@@ -39,7 +39,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         val value = this.fieldMap(field.name)
         if (value == null) {
           s"${field.name}: null"
-        } else if (field.tp == "String") {
+        } else if (field.fieldType == "String") {
           s"""${field.name}: "${this.fieldMap(field.name)}""""
         } else {
           s"""${field.name}: ${this.fieldMap(field.name)}"""

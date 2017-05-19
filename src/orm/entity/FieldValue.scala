@@ -1,12 +1,14 @@
 package orm.entity
 
+import scala.collection.mutable.ArrayBuffer
+
 object FieldValueType {
   val VALUE: Int = 1
   val ENTITY: Int = 2
   val VEC: Int = 3
 }
 
-class FieldValue(val tp: Int, value: Object, entity: Option[Object], vec: Array[Object]) {
+class FieldValue(val tp: Int, value: Object, entity: Option[Object], vec: ArrayBuffer[Object]) {
 
   def asValue(): Object = {
     require(this.tp == FieldValueType.VALUE)
@@ -18,7 +20,7 @@ class FieldValue(val tp: Int, value: Object, entity: Option[Object], vec: Array[
     return this.entity
   }
 
-  def asVec(): Array[Object] = {
+  def asVec(): ArrayBuffer[Object] = {
     require(this.tp == FieldValueType.VEC)
     return this.vec
   }
@@ -33,7 +35,7 @@ object FieldValue {
     new FieldValue(FieldValueType.VALUE, null, entity, null)
   }
 
-  def newVec(vec: Array[Object]): FieldValue = {
+  def newVec(vec: ArrayBuffer[Object]): FieldValue = {
     new FieldValue(FieldValueType.VALUE, null, null, vec)
   }
 }

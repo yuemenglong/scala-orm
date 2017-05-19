@@ -18,11 +18,11 @@ object Db {
     try {
       return DriverManager.getConnection(url, username, password)
     } catch {
-      case e:Throwable => null
+      case e: Throwable => null
     }
   }
 
-  def rebuild(): Unit ={
+  def rebuild(): Unit = {
     this.dropTables()
     this.createTables()
   }
@@ -35,9 +35,9 @@ object Db {
     }
   }
 
-  def createTables():Unit={
+  def createTables(): Unit = {
     for (entity <- OrmMeta.entityVec) {
-      var columns = entity.fieldVec.map((field)=>{
+      var columns = entity.fieldVec.filter(field => field.isNormalOrPkey()).map((field) => {
         field.getDbSql()
       }).mkString(", ")
       var sql = s"CREATE TABLE IF NOT EXISTS `${entity.table}`(${columns})"
@@ -67,7 +67,7 @@ object Db {
         }
       }
     } catch {
-      case e:Throwable => e.printStackTrace();
+      case e: Throwable => e.printStackTrace();
     }
     connection.close()
   }

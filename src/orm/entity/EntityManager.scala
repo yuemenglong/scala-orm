@@ -30,6 +30,9 @@ object EntityManager {
         if (method.getName() == coreFn) {
           return core
         }
+        if (method.getName() == "toString"){
+          return core.toString()
+        }
         val matcher = pattern.matcher(method.getName())
         if (!matcher.matches()) {
           //          return clazz.getDeclaredMethod(method.getName()).invoke(proxy, args)
@@ -47,27 +50,6 @@ object EntityManager {
       }
 
     })
-    //    enhancer.setCallback(new InvocationHandler() {
-    //      @throws[Throwable]
-    //      override def invoke(proxy: Object, method: Method, args: Array[Object]): Object = { //                System.out.println(method.getName());
-    //        if (method.getName() == coreName) {
-    //          return core
-    //        }
-    //        val matcher = pattern.matcher(method.getName())
-    //        if (!matcher.matches()) {
-    //          return clazz.getDeclaredMethod(method.getName()).invoke(proxy, args)
-    //        }
-    //        val op = matcher.group(1)
-    //        var field = matcher.group(2)
-    //        field = field.substring(0, 1).toLowerCase() + field.substring(1)
-    //
-    //        return op match {
-    //          case "get" => core.get(field)
-    //          case "set" => core.set(field, args(0))
-    //          case "clear" => throw new RuntimeException("")
-    //        }
-    //      }
-    //    })
     enhancer.create().asInstanceOf[T]
   }
 

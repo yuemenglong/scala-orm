@@ -15,14 +15,15 @@ object Orm {
     Orm.open()
     Db.rebuild()
 
-    var person = EntityManager.create(classOf[Person])
-    person.setAge(1)
-    Execute.insert(person, Db.getConn())
-    println(person.getId())
-
-    person = EntityManager.create(classOf[Person])
-    Execute.insert(person, Db.getConn())
-    println(person.getId())
+//    var person = EntityManager.create(classOf[Person])
+//    println(person)
+//    person.setAge(1)
+//    Execute.insert(person, Db.getConn())
+//    println(person.getId())
+//
+//    person = EntityManager.create(classOf[Person])
+//    Execute.insert(person, Db.getConn())
+//    println(person.getId())
 
 //  var stmt = Db.getConn().prepareStatement("insert into person set age=?,name=?")
 //    stmt.setObject(1, 100)

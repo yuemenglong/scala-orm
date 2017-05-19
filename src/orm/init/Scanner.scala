@@ -5,12 +5,14 @@ import java.lang.reflect.Field
 import java.nio.file.Paths
 
 import orm.java.anno.Entity
-import orm.meta.{EntityMeta, FieldMeta, OrmMeta}
+import orm.meta.{EntityMeta, FieldMeta, FieldMetaType, OrmMeta}
 
 /**
   * Created by Administrator on 2017/5/16.
   */
 object Scanner {
+
+
   def scan(path: String): Unit = {
     var loader = Thread.currentThread().getContextClassLoader()
     var filePath = path.replace(".", "/")
@@ -35,30 +37,49 @@ object Scanner {
       }
     }).filter(item => {
       item != null
-    })
-    for (clazz <- clazzVec) {
-      analyzeClass(clazz)
-    }
+    }).foreach(analyzeClass)
+    fixMeta()
   }
 
   def analyzeClass(clazz: Class[_]): Unit = {
     var entityMeta = new EntityMeta(clazz)
-    OrmMeta.entityVec :+= entityMeta
+    OrmMeta.entityVec += entityMeta
     OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
 
-    for (field <- clazz.getDeclaredFields()) {
-      analyzeField(entityMeta, field)
-    }
+    clazz.getDeclaredFields().foreach(field => analyzeField(entityMeta, field))
   }
 
   def analyzeField(entityMeta: EntityMeta, field: Field): Unit = {
-    var fieldMeta = new FieldMeta(field)
+    var fieldMeta = FieldMeta.createNormalMeta(field)
 
-    if(fieldMeta.pkey){
+    if (fieldMeta.pkey) {
       entityMeta.pkey = fieldMeta
     }
-    entityMeta.fieldVec :+= fieldMeta
-    entityMeta.fieldMap += (fieldMeta.name-> fieldMeta)
+    entityMeta.fieldVec += fieldMeta
+    entityMeta.fieldMap += (fieldMeta.name -> fieldMeta)
+  }
+
+  def fixMeta(): Unit = {
+    OrmMeta.entityVec.foreach(entity => {
+      entity.fieldVec.clone().foreach(field => {
+        if (!field.isNormalOrPkey()) {
+          //补左边
+          if (!entity.fieldMap.contains(field.left)) {
+            val idx = entity.fieldVec.indexOf(field)
+            val refer = FieldMeta.createReferMeta(field.left)
+            entity.fieldVec.insert(idx, refer)
+            entity.fieldMap += (field.left -> refer)
+          }
+          //补右边
+          val referEntityMeta = OrmMeta.entityMap(field.fieldType)
+          if (!referEntityMeta.fieldMap.contains(field.right)) {
+            val refer = FieldMeta.createReferMeta(field.right)
+            referEntityMeta.fieldVec += refer
+            referEntityMeta.fieldMap += (field.right -> refer)
+          }
+        }
+      })
+    })
   }
 
   def scanFile(path: String): Array[String] = {

@@ -2,6 +2,7 @@ package modal;
 
 import orm.java.anno.Entity;
 import orm.java.anno.Id;
+import orm.java.anno.Pointer;
 
 /**
  * Created by Administrator on 2017/5/17.
@@ -15,6 +16,8 @@ public class Person {
 
     String name = null;
 
+    @Pointer
+    Ptr ptr = null;
 
     public Integer getAge() {
         return age;
@@ -38,5 +41,13 @@ public class Person {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Ptr getPtr() {
+        return ptr;
+    }
+
+    public void setPtr(Ptr ptr) {
+        this.ptr = ptr;
     }
 }
