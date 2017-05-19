@@ -8,7 +8,7 @@ import orm.meta.{EntityMeta, OrmMeta}
 class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   def get(field: String): Object = {
-    if (this.meta.fieldMap(field).isNormal()) {
+    if (this.meta.fieldMap(field).isNormalOrPkey()) {
       return this.getValue(field)
     } else {
       return null
@@ -16,14 +16,15 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   }
 
   def set(field: String, value: Object): Object = {
-    if (this.meta.fieldMap(field).isNormal()) {
+    if (this.meta.fieldMap(field).isNormalOrPkey()) {
       return this.setValue(field, value)
+    } else {
+      return null
     }
-    return null
   }
 
   def getValue(field: String): Object = {
-    require(this.fieldMap.contains(field))
+    //    require(this.fieldMap.contains(field))
     return this.fieldMap(field)
   }
 
@@ -34,7 +35,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   override def toString: String = {
     val content = this.meta.fieldVec.map(field => {
-      if (field.isPkeyOrNormal()) {
+      if (field.isNormalOrPkey()) {
         val value = this.fieldMap(field.name)
         if (value == null) {
           s"${field.name}: null"

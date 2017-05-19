@@ -32,10 +32,7 @@ object Execute {
     val rs = stmt.getGeneratedKeys()
     if (rs.next()) {
       var id = rs.getObject(1)
-      println(id)
-      println(core.meta.pkey.name)
       core.fieldMap += (core.meta.pkey.name -> id)
-      println(core)
     }
     affected
   }

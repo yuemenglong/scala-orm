@@ -5,8 +5,8 @@ import java.lang.reflect.Field
 import orm.java.anno.Id
 
 class FieldMeta(val field: Field) {
-  val id: Boolean = FieldMeta.pickId(field)
-  val auto: Boolean = id && FieldMeta.pickIdAuto(field)
+  val pkey: Boolean = FieldMeta.pickId(field)
+  val auto: Boolean = pkey && FieldMeta.pickIdAuto(field)
 
   val tp: String = field.getType().getSimpleName()
   var name: String = field.getName()
@@ -20,7 +20,7 @@ class FieldMeta(val field: Field) {
       case true => "";
       case false => " NOT NULL";
     }
-    val pkey = (this.id, this.auto) match{
+    val pkey = (this.pkey, this.auto) match{
       case (false, _)=>""
       case (true, false)=>" PRIMARY KEY"
       case (true, true)=>" PRIMARY KEY AUTO_INCREMENT"
@@ -34,7 +34,7 @@ class FieldMeta(val field: Field) {
   }
 
   def isNormal(): Boolean = {
-    if (this.id) {
+    if (this.pkey) {
       return false
     }
     this.tp match {
@@ -45,12 +45,12 @@ class FieldMeta(val field: Field) {
     }
   }
 
-  def isId(): Boolean = {
-    this.id
+  def isPkey(): Boolean = {
+    this.pkey
   }
 
-  def isPkeyOrNormal(): Boolean = {
-    this.isId() || this.isNormal()
+  def isNormalOrPkey(): Boolean = {
+    this.isPkey() || this.isNormal()
   }
 }
 

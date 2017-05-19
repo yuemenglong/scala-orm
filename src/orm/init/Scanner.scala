@@ -54,7 +54,7 @@ object Scanner {
   def analyzeField(entityMeta: EntityMeta, field: Field): Unit = {
     var fieldMeta = new FieldMeta(field)
 
-    if(fieldMeta.id){
+    if(fieldMeta.pkey){
       entityMeta.pkey = fieldMeta
     }
     entityMeta.fieldVec :+= fieldMeta
