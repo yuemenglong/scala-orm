@@ -6,7 +6,8 @@ import java.util.regex.Pattern
 import net.sf.cglib.proxy.{Enhancer, InvocationHandler}
 import orm.java.interfaces.Entity
 import orm.meta.OrmMeta
-
+import net.sf.cglib.proxy.MethodInterceptor
+import net.sf.cglib.proxy.MethodProxy
 /**
   * Created by Administrator on 2017/5/18.
   */
@@ -22,8 +23,7 @@ object EntityManager {
     val enhancer: Enhancer = new Enhancer
     enhancer.setSuperclass(clazz)
     enhancer.setInterfaces(Array(classOf[Entity]))
-    import net.sf.cglib.proxy.MethodInterceptor
-    import net.sf.cglib.proxy.MethodProxy
+
     enhancer.setCallback(new MethodInterceptor() {
       @throws[Throwable]
       def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
@@ -54,6 +54,7 @@ object EntityManager {
   }
 
   def core(obj: Object): EntityCore = {
+    require(obj != null)
     if (!obj.isInstanceOf[Entity]) {
       return null
     }

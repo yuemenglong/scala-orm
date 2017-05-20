@@ -1,10 +1,9 @@
 package modal;
 
-import orm.java.anno.Entity;
-import orm.java.anno.Id;
-import orm.java.anno.Pointer;
+import orm.java.anno.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Created by Administrator on 2017/5/17.
@@ -20,6 +19,12 @@ public class Person {
 
     @Pointer
     Ptr ptr = null;
+
+    @OneToOne
+    OO oo = null;
+
+    @OneToMany
+    List<OM> om = null;
 
     public Integer getAge() {
         return age;
@@ -51,5 +56,21 @@ public class Person {
 
     public void setPtr(Ptr ptr) {
         this.ptr = ptr;
+    }
+
+    public OO getOo() {
+        return oo;
+    }
+
+    public void setOo(OO oo) {
+        this.oo = oo;
+    }
+
+    public List<OM> getOm() {
+        return om;
+    }
+
+    public void setOm(List<OM> om) {
+        this.om = om;
     }
 }

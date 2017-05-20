@@ -25,13 +25,17 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   }
 
   def execute(entity: Object, conn: Connection): Int = {
+    if (entity == null) {
+      return 0
+    }
     val core = EntityManager.core(entity)
     require(core != null)
     require(meta == core.meta)
-    this.executePointer(core, conn)
-    +this.executeSelf(core, conn)
-    +this.executeOneOne(core, conn)
-    +this.executeOneMany(core, conn)
+    return (this.executePointer(core, conn)
+      + this.executeSelf(core, conn)
+      + this.executeOneOne(core, conn)
+      + this.executeOneMany(core, conn)
+      )
   }
 
   private def executeInsert(core: EntityCore, conn: Connection): Int = {
@@ -81,35 +85,69 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   private def executePointer(core: EntityCore, conn: Connection): Int = {
     var ret = 0
     this.withs.filter { case (field, _) =>
-      core.meta.fieldMap(field).isPointer() && core.fieldMap.contains(field)
+      core.meta.fieldMap(field).isPointer() &&
+        core.fieldMap.contains(field) &&
+        core.fieldMap(field) != null
     }.foreach { case (field, ex) => {
-      val obj = core.fieldMap(field)
-      ret += ex.execute(obj, conn)
-      val objCore = EntityManager.core(obj)
+      // insert(b)
+      val b = core.fieldMap(field)
+      val bCore = EntityManager.core(b)
+      ret += ex.execute(b, conn)
+      // a.b_id = b.id
+      require(bCore != null)
       val fieldMeta = core.meta.fieldMap(field)
-      // a.b_id = b_id
-      core.fieldMap += (fieldMeta.left -> objCore.fieldMap(fieldMeta.right))
+      core.fieldMap += (fieldMeta.left -> bCore.fieldMap(fieldMeta.right))
     }
     }
     ret
   }
 
-  private def executeOneOne(core: EntityCore, conn: Connection): Int
-
-  = {
-    0
+  private def executeOneOne(core: EntityCore, conn: Connection): Int = {
+    var ret = 0
+    this.withs.filter { case (field, _) =>
+      core.meta.fieldMap(field).isOneOne() &&
+        core.fieldMap.contains(field) &&
+        core.fieldMap(field) != null
+    }.foreach { case (field, ex) => {
+      // b.a_id = a.id
+      val fieldMeta = core.meta.fieldMap(field)
+      val b = core.fieldMap(field)
+      val bCore = EntityManager.core(b)
+      require(bCore != null)
+      bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
+      // insert(b)
+      ret += ex.execute(b, conn)
+    }
+    }
+    ret
   }
 
-  private def executeOneMany(core: EntityCore, conn: Connection): Int
-
-  = {
-    0
+  private def executeOneMany(core: EntityCore, conn: Connection): Int = {
+    var ret = 0
+    this.withs.filter { case (field, _) =>
+      core.meta.fieldMap(field).isOneMany() &&
+        core.fieldMap.contains(field) &&
+        core.fieldMap(field) != null
+    }.foreach { case (field, ex) => {
+      val bs = core.fieldMap(field).asInstanceOf[Iterable[Object]]
+      bs.foreach(b => {
+        // b.a_id = a.id
+        val fieldMeta = core.meta.fieldMap(field)
+        val bCore = EntityManager.core(b)
+        require(bCore != null)
+        bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
+        // insert(b)
+        ret += ex.execute(b, conn)
+      })
+    }
+    }
+    ret
   }
 
 }
 
 object Executor {
-  def insert(clazz: Class[_]): Executor = {
+  def createInsert(clazz: Class[_]): Executor = {
     var meta = OrmMeta.entityMap(clazz.getSimpleName())
     return new Executor(meta, Cascade.INSERT)
   }

@@ -11,16 +11,14 @@ import orm.meta.{EntityMeta, FieldMeta, FieldMetaType, OrmMeta}
   * Created by Administrator on 2017/5/16.
   */
 object Scanner {
-
-
   def scan(path: String): Unit = {
-    var loader = Thread.currentThread().getContextClassLoader()
-    var filePath = path.replace(".", "/")
-    var url = loader.getResource(filePath)
+    val loader = Thread.currentThread().getContextClassLoader()
+    val filePath = path.replace(".", "/")
+    val url = loader.getResource(filePath)
     require(url != null && url.getProtocol() == "file")
-    var fullPath = new File(url.getPath()).getPath()
-    var basePath = Paths.get(fullPath.replaceAll(filePath + "$", ""))
-    var clazzVec = scanFile(url.getPath()).map(path => {
+    val fullPath = new File(url.getPath()).getPath()
+    val basePath = Paths.get(fullPath.replaceAll(filePath + "$", ""))
+    scanFile(url.getPath()).map(path => {
       // 全路径转为相对路径，将/变为.
       basePath.relativize(Paths.get(path)).toString().replaceAll("(\\\\)|(/)", ".").replaceAll("\\.class$", "")
     }).filter(path => {
@@ -28,8 +26,8 @@ object Scanner {
       "[^$]*".r.pattern.matcher(path).matches()
     }).map(path => {
       // 不是entity的过滤掉
-      var clazz = Class.forName(path)
-      var anno = clazz.getAnnotation[Entity](classOf[Entity])
+      val clazz = Class.forName(path)
+      val anno = clazz.getAnnotation[Entity](classOf[Entity])
       if (anno != null) {
         clazz
       } else {
@@ -50,7 +48,7 @@ object Scanner {
   }
 
   def analyzeField(entityMeta: EntityMeta, field: Field): Unit = {
-    var fieldMeta = FieldMeta.createNormalMeta(field)
+    var fieldMeta = FieldMeta.createFieldMeta(field)
 
     if (fieldMeta.pkey) {
       entityMeta.pkey = fieldMeta
@@ -91,19 +89,14 @@ object Scanner {
   }
 
   def scanFile(path: String): Array[String] = {
-    var file = new File(path)
+    val file = new File(path)
     if (file.isFile()) {
       return Array(path)
     }
-    var list = file.listFiles();
+    val list = file.listFiles();
     if (list == null) {
       return Array()
     }
     return list.flatMap(f => scanFile(f.getPath()))
-  }
-
-  def main(args: Array[String]): Unit = {
-    println("hello")
-    scan("")
   }
 }

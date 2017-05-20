@@ -1,6 +1,6 @@
 package orm.meta
 
-import java.lang.reflect.Field
+import java.lang.reflect.{Field, ParameterizedType}
 
 import orm.java.anno._
 
@@ -81,10 +81,18 @@ class FieldMeta(val field: Field,
   def isOneMany(): Boolean = {
     this.typeKind == FieldMetaType.ONE_MANY
   }
-
 }
 
 object FieldMeta {
+  def pickTypeName(field: Field, typeKind: Int): String = {
+    typeKind match {
+      case FieldMetaType.ONE_MANY => {
+        field.getGenericType().asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]].getSimpleName()
+      }
+      case _ => field.getType().getSimpleName()
+    }
+  }
+
   val DEFAULT_LEN: Int = 128;
 
   def pickLeftRight(field: Field, typeKind: Int): (String, String) = {
@@ -135,7 +143,7 @@ object FieldMeta {
     }
   }
 
-  def pickMetaType(field: Field): Int = {
+  def pickTypeKind(field: Field): Int = {
     field.getType().getSimpleName() match {
       case "Integer" | "Long" | "String" => return FieldMetaType.BUILT_IN
       case _ => {}
@@ -152,7 +160,7 @@ object FieldMeta {
     if (field.getDeclaredAnnotation(classOf[OneToMany]) != null) {
       return FieldMetaType.ONE_MANY
     }
-    throw new RuntimeException("")
+    throw new RuntimeException(field.getName())
   }
 
   def pickIdAuto(field: Field): Boolean = {
@@ -163,12 +171,12 @@ object FieldMeta {
     field.getDeclaredAnnotation(classOf[Id]) != null
   }
 
-  def createNormalMeta(field: Field): FieldMeta = {
+  def createFieldMeta(field: Field): FieldMeta = {
     val pkey: Boolean = FieldMeta.pickId(field)
     val auto: Boolean = pkey && FieldMeta.pickIdAuto(field)
 
-    val typeKind: Int = FieldMeta.pickMetaType(field)
-    val typeName: String = field.getType().getSimpleName()
+    val typeKind: Int = FieldMeta.pickTypeKind(field)
+    val typeName: String = FieldMeta.pickTypeName(field, typeKind)
     val name: String = field.getName()
     val column: String = field.getName()
     val nullable = true

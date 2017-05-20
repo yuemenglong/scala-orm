@@ -7,7 +7,7 @@ import orm.java.anno.Id;
  * Created by Administrator on 2017/5/19.
  */
 @Entity
-public class Ptr {
+public class OM {
     @Id(auto = true)
     private Long id;
 

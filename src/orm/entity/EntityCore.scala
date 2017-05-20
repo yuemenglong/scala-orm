@@ -20,13 +20,19 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       this.setValue(field, value)
     } else if (this.meta.fieldMap(field).isPointer()) {
       this.setPointer(field, value)
+    } else if (this.meta.fieldMap(field).isOneOne()) {
+      this.setOneOne(field, value)
+    } else if (this.meta.fieldMap(field).isOneMany()) {
+      this.setOneMany(field, value)
     }
     return null
   }
 
   def getValue(field: String): Object = {
-    //    require(this.fieldMap.contains(field))
-    return this.fieldMap(field)
+    this.fieldMap.contains(field) match {
+      case true => this.fieldMap(field)
+      case false => null
+    }
   }
 
   def setValue(field: String, value: Object): Unit = {
@@ -34,13 +40,49 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   }
 
   def setPointer(field: String, value: Object): Unit = {
-    val fieldMeta = this.meta.fieldMap(field)
+    val a = this
+    val fieldMeta = a.meta.fieldMap(field)
     // a.b = b
     this.fieldMap += (field -> value)
     // a.b_id = b.id
-    val core = EntityManager.core(value)
-    require(core != null)
-    this.fieldMap += (fieldMeta.left -> core.fieldMap(fieldMeta.right))
+    val b = EntityManager.core(value)
+    require(b != null)
+    a.syncField(fieldMeta.left, b, fieldMeta.right)
+  }
+
+  def setOneOne(field: String, value: Object): Unit = {
+    val a = this;
+    val fieldMeta = this.meta.fieldMap(field)
+    // a.b = b
+    a.fieldMap += (field -> value)
+    // b.a_id = a.id
+    val b = EntityManager.core(value)
+    require(b != null)
+    b.syncField(fieldMeta.right, a, fieldMeta.left)
+  }
+
+  def setOneMany(field: String, value: Object): Unit = {
+    val a = this;
+    val fieldMeta = a.meta.fieldMap(field)
+
+    val bs: Array[Object] = value.asInstanceOf[Iterable[Object]].map(item => {
+      // b.a_id = a.id
+      val b = EntityManager.core(item)
+      require(b != null)
+      b.syncField(fieldMeta.right, a, fieldMeta.left)
+      item
+    })(collection.breakOut)
+    // a.bs = bs
+    a.fieldMap += (field -> bs)
+  }
+
+  def syncField(left: String, b: EntityCore, right: String): Unit = {
+    // a.left = b.right
+    if (b.fieldMap.contains(right)) {
+      this.fieldMap += (left -> b.fieldMap(right))
+    } else if (this.fieldMap.contains(left)) {
+      this.fieldMap -= left
+    }
   }
 
   override def toString: String = {
@@ -54,9 +96,9 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         } else {
           s"""${field.name}: ${this.fieldMap(field.name)}"""
         }
-      } else if(!field.isOneMany()){
+      } else if (!field.isOneMany()) {
         s"""${field.name}: ${this.fieldMap(field.name)}"""
-      }else{
+      } else {
         throw new RuntimeException("")
       }
     }).mkString(", ")
