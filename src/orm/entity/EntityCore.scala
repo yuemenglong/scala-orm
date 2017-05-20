@@ -17,10 +17,11 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   def set(field: String, value: Object): Object = {
     if (this.meta.fieldMap(field).isNormalOrPkey()) {
-      return this.setValue(field, value)
-    } else {
-      return null
+      this.setValue(field, value)
+    } else if (this.meta.fieldMap(field).isPointer()) {
+      this.setPointer(field, value)
     }
+    return null
   }
 
   def getValue(field: String): Object = {
@@ -28,9 +29,18 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     return this.fieldMap(field)
   }
 
-  def setValue(field: String, value: Object): Object = {
+  def setValue(field: String, value: Object): Unit = {
     this.fieldMap += (field -> value)
-    return value
+  }
+
+  def setPointer(field: String, value: Object): Unit = {
+    val fieldMeta = this.meta.fieldMap(field)
+    // a.b = b
+    this.fieldMap += (field -> value)
+    // a.b_id = b.id
+    val core = EntityManager.core(value)
+    require(core != null)
+    this.fieldMap += (fieldMeta.left -> core.fieldMap(fieldMeta.right))
   }
 
   override def toString: String = {
@@ -39,12 +49,14 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         val value = this.fieldMap(field.name)
         if (value == null) {
           s"${field.name}: null"
-        } else if (field.fieldType == "String") {
+        } else if (field.typeName == "String") {
           s"""${field.name}: "${this.fieldMap(field.name)}""""
         } else {
           s"""${field.name}: ${this.fieldMap(field.name)}"""
         }
-      } else {
+      } else if(!field.isOneMany()){
+        s"""${field.name}: ${this.fieldMap(field.name)}"""
+      }else{
         throw new RuntimeException("")
       }
     }).mkString(", ")

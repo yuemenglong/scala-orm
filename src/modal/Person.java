@@ -4,6 +4,8 @@ import orm.java.anno.Entity;
 import orm.java.anno.Id;
 import orm.java.anno.Pointer;
 
+import java.math.BigDecimal;
+
 /**
  * Created by Administrator on 2017/5/17.
  */

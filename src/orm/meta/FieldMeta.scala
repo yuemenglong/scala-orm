@@ -16,8 +16,8 @@ class FieldMeta(val field: Field,
                 val pkey: Boolean,
                 val auto: Boolean,
 
-                val metaType: Int,
-                val fieldType: String,
+                val typeKind: Int,
+                val typeName: String,
                 val name: String,
                 val column: String,
                 val nullable: Boolean,
@@ -26,6 +26,8 @@ class FieldMeta(val field: Field,
 
                 val left: String,
                 val right: String) {
+  var selfMeta: EntityMeta = null // 最后统一注入
+  var referMeta: EntityMeta = null // 最后统一注入
 
   def getDbSql(): String = {
     val notnull = this.nullable match {
@@ -37,7 +39,7 @@ class FieldMeta(val field: Field,
       case (true, false) => " PRIMARY KEY"
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
     }
-    this.fieldType match {
+    this.typeName match {
       case "Integer" => s"`${this.column}` INTEGER${notnull}${pkey}"
       case "Long" => s"`${this.column}` BIGINT${notnull}${pkey}"
       case "String" => s"`${this.column}` VARCHAR(${this.length})${notnull}${pkey}"
@@ -57,20 +59,39 @@ class FieldMeta(val field: Field,
   }
 
   def isNormalOrPkey(): Boolean = {
-    this.metaType == FieldMetaType.BUILT_IN
+    this.typeKind == FieldMetaType.BUILT_IN
   }
 
+  def isObject(): Boolean = {
+    this.typeKind != FieldMetaType.BUILT_IN
+  }
+
+  def isRefer(): Boolean = {
+    this.typeKind == FieldMetaType.REFER
+  }
+
+  def isPointer(): Boolean = {
+    this.typeKind == FieldMetaType.POINTER
+  }
+
+  def isOneOne(): Boolean = {
+    this.typeKind == FieldMetaType.ONE_ONE
+  }
+
+  def isOneMany(): Boolean = {
+    this.typeKind == FieldMetaType.ONE_MANY
+  }
 
 }
 
 object FieldMeta {
   val DEFAULT_LEN: Int = 128;
 
-  def pickLeftRight(field: Field, metaType: Int): (String, String) = {
-    if (metaType == FieldMetaType.BUILT_IN) {
+  def pickLeftRight(field: Field, typeKind: Int): (String, String) = {
+    if (typeKind == FieldMetaType.BUILT_IN) {
       return (null, null)
     }
-    metaType match {
+    typeKind match {
       case FieldMetaType.REFER => {
         val anno = field.getAnnotation(classOf[Refer])
         return (anno.left(), anno.right())
@@ -146,19 +167,19 @@ object FieldMeta {
     val pkey: Boolean = FieldMeta.pickId(field)
     val auto: Boolean = pkey && FieldMeta.pickIdAuto(field)
 
-    var metaType: Int = FieldMeta.pickMetaType(field)
-    val fieldType: String = field.getType().getSimpleName()
-    var name: String = field.getName()
-    var column: String = field.getName()
+    val typeKind: Int = FieldMeta.pickMetaType(field)
+    val typeName: String = field.getType().getSimpleName()
+    val name: String = field.getName()
+    val column: String = field.getName()
     val nullable = true
 
-    var length: Int = FieldMeta.DEFAULT_LEN
+    val length: Int = FieldMeta.DEFAULT_LEN
 
-    val (left, right) = FieldMeta.pickLeftRight(field, metaType)
+    val (left, right) = FieldMeta.pickLeftRight(field, typeKind)
 
     return new FieldMeta(field,
       pkey, auto,
-      metaType, fieldType, name, column, nullable,
+      typeKind, typeName, name, column, nullable,
       length,
       left, right)
   }
@@ -169,8 +190,8 @@ object FieldMeta {
     val pkey: Boolean = false
     val auto: Boolean = false
 
-    val metaType: Int = FieldMetaType.BUILT_IN
-    val fieldType: String = "Long"
+    val typeKind: Int = FieldMetaType.BUILT_IN
+    val typeName: String = "Long"
     val name: String = fieldName
     val column: String = fieldName // 默认的
     val nullable: Boolean = true
@@ -182,7 +203,7 @@ object FieldMeta {
 
     return new FieldMeta(field,
       pkey, auto,
-      metaType, fieldType, name, column, nullable,
+      typeKind, typeName, name, column, nullable,
       length,
       left, right)
   }

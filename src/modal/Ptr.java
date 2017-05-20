@@ -8,7 +8,7 @@ import orm.java.anno.Id;
  */
 @Entity
 public class Ptr {
-    @Id
+    @Id(auto = true)
     private Long id;
 
     private String value;

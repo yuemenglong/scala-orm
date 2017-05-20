@@ -71,12 +71,20 @@ object Scanner {
             entity.fieldMap += (field.left -> refer)
           }
           //补右边
-          val referEntityMeta = OrmMeta.entityMap(field.fieldType)
+          val referEntityMeta = OrmMeta.entityMap(field.typeName)
           if (!referEntityMeta.fieldMap.contains(field.right)) {
             val refer = FieldMeta.createReferMeta(field.right)
             referEntityMeta.fieldVec += refer
             referEntityMeta.fieldMap += (field.right -> refer)
           }
+        }
+      })
+    })
+    OrmMeta.entityVec.foreach(entity => {
+      entity.fieldVec.clone().foreach(field => {
+        field.selfMeta = entity
+        if (field.isObject()) {
+          field.referMeta = OrmMeta.entityMap(field.typeName)
         }
       })
     })

@@ -7,68 +7,52 @@ import orm.meta.OrmMeta
 /**
   * Created by Administrator on 2017/5/16.
   */
-object Db {
+class Db(val host: String, val port: Int, val username: String, val password: String, val db: String) {
   val driver = "com.mysql.jdbc.Driver"
-  val url = "jdbc:mysql://localhost/test"
-  val username = "root"
-  val password = "root"
+  val url = s"jdbc:mysql://${host}:${port}/${db}"
+  Class.forName(driver)
 
   def getConn(): Connection = {
-    Class.forName(driver)
     try {
       return DriverManager.getConnection(url, username, password)
     } catch {
-      case e: Throwable => null
+      case _: Throwable => null
     }
   }
 
   def rebuild(): Unit = {
-    this.dropTables()
-    this.createTables()
+    this.drop()
+    this.create()
   }
 
-  def dropTables(): Unit = {
+  def drop(): Unit = {
     for (entity <- OrmMeta.entityVec) {
-      var sql = s"DROP TABLE IF EXISTS `${entity.table}`"
+      val sql = s"DROP TABLE IF EXISTS `${entity.table}`"
       println(sql)
-      this.getConn().createStatement().execute(sql)
+      this.execute(sql)
     }
   }
 
-  def createTables(): Unit = {
+  def create(): Unit = {
     for (entity <- OrmMeta.entityVec) {
-      var columns = entity.fieldVec.filter(field => field.isNormalOrPkey()).map((field) => {
+      val columns = entity.fieldVec.filter(field => field.isNormalOrPkey()).map((field) => {
         field.getDbSql()
       }).mkString(", ")
-      var sql = s"CREATE TABLE IF NOT EXISTS `${entity.table}`(${columns})"
+      val sql = s"CREATE TABLE IF NOT EXISTS `${entity.table}`(${columns})"
       println(sql)
-      this.getConn().createStatement().execute(sql)
+      this.execute(sql)
     }
   }
 
-  def test(args: Array[String]) {
-    // connect to the database named "mysql" on the localhost
+  def execute(sql: String): Int = execute(sql, Array())
 
-
-    // there's probably a better way to do this
-    var connection: Connection = null
-
-    try {
-      // make the connection
-      Class.forName(driver)
-      connection = DriverManager.getConnection(url, username, password)
-
-      // create the statement, and run the select query
-      val statement = connection.createStatement()
-      val resultSet = statement.executeQuery("SELECT * FROM test")
-      while (resultSet.next()) {
-        for (idx <- 1 to resultSet.getMetaData().getColumnCount()) {
-          println(resultSet.getString(idx));
-        }
-      }
-    } catch {
-      case e: Throwable => e.printStackTrace();
-    }
-    connection.close()
+  def execute(sql: String, params: Array[Object]): Int = {
+    val conn = this.getConn()
+    val stmt = conn.prepareStatement(sql)
+    params.zipWithIndex.foreach { case (p, i) => stmt.setObject(i + 1, p) }
+    val ret = stmt.executeUpdate()
+    conn.close()
+    return ret
   }
+
 }
