@@ -3,7 +3,9 @@ package modal;
 import orm.Orm;
 import orm.db.Db;
 import orm.entity.EntityManager;
-import orm.execute.Executor;
+import orm.operate.Cond;
+import orm.operate.Executor;
+import orm.operate.Selector;
 
 import java.util.List;
 
@@ -41,5 +43,21 @@ public class Main {
         ex.insert("om");
         int ret = ex.execute(person, db.getConn());
         System.out.println(ret);
+
+        Selector selector = Selector.from(Person.class);
+        selector.select("ptr");
+        selector.select("oo");
+        selector.select("om");
+
+        selector.where(Cond.byEq("id", 1));
+        String c = selector.getColumns();
+        System.out.println(c);
+        String t = selector.getTables();
+        System.out.println(t);
+        String cond = selector.getConds();
+        System.out.println(cond);
+
+        String sql = selector.getSql();
+        System.out.println(sql);
     }
 }

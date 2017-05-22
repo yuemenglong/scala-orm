@@ -8,5 +8,9 @@ import scala.collection.mutable.ArrayBuffer
 object OrmMeta {
   var entityVec: ArrayBuffer[EntityMeta] = ArrayBuffer()
   var entityMap: Map[String, EntityMeta] = Map()
+
+  def check(): Unit = {
+    require(entityVec.length > 0)
+  }
 }
 
