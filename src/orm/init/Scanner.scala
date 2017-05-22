@@ -48,7 +48,7 @@ object Scanner {
   }
 
   def analyzeField(entityMeta: EntityMeta, field: Field): Unit = {
-    var fieldMeta = FieldMeta.createFieldMeta(field)
+    var fieldMeta = FieldMeta.createFieldMeta(entityMeta, field)
 
     if (fieldMeta.pkey) {
       entityMeta.pkey = fieldMeta
@@ -64,14 +64,14 @@ object Scanner {
           //补左边
           if (!entity.fieldMap.contains(field.left)) {
             val idx = entity.fieldVec.indexOf(field)
-            val refer = FieldMeta.createReferMeta(field.left)
+            val refer = FieldMeta.createReferMeta(entity, field.left)
             entity.fieldVec.insert(idx, refer)
             entity.fieldMap += (field.left -> refer)
           }
           //补右边
           val referEntityMeta = OrmMeta.entityMap(field.typeName)
           if (!referEntityMeta.fieldMap.contains(field.right)) {
-            val refer = FieldMeta.createReferMeta(field.right)
+            val refer = FieldMeta.createReferMeta(entity, field.right)
             referEntityMeta.fieldVec += refer
             referEntityMeta.fieldMap += (field.right -> refer)
           }
@@ -80,9 +80,8 @@ object Scanner {
     })
     OrmMeta.entityVec.foreach(entity => {
       entity.fieldVec.clone().foreach(field => {
-        field.selfMeta = entity
         if (field.isObject()) {
-          field.referMeta = OrmMeta.entityMap(field.typeName)
+          field.refer = OrmMeta.entityMap(field.typeName)
         }
       })
     })

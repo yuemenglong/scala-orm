@@ -1,6 +1,7 @@
 package orm.execute
 
 import java.sql.{Connection, Statement}
+import java.util
 
 import orm.entity.{EntityCore, EntityManager}
 import orm.meta.{EntityMeta, OrmMeta}
@@ -19,7 +20,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 
   def insert(field: String): Executor = {
     require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
-    val execute = new Executor(meta.fieldMap(field).referMeta, Cascade.INSERT)
+    val execute = new Executor(meta.fieldMap(field).refer, Cascade.INSERT)
     this.withs.+=((field, execute))
     this.withs.last._2
   }
@@ -29,7 +30,6 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
       return 0
     }
     val core = EntityManager.core(entity)
-    require(core != null)
     require(meta == core.meta)
     return (this.executePointer(core, conn)
       + this.executeSelf(core, conn)
@@ -40,7 +40,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 
   private def executeInsert(core: EntityCore, conn: Connection): Int = {
     val validFields = core.meta.fieldVec.filter(field => {
-      field.isNormal() && core.fieldMap.contains(field.name)
+      field.isNormalOrPkey() && core.fieldMap.contains(field.name)
     })
     val columns = validFields.map(field => {
       s"`${field.column}`"
@@ -113,7 +113,6 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
       val fieldMeta = core.meta.fieldMap(field)
       val b = core.fieldMap(field)
       val bCore = EntityManager.core(b)
-      require(bCore != null)
       bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
       // insert(b)
       ret += ex.execute(b, conn)
@@ -129,16 +128,16 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
     }.foreach { case (field, ex) => {
-      val bs = core.fieldMap(field).asInstanceOf[Iterable[Object]]
-      bs.foreach(b => {
+      val bs = core.fieldMap(field).asInstanceOf[util.ArrayList[Object]]
+      for (i <- 0 to bs.size() - 1) {
+        val b = bs.get(i)
         // b.a_id = a.id
         val fieldMeta = core.meta.fieldMap(field)
         val bCore = EntityManager.core(b)
-        require(bCore != null)
         bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
         // insert(b)
         ret += ex.execute(b, conn)
-      })
+      }
     }
     }
     ret

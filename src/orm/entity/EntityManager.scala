@@ -8,18 +8,26 @@ import orm.java.interfaces.Entity
 import orm.meta.OrmMeta
 import net.sf.cglib.proxy.MethodInterceptor
 import net.sf.cglib.proxy.MethodProxy
+
 /**
   * Created by Administrator on 2017/5/18.
   */
 object EntityManager {
-
-  private val pattern = Pattern.compile("(get|set|clear)(.+)")
-  private val coreFn = "$$core"
+  def empty[T](clazz: Class[T]): T = {
+    require(OrmMeta.entityMap.size > 0)
+    val meta = OrmMeta.entityMap(clazz.getSimpleName())
+    val core = EntityCore.empty(meta)
+    wrap[T](clazz, core)
+  }
 
   def create[T](clazz: Class[T]): T = {
     require(OrmMeta.entityMap.size > 0)
     val meta = OrmMeta.entityMap(clazz.getSimpleName())
     val core = EntityCore.create(meta)
+    wrap[T](clazz, core)
+  }
+
+  private def wrap[T](clazz: Class[T], core: EntityCore): T = {
     val enhancer: Enhancer = new Enhancer
     enhancer.setSuperclass(clazz)
     enhancer.setInterfaces(Array(classOf[Entity]))
@@ -27,28 +35,8 @@ object EntityManager {
     enhancer.setCallback(new MethodInterceptor() {
       @throws[Throwable]
       def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-        if (method.getName() == coreFn) {
-          return core
-        }
-        if (method.getName() == "toString"){
-          return core.toString()
-        }
-        val matcher = pattern.matcher(method.getName())
-        if (!matcher.matches()) {
-          //          return clazz.getDeclaredMethod(method.getName()).invoke(proxy, args)
-          return proxy.invokeSuper(obj, args)
-        }
-        val op = matcher.group(1)
-        var field = matcher.group(2)
-        field = field.substring(0, 1).toLowerCase() + field.substring(1)
-
-        return op match {
-          case "get" => core.get(field)
-          case "set" => core.set(field, args(0))
-          case "clear" => throw new RuntimeException("")
-        }
+        core.intercept(obj, method, args, proxy)
       }
-
     })
     enhancer.create().asInstanceOf[T]
   }
@@ -56,7 +44,7 @@ object EntityManager {
   def core(obj: Object): EntityCore = {
     require(obj != null)
     if (!obj.isInstanceOf[Entity]) {
-      return null
+      require(false)
     }
     val entity = obj.asInstanceOf[Entity]
     return entity.$$core()

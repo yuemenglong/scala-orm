@@ -12,7 +12,8 @@ object FieldMetaType {
   val ONE_MANY: Int = 4
 }
 
-class FieldMeta(val field: Field,
+class FieldMeta(val entity: EntityMeta,
+                val field: Field,
                 val pkey: Boolean,
                 val auto: Boolean,
 
@@ -20,14 +21,13 @@ class FieldMeta(val field: Field,
                 val typeName: String,
                 val name: String,
                 val column: String,
-                val nullable: Boolean,
 
+                val nullable: Boolean,
                 val length: Int,
 
                 val left: String,
                 val right: String) {
-  var selfMeta: EntityMeta = null // 最后统一注入
-  var referMeta: EntityMeta = null // 最后统一注入
+  var refer: EntityMeta = null // 最后统一注入，因为第一遍扫描时可能还没有生成
 
   def getDbSql(): String = {
     val notnull = this.nullable match {
@@ -95,7 +95,7 @@ object FieldMeta {
 
   val DEFAULT_LEN: Int = 128;
 
-  def pickLeftRight(field: Field, typeKind: Int): (String, String) = {
+  def pickLeftRight(entity: EntityMeta, field: Field, typeKind: Int): (String, String) = {
     if (typeKind == FieldMetaType.BUILT_IN) {
       return (null, null)
     }
@@ -123,7 +123,7 @@ object FieldMeta {
           case _ => anno.left()
         }
         val right = anno.right() match {
-          case "" => field.getType().getName().toLowerCase() + "_id"
+          case "" => entity.entity.toLowerCase() + "_id"
           case _ => anno.right()
         }
         return (left, right)
@@ -135,7 +135,7 @@ object FieldMeta {
           case _ => anno.left()
         }
         val right = anno.right() match {
-          case "" => field.getType().getName().toLowerCase() + "_id"
+          case "" => entity.entity.toLowerCase() + "_id"
           case _ => anno.right()
         }
         return (left, right)
@@ -171,7 +171,7 @@ object FieldMeta {
     field.getDeclaredAnnotation(classOf[Id]) != null
   }
 
-  def createFieldMeta(field: Field): FieldMeta = {
+  def createFieldMeta(entity: EntityMeta, field: Field): FieldMeta = {
     val pkey: Boolean = FieldMeta.pickId(field)
     val auto: Boolean = pkey && FieldMeta.pickIdAuto(field)
 
@@ -183,16 +183,16 @@ object FieldMeta {
 
     val length: Int = FieldMeta.DEFAULT_LEN
 
-    val (left, right) = FieldMeta.pickLeftRight(field, typeKind)
+    val (left, right) = FieldMeta.pickLeftRight(entity, field, typeKind)
 
-    return new FieldMeta(field,
+    return new FieldMeta(entity, field,
       pkey, auto,
-      typeKind, typeName, name, column, nullable,
-      length,
+      typeKind, typeName, name, column,
+      nullable, length,
       left, right)
   }
 
-  def createReferMeta(fieldName: String): FieldMeta = {
+  def createReferMeta(entity: EntityMeta, fieldName: String): FieldMeta = {
     // 默认Long
     val field: Field = null
     val pkey: Boolean = false
@@ -209,10 +209,10 @@ object FieldMeta {
     val left: String = null
     val right: String = null
 
-    return new FieldMeta(field,
+    return new FieldMeta(entity, field,
       pkey, auto,
-      typeKind, typeName, name, column, nullable,
-      length,
+      typeKind, typeName, name, column,
+      nullable, length,
       left, right)
   }
 }

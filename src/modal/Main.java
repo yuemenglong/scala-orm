@@ -5,6 +5,8 @@ import orm.db.Db;
 import orm.entity.EntityManager;
 import orm.execute.Executor;
 
+import java.util.List;
+
 /**
  * Created by Administrator on 2017/5/20.
  */
@@ -26,8 +28,14 @@ public class Main {
         oo.setValue(100);
         om.setValue(1000);
         om2.setValue(2000);
+
         person.setPtr(ptr);
         person.setOo(oo);
+        List list = person.getOm();
+        list.add(om);
+        list.add(om2);
+        person.setOm(list);
+
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
