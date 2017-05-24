@@ -15,7 +15,7 @@ object Cascade {
   val DELETE: Int = 3
 }
 
-class Executor(val meta: EntityMeta, val cascade: Int) {
+class Executor(val meta: EntityMeta, val cascade: Int, val entity: Object = null) {
   var withs = new ArrayBuffer[(String, Executor)]()
 
   def insert(field: String): Executor = {
@@ -23,6 +23,11 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     val execute = new Executor(meta.fieldMap(field).refer, Cascade.INSERT)
     this.withs.+=((field, execute))
     this.withs.last._2
+  }
+
+  def execute(conn: Connection): Int = {
+    require(entity != null)
+    execute(entity, conn)
   }
 
   def execute(entity: Object, conn: Connection): Int = {
@@ -146,8 +151,8 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 }
 
 object Executor {
-  def createInsert(clazz: Class[_]): Executor = {
-    var meta = OrmMeta.entityMap(clazz.getSimpleName())
-    return new Executor(meta, Cascade.INSERT)
+  def createInsert(entity: Object): Executor = {
+    var meta = EntityManager.core(entity).meta
+    return new Executor(meta, Cascade.INSERT, entity)
   }
 }

@@ -38,12 +38,12 @@ public class Main {
         oms.add(om2);
         person.setOm(oms);
 
-        Executor ex = Executor.createInsert(Person.class);
+        Executor ex = Executor.createInsert(person);
 
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
-        int ret = ex.execute(person, db.getConn());
+        int ret = ex.execute(db.getConn());
         System.out.println(ret);
 
         Selector selector = Selector.from(Person.class);

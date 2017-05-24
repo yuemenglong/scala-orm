@@ -5,6 +5,7 @@ import java.util
 import java.util.regex.Pattern
 
 import net.sf.cglib.proxy.MethodProxy
+import orm.Session.Session
 import orm.meta.{EntityMeta, OrmMeta}
 
 import scala.collection.mutable.ArrayBuffer
@@ -16,6 +17,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   private val pattern = Pattern.compile("(get|set|clear)(.+)")
   private val coreFn = "$$core"
+  private val session:Session = null
 
   def getPkey(): Object = {
     if (!fieldMap.contains(meta.pkey.name)) {
@@ -121,6 +123,10 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     } else if (this.fieldMap.contains(left)) {
       this.fieldMap -= left
     }
+  }
+
+  def addSessionCache(obj:Object): Unit ={
+
   }
 
   override def toString: String = {
