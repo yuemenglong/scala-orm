@@ -14,7 +14,6 @@ import scala.collection.mutable.ArrayBuffer
   */
 class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
-
   private val pattern = Pattern.compile("(get|set|clear)(.+)")
   private val coreFn = "$$core"
 
@@ -81,6 +80,17 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   def setOneOne(field: String, value: Object): Unit = {
     val a = this;
     val fieldMeta = this.meta.fieldMap(field)
+    // oldb.a_id = null
+    this.fieldMap.contains(field) match {
+      case false => {}
+      case true => this.fieldMap(field) match {
+        case null => {}
+        case _ => {
+          val oldb = EntityManager.core(this.fieldMap(field))
+          oldb.fieldMap += (fieldMeta.right -> null)
+        }
+      }
+    }
     // a.b = b
     a.fieldMap += (field -> value)
     // b.a_id = a.id

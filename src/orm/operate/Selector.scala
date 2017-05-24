@@ -11,17 +11,18 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by Administrator on 2017/5/22.
   */
-class Selector[T](val meta: EntityMeta, val alias: String) {
+class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[_] = null) {
   require(meta != null)
   val withs = ArrayBuffer[(String, Selector[Object])]()
   var cond: Cond = null
+  var on: JoinCond = null
   var map = Map[String, EntityCore]()
 
   def select(field: String): Selector[Object] = {
     require(meta.fieldMap.contains(field))
     val fieldMeta = meta.fieldMap(field)
     require(!fieldMeta.isNormalOrPkey())
-    val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_${field}")
+    val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_${field}", this)
     this.withs += ((field, selector))
     return selector
   }
@@ -50,7 +51,15 @@ class Selector[T](val meta: EntityMeta, val alias: String) {
       val alias = selector.alias
       val fieldMeta = this.meta.fieldMap(field)
       val cond = s"${this.alias}.${fieldMeta.left} = ${alias}.${fieldMeta.right}"
-      val main = s"LEFT JOIN ${table} AS ${alias} ON ${cond}"
+      var main = s"LEFT JOIN ${table} AS ${alias} ON ${cond}"
+      val joinCond = this.on match {
+        case null => ""
+        case _ => this.on.toSql(parent.alias, alias, parent.meta, meta)
+      }
+      main = joinCond.length() match {
+        case 0 => main
+        case _ => s"${main} AND ${joinCond}"
+      }
       val subs = selector.getTables()
       subs.length match {
         case 0 => s"${main}"
@@ -68,7 +77,7 @@ class Selector[T](val meta: EntityMeta, val alias: String) {
     }.filter(item => item != null)
     this.cond match {
       case null => {}
-      case _ => subConds.insert(0, this.cond.toSql(alias))
+      case _ => subConds.insert(0, this.cond.toSql(alias, meta))
     }
     if (subConds.length == 0) {
       return null
@@ -165,22 +174,24 @@ class Selector[T](val meta: EntityMeta, val alias: String) {
         } else {
           core.fieldMap += (field -> null)
         }
-      } else {
-        if (bCore != null) {
-          val key = s"${field}@${bCore.getPkey().toString()}"
-          if (!map.contains(key) && !core.fieldMap.contains(field)) {
-            core.fieldMap += (field -> new util.ArrayList[Object]())
-          }
-          if (!map.contains(key)) {
-            val list = core.fieldMap(field).asInstanceOf[util.ArrayList[Object]]
-            list.add(EntityManager.wrap(bCore))
-          }
-          map += (key -> bCore)
+      }
+       else {
+      if (bCore != null) {
+        val key = s"${field}@${bCore.getPkey().toString()}"
+        if (!map.contains(key) && !core.fieldMap.contains(field)) {
+          core.fieldMap += (field -> new util.ArrayList[Object]())
         }
+        if (!map.contains(key)) {
+          val list = core.fieldMap(field).asInstanceOf[util.ArrayList[Object]]
+          list.add(EntityManager.wrap(bCore))
+        }
+        map += (key -> bCore)
       }
     }
     }
   }
+}
+
 }
 
 object Selector {

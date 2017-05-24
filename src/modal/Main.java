@@ -23,7 +23,7 @@ public class Main {
         OO oo = EntityManager.create(OO.class);
         OM om = EntityManager.create(OM.class);
         OM om2 = EntityManager.create(OM.class);
-        Executor ex = Executor.createInsert(Person.class);
+
 
         person.setAge(10);
         ptr.setValue(10);
@@ -37,6 +37,8 @@ public class Main {
         oms.add(om);
         oms.add(om2);
         person.setOm(oms);
+
+        Executor ex = Executor.createInsert(Person.class);
 
         ex.insert("ptr");
         ex.insert("oo");
