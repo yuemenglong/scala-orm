@@ -25,7 +25,7 @@ public class Main {
         OM om2 = EntityManager.create(OM.class);
         Executor ex = Executor.createInsert(Person.class);
 
-        person.setAge(1);
+        person.setAge(10);
         ptr.setValue(10);
         oo.setValue(100);
         om.setValue(1000);
@@ -33,10 +33,10 @@ public class Main {
 
         person.setPtr(ptr);
         person.setOo(oo);
-        List list = person.getOm();
-        list.add(om);
-        list.add(om2);
-        person.setOm(list);
+        List oms = person.getOm();
+        oms.add(om);
+        oms.add(om2);
+        person.setOm(oms);
 
         ex.insert("ptr");
         ex.insert("oo");
@@ -50,14 +50,11 @@ public class Main {
         selector.select("om");
 
         selector.where(Cond.byEq("id", 1));
-        String c = selector.getColumns();
-        System.out.println(c);
-        String t = selector.getTables();
-        System.out.println(t);
-        String cond = selector.getConds();
-        System.out.println(cond);
-
         String sql = selector.getSql();
         System.out.println(sql);
+        List list = selector.query(db.getConn());
+        for (Object obj : list) {
+            System.out.println(obj);
+        }
     }
 }

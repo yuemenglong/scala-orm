@@ -13,23 +13,23 @@ import net.sf.cglib.proxy.MethodProxy
   * Created by Administrator on 2017/5/18.
   */
 object EntityManager {
-  def empty[T](clazz: Class[T]): T = {
+  def empty[T](clazz:Class[T]): T = {
     require(OrmMeta.entityMap.size > 0)
     val meta = OrmMeta.entityMap(clazz.getSimpleName())
     val core = EntityCore.empty(meta)
-    wrap[T](clazz, core)
+    wrap(core).asInstanceOf[T]
   }
 
-  def create[T](clazz: Class[T]): T = {
+  def create[T](clazz:Class[T]): T = {
     require(OrmMeta.entityMap.size > 0)
     val meta = OrmMeta.entityMap(clazz.getSimpleName())
     val core = EntityCore.create(meta)
-    wrap[T](clazz, core)
+    wrap(core).asInstanceOf[T]
   }
 
-  private def wrap[T](clazz: Class[T], core: EntityCore): T = {
+  def wrap(core: EntityCore): Object = {
     val enhancer: Enhancer = new Enhancer
-    enhancer.setSuperclass(clazz)
+    enhancer.setSuperclass(core.meta.clazz)
     enhancer.setInterfaces(Array(classOf[Entity]))
 
     enhancer.setCallback(new MethodInterceptor() {
@@ -38,7 +38,7 @@ object EntityManager {
         core.intercept(obj, method, args, proxy)
       }
     })
-    enhancer.create().asInstanceOf[T]
+    enhancer.create()
   }
 
   def core(obj: Object): EntityCore = {

@@ -34,7 +34,6 @@ class Cond {
 object Cond {
   def byEq(field: String, param: Object): Cond = {
     new Cond().eq(field, param)
-
   }
 }
 

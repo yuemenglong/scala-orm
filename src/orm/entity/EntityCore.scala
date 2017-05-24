@@ -18,6 +18,13 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   private val pattern = Pattern.compile("(get|set|clear)(.+)")
   private val coreFn = "$$core"
 
+  def getPkey(): Object = {
+    if (!fieldMap.contains(meta.pkey.name)) {
+      return null
+    }
+    fieldMap(meta.pkey.name)
+  }
+
   def get(field: String): Object = {
     val fieldMeta = this.meta.fieldMap(field)
     if (fieldMeta.isNormalOrPkey()) {
@@ -107,7 +114,9 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   }
 
   override def toString: String = {
-    val content = this.meta.fieldVec.map(field => {
+    val content = this.meta.fieldVec.filter(field => {
+      this.fieldMap.contains(field.name)
+    }).map(field => {
       if (field.isNormalOrPkey()) {
         val value = this.fieldMap(field.name)
         if (value == null) {
@@ -120,9 +129,16 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       } else if (!field.isOneMany()) {
         s"""${field.name}: ${this.fieldMap(field.name)}"""
       } else {
-        throw new RuntimeException("")
+        val bs = this.fieldMap(field.name).asInstanceOf[util.ArrayList[Object]]
+        val joins = new ArrayBuffer[String]()
+        for (i <- 0 to bs.size() - 1) {
+          joins += bs.get(i).toString()
+        }
+        val content = joins.mkString(", ")
+        s"${field.name}: [${content}]"
       }
     }).mkString(", ")
+
     s"{${content}}"
   }
 
