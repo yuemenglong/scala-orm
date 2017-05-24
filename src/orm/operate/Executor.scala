@@ -15,7 +15,7 @@ object Cascade {
   val DELETE: Int = 3
 }
 
-class Executor(val meta: EntityMeta, val cascade: Int, val entity: Object = null) {
+class Executor(val meta: EntityMeta, val cascade: Int, val entity: Object = null) {// 只有顶层有entity
   var withs = new ArrayBuffer[(String, Executor)]()
 
   def insert(field: String): Executor = {
@@ -30,7 +30,7 @@ class Executor(val meta: EntityMeta, val cascade: Int, val entity: Object = null
     execute(entity, conn)
   }
 
-  def execute(entity: Object, conn: Connection): Int = {
+  private def execute(entity: Object, conn: Connection): Int = {
     if (entity == null) {
       return 0
     }
@@ -151,6 +151,11 @@ class Executor(val meta: EntityMeta, val cascade: Int, val entity: Object = null
 }
 
 object Executor {
+  def createUpdate(entity: Object) :Executor = {
+    var meta = EntityManager.core(entity).meta
+    return new Executor(meta, Cascade.UPDATE, entity)
+  }
+
   def createInsert(entity: Object): Executor = {
     var meta = EntityManager.core(entity).meta
     return new Executor(meta, Cascade.INSERT, entity)

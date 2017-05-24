@@ -6,6 +6,7 @@ import java.util.regex.Pattern
 
 import net.sf.cglib.proxy.MethodProxy
 import orm.Session.Session
+import orm.kit.Kit
 import orm.meta.{EntityMeta, OrmMeta}
 
 import scala.collection.mutable.ArrayBuffer
@@ -17,7 +18,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   private val pattern = Pattern.compile("(get|set|clear)(.+)")
   private val coreFn = "$$core"
-  private val session:Session = null
+  private var session: Session = null
 
   def getPkey(): Object = {
     if (!fieldMap.contains(meta.pkey.name)) {
@@ -90,6 +91,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         case _ => {
           val oldb = EntityManager.core(this.fieldMap(field))
           oldb.fieldMap += (fieldMeta.right -> null)
+          addSessionCache(this.fieldMap(field))
         }
       }
     }
@@ -104,14 +106,27 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     require(value != null)
     val a = this;
     val fieldMeta = a.meta.fieldMap(field)
-    //    val bs = new util.ArrayList[Object]()
-    var list = value.asInstanceOf[java.util.ArrayList[Object]];
-    for (i <- 0 to list.size() - 1) {
-      val item = list.get(i)
+    val list = value.asInstanceOf[java.util.ArrayList[Object]]
+    val newArray = Kit.array(list)
+    val newIds: Set[String] = newArray.map(EntityManager.core(_).getPkey())
+      .filter(_ != null)
+      .map(_.toString())(collection.breakOut)
+    a.fieldMap.contains(field) match {
+      case false => {}
+      case true => Kit.array(a.fieldMap(field).asInstanceOf[util.ArrayList[Object]]).foreach(item => {
+        val core = EntityManager.core(item)
+        if (core.getPkey() != null && !newIds.contains(core.getPkey().toString())) {
+          // oldb.a_id = null
+          core.fieldMap += ((fieldMeta.right, null))
+          addSessionCache(item)
+        }
+      })
+    }
+    newArray.foreach(item => {
       // b.a_id = a.id
       val b = EntityManager.core(item)
       b.syncField(fieldMeta.right, a, fieldMeta.left)
-    }
+    })
     // a.bs = bs
     a.fieldMap += (field -> value)
   }
@@ -125,8 +140,16 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     }
   }
 
-  def addSessionCache(obj:Object): Unit ={
+  def setSession(session: Session): Unit = {
+    this.session = session
+  }
 
+  def addSessionCache(obj: Object): Unit = {
+    if (session == null) {
+      return
+    }
+    require(!session.isClosed())
+    session.addCache(obj)
   }
 
   override def toString: String = {

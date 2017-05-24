@@ -2,6 +2,7 @@ package orm.db
 
 import java.sql.{Connection, DriverManager}
 
+import orm.Session.Session
 import orm.meta.OrmMeta
 
 /**
@@ -42,6 +43,10 @@ class Db(val host: String, val port: Int, val username: String, val password: St
       println(sql)
       this.execute(sql)
     }
+  }
+
+  def openSession(): Session = {
+    new Session(getConn())
   }
 
   def execute(sql: String): Int = execute(sql, Array())

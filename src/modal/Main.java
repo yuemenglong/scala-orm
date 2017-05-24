@@ -1,6 +1,7 @@
 package modal;
 
 import orm.Orm;
+import orm.Session.Session;
 import orm.db.Db;
 import orm.entity.EntityManager;
 import orm.operate.Cond;
@@ -17,6 +18,7 @@ public class Main {
         Orm.init("");
         Db db = Orm.openDb("localhost", 3306, "root", "root", "test");
         db.rebuild();
+        Session session = db.openSession();
 
         Person person = EntityManager.create(Person.class);
         Ptr ptr = EntityManager.create(Ptr.class);
@@ -43,7 +45,7 @@ public class Main {
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
-        int ret = ex.execute(db.getConn());
+        int ret = session.execute(ex);
         System.out.println(ret);
 
         Selector selector = Selector.from(Person.class);
@@ -54,9 +56,10 @@ public class Main {
         selector.where(Cond.byEq("id", 1));
         String sql = selector.getSql();
         System.out.println(sql);
-        List list = selector.query(db.getConn());
+        List list = session.query(selector);
         for (Object obj : list) {
             System.out.println(obj);
         }
+        session.close();
     }
 }

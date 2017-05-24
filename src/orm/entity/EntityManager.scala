@@ -1,9 +1,8 @@
 package orm.entity
 
 import java.lang.reflect.Method
-import java.util.regex.Pattern
 
-import net.sf.cglib.proxy.{Enhancer, InvocationHandler}
+import net.sf.cglib.proxy.Enhancer
 import orm.java.interfaces.Entity
 import orm.meta.OrmMeta
 import net.sf.cglib.proxy.MethodInterceptor
@@ -43,9 +42,7 @@ object EntityManager {
 
   def core(obj: Object): EntityCore = {
     require(obj != null)
-    if (!obj.isInstanceOf[Entity]) {
-      require(false)
-    }
+    require(obj.isInstanceOf[Entity])
     val entity = obj.asInstanceOf[Entity]
     return entity.$$core()
   }
