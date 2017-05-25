@@ -48,6 +48,11 @@ public class Main {
         int ret = session.execute(ex);
         System.out.println(ret);
 
+        person.setAge(20);
+        ex = Executor.createUpdate(person);
+        ex.where(Cond.byEq("id", person.getId()));
+        session.execute(ex);
+
         Selector selector = Selector.from(Person.class);
         selector.select("ptr");
         selector.select("oo");
@@ -55,11 +60,18 @@ public class Main {
 
         selector.where(Cond.byEq("id", 1));
         String sql = selector.getSql();
-        System.out.println(sql);
         List list = session.query(selector);
         for (Object obj : list) {
             System.out.println(obj);
         }
+
+        ex = Executor.createDelete(person);
+        ret = session.execute(ex);
+        System.out.println(ret);
+
+        list = session.query(selector);
+        System.out.println(list.size());
+
         session.close();
     }
 }

@@ -33,6 +33,13 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     this
   }
 
+  private def reset(): Unit = {
+    map = Map()
+    withs.foreach { case (_, selector) =>
+      selector.reset()
+    }
+  }
+
   def getColumns(): String = {
     val selfColumns = this.meta.fieldVec.filter(field => field.isNormalOrPkey()).map(field => {
       s"${this.alias}.${field.column} AS ${this.alias}$$${field.name}"
@@ -119,6 +126,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
 
   def query(conn: Connection): util.ArrayList[T] = {
     val sql = this.getSql()
+    println(sql)
     val stmt = conn.prepareStatement(sql)
     this.getParams().zipWithIndex.foreach { case (param, i) => {
       stmt.setObject(i + 1, param)
@@ -134,6 +142,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
       }
       map += (key -> core)
     }
+    reset()
     return ret
   }
 
@@ -175,22 +184,22 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
           core.fieldMap += (field -> null)
         }
       }
-       else {
-      if (bCore != null) {
-        val key = s"${field}@${bCore.getPkey().toString()}"
-        if (!map.contains(key) && !core.fieldMap.contains(field)) {
-          core.fieldMap += (field -> new util.ArrayList[Object]())
+      else {
+        if (bCore != null) {
+          val key = s"${field}@${bCore.getPkey().toString()}"
+          if (!map.contains(key) && !core.fieldMap.contains(field)) {
+            core.fieldMap += (field -> new util.ArrayList[Object]())
+          }
+          if (!map.contains(key)) {
+            val list = core.fieldMap(field).asInstanceOf[util.ArrayList[Object]]
+            list.add(EntityManager.wrap(bCore))
+          }
+          map += (key -> bCore)
         }
-        if (!map.contains(key)) {
-          val list = core.fieldMap(field).asInstanceOf[util.ArrayList[Object]]
-          list.add(EntityManager.wrap(bCore))
-        }
-        map += (key -> bCore)
       }
     }
     }
   }
-}
 
 }
 

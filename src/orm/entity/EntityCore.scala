@@ -7,7 +7,7 @@ import java.util.regex.Pattern
 import net.sf.cglib.proxy.MethodProxy
 import orm.Session.Session
 import orm.kit.Kit
-import orm.meta.{EntityMeta, OrmMeta}
+import orm.meta.EntityMeta
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -86,7 +86,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   }
 
   def setOneOne(field: String, value: Object): Unit = {
-    val a = this;
+    val a = this
     val fieldMeta = this.meta.fieldMap(field)
     // oldb.a_id = null
     this.fieldMap.contains(field) match {

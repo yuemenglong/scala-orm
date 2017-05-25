@@ -19,6 +19,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   // 只有顶层有entity
   private var withs = new ArrayBuffer[(String, Executor)]()
   private var entity: Object = null
+  private var cond: Cond = null
 
   private def setEntity(entity: Object): Unit = {
     this.entity = entity
@@ -28,9 +29,27 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     entity
   }
 
+  def where(cond: Cond): Unit = {
+    this.cond = cond
+  }
+
   def insert(field: String): Executor = {
     require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
     val execute = new Executor(meta.fieldMap(field).refer, Cascade.INSERT)
+    this.withs.+=((field, execute))
+    this.withs.last._2
+  }
+
+  def update(field: String): Executor = {
+    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
+    val execute = new Executor(meta.fieldMap(field).refer, Cascade.UPDATE)
+    this.withs.+=((field, execute))
+    this.withs.last._2
+  }
+
+  def delete(field: String): Executor = {
+    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
+    val execute = new Executor(meta.fieldMap(field).refer, Cascade.DELETE)
     this.withs.+=((field, execute))
     this.withs.last._2
   }
@@ -82,11 +101,43 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   }
 
   private def executeUpdate(core: EntityCore, conn: Connection): Int = {
-    0
+    require(core.getPkey() != null)
+    val validFields = core.meta.fieldVec.filter(field => {
+      field.isNormal() && core.fieldMap.contains(field.name)
+    })
+    val columns = validFields.map(field => {
+      s"`${field.column}` = ?"
+    }).mkString(", ")
+    //    val cond = this.cond match {
+    //      case null => ""
+    //      case _ => s" AND ${this.cond.toSql(core.meta.entity, core.meta)}"
+    //    }
+    //    val params = this.cond match {
+    //      case null => Array()
+    //      case _ => this.cond.toParams()
+    //    }
+    val idCond = s"${core.meta.pkey.name} = ?"
+    val sql = s"UPDATE ${core.meta.table} SET ${columns} WHERE ${idCond}"
+    val stmt = conn.prepareStatement(sql)
+    validFields.zipWithIndex.foreach { case (field, i) =>
+      stmt.setObject(i + 1, core.get(field.name))
+    }
+    stmt.setObject(validFields.length + 1, core.getPkey())
+    //    params.zipWithIndex.foreach { case (param, i) =>
+    //      stmt.setObject(i + 1 + validFields.length, param)
+    //    }
+    println(sql)
+    stmt.executeUpdate()
   }
 
   private def executeDelete(core: EntityCore, conn: Connection): Int = {
-    0
+    require(core.getPkey() != null)
+    val idCond = s"${core.meta.pkey.name} = ?"
+    val sql = s"DELETE FROM ${core.meta.table} WHERE ${idCond}"
+    val stmt = conn.prepareStatement(sql)
+    stmt.setObject(1, core.getPkey())
+    println(sql)
+    stmt.executeUpdate()
   }
 
   private def executeSelf(core: EntityCore, conn: Connection): Int = {
@@ -161,16 +212,21 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 }
 
 object Executor {
+  def createInsert(entity: Object): Executor = {
+    val meta = EntityManager.core(entity).meta
+    val ret = new Executor(meta, Cascade.INSERT)
+    ret.setEntity(entity)
+    return ret
+  }
   def createUpdate(entity: Object): Executor = {
     val meta = EntityManager.core(entity).meta
     val ret = new Executor(meta, Cascade.UPDATE)
     ret.setEntity(entity)
     return ret
   }
-
-  def createInsert(entity: Object): Executor = {
+  def createDelete(entity: Object): Executor = {
     val meta = EntityManager.core(entity).meta
-    val ret = new Executor(meta, Cascade.INSERT)
+    val ret = new Executor(meta, Cascade.DELETE)
     ret.setEntity(entity)
     return ret
   }
