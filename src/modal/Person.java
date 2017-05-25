@@ -13,6 +13,7 @@ public class Person {
     @Id(auto = true)
     Long id = null;
 
+    @Column(name = "age_")
     Integer age = null;
 
     String name = null;

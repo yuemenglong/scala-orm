@@ -84,6 +84,20 @@ class FieldMeta(val entity: EntityMeta,
 }
 
 object FieldMeta {
+  def pickColumn(field: Field, typeKind: Int): String = {
+    // 非内建类型不对应数据库列
+    if (typeKind != FieldMetaType.BUILT_IN) {
+      return null
+    }
+    field.getDeclaredAnnotation(classOf[Column]) match {
+      case null => field.getName().toLowerCase()
+      case column => column.name() match {
+        case null | "" => field.getName().toLowerCase()
+        case name => name
+      }
+    }
+  }
+
   def pickTypeName(field: Field, typeKind: Int): String = {
     typeKind match {
       case FieldMetaType.ONE_MANY => {
@@ -178,7 +192,7 @@ object FieldMeta {
     val typeKind: Int = FieldMeta.pickTypeKind(field)
     val typeName: String = FieldMeta.pickTypeName(field, typeKind)
     val name: String = field.getName()
-    val column: String = field.getName()
+    val column: String = FieldMeta.pickColumn(field, typeKind)
     val nullable = true
 
     val length: Int = FieldMeta.DEFAULT_LEN
@@ -201,7 +215,7 @@ object FieldMeta {
     val typeKind: Int = FieldMetaType.BUILT_IN
     val typeName: String = "Long"
     val name: String = fieldName
-    val column: String = fieldName // 默认的
+    val column: String = fieldName
     val nullable: Boolean = true
 
     val length: Int = FieldMeta.DEFAULT_LEN
