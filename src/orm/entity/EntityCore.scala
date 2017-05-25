@@ -75,9 +75,14 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     val fieldMeta = a.meta.fieldMap(field)
     // a.b = b
     this.fieldMap += (field -> value)
-    // a.b_id = b.id
-    val b = EntityManager.core(value)
-    a.syncField(fieldMeta.left, b, fieldMeta.right)
+    if (value != null) {
+      // a.b_id = b.id
+      val b = EntityManager.core(value)
+      a.syncField(fieldMeta.left, b, fieldMeta.right)
+    } else {
+      // a.b_id = null
+      a.fieldMap += ((fieldMeta.left, null))
+    }
   }
 
   def setOneOne(field: String, value: Object): Unit = {
@@ -97,9 +102,11 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     }
     // a.b = b
     a.fieldMap += (field -> value)
-    // b.a_id = a.id
-    val b = EntityManager.core(value)
-    b.syncField(fieldMeta.right, a, fieldMeta.left)
+    if (value != null) {
+      // b.a_id = a.id
+      val b = EntityManager.core(value)
+      b.syncField(fieldMeta.right, a, fieldMeta.left)
+    }
   }
 
   def setOneMany(field: String, value: Object): Unit = {

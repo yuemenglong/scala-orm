@@ -15,8 +15,18 @@ object Cascade {
   val DELETE: Int = 3
 }
 
-class Executor(val meta: EntityMeta, val cascade: Int, val entity: Object = null) {// 只有顶层有entity
-  var withs = new ArrayBuffer[(String, Executor)]()
+class Executor(val meta: EntityMeta, val cascade: Int) {
+  // 只有顶层有entity
+  private var withs = new ArrayBuffer[(String, Executor)]()
+  private var entity: Object = null
+
+  private def setEntity(entity: Object): Unit = {
+    this.entity = entity
+  }
+
+  def getEntity(): Object = {
+    entity
+  }
 
   def insert(field: String): Executor = {
     require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
@@ -151,13 +161,17 @@ class Executor(val meta: EntityMeta, val cascade: Int, val entity: Object = null
 }
 
 object Executor {
-  def createUpdate(entity: Object) :Executor = {
-    var meta = EntityManager.core(entity).meta
-    return new Executor(meta, Cascade.UPDATE, entity)
+  def createUpdate(entity: Object): Executor = {
+    val meta = EntityManager.core(entity).meta
+    val ret = new Executor(meta, Cascade.UPDATE)
+    ret.setEntity(entity)
+    return ret
   }
 
   def createInsert(entity: Object): Executor = {
-    var meta = EntityManager.core(entity).meta
-    return new Executor(meta, Cascade.INSERT, entity)
+    val meta = EntityManager.core(entity).meta
+    val ret = new Executor(meta, Cascade.INSERT)
+    ret.setEntity(entity)
+    return ret
   }
 }

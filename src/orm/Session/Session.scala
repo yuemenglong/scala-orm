@@ -41,7 +41,7 @@ class Session(val conn: Connection) {
   }
 
   def execute(executor: Executor): Int = {
-    val entity = executor.entity
+    val entity = executor.getEntity()
     require(entity != null)
     val ret = executor.execute(conn)
     injectSession(entity, this)
