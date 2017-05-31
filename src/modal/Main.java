@@ -8,6 +8,7 @@ import orm.operate.Cond;
 import orm.operate.Executor;
 import orm.operate.Selector;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,8 +27,10 @@ public class Main {
         OM om = EntityManager.create(OM.class);
         OM om2 = EntityManager.create(OM.class);
 
-
         person.setAge(10);
+        person.setBirthday(new Date());
+        person.setNow(new Date());
+
         ptr.setValue(10);
         oo.setValue(100);
         om.setValue(1000);

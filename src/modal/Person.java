@@ -2,7 +2,7 @@ package modal;
 
 import orm.java.anno.*;
 
-import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -17,6 +17,11 @@ public class Person {
     Integer age = null;
 
     String name = null;
+
+    Date birthday = null;
+
+    @DateTime
+    Date now = null;
 
     @Pointer
     Ptr ptr = null;
@@ -73,5 +78,21 @@ public class Person {
 
     public void setOm(List<OM> om) {
         this.om = om;
+    }
+
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+
+    public Date getNow() {
+        return now;
+    }
+
+    public void setNow(Date now) {
+        this.now = now;
     }
 }

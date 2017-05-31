@@ -42,6 +42,11 @@ class FieldMeta(val entity: EntityMeta,
     this.typeName match {
       case "Integer" => s"`${this.column}` INTEGER${notnull}${pkey}"
       case "Long" => s"`${this.column}` BIGINT${notnull}${pkey}"
+      case "Float" => s"`${this.column}` FLOAT${notnull}${pkey}"
+      case "Double" => s"`${this.column}` DOUBLE${notnull}${pkey}"
+      case "BigDecimal" => s"`${this.column}` DECIMAL${notnull}${pkey}"
+      case "Date" => s"`${this.column}` DATE${notnull}${pkey}"
+      case "DateTime" => s"`${this.column}` DATETIME${notnull}${pkey}"
       case "String" => s"`${this.column}` VARCHAR(${this.length})${notnull}${pkey}"
       case _ => throw new RuntimeException()
     }
@@ -99,15 +104,26 @@ object FieldMeta {
   }
 
   def pickTypeName(field: Field, typeKind: Int): String = {
-    typeKind match {
+    val typeName = typeKind match {
       case FieldMetaType.ONE_MANY => {
         field.getGenericType().asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]].getSimpleName()
       }
-      case _ => field.getType().getSimpleName()
+      case _ => {
+        field.getType().getSimpleName()
+      }
+    }
+    typeName match {
+      case "Date" => {
+        field.getDeclaredAnnotation(classOf[DateTime]) match {
+          case null => "Date"
+          case _ => "DateTime"
+        }
+      }
+      case _ => typeName
     }
   }
 
-  val DEFAULT_LEN: Int = 128;
+  val DEFAULT_LEN: Int = 128
 
   def pickLeftRight(entity: EntityMeta, field: Field, typeKind: Int): (String, String) = {
     if (typeKind == FieldMetaType.BUILT_IN) {
@@ -159,7 +175,13 @@ object FieldMeta {
 
   def pickTypeKind(field: Field): Int = {
     field.getType().getSimpleName() match {
-      case "Integer" | "Long" | "String" => return FieldMetaType.BUILT_IN
+      case "Integer" |
+           "Long" |
+           "Float" |
+           "Double" |
+           "BigDecimal" |
+           "Date" |
+           "String" => return FieldMetaType.BUILT_IN
       case _ => {}
     }
     if (field.getDeclaredAnnotation(classOf[Refer]) != null) {
