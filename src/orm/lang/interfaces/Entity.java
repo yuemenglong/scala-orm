@@ -1,4 +1,4 @@
-package orm.java.interfaces;
+package orm.lang.interfaces;
 
 import orm.entity.EntityCore;
 

@@ -43,6 +43,11 @@ public class Main {
         oms.add(om2);
         person.setOm(oms);
 
+        String json = Orm.stringify(person);
+        System.out.println(json);
+        person = Orm.parse(Person.class, json);
+        System.out.println(person);
+
         Executor ex = Executor.createInsert(person);
 
         ex.insert("ptr");
@@ -74,6 +79,8 @@ public class Main {
 
         list = session.query(selector);
         System.out.println(list.size());
+
+
 
         session.close();
     }

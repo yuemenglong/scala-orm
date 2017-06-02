@@ -1,10 +1,10 @@
 package orm
 
+import java.util
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.meta.OrmMeta
-
 
 object Orm {
 
@@ -20,4 +20,25 @@ object Orm {
   def create[T](clazz: Class[T]): T = {
     EntityManager.create(clazz)
   }
+
+  def empty[T](clazz: Class[T]): T = {
+    EntityManager.empty(clazz)
+  }
+
+  def parse[T](clazz: Class[T], json: String): T = {
+    EntityManager.parse[T](clazz, json)
+  }
+
+  def parseArray[T](clazz: Class[T], json: String): util.ArrayList[T] = {
+    EntityManager.parseArray[T](clazz, json)
+  }
+
+  def stringify(obj: Object): String = {
+    EntityManager.stringify(obj)
+  }
+
+  def stringifyArray(arr: util.ArrayList[Object]): String = {
+    EntityManager.stringifyArray(arr)
+  }
+
 }

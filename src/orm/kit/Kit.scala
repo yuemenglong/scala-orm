@@ -16,8 +16,8 @@ object Kit {
     return ret
   }
 
-  def list[T](array: ArrayBuffer[T]): util.ArrayList[T] = {
-    var ret = new util.ArrayList[T]()
+  def list[T](array: Seq[T]): util.ArrayList[T] = {
+    val ret = new util.ArrayList[T]()
     array.foreach(item => {
       ret.add(item)
     })

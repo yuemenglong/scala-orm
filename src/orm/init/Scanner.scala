@@ -4,8 +4,8 @@ import java.io.File
 import java.lang.reflect.Field
 import java.nio.file.Paths
 
-import orm.java.anno.Entity
-import orm.meta.{EntityMeta, FieldMeta, FieldMetaType, OrmMeta}
+import orm.lang.anno.Entity
+import orm.meta.{EntityMeta, FieldMeta, FieldMetaTypeKind, OrmMeta}
 
 /**
   * Created by Administrator on 2017/5/16.

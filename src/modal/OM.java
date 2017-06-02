@@ -1,7 +1,7 @@
 package modal;
 
-import orm.java.anno.Entity;
-import orm.java.anno.Id;
+import orm.lang.anno.Entity;
+import orm.lang.anno.Id;
 
 /**
  * Created by Administrator on 2017/5/19.

@@ -1,10 +1,12 @@
 package orm.meta
 
 import java.lang.reflect.{Field, ParameterizedType}
+import java.text.SimpleDateFormat
+import java.util.Date
 
-import orm.java.anno._
+import orm.lang.anno._
 
-object FieldMetaType {
+object FieldMetaTypeKind {
   val BUILT_IN: Int = 0
   val REFER: Int = 1
   val POINTER: Int = 2
@@ -64,34 +66,69 @@ class FieldMeta(val entity: EntityMeta,
   }
 
   def isNormalOrPkey(): Boolean = {
-    this.typeKind == FieldMetaType.BUILT_IN
+    this.typeKind == FieldMetaTypeKind.BUILT_IN
   }
 
   def isObject(): Boolean = {
-    this.typeKind != FieldMetaType.BUILT_IN
+    this.typeKind != FieldMetaTypeKind.BUILT_IN
   }
 
   def isRefer(): Boolean = {
-    this.typeKind == FieldMetaType.REFER
+    this.typeKind == FieldMetaTypeKind.REFER
   }
 
   def isPointer(): Boolean = {
-    this.typeKind == FieldMetaType.POINTER
+    this.typeKind == FieldMetaTypeKind.POINTER
   }
 
   def isOneOne(): Boolean = {
-    this.typeKind == FieldMetaType.ONE_ONE
+    this.typeKind == FieldMetaTypeKind.ONE_ONE
   }
 
   def isOneMany(): Boolean = {
-    this.typeKind == FieldMetaType.ONE_MANY
+    this.typeKind == FieldMetaTypeKind.ONE_MANY
+  }
+
+  def parse(json: String): Object = {
+    require(typeKind == FieldMetaTypeKind.BUILT_IN)
+    if (json == "null") {
+      return null
+    }
+    typeName match {
+      case "Integer" => new java.lang.Integer(json)
+      case "Long" => new java.lang.Long(json)
+      case "Float" => new java.lang.Float(json)
+      case "Double" => new java.lang.Double(json)
+      case "BigDecimal" => new java.math.BigDecimal(json)
+      case "Date" => new SimpleDateFormat("yyyy-MM-dd").parse(json)
+      case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(json)
+      case "String" => json
+      case _ => throw new RuntimeException()
+    }
+  }
+
+  def stringify(data: Object): String = {
+    if (data == null) {
+      return "null"
+    }
+    typeName match {
+      case "Integer" => data.toString()
+      case "Long" => data.toString()
+      case "Float" => data.toString()
+      case "Double" => data.toString()
+      case "BigDecimal" => data.toString()
+      case "Date" => new SimpleDateFormat("yyyy-MM-dd").format(data.asInstanceOf[Date])
+      case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(data.asInstanceOf[Date])
+      case "String" => data.toString()
+      case _ => throw new RuntimeException()
+    }
   }
 }
 
 object FieldMeta {
   def pickColumn(field: Field, typeKind: Int): String = {
     // 非内建类型不对应数据库列
-    if (typeKind != FieldMetaType.BUILT_IN) {
+    if (typeKind != FieldMetaTypeKind.BUILT_IN) {
       return null
     }
     field.getDeclaredAnnotation(classOf[Column]) match {
@@ -105,7 +142,7 @@ object FieldMeta {
 
   def pickTypeName(field: Field, typeKind: Int): String = {
     val typeName = typeKind match {
-      case FieldMetaType.ONE_MANY => {
+      case FieldMetaTypeKind.ONE_MANY => {
         field.getGenericType().asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]].getSimpleName()
       }
       case _ => {
@@ -126,15 +163,15 @@ object FieldMeta {
   val DEFAULT_LEN: Int = 128
 
   def pickLeftRight(entity: EntityMeta, field: Field, typeKind: Int): (String, String) = {
-    if (typeKind == FieldMetaType.BUILT_IN) {
+    if (typeKind == FieldMetaTypeKind.BUILT_IN) {
       return (null, null)
     }
     typeKind match {
-      case FieldMetaType.REFER => {
+      case FieldMetaTypeKind.REFER => {
         val anno = field.getAnnotation(classOf[Refer])
         return (anno.left(), anno.right())
       }
-      case FieldMetaType.POINTER => {
+      case FieldMetaTypeKind.POINTER => {
         val anno = field.getAnnotation(classOf[Pointer])
         val left = anno.left() match {
           case "" => field.getName().toLowerCase() + "_id"
@@ -146,7 +183,7 @@ object FieldMeta {
         }
         return (left, right)
       }
-      case FieldMetaType.ONE_ONE => {
+      case FieldMetaTypeKind.ONE_ONE => {
         val anno = field.getAnnotation(classOf[OneToOne])
         val left = anno.left() match {
           case "" => "id"
@@ -158,7 +195,7 @@ object FieldMeta {
         }
         return (left, right)
       }
-      case FieldMetaType.ONE_MANY => {
+      case FieldMetaTypeKind.ONE_MANY => {
         val anno = field.getAnnotation(classOf[OneToMany])
         val left = anno.left() match {
           case "" => "id"
@@ -181,20 +218,20 @@ object FieldMeta {
            "Double" |
            "BigDecimal" |
            "Date" |
-           "String" => return FieldMetaType.BUILT_IN
+           "String" => return FieldMetaTypeKind.BUILT_IN
       case _ => {}
     }
     if (field.getDeclaredAnnotation(classOf[Refer]) != null) {
-      return FieldMetaType.REFER
+      return FieldMetaTypeKind.REFER
     }
     if (field.getDeclaredAnnotation(classOf[Pointer]) != null) {
-      return FieldMetaType.POINTER
+      return FieldMetaTypeKind.POINTER
     }
     if (field.getDeclaredAnnotation(classOf[OneToOne]) != null) {
-      return FieldMetaType.ONE_ONE
+      return FieldMetaTypeKind.ONE_ONE
     }
     if (field.getDeclaredAnnotation(classOf[OneToMany]) != null) {
-      return FieldMetaType.ONE_MANY
+      return FieldMetaTypeKind.ONE_MANY
     }
     throw new RuntimeException(field.getName())
   }
@@ -234,7 +271,7 @@ object FieldMeta {
     val pkey: Boolean = false
     val auto: Boolean = false
 
-    val typeKind: Int = FieldMetaType.BUILT_IN
+    val typeKind: Int = FieldMetaTypeKind.BUILT_IN
     val typeName: String = "Long"
     val name: String = fieldName
     val column: String = fieldName

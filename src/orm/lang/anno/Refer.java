@@ -1,4 +1,4 @@
-package orm.java.anno;
+package orm.lang.anno;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,7 +1,8 @@
 package modal;
 
-import orm.java.anno.*;
+import orm.lang.anno.*;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -15,6 +16,8 @@ public class Person {
 
     @Column(name = "age_")
     Integer age = null;
+
+    BigDecimal price = null;
 
     String name = null;
 
@@ -94,5 +97,13 @@ public class Person {
 
     public void setNow(Date now) {
         this.now = now;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }

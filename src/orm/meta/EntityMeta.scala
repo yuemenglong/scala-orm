@@ -1,6 +1,6 @@
 package orm.meta
 
-import orm.java.anno.Entity
+import orm.lang.anno.Entity
 
 import scala.collection.mutable.ArrayBuffer
 
