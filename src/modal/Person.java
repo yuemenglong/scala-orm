@@ -24,7 +24,7 @@ public class Person {
     Date birthday = null;
 
     @DateTime
-    Date now = null;
+    Date nowTime = null;
 
     @Pointer
     Ptr ptr = null;
@@ -91,12 +91,12 @@ public class Person {
         this.birthday = birthday;
     }
 
-    public Date getNow() {
-        return now;
+    public Date getNowTime() {
+        return nowTime;
     }
 
-    public void setNow(Date now) {
-        this.now = now;
+    public void setNowTime(Date nowTime) {
+        this.nowTime = nowTime;
     }
 
     public BigDecimal getPrice() {

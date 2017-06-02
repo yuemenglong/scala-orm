@@ -29,7 +29,7 @@ public class Main {
 
         person.setAge(10);
         person.setBirthday(new Date());
-        person.setNow(new Date());
+        person.setNowTime(new Date());
 
         ptr.setValue(10);
         oo.setValue(100);

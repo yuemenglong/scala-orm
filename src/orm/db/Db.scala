@@ -59,3 +59,11 @@ class Db(val host: String, val port: Int, val username: String, val password: St
   }
 
 }
+
+object Orm {
+  def main(args: Array[String]): Unit = {
+//    val ret = "asf".split("[A-Z]")
+    val ret = """[A-Z]""".r.replaceAllIn("personCount", m => "_" + m.group(0).toLowerCase())
+    println(ret)
+  }
+}
