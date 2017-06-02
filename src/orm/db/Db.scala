@@ -4,6 +4,7 @@ import java.sql.{Connection, DriverManager}
 
 import orm.Session.Session
 import orm.meta.OrmMeta
+import orm.operate.Table
 
 /**
   * Created by Administrator on 2017/5/16.
@@ -28,7 +29,7 @@ class Db(val host: String, val port: Int, val username: String, val password: St
 
   def drop(): Unit = {
     for (entity <- OrmMeta.entityVec) {
-      val sql = s"DROP TABLE IF EXISTS `${entity.table}`"
+      val sql = Table.getDropSql(entity)
       println(sql)
       this.execute(sql)
     }
@@ -36,10 +37,7 @@ class Db(val host: String, val port: Int, val username: String, val password: St
 
   def create(): Unit = {
     for (entity <- OrmMeta.entityVec) {
-      val columns = entity.fieldVec.filter(field => field.isNormalOrPkey()).map((field) => {
-        field.getDbSql()
-      }).mkString(", ")
-      val sql = s"CREATE TABLE IF NOT EXISTS `${entity.table}`(${columns})"
+      val sql = Table.getCreateSql(entity)
       println(sql)
       this.execute(sql)
     }
