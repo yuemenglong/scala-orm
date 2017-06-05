@@ -1,5 +1,6 @@
 package orm.meta
 
+import orm.kit.Kit
 import orm.lang.anno.Entity
 
 import scala.collection.mutable.ArrayBuffer
@@ -19,10 +20,10 @@ object EntityMeta {
   def pickTable(clazz: Class[_]): String = {
     val anno = clazz.getDeclaredAnnotation(classOf[Entity])
     if (anno == null) {
-      return clazz.getSimpleName().toLowerCase()
+      return Kit.lodashCase(clazz.getSimpleName())
     }
     anno.table() match {
-      case "" => clazz.getSimpleName().toLowerCase()
+      case "" => Kit.lodashCase(clazz.getSimpleName())
       case _ => anno.table()
     }
   }

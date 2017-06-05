@@ -4,6 +4,7 @@ import java.lang.reflect.{Field, ParameterizedType}
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import orm.kit.Kit
 import orm.lang.anno._
 
 object FieldMetaTypeKind {
@@ -132,9 +133,9 @@ object FieldMeta {
       return null
     }
     field.getDeclaredAnnotation(classOf[Column]) match {
-      case null => """[A-Z]""".r.replaceAllIn(field.getName(), m => "_" + m.group(0).toLowerCase())
+      case null => Kit.lodashCase(field.getName())
       case column => column.name() match {
-        case null | "" => field.getName().toLowerCase()
+        case null | "" => Kit.lodashCase(field.getName())
         case name => name
       }
     }

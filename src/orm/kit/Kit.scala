@@ -23,4 +23,8 @@ object Kit {
     })
     return ret
   }
+
+  def lodashCase(str: String): String = {
+    """[A-Z]""".r.replaceAllIn(str, m => "_" + m.group(0).toLowerCase())
+  }
 }
