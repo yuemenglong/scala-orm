@@ -40,6 +40,7 @@ object Scanner {
   }
 
   def analyzeClass(clazz: Class[_]): Unit = {
+    println(s"[Scanner] Find Entity: [${clazz.getName()}]")
     var entityMeta = new EntityMeta(clazz)
     OrmMeta.entityVec += entityMeta
     OrmMeta.entityMap += (entityMeta.entity -> entityMeta)

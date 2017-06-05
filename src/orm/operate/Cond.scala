@@ -1,5 +1,8 @@
 package orm.operate
 
+import java.util
+
+import orm.kit.Kit
 import orm.meta.EntityMeta
 
 import scala.collection.mutable.ArrayBuffer
@@ -37,6 +40,11 @@ class Cond {
 
   def lte(field: String, param: Object): Cond = {
     items += new Lte(field, param)
+    this
+  }
+
+  def in(field: String, param: Object): Cond = {
+    items += new In(field, param)
     this
   }
 
@@ -154,10 +162,34 @@ class Cond {
       require(meta.fieldMap.contains(field))
     }
   }
+
+  class In(val field: String, val param: Object) extends CondItem {
+    require(param.isInstanceOf[util.ArrayList[_]])
+    val arr = Kit.array(param.asInstanceOf[util.ArrayList[Object]])
+
+    override def toSql(alias: String, meta: EntityMeta): String = {
+      val column = meta.fieldMap(field).column
+      val placeholder = (1 to arr.size).map(_ => "?").mkString(", ")
+      s"${alias}.${column} in (${placeholder})"
+    }
+
+    override def toParams(): Array[Object] = {
+      arr.toArray
+    }
+
+    override def check(meta: EntityMeta): Unit = {
+      require(meta.fieldMap.contains(field))
+    }
+  }
+
 }
 
 object Cond {
   def byEq(field: String, param: Object): Cond = {
     new Cond().eq(field, param)
+  }
+
+  def byIn(field: String, param: Object): Cond = {
+    new Cond().in(field, param)
   }
 }
