@@ -25,6 +25,7 @@ object Kit {
   }
 
   def lodashCase(str: String): String = {
-    """[A-Z]""".r.replaceAllIn(str, m => "_" + m.group(0).toLowerCase())
+    val lowerCaseFirst = str.substring(0, 1).toLowerCase() + str.substring(1)
+    """[A-Z]""".r.replaceAllIn(lowerCaseFirst, m => "_" + m.group(0).toLowerCase())
   }
 }

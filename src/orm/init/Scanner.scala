@@ -18,14 +18,9 @@ object Scanner {
     require(url != null && url.getProtocol() == "file")
     val fullPath = new File(url.getPath()).getPath().replaceAll("\\\\", "/")
     val basePath = Paths.get(fullPath.replaceAll(s"${filePath}$$", ""))
-    println(fullPath)
-    println(filePath)
-    println(basePath)
     scanFile(url.getPath()).map(path => {
       // 全路径转为相对路径，将/变为.
-      val ret = basePath.relativize(Paths.get(path)).toString().replaceAll("(\\\\)|(/)", ".").replaceAll("\\.class$", "")
-      println(ret)
-      ret
+      basePath.relativize(Paths.get(path)).toString().replaceAll("(\\\\)|(/)", ".").replaceAll("\\.class$", "")
     }).filter(path => {
       // 将带有$的去掉，主要是为了去掉scala的部分
       "[^$]*".r.pattern.matcher(path).matches()
