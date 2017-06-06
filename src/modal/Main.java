@@ -30,6 +30,7 @@ public class Main {
         OM om2 = EntityManager.create(OM.class);
 
         person.setAge(10);
+        person.setName("TOM");
         person.setBirthday(new Date());
         person.setNowTime(new Date());
 

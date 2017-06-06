@@ -10,6 +10,10 @@ import java.lang.annotation.Target;
 public @interface Column {
     String name() default "";
 
+    boolean nullable() default true;
+
+    int length() default 256;
+
     int precision() default 0;
 
     int scale() default 0;

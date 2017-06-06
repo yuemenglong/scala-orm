@@ -20,6 +20,7 @@ public class Person {
     @Column(precision = 5, scale = 2)
     BigDecimal price = null;
 
+    @Column(length = 128, nullable = false)
     String name = null;
 
     Date birthday = null;

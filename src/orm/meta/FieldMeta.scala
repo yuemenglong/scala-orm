@@ -27,29 +27,31 @@ class FieldMeta(val entity: EntityMeta,
                 val column: String,
                 val columnAnno: Column,
 
-                val nullable: Boolean,
-                val length: Int,
-
                 val left: String,
                 val right: String) {
   var refer: EntityMeta = null // 最后统一注入，因为第一遍扫描时可能还没有生成
 
   def getDbSql(): String = {
-    val notnull = this.nullable match {
-      case true => "";
-      case false => " NOT NULL";
+    var length = FieldMeta.DEFAULT_LEN
+    var notnull = FieldMeta.DEFAULT_NOT_NULL;
+    var bigDecimalDetail = ""
+
+    if (columnAnno != null) {
+      length = columnAnno.length()
+      notnull = columnAnno.nullable() match {
+        case true => ""
+        case false => " NOT NULL"
+      }
+      bigDecimalDetail = (columnAnno.precision(), columnAnno.scale()) match {
+        case (0, 0) => ""
+        case (p, s) => s"(${p},${s})"
+      }
     }
+
     val pkey = (this.pkey, this.auto) match {
       case (false, _) => ""
       case (true, false) => " PRIMARY KEY"
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
-    }
-    val bigDecimalDetail = columnAnno match {
-      case null => ""
-      case _ => (columnAnno.precision(), columnAnno.scale()) match {
-        case (0, 0) => ""
-        case (p, s) => s"(${p},${s})"
-      }
     }
     this.typeName match {
       case "Integer" => s"`${this.column}` INTEGER${notnull}${pkey}"
@@ -60,7 +62,7 @@ class FieldMeta(val entity: EntityMeta,
       case "BigDecimal" => s"`${this.column}` DECIMAL${bigDecimalDetail}${notnull}${pkey}"
       case "Date" => s"`${this.column}` DATE${notnull}${pkey}"
       case "DateTime" => s"`${this.column}` DATETIME${notnull}${pkey}"
-      case "String" => s"`${this.column}` VARCHAR(${this.length})${notnull}${pkey}"
+      case "String" => s"`${this.column}` VARCHAR(${length})${notnull}${pkey}"
       case "LongText" => s"`${this.column}` LONGTEXT${notnull}${pkey}"
       case _ => throw new RuntimeException()
     }
@@ -142,6 +144,9 @@ class FieldMeta(val entity: EntityMeta,
 }
 
 object FieldMeta {
+  val DEFAULT_LEN: Int = 256
+  val DEFAULT_NOT_NULL: String = ""
+
   def pickColumn(field: Field, typeKind: Int): String = {
     // 非内建类型不对应数据库列
     if (typeKind != FieldMetaTypeKind.BUILT_IN) {
@@ -182,7 +187,6 @@ object FieldMeta {
     }
   }
 
-  val DEFAULT_LEN: Int = 128
 
   def pickLeftRight(entity: EntityMeta, field: Field, typeKind: Int): (String, String) = {
     if (typeKind == FieldMetaTypeKind.BUILT_IN) {
@@ -276,16 +280,12 @@ object FieldMeta {
     val name: String = field.getName()
     val column: String = FieldMeta.pickColumn(field, typeKind)
     val columnAnno: Column = field.getDeclaredAnnotation(classOf[Column])
-    val nullable = true
-
-    val length: Int = FieldMeta.DEFAULT_LEN
 
     val (left, right) = FieldMeta.pickLeftRight(entity, field, typeKind)
 
     return new FieldMeta(entity, field,
       pkey, auto,
       typeKind, typeName, name, column, columnAnno,
-      nullable, length,
       left, right)
   }
 
@@ -300,9 +300,6 @@ object FieldMeta {
     val name: String = fieldName
     val column: String = fieldName
     val columnAnno: Column = null
-    val nullable: Boolean = true
-
-    val length: Int = FieldMeta.DEFAULT_LEN
 
     val left: String = null
     val right: String = null
@@ -310,7 +307,6 @@ object FieldMeta {
     return new FieldMeta(entity, field,
       pkey, auto,
       typeKind, typeName, name, column, columnAnno,
-      nullable, length,
       left, right)
   }
 }
