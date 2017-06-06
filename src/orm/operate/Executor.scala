@@ -120,6 +120,11 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
       case (field, i) => stmt.setObject(i + 1, core.get(field.name))
     }
     println(sql)
+    val params = validFields.map(item => {
+      core.get(item.name).toString()
+    }).mkString(", ")
+    println(s"[Params] => [${params}]")
+
     val affected = stmt.executeUpdate()
     if (!core.meta.pkey.auto) {
       stmt.close()
