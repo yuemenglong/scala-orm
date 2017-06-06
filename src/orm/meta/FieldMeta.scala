@@ -1,5 +1,6 @@
 package orm.meta
 
+import java.lang
 import java.lang.reflect.{Field, ParameterizedType}
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,11 +107,11 @@ class FieldMeta(val entity: EntityMeta,
       return null
     }
     typeName match {
-      case "Integer" => new java.lang.Integer(json)
-      case "Long" => new java.lang.Long(json)
-      case "Float" => new java.lang.Float(json)
-      case "Double" => new java.lang.Double(json)
-      case "Boolean" => new java.lang.Boolean(json)
+      case "Integer" => new lang.Integer(lang.Double.parseDouble(json).toInt)
+      case "Long" => new lang.Long(lang.Double.parseDouble(json).toLong)
+      case "Float" => new lang.Float(lang.Double.parseDouble(json).toFloat)
+      case "Double" => new lang.Double(lang.Double.parseDouble(json))
+      case "Boolean" => new lang.Boolean(lang.Boolean.parseBoolean(json))
       case "BigDecimal" => new java.math.BigDecimal(json)
       case "Date" => new SimpleDateFormat("yyyy-MM-dd").parse(json)
       case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(json)

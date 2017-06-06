@@ -1,6 +1,7 @@
 package orm
 
 import java.util
+
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
@@ -41,4 +42,7 @@ object Orm {
     EntityManager.stringifyArray(arr)
   }
 
+  def main(args: Array[String]): Unit = {
+    Orm.init("")
+  }
 }
