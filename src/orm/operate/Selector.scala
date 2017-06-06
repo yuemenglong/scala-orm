@@ -144,6 +144,8 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
       }
       map += (key -> core)
     }
+    rs.close()
+    stmt.close()
     reset()
     return ret
   }

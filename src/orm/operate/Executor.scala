@@ -122,6 +122,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     println(sql)
     val affected = stmt.executeUpdate()
     if (!core.meta.pkey.auto) {
+      stmt.close()
       return affected
     }
     val rs = stmt.getGeneratedKeys()
@@ -129,6 +130,8 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
       val id = rs.getObject(1)
       core.fieldMap += (core.meta.pkey.name -> id)
     }
+    rs.close()
+    stmt.close()
     affected
   }
 
@@ -148,7 +151,9 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     }
     stmt.setObject(validFields.length + 1, core.getPkey())
     println(sql)
-    stmt.executeUpdate()
+    val ret = stmt.executeUpdate()
+    stmt.close()
+    ret
   }
 
   private def executeDelete(core: EntityCore, conn: Connection): Int = {
@@ -158,7 +163,9 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     val stmt = conn.prepareStatement(sql)
     stmt.setObject(1, core.getPkey())
     println(sql)
-    stmt.executeUpdate()
+    val ret = stmt.executeUpdate()
+    stmt.close()
+    ret
   }
 
   private def executeSelf(core: EntityCore, conn: Connection): Int = {

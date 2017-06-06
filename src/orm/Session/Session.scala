@@ -60,6 +60,10 @@ class Session(val conn: Connection) {
     return ret
   }
 
+  def beginTransaction(): Transaction = {
+    new Transaction(conn)
+  }
+
   def addCache(obj: Object): Unit = {
     cache += obj
   }
