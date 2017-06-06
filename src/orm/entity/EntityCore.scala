@@ -115,10 +115,14 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     val a = this;
     val fieldMeta = a.meta.fieldMap(field)
     val coll = value.asInstanceOf[java.util.Collection[Object]]
-    var newIds: Set[String] = Set()
-    coll.stream().map(EntityManager.core(_).getPkey())
-      .filter(_ != null).map(_.toString()).forEach(item => {
-      newIds += item
+    var newIds = Set[String]()
+    coll.stream().forEach(item => {
+      EntityManager.core(item).getPkey() match {
+        case null => {}
+        case pkey: Object => {
+          newIds += pkey.toString
+        }
+      }
     })
     a.fieldMap.contains(field) match {
       case false => {}

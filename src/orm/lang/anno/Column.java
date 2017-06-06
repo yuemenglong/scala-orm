@@ -8,5 +8,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
-     String name() default "";
+    String name() default "";
+
+    int precision() default 0;
+
+    int scale() default 0;
+
 }
+//(precision, scale)

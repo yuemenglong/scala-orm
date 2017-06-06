@@ -17,6 +17,7 @@ public class Person {
     @Column(name = "age_")
     Integer age = null;
 
+    @Column(precision = 5, scale = 2)
     BigDecimal price = null;
 
     String name = null;

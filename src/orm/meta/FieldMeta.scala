@@ -24,6 +24,7 @@ class FieldMeta(val entity: EntityMeta,
                 val typeName: String,
                 val name: String,
                 val column: String,
+                val columnAnno: Column,
 
                 val nullable: Boolean,
                 val length: Int,
@@ -42,12 +43,19 @@ class FieldMeta(val entity: EntityMeta,
       case (true, false) => " PRIMARY KEY"
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
     }
+    val bigDecimalDetail = columnAnno match {
+      case null => ""
+      case _ => (columnAnno.precision(), columnAnno.scale()) match {
+        case (0, 0) => ""
+        case (p, s) => s"(${p},${s})"
+      }
+    }
     this.typeName match {
       case "Integer" => s"`${this.column}` INTEGER${notnull}${pkey}"
       case "Long" => s"`${this.column}` BIGINT${notnull}${pkey}"
       case "Float" => s"`${this.column}` FLOAT${notnull}${pkey}"
       case "Double" => s"`${this.column}` DOUBLE${notnull}${pkey}"
-      case "BigDecimal" => s"`${this.column}` DECIMAL${notnull}${pkey}"
+      case "BigDecimal" => s"`${this.column}` DECIMAL${bigDecimalDetail}${notnull}${pkey}"
       case "Date" => s"`${this.column}` DATE${notnull}${pkey}"
       case "DateTime" => s"`${this.column}` DATETIME${notnull}${pkey}"
       case "String" => s"`${this.column}` VARCHAR(${this.length})${notnull}${pkey}"
@@ -262,6 +270,7 @@ object FieldMeta {
     val typeName: String = FieldMeta.pickTypeName(field, typeKind)
     val name: String = field.getName()
     val column: String = FieldMeta.pickColumn(field, typeKind)
+    val columnAnno: Column = field.getDeclaredAnnotation(classOf[Column])
     val nullable = true
 
     val length: Int = FieldMeta.DEFAULT_LEN
@@ -270,7 +279,7 @@ object FieldMeta {
 
     return new FieldMeta(entity, field,
       pkey, auto,
-      typeKind, typeName, name, column,
+      typeKind, typeName, name, column, columnAnno,
       nullable, length,
       left, right)
   }
@@ -285,6 +294,7 @@ object FieldMeta {
     val typeName: String = "Long"
     val name: String = fieldName
     val column: String = fieldName
+    val columnAnno: Column = null
     val nullable: Boolean = true
 
     val length: Int = FieldMeta.DEFAULT_LEN
@@ -294,7 +304,7 @@ object FieldMeta {
 
     return new FieldMeta(entity, field,
       pkey, auto,
-      typeKind, typeName, name, column,
+      typeKind, typeName, name, column, columnAnno,
       nullable, length,
       left, right)
   }
