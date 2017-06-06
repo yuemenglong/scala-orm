@@ -164,8 +164,8 @@ class Cond {
   }
 
   class In(val field: String, val param: Object) extends CondItem {
-    require(param.isInstanceOf[util.ArrayList[_]])
-    val arr = Kit.array(param.asInstanceOf[util.ArrayList[Object]])
+    require(param.isInstanceOf[util.Collection[_]])
+    val arr = Kit.array(param.asInstanceOf[util.Collection[Object]])
 
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column

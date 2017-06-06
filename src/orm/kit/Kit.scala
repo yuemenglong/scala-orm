@@ -8,11 +8,11 @@ import scala.collection.mutable.ArrayBuffer
   * Created by Administrator on 2017/5/24.
   */
 object Kit {
-  def array[T](list: util.ArrayList[T]): ArrayBuffer[T] = {
+  def array[T](list: util.Collection[T]): ArrayBuffer[T] = {
     var ret = new ArrayBuffer[T]()
-    for (i <- 0 to list.size() - 1) {
-      ret += list.get(i)
-    }
+    list.stream().forEach(item => {
+      ret += item
+    })
     return ret
   }
 

@@ -51,6 +51,7 @@ class FieldMeta(val entity: EntityMeta,
       case "Date" => s"`${this.column}` DATE${notnull}${pkey}"
       case "DateTime" => s"`${this.column}` DATETIME${notnull}${pkey}"
       case "String" => s"`${this.column}` VARCHAR(${this.length})${notnull}${pkey}"
+      case "LongText" => s"`${this.column}` LONGTEXT${notnull}${pkey}"
       case _ => throw new RuntimeException()
     }
   }
@@ -104,6 +105,7 @@ class FieldMeta(val entity: EntityMeta,
       case "Date" => new SimpleDateFormat("yyyy-MM-dd").parse(json)
       case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(json)
       case "String" => json
+      case "LongText" => json
       case _ => throw new RuntimeException()
     }
   }
@@ -121,6 +123,7 @@ class FieldMeta(val entity: EntityMeta,
       case "Date" => new SimpleDateFormat("yyyy-MM-dd").format(data.asInstanceOf[Date])
       case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(data.asInstanceOf[Date])
       case "String" => data.toString()
+      case "LongText" => data.toString()
       case _ => throw new RuntimeException()
     }
   }
@@ -155,6 +158,12 @@ object FieldMeta {
         field.getDeclaredAnnotation(classOf[DateTime]) match {
           case null => "Date"
           case _ => "DateTime"
+        }
+      }
+      case "String" => {
+        field.getDeclaredAnnotation(classOf[LongText]) match {
+          case null => "String"
+          case _ => "LongText"
         }
       }
       case _ => typeName
