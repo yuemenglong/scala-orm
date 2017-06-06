@@ -20,6 +20,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   private var withs = new ArrayBuffer[(String, Executor)]()
   private var entity: Object = null
   private var cond: Cond = null
+  private var spec = Map[Object, Executor]()
 
   private def setEntity(entity: Object): Unit = {
     this.entity = entity
@@ -53,6 +54,37 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     this.withs.+=((field, execute))
     this.withs.last._2
   }
+
+
+  def insert(obj: Object): Executor = {
+    val core = EntityManager.core(obj)
+    val referMeta = core.meta
+    val executor = new Executor(referMeta, Cascade.INSERT)
+    this.spec += ((obj, executor))
+    executor
+  }
+
+  def update(obj: Object): Executor = {
+    val core = EntityManager.core(obj)
+    val referMeta = core.meta
+    val executor = new Executor(referMeta, Cascade.UPDATE)
+    this.spec += ((obj, executor))
+    executor
+  }
+
+  def delete(obj: Object): Executor = {
+    val core = EntityManager.core(obj)
+    val referMeta = core.meta
+    val executor = new Executor(referMeta, Cascade.DELETE)
+    this.spec += ((obj, executor))
+    executor
+  }
+
+  def ignore(obj: Object): Executor = {
+    this.spec += ((obj, null))
+    null
+  }
+
 
   def execute(conn: Connection): Int = {
     require(entity != null)
@@ -108,14 +140,6 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
     }).mkString(", ")
-    //    val cond = this.cond match {
-    //      case null => ""
-    //      case _ => s" AND ${this.cond.toSql(core.meta.entity, core.meta)}"
-    //    }
-    //    val params = this.cond match {
-    //      case null => Array()
-    //      case _ => this.cond.toParams()
-    //    }
     val idCond = s"${core.meta.pkey.name} = ?"
     val sql = s"UPDATE ${core.meta.table} SET ${columns} WHERE ${idCond}"
     val stmt = conn.prepareStatement(sql)
@@ -123,9 +147,6 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
       stmt.setObject(i + 1, core.get(field.name))
     }
     stmt.setObject(validFields.length + 1, core.getPkey())
-    //    params.zipWithIndex.foreach { case (param, i) =>
-    //      stmt.setObject(i + 1 + validFields.length, param)
-    //    }
     println(sql)
     stmt.executeUpdate()
   }
@@ -196,12 +217,22 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     }.foreach { case (field, ex) => {
       val bs = core.fieldMap(field).asInstanceOf[util.Collection[Object]]
       bs.forEach(b => {
-        // b.a_id = a.id
-        val fieldMeta = core.meta.fieldMap(field)
-        val bCore = EntityManager.core(b)
-        bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
-        // insert(b)
-        ret += ex.execute(b, conn)
+        spec.contains(b) match {
+          case true => {
+            val specEx = spec(b)
+            if (specEx != null) {
+              ret += specEx.execute(b, conn)
+            }
+          }
+          case false => {
+            // b.a_id = a.id
+            val fieldMeta = core.meta.fieldMap(field)
+            val bCore = EntityManager.core(b)
+            bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
+            // insert(b)
+            ret += ex.execute(b, conn)
+          }
+        }
       })
     }
     }

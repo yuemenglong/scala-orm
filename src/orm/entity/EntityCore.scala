@@ -41,7 +41,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     } else if (fieldMeta.isOneMany()) {
       return this.getValue(field)
     } else {
-      throw new RuntimeException("")
+      throw new RuntimeException("Unknown Field Type")
     }
   }
 
@@ -114,17 +114,17 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     require(value != null)
     val a = this;
     val fieldMeta = a.meta.fieldMap(field)
-    val list = value.asInstanceOf[java.util.Collection[Object]]
+    val coll = value.asInstanceOf[java.util.Collection[Object]]
     var newIds: Set[String] = Set()
-    list.stream().map(EntityManager.core(_).getPkey())
+    coll.stream().map(EntityManager.core(_).getPkey())
       .filter(_ != null).map(_.toString()).forEach(item => {
-      println(item)
-      //      newIds += item
+      newIds += item
     })
     a.fieldMap.contains(field) match {
       case false => {}
       case true => a.fieldMap(field).asInstanceOf[util.Collection[Object]].forEach(item => {
         val core = EntityManager.core(item)
+        // 不在新数组里，说明关系断开了
         if (core.getPkey() != null && !newIds.contains(core.getPkey().toString())) {
           // oldb.a_id = null
           core.fieldMap += ((fieldMeta.right, null))
@@ -132,7 +132,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         }
       })
     }
-    list.stream().forEach(item => {
+    coll.stream().forEach(item => {
       // b.a_id = a.id
       val b = EntityManager.core(item)
       b.syncField(fieldMeta.right, a, fieldMeta.left)
@@ -189,7 +189,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         s"${field.name}: [${content}]"
       }
     }).mkString(", ")
-
     s"{${content}}"
   }
 

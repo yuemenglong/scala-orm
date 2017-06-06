@@ -127,6 +127,8 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
   def query(conn: Connection): util.Collection[T] = {
     val sql = this.getSql()
     println(sql)
+    val params = this.getParams().map(_.toString()).mkString(", ")
+    println("[Params]: " + params)
     val stmt = conn.prepareStatement(sql)
     this.getParams().zipWithIndex.foreach { case (param, i) => {
       stmt.setObject(i + 1, param)
