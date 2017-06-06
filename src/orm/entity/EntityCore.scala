@@ -3,6 +3,7 @@ package orm.entity
 import java.lang.reflect.Method
 import java.util
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 import net.sf.cglib.proxy.MethodProxy
 import orm.Session.Session
@@ -113,14 +114,16 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     require(value != null)
     val a = this;
     val fieldMeta = a.meta.fieldMap(field)
-    val list = value.asInstanceOf[java.util.ArrayList[Object]]
-    val newArray = Kit.array(list)
-    val newIds: Set[String] = newArray.map(EntityManager.core(_).getPkey())
-      .filter(_ != null)
-      .map(_.toString())(collection.breakOut)
+    val list = value.asInstanceOf[java.util.Collection[Object]]
+    var newIds: Set[String] = Set()
+    list.stream().map(EntityManager.core(_).getPkey())
+      .filter(_ != null).map(_.toString()).forEach(item => {
+      println(item)
+      //      newIds += item
+    })
     a.fieldMap.contains(field) match {
       case false => {}
-      case true => Kit.array(a.fieldMap(field).asInstanceOf[util.ArrayList[Object]]).foreach(item => {
+      case true => a.fieldMap(field).asInstanceOf[util.Collection[Object]].forEach(item => {
         val core = EntityManager.core(item)
         if (core.getPkey() != null && !newIds.contains(core.getPkey().toString())) {
           // oldb.a_id = null
@@ -129,7 +132,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         }
       })
     }
-    newArray.foreach(item => {
+    list.stream().forEach(item => {
       // b.a_id = a.id
       val b = EntityManager.core(item)
       b.syncField(fieldMeta.right, a, fieldMeta.left)
@@ -177,11 +180,11 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       } else if (!field.isOneMany()) {
         s"""${field.name}: ${this.fieldMap(field.name)}"""
       } else {
-        val bs = this.fieldMap(field.name).asInstanceOf[util.ArrayList[Object]]
+        val bs = this.fieldMap(field.name).asInstanceOf[util.Collection[Object]]
         val joins = new ArrayBuffer[String]()
-        for (i <- 0 to bs.size() - 1) {
-          joins += bs.get(i).toString()
-        }
+        bs.forEach(b => {
+          joins += b.toString()
+        })
         val content = joins.mkString(", ")
         s"${field.name}: [${content}]"
       }

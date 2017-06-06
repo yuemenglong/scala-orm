@@ -194,16 +194,15 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
     }.foreach { case (field, ex) => {
-      val bs = core.fieldMap(field).asInstanceOf[util.ArrayList[Object]]
-      for (i <- 0 to bs.size() - 1) {
-        val b = bs.get(i)
+      val bs = core.fieldMap(field).asInstanceOf[util.Collection[Object]]
+      bs.forEach(b => {
         // b.a_id = a.id
         val fieldMeta = core.meta.fieldMap(field)
         val bCore = EntityManager.core(b)
         bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
         // insert(b)
         ret += ex.execute(b, conn)
-      }
+      })
     }
     }
     ret
@@ -218,12 +217,14 @@ object Executor {
     ret.setEntity(entity)
     return ret
   }
+
   def createUpdate(entity: Object): Executor = {
     val meta = EntityManager.core(entity).meta
     val ret = new Executor(meta, Cascade.UPDATE)
     ret.setEntity(entity)
     return ret
   }
+
   def createDelete(entity: Object): Executor = {
     val meta = EntityManager.core(entity).meta
     val ret = new Executor(meta, Cascade.DELETE)

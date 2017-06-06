@@ -29,7 +29,7 @@ object Orm {
     EntityManager.parse[T](clazz, json)
   }
 
-  def parseArray[T](clazz: Class[T], json: String): util.ArrayList[T] = {
+  def parseArray[T](clazz: Class[T], json: String): util.Collection[T] = {
     EntityManager.parseArray[T](clazz, json)
   }
 
@@ -37,7 +37,7 @@ object Orm {
     EntityManager.stringify(obj)
   }
 
-  def stringifyArray(arr: util.ArrayList[Object]): String = {
+  def stringifyArray(arr: util.Collection[Object]): String = {
     EntityManager.stringifyArray(arr)
   }
 

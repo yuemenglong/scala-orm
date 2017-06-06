@@ -9,6 +9,7 @@ import orm.operate.Executor;
 import orm.operate.Selector;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -72,8 +73,8 @@ public class Main {
         inList.add(2);
         selector.where(Cond.byIn("id", inList));
         String sql = selector.getSql();
-        List list = session.query(selector);
-        for (Object obj : list) {
+        Collection coll = session.query(selector);
+        for (Object obj : coll) {
             System.out.println(obj);
         }
 
@@ -81,8 +82,8 @@ public class Main {
         ret = session.execute(ex);
         System.out.println(ret);
 
-        list = session.query(selector);
-        System.out.println(list.size());
+        coll = session.query(selector);
+        System.out.println(coll.size());
 
 
         session.close();

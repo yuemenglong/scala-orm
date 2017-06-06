@@ -165,16 +165,20 @@ class Cond {
 
   class In(val field: String, val param: Object) extends CondItem {
     require(param.isInstanceOf[util.Collection[_]])
-    val arr = Kit.array(param.asInstanceOf[util.Collection[Object]])
+    val coll = param.asInstanceOf[util.Collection[Object]]
 
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      val placeholder = (1 to arr.size).map(_ => "?").mkString(", ")
+      val placeholder = (1 to coll.size()).map(_ => "?").mkString(", ")
       s"${alias}.${column} in (${placeholder})"
     }
 
     override def toParams(): Array[Object] = {
-      arr.toArray
+      val ret = new ArrayBuffer[Object]()
+      coll.forEach(item => {
+        ret += item
+      })
+      ret.toArray
     }
 
     override def check(meta: EntityMeta): Unit = {

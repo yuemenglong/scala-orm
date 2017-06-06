@@ -124,7 +124,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     s"SELECT\n\t${columns}\nFROM\n\t${tables}\nWHERE\n\t${cond}"
   }
 
-  def query(conn: Connection): util.ArrayList[T] = {
+  def query(conn: Connection): util.Collection[T] = {
     val sql = this.getSql()
     println(sql)
     val stmt = conn.prepareStatement(sql)
@@ -144,6 +144,14 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     }
     reset()
     return ret
+  }
+
+  def first(conn: Connection): T = {
+    val coll = query(conn)
+    coll.size() match {
+      case 0 => null.asInstanceOf[T]
+      case _ => coll.iterator().next()
+    }
   }
 
   def pick(rs: ResultSet): EntityCore = {
@@ -185,13 +193,14 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
         }
       }
       else {
+        // 一对多的情况
         if (bCore != null) {
           val key = s"${field}@${bCore.getPkey().toString()}"
           if (!map.contains(key) && !core.fieldMap.contains(field)) {
             core.fieldMap += (field -> new util.ArrayList[Object]())
           }
           if (!map.contains(key)) {
-            val list = core.fieldMap(field).asInstanceOf[util.ArrayList[Object]]
+            val list = core.fieldMap(field).asInstanceOf[util.Collection[Object]]
             list.add(EntityManager.wrap(bCore))
           }
           map += (key -> bCore)

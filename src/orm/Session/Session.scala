@@ -21,13 +21,13 @@ class Session(val conn: Connection) {
     if (entity == null) {
       return
     }
-    if (entity.isInstanceOf[util.ArrayList[_]]) {
-      val list = entity.asInstanceOf[util.ArrayList[Object]]
-      for (i <- 0 to list.size() - 1) {
-        val core = EntityManager.core(list.get(i))
+    if (entity.isInstanceOf[util.Collection[_]]) {
+      val coll = entity.asInstanceOf[util.Collection[Object]]
+      coll.forEach(item => {
+        val core = EntityManager.core(item)
         core.setSession(this)
-        injectSession(list.get(i), session)
-      }
+        injectSession(item, session)
+      })
     } else {
       val core = EntityManager.core(entity)
       core.setSession(this)
@@ -48,9 +48,15 @@ class Session(val conn: Connection) {
     return ret
   }
 
-  def query[T](selector: Selector[T]): util.ArrayList[T] = {
+  def query[T](selector: Selector[T]): util.Collection[T] = {
     val ret = selector.query(conn)
     injectSession(ret, this)
+    return ret
+  }
+
+  def first[T](selector: Selector[T]): T = {
+    val ret = selector.first(conn)
+    injectSession(ret.asInstanceOf[Object], this)
     return ret
   }
 
