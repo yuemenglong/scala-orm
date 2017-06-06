@@ -24,6 +24,8 @@ public class Person {
 
     Date birthday = null;
 
+    Boolean married = false;
+
     @DateTime
     Date nowTime = null;
 

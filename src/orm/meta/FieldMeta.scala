@@ -55,6 +55,7 @@ class FieldMeta(val entity: EntityMeta,
       case "Long" => s"`${this.column}` BIGINT${notnull}${pkey}"
       case "Float" => s"`${this.column}` FLOAT${notnull}${pkey}"
       case "Double" => s"`${this.column}` DOUBLE${notnull}${pkey}"
+      case "Boolean" => s"`${this.column}` BOOLEAN${notnull}${pkey}"
       case "BigDecimal" => s"`${this.column}` DECIMAL${bigDecimalDetail}${notnull}${pkey}"
       case "Date" => s"`${this.column}` DATE${notnull}${pkey}"
       case "DateTime" => s"`${this.column}` DATETIME${notnull}${pkey}"
@@ -109,6 +110,7 @@ class FieldMeta(val entity: EntityMeta,
       case "Long" => new java.lang.Long(json)
       case "Float" => new java.lang.Float(json)
       case "Double" => new java.lang.Double(json)
+      case "Boolean" => new java.lang.Boolean(json)
       case "BigDecimal" => new java.math.BigDecimal(json)
       case "Date" => new SimpleDateFormat("yyyy-MM-dd").parse(json)
       case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(json)
@@ -127,6 +129,7 @@ class FieldMeta(val entity: EntityMeta,
       case "Long" => data.toString()
       case "Float" => data.toString()
       case "Double" => data.toString()
+      case "Boolean" => data.toString()
       case "BigDecimal" => data.toString()
       case "Date" => new SimpleDateFormat("yyyy-MM-dd").format(data.asInstanceOf[Date])
       case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(data.asInstanceOf[Date])
@@ -234,6 +237,7 @@ object FieldMeta {
            "Long" |
            "Float" |
            "Double" |
+           "Boolean" |
            "BigDecimal" |
            "Date" |
            "String" => return FieldMetaTypeKind.BUILT_IN
