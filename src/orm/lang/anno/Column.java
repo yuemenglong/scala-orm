@@ -12,7 +12,7 @@ public @interface Column {
 
     boolean nullable() default true;
 
-    int length() default 256;
+    int length() default 255;
 
     int precision() default 0;
 

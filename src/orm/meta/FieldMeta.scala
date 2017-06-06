@@ -144,7 +144,7 @@ class FieldMeta(val entity: EntityMeta,
 }
 
 object FieldMeta {
-  val DEFAULT_LEN: Int = 256
+  val DEFAULT_LEN: Int = 255
   val DEFAULT_NOT_NULL: String = ""
 
   def pickColumn(field: Field, typeKind: Int): String = {
