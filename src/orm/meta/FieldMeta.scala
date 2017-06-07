@@ -203,7 +203,7 @@ object FieldMeta {
       case FieldMetaTypeKind.POINTER => {
         val anno = field.getAnnotation(classOf[Pointer])
         val left = anno.left() match {
-          case "" => field.getName().toLowerCase() + "_id"
+          case "" => field.getName() + "Id"
           case _ => anno.left()
         }
         val right = anno.right() match {
@@ -219,7 +219,7 @@ object FieldMeta {
           case _ => anno.left()
         }
         val right = anno.right() match {
-          case "" => entity.entity.toLowerCase() + "_id"
+          case "" => entity.entity + "Id"
           case _ => anno.right()
         }
         return (left, right)
@@ -231,7 +231,7 @@ object FieldMeta {
           case _ => anno.left()
         }
         val right = anno.right() match {
-          case "" => entity.entity.toLowerCase() + "_id"
+          case "" => entity.entity + "Id"
           case _ => anno.right()
         }
         return (left, right)
@@ -320,7 +320,7 @@ object FieldMeta {
     val typeName: String = "Long"
 
     val name: String = fieldName
-    val column: String = fieldName
+    val column: String = Kit.lodashCase(fieldName)
     val columnAnno: Column = null
     val ignore = false
 

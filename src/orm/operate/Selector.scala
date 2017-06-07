@@ -57,7 +57,9 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
       val table = selector.meta.table
       val alias = selector.alias
       val fieldMeta = this.meta.fieldMap(field)
-      val cond = s"${this.alias}.${fieldMeta.left} = ${alias}.${fieldMeta.right}"
+      val leftColumn = this.meta.fieldMap(fieldMeta.left).column
+      val rightColumn = selector.meta.fieldMap(fieldMeta.right).column
+      val cond = s"${this.alias}.${leftColumn} = ${alias}.${rightColumn}"
       var main = s"LEFT JOIN ${table} AS ${alias} ON ${cond}"
       val joinCond = this.on match {
         case null => ""
