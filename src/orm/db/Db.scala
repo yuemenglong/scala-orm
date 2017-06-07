@@ -28,19 +28,19 @@ class Db(val host: String, val port: Int, val username: String, val password: St
   }
 
   def drop(): Unit = {
-    for (entity <- OrmMeta.entityVec) {
+    OrmMeta.entityVec.filter(!_.ignore).foreach(entity => {
       val sql = Table.getDropSql(entity)
       println(sql)
       this.execute(sql)
-    }
+    })
   }
 
   def create(): Unit = {
-    for (entity <- OrmMeta.entityVec) {
+    OrmMeta.entityVec.filter(!_.ignore).foreach(entity => {
       val sql = Table.getCreateSql(entity)
       println(sql)
       this.execute(sql)
-    }
+    })
   }
 
   def openSession(): Session = {

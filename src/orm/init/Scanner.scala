@@ -4,6 +4,7 @@ import java.io.File
 import java.lang.reflect.Field
 import java.nio.file.Paths
 
+import orm.kit.Kit
 import orm.lang.anno.Entity
 import orm.meta.{EntityMeta, FieldMeta, FieldMetaTypeKind, OrmMeta}
 
@@ -35,13 +36,17 @@ object Scanner {
       }
     }).filter(item => {
       item != null
-    }).foreach(analyzeClass)
+    }).foreach(analyzeClass(_))
     fixMeta()
   }
 
-  def analyzeClass(clazz: Class[_]): Unit = {
-    println(s"[Scanner] Find Entity: [${clazz.getName()}]")
-    var entityMeta = new EntityMeta(clazz)
+  def analyzeClass(clazz: Class[_], ignore: Boolean = false): Unit = {
+    val ignoreStr = ignore match {
+      case true => "Ignore "
+      case false => ""
+    }
+    println(s"[Scanner] Find ${ignoreStr}Entity: [${clazz.getName()}]")
+    var entityMeta = new EntityMeta(clazz, ignore)
     OrmMeta.entityVec += entityMeta
     OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
 
@@ -59,6 +64,22 @@ object Scanner {
   }
 
   def fixMeta(): Unit = {
+    OrmMeta.entityVec.clone().foreach(entity => {
+      // 未标注ignore的字段对应的对象都必须显式标注为entity,也就是已经在orm中
+      entity.managedFieldVec().filter(!_.isNormalOrPkey()).foreach(field => {
+        if (!OrmMeta.entityMap.contains(field.typeName)) {
+          throw new RuntimeException(s"[${field.typeName}] Is Not Entity")
+        }
+      })
+      // 标注ignore的字段对应的对象如果没有加入entity，也加进去
+      entity.fieldVec.filter(field => {
+        field.ignore && field.isObject() && !OrmMeta.entityMap.contains(field.typeName)
+      }).foreach(fieldMeta => {
+        val clazz = Kit.getGenericType(fieldMeta.field)
+        analyzeClass(clazz, true)
+      })
+
+    })
     OrmMeta.entityVec.foreach(entity => {
       // 补关系字段，ignore的不用补
       entity.managedFieldVec().foreach(field => {

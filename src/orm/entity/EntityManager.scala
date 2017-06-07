@@ -2,18 +2,13 @@ package orm.entity
 
 import java.lang.reflect.Method
 import java.util
-import java.util.stream.Collectors
 
-import net.sf.cglib.proxy.Enhancer
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 import orm.lang.interfaces.Entity
 import orm.meta.{EntityMeta, FieldMetaTypeKind, OrmMeta}
-import net.sf.cglib.proxy.MethodInterceptor
-import net.sf.cglib.proxy.MethodProxy
-import orm.kit.Kit
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.JavaConversions
-import scala.util.parsing.json.{JSON, JSONArray, JSONObject, JSONType}
+import scala.util.parsing.json.{JSON, JSONArray, JSONObject}
 
 /**
   * Created by Administrator on 2017/5/18.
@@ -91,12 +86,14 @@ object EntityManager {
     }).map(fieldMeta => {
       val value = core.fieldMap(fieldMeta.name)
       val obj = fieldMeta.typeKind match {
-        case FieldMetaTypeKind.BUILT_IN => fieldMeta.stringify(value)
-        case FieldMetaTypeKind.IGNORE |
-             FieldMetaTypeKind.REFER |
+        case FieldMetaTypeKind.BUILT_IN |
+             FieldMetaTypeKind.IGNORE_BUILT_IN => fieldMeta.stringify(value)
+        case FieldMetaTypeKind.REFER |
              FieldMetaTypeKind.POINTER |
-             FieldMetaTypeKind.ONE_ONE => stringifyInner(value)
-        case FieldMetaTypeKind.ONE_MANY => {
+             FieldMetaTypeKind.ONE_ONE |
+             FieldMetaTypeKind.IGNORE_REFER => stringifyInner(value)
+        case FieldMetaTypeKind.ONE_MANY |
+             FieldMetaTypeKind.IGNORE_MANY => {
           val ab = new ArrayBuffer[Object]()
           value.asInstanceOf[util.Collection[Object]].forEach(item => {
             ab += stringifyInner(item)
@@ -115,12 +112,14 @@ object EntityManager {
     }).map(fieldMeta => {
       val value = data.obj(fieldMeta.name)
       val obj = fieldMeta.typeKind match {
-        case FieldMetaTypeKind.BUILT_IN => fieldMeta.parse(value.toString())
-        case FieldMetaTypeKind.IGNORE |
-             FieldMetaTypeKind.REFER |
+        case FieldMetaTypeKind.BUILT_IN |
+             FieldMetaTypeKind.IGNORE_BUILT_IN => fieldMeta.parse(value.toString())
+        case FieldMetaTypeKind.REFER |
              FieldMetaTypeKind.POINTER |
-             FieldMetaTypeKind.ONE_ONE => parseInner(fieldMeta.refer, value.asInstanceOf[JSONObject])
-        case FieldMetaTypeKind.ONE_MANY => {
+             FieldMetaTypeKind.ONE_ONE |
+             FieldMetaTypeKind.IGNORE_REFER => parseInner(fieldMeta.refer, value.asInstanceOf[JSONObject])
+        case FieldMetaTypeKind.ONE_MANY |
+             FieldMetaTypeKind.IGNORE_MANY => {
           val list = new util.ArrayList[Object]()
           value.asInstanceOf[JSONArray].list.foreach(item => {
             list.add(parseInner(fieldMeta.refer, item.asInstanceOf[JSONObject]))

@@ -9,12 +9,14 @@ import orm.kit.Kit
 import orm.lang.anno._
 
 object FieldMetaTypeKind {
-  val IGNORE: Int = -1
   val BUILT_IN: Int = 0
   val REFER: Int = 1
   val POINTER: Int = 2
   val ONE_ONE: Int = 3
   val ONE_MANY: Int = 4
+  val IGNORE_BUILT_IN: Int = 100
+  val IGNORE_REFER: Int = 101
+  val IGNORE_MANY: Int = 102
 }
 
 class FieldMeta(val entity: EntityMeta,
@@ -87,7 +89,10 @@ class FieldMeta(val entity: EntityMeta,
   }
 
   def isObject(): Boolean = {
-    this.typeKind != FieldMetaTypeKind.BUILT_IN
+    this.typeKind match {
+      case FieldMetaTypeKind.BUILT_IN | FieldMetaTypeKind.IGNORE_BUILT_IN => false
+      case _ => true
+    }
   }
 
   def isRefer(): Boolean = {
@@ -107,7 +112,8 @@ class FieldMeta(val entity: EntityMeta,
   }
 
   def parse(json: String): Object = {
-    require(typeKind == FieldMetaTypeKind.BUILT_IN)
+    require(typeKind == FieldMetaTypeKind.BUILT_IN ||
+      typeKind == FieldMetaTypeKind.IGNORE_BUILT_IN)
     if (json == "null") {
       return null
     }
@@ -126,17 +132,15 @@ class FieldMeta(val entity: EntityMeta,
     }
   }
 
-  def stringify(data: Object): String = {
-    if (data == null) {
-      return "null"
-    }
+  def stringify(data: Object): Object = {
+    require(data != null)
     typeName match {
-      case "Integer" => data.toString()
-      case "Long" => data.toString()
-      case "Float" => data.toString()
-      case "Double" => data.toString()
-      case "Boolean" => data.toString()
-      case "BigDecimal" => data.toString()
+      case "Integer" => data
+      case "Long" => data
+      case "Float" => data
+      case "Double" => data
+      case "Boolean" => data
+      case "BigDecimal" => new lang.Double(data.asInstanceOf[java.math.BigDecimal].doubleValue())
       case "Date" => new SimpleDateFormat("yyyy-MM-dd").format(data.asInstanceOf[Date])
       case "DateTime" => new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(data.asInstanceOf[Date])
       case "String" => data.toString()
@@ -164,15 +168,8 @@ object FieldMeta {
     }
   }
 
-  def pickTypeName(field: Field, typeKind: Int): String = {
-    val typeName = typeKind match {
-      case FieldMetaTypeKind.ONE_MANY => {
-        field.getGenericType().asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]].getSimpleName()
-      }
-      case _ => {
-        field.getType().getSimpleName()
-      }
-    }
+  def pickTypeName(field: Field): String = {
+    val typeName = Kit.getGenericType(field).getSimpleName()
     typeName match {
       case "Date" => {
         field.getDeclaredAnnotation(classOf[DateTime]) match {
@@ -194,7 +191,9 @@ object FieldMeta {
   def pickLeftRight(entity: EntityMeta, field: Field, typeKind: Int): (String, String) = {
     typeKind match {
       case FieldMetaTypeKind.BUILT_IN |
-           FieldMetaTypeKind.IGNORE => {
+           FieldMetaTypeKind.IGNORE_BUILT_IN |
+           FieldMetaTypeKind.IGNORE_REFER |
+           FieldMetaTypeKind.IGNORE_MANY => {
         return (null, null)
       }
       case FieldMetaTypeKind.REFER => {
@@ -240,8 +239,8 @@ object FieldMeta {
     }
   }
 
-  def pickTypeKind(field: Field): Int = {
-    field.getType().getSimpleName() match {
+  def pickTypeKind(entity: EntityMeta, field: Field): Int = {
+    val builtIn = field.getType().getSimpleName() match {
       case "Integer" |
            "Long" |
            "Float" |
@@ -249,8 +248,20 @@ object FieldMeta {
            "Boolean" |
            "BigDecimal" |
            "Date" |
-           "String" => return FieldMetaTypeKind.BUILT_IN
-      case _ => {}
+           "String" => true
+      case _ => false
+    }
+    if (field.getDeclaredAnnotation(classOf[Ignore]) != null || entity.ignore) {
+      if (builtIn) {
+        return FieldMetaTypeKind.IGNORE_BUILT_IN
+      } else if (!Kit.isGenericType(field)) {
+        return FieldMetaTypeKind.IGNORE_REFER
+      } else {
+        return FieldMetaTypeKind.IGNORE_MANY
+      }
+    }
+    if (builtIn) {
+      return FieldMetaTypeKind.BUILT_IN
     }
     if (field.getDeclaredAnnotation(classOf[Refer]) != null) {
       return FieldMetaTypeKind.REFER
@@ -264,8 +275,8 @@ object FieldMeta {
     if (field.getDeclaredAnnotation(classOf[OneToMany]) != null) {
       return FieldMetaTypeKind.ONE_MANY
     }
-    if (field.getDeclaredAnnotation(classOf[Ignore]) != null) {
-      return FieldMetaTypeKind.IGNORE
+    if (field.getDeclaredAnnotation(classOf[Ignore]) != null || entity.ignore) {
+      return FieldMetaTypeKind.IGNORE_BUILT_IN
     }
     throw new RuntimeException(s"[${field.getName()}] Must Has A Refer Type")
   }
@@ -282,13 +293,13 @@ object FieldMeta {
     val pkey: Boolean = FieldMeta.pickId(field)
     val auto: Boolean = pkey && FieldMeta.pickIdAuto(field)
 
-    val typeKind: Int = FieldMeta.pickTypeKind(field)
-    val typeName: String = FieldMeta.pickTypeName(field, typeKind)
+    val typeKind: Int = FieldMeta.pickTypeKind(entity, field)
+    val typeName: String = FieldMeta.pickTypeName(field)
 
     val name: String = field.getName()
     val column: String = FieldMeta.pickColumn(field, typeKind)
     val columnAnno: Column = field.getDeclaredAnnotation(classOf[Column])
-    val ignore = field.getDeclaredAnnotation(classOf[Ignore]) != null
+    val ignore = typeKind >= FieldMetaTypeKind.IGNORE_BUILT_IN
 
     val (left, right) = FieldMeta.pickLeftRight(entity, field, typeKind)
 

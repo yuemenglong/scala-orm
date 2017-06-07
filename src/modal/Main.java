@@ -4,11 +4,11 @@ import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
 import orm.entity.EntityManager;
-import orm.lang.interfaces.Entity;
 import orm.operate.Cond;
 import orm.operate.Executor;
 import orm.operate.Selector;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -34,7 +34,11 @@ public class Main {
         person.setName("TOM");
         person.setBirthday(new Date());
         person.setNowTime(new Date());
-        person.setParent(Orm.create(Person.class));
+        person.setPrice(new BigDecimal(123.45));
+
+
+        person.setIgnValue(0);
+        person.setIgn(Orm.create(Ign.class));
 
         ptr.setValue(10);
         oo.setValue(100);

@@ -31,7 +31,13 @@ public class Person {
     Date nowTime = null;
 
     @Ignore
-    Person parent = null;
+    Integer ignValue = null;
+
+    @Ignore
+    Ign ign = null;
+
+    @Ignore
+    List<Ign> igns = null;
 
     @Pointer
     Ptr ptr = null;
@@ -122,11 +128,27 @@ public class Person {
         this.married = married;
     }
 
-    public Person getParent() {
-        return parent;
+    public Integer getIgnValue() {
+        return ignValue;
     }
 
-    public void setParent(Person parent) {
-        this.parent = parent;
+    public void setIgnValue(Integer ignValue) {
+        this.ignValue = ignValue;
+    }
+
+    public Ign getIgn() {
+        return ign;
+    }
+
+    public void setIgn(Ign ign) {
+        this.ign = ign;
+    }
+
+    public List<Ign> getIgns() {
+        return igns;
+    }
+
+    public void setIgns(List<Ign> igns) {
+        this.igns = igns;
     }
 }

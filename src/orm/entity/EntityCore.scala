@@ -50,7 +50,9 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     fieldMeta.typeKind match {
       case FieldMetaTypeKind.BUILT_IN |
            FieldMetaTypeKind.REFER |
-           FieldMetaTypeKind.IGNORE => this.setValue(field, value)
+           FieldMetaTypeKind.IGNORE_BUILT_IN |
+           FieldMetaTypeKind.IGNORE_REFER |
+           FieldMetaTypeKind.IGNORE_MANY => this.setValue(field, value)
       case FieldMetaTypeKind.POINTER => this.setPointer(field, value)
       case FieldMetaTypeKind.ONE_ONE => this.setOneOne(field, value)
       case FieldMetaTypeKind.ONE_MANY => this.setOneMany(field, value)
@@ -170,7 +172,8 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       this.fieldMap.contains(field.name)
     }).map(field => {
       field.typeKind match {
-        case FieldMetaTypeKind.BUILT_IN => {
+        case FieldMetaTypeKind.BUILT_IN |
+             FieldMetaTypeKind.IGNORE_BUILT_IN => {
           val value = this.fieldMap(field.name)
           if (value == null) {
             s"${field.name}: null"
@@ -182,13 +185,14 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
             s"""${field.name}: ${this.fieldMap(field.name)}"""
           }
         }
-        case FieldMetaTypeKind.IGNORE |
+        case FieldMetaTypeKind.IGNORE_REFER |
              FieldMetaTypeKind.REFER |
              FieldMetaTypeKind.POINTER |
              FieldMetaTypeKind.ONE_ONE => {
           s"""${field.name}: ${this.fieldMap(field.name)}"""
         }
-        case FieldMetaTypeKind.ONE_MANY => {
+        case FieldMetaTypeKind.ONE_MANY |
+             FieldMetaTypeKind.IGNORE_MANY => {
           val bs = this.fieldMap(field.name).asInstanceOf[util.Collection[Object]]
           val joins = new ArrayBuffer[String]()
           bs.forEach(b => {
