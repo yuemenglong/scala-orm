@@ -60,7 +60,8 @@ object Scanner {
 
   def fixMeta(): Unit = {
     OrmMeta.entityVec.foreach(entity => {
-      entity.fieldVec.clone().foreach(field => {
+      // 补关系字段，ignore的不用补
+      entity.managedFieldVec().foreach(field => {
         if (!field.isNormalOrPkey()) {
           //补左边
           if (!entity.fieldMap.contains(field.left)) {
@@ -79,8 +80,9 @@ object Scanner {
         }
       })
     })
+    // 统一注入refer,这里ignore的也要注入
     OrmMeta.entityVec.foreach(entity => {
-      entity.fieldVec.clone().foreach(field => {
+      entity.fieldVec.foreach(field => {
         if (field.isObject()) {
           field.refer = OrmMeta.entityMap(field.typeName)
         }

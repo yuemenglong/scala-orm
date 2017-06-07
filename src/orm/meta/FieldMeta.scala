@@ -9,6 +9,7 @@ import orm.kit.Kit
 import orm.lang.anno._
 
 object FieldMetaTypeKind {
+  val IGNORE: Int = -1
   val BUILT_IN: Int = 0
   val REFER: Int = 1
   val POINTER: Int = 2
@@ -23,9 +24,11 @@ class FieldMeta(val entity: EntityMeta,
 
                 val typeKind: Int,
                 val typeName: String,
+
                 val name: String,
                 val column: String,
                 val columnAnno: Column,
+                val ignore: Boolean,
 
                 val left: String,
                 val right: String) {
@@ -189,10 +192,11 @@ object FieldMeta {
 
 
   def pickLeftRight(entity: EntityMeta, field: Field, typeKind: Int): (String, String) = {
-    if (typeKind == FieldMetaTypeKind.BUILT_IN) {
-      return (null, null)
-    }
     typeKind match {
+      case FieldMetaTypeKind.BUILT_IN |
+           FieldMetaTypeKind.IGNORE => {
+        return (null, null)
+      }
       case FieldMetaTypeKind.REFER => {
         val anno = field.getAnnotation(classOf[Refer])
         return (anno.left(), anno.right())
@@ -260,7 +264,10 @@ object FieldMeta {
     if (field.getDeclaredAnnotation(classOf[OneToMany]) != null) {
       return FieldMetaTypeKind.ONE_MANY
     }
-    throw new RuntimeException(field.getName())
+    if (field.getDeclaredAnnotation(classOf[Ignore]) != null) {
+      return FieldMetaTypeKind.IGNORE
+    }
+    throw new RuntimeException(s"[${field.getName()}] Must Has A Refer Type")
   }
 
   def pickIdAuto(field: Field): Boolean = {
@@ -277,15 +284,18 @@ object FieldMeta {
 
     val typeKind: Int = FieldMeta.pickTypeKind(field)
     val typeName: String = FieldMeta.pickTypeName(field, typeKind)
+
     val name: String = field.getName()
     val column: String = FieldMeta.pickColumn(field, typeKind)
     val columnAnno: Column = field.getDeclaredAnnotation(classOf[Column])
+    val ignore = field.getDeclaredAnnotation(classOf[Ignore]) != null
 
     val (left, right) = FieldMeta.pickLeftRight(entity, field, typeKind)
 
     return new FieldMeta(entity, field,
       pkey, auto,
-      typeKind, typeName, name, column, columnAnno,
+      typeKind, typeName,
+      name, column, columnAnno, ignore,
       left, right)
   }
 
@@ -297,16 +307,19 @@ object FieldMeta {
 
     val typeKind: Int = FieldMetaTypeKind.BUILT_IN
     val typeName: String = "Long"
+
     val name: String = fieldName
     val column: String = fieldName
     val columnAnno: Column = null
+    val ignore = false
 
     val left: String = null
     val right: String = null
 
     return new FieldMeta(entity, field,
       pkey, auto,
-      typeKind, typeName, name, column, columnAnno,
+      typeKind, typeName,
+      name, column, columnAnno, ignore,
       left, right)
   }
 }

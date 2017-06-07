@@ -4,6 +4,7 @@ import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
 import orm.entity.EntityManager;
+import orm.lang.interfaces.Entity;
 import orm.operate.Cond;
 import orm.operate.Executor;
 import orm.operate.Selector;
@@ -33,6 +34,7 @@ public class Main {
         person.setName("TOM");
         person.setBirthday(new Date());
         person.setNowTime(new Date());
+        person.setParent(Orm.create(Person.class));
 
         ptr.setValue(10);
         oo.setValue(100);

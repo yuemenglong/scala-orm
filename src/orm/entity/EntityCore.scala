@@ -8,7 +8,7 @@ import java.util.stream.Collectors
 import net.sf.cglib.proxy.MethodProxy
 import orm.Session.Session
 import orm.kit.Kit
-import orm.meta.EntityMeta
+import orm.meta.{EntityMeta, FieldMetaTypeKind}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -47,15 +47,14 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   def set(field: String, value: Object): Object = {
     val fieldMeta = this.meta.fieldMap(field)
-    if (fieldMeta.isNormalOrPkey() ||
-      fieldMeta.isRefer()) {
-      this.setValue(field, value)
-    } else if (fieldMeta.isPointer()) {
-      this.setPointer(field, value)
-    } else if (fieldMeta.isOneOne()) {
-      this.setOneOne(field, value)
-    } else if (fieldMeta.isOneMany()) {
-      this.setOneMany(field, value)
+    fieldMeta.typeKind match {
+      case FieldMetaTypeKind.BUILT_IN |
+           FieldMetaTypeKind.REFER |
+           FieldMetaTypeKind.IGNORE => this.setValue(field, value)
+      case FieldMetaTypeKind.POINTER => this.setPointer(field, value)
+      case FieldMetaTypeKind.ONE_ONE => this.setOneOne(field, value)
+      case FieldMetaTypeKind.ONE_MANY => this.setOneMany(field, value)
+      case _ => throw new RuntimeException(s"Unknown Field Meta Type: [${field}]")
     }
     return null
   }
@@ -170,27 +169,34 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     val content = this.meta.fieldVec.filter(field => {
       this.fieldMap.contains(field.name)
     }).map(field => {
-      if (field.isNormalOrPkey()) {
-        val value = this.fieldMap(field.name)
-        if (value == null) {
-          s"${field.name}: null"
-        } else if (field.typeName == "String" ||
-          field.typeName == "Date" ||
-          field.typeName == "DateTime") {
-          s"""${field.name}: "${this.fieldMap(field.name)}""""
-        } else {
+      field.typeKind match {
+        case FieldMetaTypeKind.BUILT_IN => {
+          val value = this.fieldMap(field.name)
+          if (value == null) {
+            s"${field.name}: null"
+          } else if (field.typeName == "String" ||
+            field.typeName == "Date" ||
+            field.typeName == "DateTime") {
+            s"""${field.name}: "${this.fieldMap(field.name)}""""
+          } else {
+            s"""${field.name}: ${this.fieldMap(field.name)}"""
+          }
+        }
+        case FieldMetaTypeKind.IGNORE |
+             FieldMetaTypeKind.REFER |
+             FieldMetaTypeKind.POINTER |
+             FieldMetaTypeKind.ONE_ONE => {
           s"""${field.name}: ${this.fieldMap(field.name)}"""
         }
-      } else if (!field.isOneMany()) {
-        s"""${field.name}: ${this.fieldMap(field.name)}"""
-      } else {
-        val bs = this.fieldMap(field.name).asInstanceOf[util.Collection[Object]]
-        val joins = new ArrayBuffer[String]()
-        bs.forEach(b => {
-          joins += b.toString()
-        })
-        val content = joins.mkString(", ")
-        s"${field.name}: [${content}]"
+        case FieldMetaTypeKind.ONE_MANY => {
+          val bs = this.fieldMap(field.name).asInstanceOf[util.Collection[Object]]
+          val joins = new ArrayBuffer[String]()
+          bs.forEach(b => {
+            joins += b.toString()
+          })
+          val content = joins.mkString(", ")
+          s"${field.name}: [${content}]"
+        }
       }
     }).mkString(", ")
     s"{${content}}"

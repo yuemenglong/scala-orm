@@ -14,6 +14,10 @@ class EntityMeta(val clazz: Class[_]) {
   var pkey: FieldMeta = null
   var fieldVec: ArrayBuffer[FieldMeta] = ArrayBuffer()
   var fieldMap: Map[String, FieldMeta] = Map()
+
+  def managedFieldVec(): ArrayBuffer[FieldMeta] = {
+    fieldVec.filter(!_.ignore)
+  }
 }
 
 object EntityMeta {

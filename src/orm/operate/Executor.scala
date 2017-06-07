@@ -105,7 +105,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   }
 
   private def executeInsert(core: EntityCore, conn: Connection): Int = {
-    val validFields = core.meta.fieldVec.filter(field => {
+    val validFields = core.meta.managedFieldVec().filter(field => {
       field.isNormalOrPkey() && core.fieldMap.contains(field.name)
     })
     val columns = validFields.map(field => {
@@ -142,7 +142,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 
   private def executeUpdate(core: EntityCore, conn: Connection): Int = {
     require(core.getPkey() != null)
-    val validFields = core.meta.fieldVec.filter(field => {
+    val validFields = core.meta.managedFieldVec().filter(field => {
       field.isNormal() && core.fieldMap.contains(field.name)
     })
     val columns = validFields.map(field => {

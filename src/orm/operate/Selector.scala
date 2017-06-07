@@ -41,7 +41,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
   }
 
   def getColumns(): String = {
-    val selfColumns = this.meta.fieldVec.filter(field => field.isNormalOrPkey()).map(field => {
+    val selfColumns = this.meta.managedFieldVec.filter(field => field.isNormalOrPkey()).map(field => {
       s"${this.alias}.${field.column} AS ${this.alias}$$${field.name}"
     }).mkString(",\n\t")
     val withColumns = this.withs.map { case (_, selector) => {
@@ -169,7 +169,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
 
   def pickSelf(rs: ResultSet): EntityCore = {
     val core = new EntityCore(meta, Map())
-    meta.fieldVec.filter(_.isNormalOrPkey()).foreach(field => {
+    meta.managedFieldVec().filter(_.isNormalOrPkey()).foreach(field => {
       val label = s"${alias}$$${field.name}"
       val value = rs.getObject(label)
       core.fieldMap += (field.name -> value)

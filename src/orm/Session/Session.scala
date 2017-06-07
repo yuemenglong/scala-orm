@@ -31,7 +31,7 @@ class Session(val conn: Connection) {
     } else {
       val core = EntityManager.core(entity)
       core.setSession(this)
-      core.meta.fieldVec.filter(!_.isNormalOrPkey()).foreach(fieldMeta => {
+      core.meta.managedFieldVec().filter(!_.isNormalOrPkey()).foreach(fieldMeta => {
         if (core.fieldMap.contains(fieldMeta.name)) {
           injectSession(core.fieldMap(fieldMeta.name), session)
         }

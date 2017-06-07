@@ -92,7 +92,8 @@ object EntityManager {
       val value = core.fieldMap(fieldMeta.name)
       val obj = fieldMeta.typeKind match {
         case FieldMetaTypeKind.BUILT_IN => fieldMeta.stringify(value)
-        case FieldMetaTypeKind.REFER |
+        case FieldMetaTypeKind.IGNORE |
+             FieldMetaTypeKind.REFER |
              FieldMetaTypeKind.POINTER |
              FieldMetaTypeKind.ONE_ONE => stringifyInner(value)
         case FieldMetaTypeKind.ONE_MANY => {
@@ -115,7 +116,8 @@ object EntityManager {
       val value = data.obj(fieldMeta.name)
       val obj = fieldMeta.typeKind match {
         case FieldMetaTypeKind.BUILT_IN => fieldMeta.parse(value.toString())
-        case FieldMetaTypeKind.REFER |
+        case FieldMetaTypeKind.IGNORE |
+             FieldMetaTypeKind.REFER |
              FieldMetaTypeKind.POINTER |
              FieldMetaTypeKind.ONE_ONE => parseInner(fieldMeta.refer, value.asInstanceOf[JSONObject])
         case FieldMetaTypeKind.ONE_MANY => {

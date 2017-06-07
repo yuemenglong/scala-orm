@@ -30,6 +30,9 @@ public class Person {
     @DateTime
     Date nowTime = null;
 
+    @Ignore
+    Person parent = null;
+
     @Pointer
     Ptr ptr = null;
 
@@ -109,5 +112,21 @@ public class Person {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public Boolean getMarried() {
+        return married;
+    }
+
+    public void setMarried(Boolean married) {
+        this.married = married;
+    }
+
+    public Person getParent() {
+        return parent;
+    }
+
+    public void setParent(Person parent) {
+        this.parent = parent;
     }
 }
