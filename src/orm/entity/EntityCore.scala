@@ -29,20 +29,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   }
 
   def get(field: String): Object = {
-    val fieldMeta = this.meta.fieldMap(field)
-    if (fieldMeta.isNormalOrPkey()) {
-      return this.getValue(field)
-    } else if (fieldMeta.isRefer()) {
-      return this.getValue(field)
-    } else if (fieldMeta.isPointer()) {
-      return this.getValue(field)
-    } else if (fieldMeta.isOneOne()) {
-      return this.getValue(field)
-    } else if (fieldMeta.isOneMany()) {
-      return this.getValue(field)
-    } else {
-      throw new RuntimeException("Unknown Field Type")
-    }
+    this.getValue(field)
   }
 
   def set(field: String, value: Object): Object = {
