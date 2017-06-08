@@ -52,7 +52,7 @@ public class Main {
         oms.add(om2);
         person.setOm(oms);
 
-        person = (Person) Orm.convert(person);
+        person = Orm.convert(person);
 
         String json = Orm.stringify(person);
         System.out.println(json);

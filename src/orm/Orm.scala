@@ -43,8 +43,8 @@ object Orm {
     EntityManager.stringifyArray(arr)
   }
 
-  def convert(obj: Object): Object = {
-    EntityManager.convert(obj)
+  def convert[T](obj: T): T = {
+    EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
   }
 
   def main(args: Array[String]): Unit = {
