@@ -24,14 +24,14 @@ public class Main {
         db.rebuild();
         Session session = db.openSession();
 
-        Person person = EntityManager.create(Person.class);
-        Ptr ptr = EntityManager.create(Ptr.class);
-        OO oo = EntityManager.create(OO.class);
-        OM om = EntityManager.create(OM.class);
-        OM om2 = EntityManager.create(OM.class);
+        Person person = new Person();
+        Ptr ptr = new Ptr();
+        OO oo = new OO();
+        OM om = new OM();
+        OM om2 = new OM();
 
         person.setAge(10);
-        person.setName("TOM");
+        person.setName("/TOM");
         person.setBirthday(new Date());
         person.setNowTime(new Date());
         person.setPrice(new BigDecimal(123.45));
@@ -51,6 +51,8 @@ public class Main {
         oms.add(om);
         oms.add(om2);
         person.setOm(oms);
+
+        person = (Person) Orm.convert(person);
 
         String json = Orm.stringify(person);
         System.out.println(json);

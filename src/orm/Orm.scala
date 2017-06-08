@@ -2,6 +2,7 @@ package orm
 
 import java.util
 
+import org.jcp.xml.dsig.internal.dom.DOMExcC14NMethod
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
@@ -40,6 +41,10 @@ object Orm {
 
   def stringifyArray(arr: util.Collection[Object]): String = {
     EntityManager.stringifyArray(arr)
+  }
+
+  def convert(obj: Object): Object = {
+    EntityManager.convert(obj)
   }
 
   def main(args: Array[String]): Unit = {

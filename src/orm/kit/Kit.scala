@@ -26,4 +26,19 @@ object Kit {
   def isGenericType(field: Field): Boolean = {
     field.getGenericType().isInstanceOf[ParameterizedType]
   }
+
+  def newInstance(clazz: Class[_]): Object = {
+    try {
+      return clazz.newInstance().asInstanceOf[Object]
+    } catch {
+      case _: Exception => {
+        clazz.getName() match {
+          case "java.util.Collection" => return new util.ArrayList[Object]
+          case "java.util.List" => return new util.ArrayList[Object]
+          case "java.util.Set" => return new util.HashSet[Object]
+          case _ => throw new RuntimeException(s"Unsupport Collection Type: [${clazz.getName}]")
+        }
+      }
+    }
+  }
 }

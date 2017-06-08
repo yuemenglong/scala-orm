@@ -4,6 +4,7 @@ import java.sql.{Connection, ResultSet}
 import java.util
 
 import orm.entity.{EntityCore, EntityManager}
+import orm.kit.Kit
 import orm.meta.{EntityMeta, OrmMeta}
 
 import scala.collection.mutable.ArrayBuffer
@@ -16,7 +17,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
   val withs = ArrayBuffer[(String, Selector[Object])]()
   var cond: Cond = null
   var on: JoinCond = null
-  var map = Map[String, EntityCore]()
+  var map = Map[String, EntityCore]() // 过滤结果用
 
   def select(field: String): Selector[Object] = {
     require(meta.fieldMap.contains(field))
@@ -190,7 +191,8 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
   def pickRefer(rs: ResultSet, core: EntityCore): Unit = {
     withs.foreach { case (field, selector) => {
       val bCore = selector.pick(rs)
-      if (!meta.fieldMap(field).isOneMany()) {
+      val fieldMeta = meta.fieldMap(field)
+      if (!fieldMeta.isOneMany()) {
         if (bCore != null) {
           val entity = EntityManager.wrap(bCore)
           core.fieldMap += (field -> entity)
@@ -203,7 +205,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
         if (bCore != null) {
           val key = s"${field}@${bCore.getPkey().toString()}"
           if (!map.contains(key) && !core.fieldMap.contains(field)) {
-            core.fieldMap += (field -> new util.ArrayList[Object]())
+            core.fieldMap += (field -> Kit.newInstance(fieldMeta.field.getType))
           }
           if (!map.contains(key)) {
             val list = core.fieldMap(field).asInstanceOf[util.Collection[Object]]
@@ -220,6 +222,12 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
 
 object Selector {
   def from[T](clazz: Class[T]): Selector[T] = {
+    OrmMeta.check()
+    val entityMeta = OrmMeta.entityMap(clazz.getSimpleName())
+    new Selector[T](entityMeta, entityMeta.entity)
+  }
+
+  def createSelect[T](clazz: Class[T]): Selector[T] = {
     OrmMeta.check()
     val entityMeta = OrmMeta.entityMap(clazz.getSimpleName())
     new Selector[T](entityMeta, entityMeta.entity)

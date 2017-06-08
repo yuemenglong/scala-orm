@@ -3,6 +3,7 @@ package modal;
 import orm.lang.anno.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class Person {
     Ign ign = null;
 
     @Ignore
-    List<Ign> igns = null;
+    List<Ign> igns = new ArrayList<Ign>();
 
     @Pointer
     Ptr ptr = null;
@@ -46,7 +47,7 @@ public class Person {
     OO oo = null;
 
     @OneToMany
-    List<OM> om = null;
+    List<OM> om = new ArrayList<OM>();
 
     public Integer getAge() {
         return age;

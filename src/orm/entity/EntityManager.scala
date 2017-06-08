@@ -4,6 +4,7 @@ import java.lang.reflect.Method
 import java.util
 
 import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
+import orm.kit.Kit
 import orm.lang.interfaces.Entity
 import orm.meta.{EntityMeta, FieldMetaTypeKind, OrmMeta}
 
@@ -44,7 +45,7 @@ object EntityManager {
 
   def core(obj: Object): EntityCore = {
     require(obj != null)
-    require(obj.isInstanceOf[Entity])
+    if (!obj.isInstanceOf[Entity]) throw new RuntimeException("Not Entity, Need Use Orm.create/parse To Create Entity")
     val entity = obj.asInstanceOf[Entity]
     return entity.$$core()
   }
@@ -70,10 +71,10 @@ object EntityManager {
     return jsonObj.toString()
   }
 
-  def stringifyArray(arr: util.Collection[Object]): String = {
+  def stringifyArray(arr: util.Collection[_]): String = {
     var ab: ArrayBuffer[JSONObject] = new ArrayBuffer[JSONObject]()
     arr.stream().forEach(item => {
-      ab += stringifyInner(item)
+      ab += stringifyInner(item.asInstanceOf[Object])
     })
     return new JSONArray(ab.toList).toString()
   }
@@ -120,7 +121,7 @@ object EntityManager {
              FieldMetaTypeKind.IGNORE_REFER => parseInner(fieldMeta.refer, value.asInstanceOf[JSONObject])
         case FieldMetaTypeKind.ONE_MANY |
              FieldMetaTypeKind.IGNORE_MANY => {
-          val list = new util.ArrayList[Object]()
+          val list = Kit.newInstance(fieldMeta.field.getType).asInstanceOf[util.Collection[Object]]
           value.asInstanceOf[JSONArray].list.foreach(item => {
             list.add(parseInner(fieldMeta.refer, item.asInstanceOf[JSONObject]))
           })
@@ -132,4 +133,57 @@ object EntityManager {
     val core = new EntityCore(meta, map)
     wrap(core)
   }
+
+  def isEntity(obj: Object): Boolean = {
+    obj.isInstanceOf[Entity]
+  }
+
+  def convert(obj: Object): Object = {
+    if (isEntity(obj)) {
+      //      throw new RuntimeException("Already Entity");
+      return obj
+    }
+    if (!OrmMeta.entityMap.contains(obj.getClass.getSimpleName)) {
+      throw new RuntimeException(s"[${obj.getClass.getSimpleName}] Is Not Entity")
+    }
+    val meta = OrmMeta.entityMap(obj.getClass.getSimpleName)
+    val map: Map[String, Object] = obj.getClass.getDeclaredFields.map(field => {
+      field.setAccessible(true)
+      val name = field.getName
+      val fieldMeta = meta.fieldMap(name)
+      val value = fieldMeta.typeKind match {
+        case FieldMetaTypeKind.BUILT_IN
+             | FieldMetaTypeKind.IGNORE_BUILT_IN
+        => field.get(obj)
+        case FieldMetaTypeKind.REFER
+             | FieldMetaTypeKind.POINTER
+             | FieldMetaTypeKind.ONE_ONE
+             | FieldMetaTypeKind.IGNORE_REFER
+        => convert(field.get(obj))
+        case FieldMetaTypeKind.ONE_MANY
+             | FieldMetaTypeKind.IGNORE_MANY
+        => {
+          val bs = field.get(obj).asInstanceOf[util.Collection[Object]]
+          if (bs == null) {
+            throw new RuntimeException("Collection Must Init To Empty Rather Than Null")
+          }
+          val coll = Kit.newInstance(field.getType()).asInstanceOf[util.Collection[Object]]
+          bs.forEach(b => {
+            coll.add(convert(b))
+          })
+          coll
+        }
+      }
+      (name, value)
+    })(collection.breakOut)
+    val core = new EntityCore(meta, map)
+    return wrap(core)
+  }
+
+  def main(args: Array[String]): Unit = {
+    //    val map = Map[String, Object]("a" -> "/b")
+    //    val obj = new JSONObject(map)
+    //    println(obj.toString())
+  }
+
 }

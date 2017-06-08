@@ -223,9 +223,10 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 object EntityCore {
   def create(meta: EntityMeta): EntityCore = {
     val map: Map[String, Object] = meta.fieldVec.map((field) => {
-      field.isOneMany() match {
-        case false => (field.name, null)
-        case true => (field.name, new util.ArrayList[Object]())
+      field.typeKind match {
+        case FieldMetaTypeKind.ONE_MANY
+             | FieldMetaTypeKind.IGNORE_MANY => (field.name, Kit.newInstance(field.field.getType))
+        case _ => (field.name, null)
       }
     })(collection.breakOut)
     new EntityCore(meta, map)
