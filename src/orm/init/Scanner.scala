@@ -6,7 +6,7 @@ import java.nio.file.Paths
 
 import orm.kit.Kit
 import orm.lang.anno.Entity
-import orm.meta.{EntityMeta, FieldMeta, FieldMetaTypeKind, OrmMeta}
+import orm.meta.{EntityMeta, FieldMeta, OrmMeta}
 
 /**
   * Created by Administrator on 2017/5/16.
@@ -66,6 +66,10 @@ object Scanner {
 
   def fixMeta(): Unit = {
     OrmMeta.entityVec.foreach(entity => {
+      // 检查是否配置主键
+      if(entity.pkey == null){
+        throw new RuntimeException(s"[${entity.entity}] Has No Pkey")
+      }
       // 未标注ignore的字段对应的对象都必须显式标注为entity,也就是已经在orm中
       entity.managedFieldVec().filter(!_.isNormalOrPkey()).foreach(field => {
         if (!OrmMeta.entityMap.contains(field.typeName)) {
