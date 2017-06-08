@@ -121,7 +121,10 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     }
     println(sql)
     val params = validFields.map(item => {
-      core.get(item.name).toString()
+      core.get(item.name) match {
+        case null => "null"
+        case v => v.toString()
+      }
     }).mkString(", ")
     println(s"[Params] => [${params}]")
 
