@@ -28,16 +28,13 @@ object Kit {
   }
 
   def newInstance(clazz: Class[_]): Object = {
-    try {
-      return clazz.newInstance().asInstanceOf[Object]
-    } catch {
-      case _: Exception => {
-        clazz.getName() match {
-          case "java.util.Collection" => return new util.ArrayList[Object]
-          case "java.util.List" => return new util.ArrayList[Object]
-          case "java.util.Set" => return new util.HashSet[Object]
-          case _ => throw new RuntimeException(s"Unsupport Collection Type: [${clazz.getName}]")
-        }
+    clazz.isInterface() match {
+      case false => clazz.newInstance().asInstanceOf[Object]
+      case true => clazz.getName() match {
+        case "java.util.Collection" => return new util.ArrayList[Object]
+        case "java.util.List" => return new util.ArrayList[Object]
+        case "java.util.Set" => return new util.HashSet[Object]
+        case _ => throw new RuntimeException(s"Unsupport Interface Type: [${clazz.getName}]")
       }
     }
   }
