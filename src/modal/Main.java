@@ -19,7 +19,14 @@ import java.util.List;
  */
 public class Main {
     public static void main(String args[]) {
-        Orm.init("");
+        ArrayList clazzList = new ArrayList<String>();
+        clazzList.add("modal.Person");
+        clazzList.add("modal.Ptr");
+        clazzList.add("modal.OO");
+        clazzList.add("modal.OM");
+        clazzList.add("modal.Ign");
+        Orm.init(clazzList);
+
         Db db = Orm.openDb("localhost", 3306, "root", "root", "test");
         db.rebuild();
         Session session = db.openSession();

@@ -14,6 +14,10 @@ object Orm {
     Scanner.scan(path)
   }
 
+  def init(paths: util.Collection[String]): Unit = {
+    Scanner.scan(paths)
+  }
+
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
     require(OrmMeta.entityVec.length > 0)
     return new Db(host, port, user, pwd, db)

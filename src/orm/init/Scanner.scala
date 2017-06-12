@@ -40,6 +40,18 @@ object Scanner {
     fixMeta()
   }
 
+  def scan(paths: java.util.Collection[String]): Unit = {
+    paths.stream().forEach(path=>{
+      // 不是entity的过滤掉
+      val clazz = Class.forName(path)
+      val anno = clazz.getAnnotation[Entity](classOf[Entity])
+      if (anno != null) {
+        analyzeClass(clazz)
+      }
+    })
+    fixMeta()
+  }
+
   def analyzeClass(clazz: Class[_], ignore: Boolean = false): EntityMeta = {
     val ignoreStr = ignore match {
       case true => "Ignore "
