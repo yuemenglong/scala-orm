@@ -139,6 +139,9 @@ object EntityManager {
   }
 
   def convert(obj: Object): Object = {
+    if(obj == null){
+      return null
+    }
     if (isEntity(obj)) {
       //      throw new RuntimeException("Already Entity");
       return obj
