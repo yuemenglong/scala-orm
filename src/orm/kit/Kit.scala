@@ -38,4 +38,20 @@ object Kit {
       }
     }
   }
+
+  def collection[T](list: Seq[T]): util.Collection[T] = {
+    val coll = new util.ArrayList[T]()
+    list.foreach(item => {
+      coll.add(item)
+    })
+    coll
+  }
+
+  def seq[T](coll: util.Collection[T]): Seq[T] = {
+    val ret = new ArrayBuffer[T]
+    coll.forEach(item => {
+      ret += item
+    })
+    ret.toList
+  }
 }

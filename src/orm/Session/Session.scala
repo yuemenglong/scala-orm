@@ -13,9 +13,9 @@ import scala.collection.mutable.ArrayBuffer
   * Created by Administrator on 2017/5/24.
   */
 
-class Session(val conn: Connection) {
-  var cache = new ArrayBuffer[Object]()
-  var closed = false
+class Session(private val conn: Connection) {
+  private var cache = new ArrayBuffer[Object]()
+  private var closed = false
 
   def injectSession(entity: Object, session: Session): Unit = {
     if (entity == null) {

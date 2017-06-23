@@ -2,7 +2,6 @@ package orm
 
 import java.util
 
-import org.jcp.xml.dsig.internal.dom.DOMExcC14NMethod
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
