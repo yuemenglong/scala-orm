@@ -83,7 +83,7 @@ class Session(val conn: Connection) {
 
   def close(): Unit = {
     require(closed == false)
-    flush()
+    //    flush()
     conn.close()
     this.closed = true
   }
