@@ -64,7 +64,7 @@ object Scanner {
     OrmMeta.entityVec += entityMeta
     OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
 
-    clazz.getDeclaredFields.foreach(field => analyzeField(entityMeta, field))
+    Kit.getDeclaredFields(clazz).foreach(field => analyzeField(entityMeta, field))
     entityMeta
   }
 

@@ -2,10 +2,12 @@ package orm
 
 import java.util
 
+import modal.Male
 import org.jcp.xml.dsig.internal.dom.DOMExcC14NMethod
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
+import orm.kit.Kit
 import orm.meta.OrmMeta
 
 object Orm {
@@ -52,6 +54,7 @@ object Orm {
   }
 
   def main(args: Array[String]): Unit = {
-    Orm.init("")
+    //    Orm.init("")
+    Kit.getDeclaredFields(classOf[Male]).foreach(println(_))
   }
 }

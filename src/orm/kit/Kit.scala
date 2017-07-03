@@ -38,4 +38,15 @@ object Kit {
       }
     }
   }
+
+  def getDeclaredFields(clazz: Class[_]): Array[Field] = {
+    val ret = new ArrayBuffer[Field]()
+    clazz.getDeclaredFields.foreach(ret += _)
+    var parent = clazz.getSuperclass
+    while (parent != null) {
+      parent.getDeclaredFields.foreach(ret += _)
+      parent = parent.getSuperclass
+    }
+    ret.toArray
+  }
 }

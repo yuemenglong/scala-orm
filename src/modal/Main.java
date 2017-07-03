@@ -21,6 +21,7 @@ public class Main {
     public static void main(String args[]) {
         ArrayList clazzList = new ArrayList<String>();
         clazzList.add("modal.Person");
+        clazzList.add("modal.Male");
         clazzList.add("modal.Ptr");
         clazzList.add("modal.OO");
         clazzList.add("modal.OM");
@@ -84,7 +85,7 @@ public class Main {
         selector.select("oo");
         selector.select("om");
 
-        ArrayList<Integer> inList = new ArrayList();
+        ArrayList<Integer> inList = new ArrayList<>();
         inList.add(1);
         inList.add(2);
         selector.where(Cond.byIn("id", inList));
@@ -100,7 +101,6 @@ public class Main {
 
         coll = session.query(selector);
         System.out.println(coll.size());
-
 
         session.close();
     }

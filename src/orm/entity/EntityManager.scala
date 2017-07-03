@@ -148,7 +148,7 @@ object EntityManager {
       throw new RuntimeException(s"[${obj.getClass.getSimpleName}] Is Not Entity")
     }
     val meta = OrmMeta.entityMap(obj.getClass.getSimpleName)
-    val map: Map[String, Object] = obj.getClass.getDeclaredFields.map(field => {
+    val map: Map[String, Object] = Kit.getDeclaredFields(obj.getClass).map(field => {
       field.setAccessible(true)
       val name = field.getName
       val fieldMeta = meta.fieldMap(name)
