@@ -171,7 +171,11 @@ object FieldMeta {
   }
 
   def pickTypeName(field: Field): String = {
-    val typeName = Kit.getGenericType(field).getSimpleName()
+    val typeName = if (field.getType.isArray) {
+      field.getType.getSimpleName.replace("[]", "")
+    } else {
+      field.getType.getSimpleName
+    }
     typeName match {
       case "Date" => {
         field.getDeclaredAnnotation(classOf[DateTime]) match {
@@ -196,11 +200,11 @@ object FieldMeta {
            FieldMetaTypeKind.IGNORE_BUILT_IN |
            FieldMetaTypeKind.IGNORE_REFER |
            FieldMetaTypeKind.IGNORE_MANY => {
-        return (null, null)
+        (null, null)
       }
       case FieldMetaTypeKind.REFER => {
         val anno = field.getAnnotation(classOf[Refer])
-        return (anno.left(), anno.right())
+        (anno.left(), anno.right())
       }
       case FieldMetaTypeKind.POINTER => {
         val anno = field.getAnnotation(classOf[Pointer])
@@ -212,7 +216,7 @@ object FieldMeta {
           case "" => "id"
           case _ => anno.right()
         }
-        return (left, right)
+        (left, right)
       }
       case FieldMetaTypeKind.ONE_ONE => {
         val anno = field.getAnnotation(classOf[OneToOne])
@@ -224,7 +228,7 @@ object FieldMeta {
           case "" => entity.entity + "Id"
           case _ => anno.right()
         }
-        return (left, right)
+        (left, right)
       }
       case FieldMetaTypeKind.ONE_MANY => {
         val anno = field.getAnnotation(classOf[OneToMany])
@@ -236,7 +240,7 @@ object FieldMeta {
           case "" => entity.entity + "Id"
           case _ => anno.right()
         }
-        return (left, right)
+        (left, right)
       }
     }
   }
@@ -256,7 +260,7 @@ object FieldMeta {
     if (field.getDeclaredAnnotation(classOf[Ignore]) != null || entity.ignore) {
       if (builtIn) {
         return FieldMetaTypeKind.IGNORE_BUILT_IN
-      } else if (!Kit.isGenericType(field)) {
+      } else if (!field.getType.isArray) {
         return FieldMetaTypeKind.IGNORE_REFER
       } else {
         return FieldMetaTypeKind.IGNORE_MANY
@@ -280,7 +284,7 @@ object FieldMeta {
     if (field.getDeclaredAnnotation(classOf[Ignore]) != null || entity.ignore) {
       return FieldMetaTypeKind.IGNORE_BUILT_IN
     }
-    throw new RuntimeException(s"[${field.getName()}] Must Has A Refer Type")
+    throw new RuntimeException(s"[${field.getName}] Must Has A Refer Type")
   }
 
   def pickIdAuto(field: Field): Boolean = {

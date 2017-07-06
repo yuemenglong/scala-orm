@@ -1,12 +1,11 @@
 package orm.entity
 
 import java.lang.reflect.Method
-import java.util
 
 import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 import orm.kit.Kit
 import orm.lang.interfaces.Entity
-import orm.meta.{EntityMeta, FieldMetaTypeKind, OrmMeta}
+import orm.meta.{FieldMetaTypeKind, OrmMeta}
 
 /**
   * Created by Administrator on 2017/5/18.
@@ -42,7 +41,7 @@ object EntityManager {
 
   def core(obj: Object): EntityCore = {
     require(obj != null)
-    if (!obj.isInstanceOf[Entity]) throw new RuntimeException("Not Entity, Need Use Orm.create/parse To Create Entity")
+    if (!obj.isInstanceOf[Entity]) throw new RuntimeException("Not Entity, Need Use Orm.create/parse/convert To Get Entity")
     val entity = obj.asInstanceOf[Entity]
     entity.$$core()
   }
@@ -56,7 +55,6 @@ object EntityManager {
       return null
     }
     if (isEntity(obj)) {
-      //      throw new RuntimeException("Already Entity");
       return obj
     }
     if (!OrmMeta.entityMap.contains(obj.getClass.getSimpleName)) {
@@ -78,16 +76,11 @@ object EntityManager {
         => convert(field.get(obj))
         case FieldMetaTypeKind.ONE_MANY
              | FieldMetaTypeKind.IGNORE_MANY
-        =>
-          val bs = field.get(obj).asInstanceOf[util.Collection[Object]]
+        => val bs = field.get(obj).asInstanceOf[Array[Object]]
           if (bs == null) {
-            throw new RuntimeException("Collection Must Init To Empty Rather Than Null")
+            throw new RuntimeException("Array Must Init To Empty Rather Than Null")
           }
-          val coll = Kit.newInstance(field.getType).asInstanceOf[util.Collection[Object]]
-          bs.forEach(b => {
-            coll.add(convert(b))
-          })
-          coll
+          bs.map(convert)
       }
       (name, value)
     })(collection.breakOut)

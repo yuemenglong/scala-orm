@@ -1,7 +1,6 @@
 package orm.Session
 
 import java.sql.Connection
-import java.util
 
 import orm.entity.EntityManager
 import orm.operate.{Executor, Selector}
@@ -20,9 +19,8 @@ class Session(val conn: Connection) {
     if (entity == null) {
       return
     }
-    if (entity.isInstanceOf[util.Collection[_]]) {
-      val coll = entity.asInstanceOf[util.Collection[Object]]
-      coll.forEach(item => {
+    if (entity.getClass.isArray) {
+      entity.asInstanceOf[Array[Object]].foreach(item => {
         val core = EntityManager.core(item)
         core.setSession(this)
         injectSession(item, session)
@@ -44,19 +42,19 @@ class Session(val conn: Connection) {
     require(entity != null)
     val ret = executor.execute(conn)
     injectSession(entity, this)
-     ret
+    ret
   }
 
-  def query[T](selector: Selector[T]): util.Collection[T] = {
+  def query[T](selector: Selector[T]): Array[T] = {
     val ret = selector.query(conn)
     injectSession(ret, this)
-     ret
+    ret
   }
 
   def first[T](selector: Selector[T]): T = {
     val ret = selector.first(conn)
     injectSession(ret.asInstanceOf[Object], this)
-     ret
+    ret
   }
 
   def beginTransaction(): Transaction = {

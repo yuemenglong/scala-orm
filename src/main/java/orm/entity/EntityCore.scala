@@ -1,16 +1,12 @@
 package orm.entity
 
 import java.lang.reflect.Method
-import java.util
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 import net.sf.cglib.proxy.MethodProxy
 import orm.Session.Session
 import orm.kit.Kit
 import orm.meta.{EntityMeta, FieldMetaTypeKind}
-
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by Administrator on 2017/5/18.
@@ -99,32 +95,27 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   }
 
   def setOneMany(field: String, value: Object): Unit = {
-    require(value != null)
-    val a = this;
+    require(value != null && value.getClass.isArray)
+    val a = this
     val fieldMeta = a.meta.fieldMap(field)
-    val coll = value.asInstanceOf[java.util.Collection[Object]]
-    var newIds = Set[String]()
-    coll.stream().forEach(item => {
-      EntityManager.core(item).getPkey() match {
-        case null => {}
-        case pkey: Object => {
-          newIds += pkey.toString
-        }
-      }
-    })
-    a.fieldMap.contains(field) match {
-      case false => {}
-      case true => a.fieldMap(field).asInstanceOf[util.Collection[Object]].forEach(item => {
+    val arr = value.asInstanceOf[Array[Object]]
+    // 新id的集合，用来判断老数据是否需要断开id
+    val newIds: Set[String] = arr.map(EntityManager.core(_).getPkey())
+      .filter(_ != null)
+      .map(_.toString)(collection.breakOut)
+    // 老数据断开id
+    if (a.fieldMap.contains(field)) {
+      a.fieldMap(field).asInstanceOf[Array[Object]].foreach(item => {
         val core = EntityManager.core(item)
         // 不在新数组里，说明关系断开了
-        if (core.getPkey() != null && !newIds.contains(core.getPkey().toString())) {
+        if (core.getPkey() != null && !newIds.contains(core.getPkey().toString)) {
           // oldb.a_id = null
           core.fieldMap += ((fieldMeta.right, null))
           addSessionCache(item)
         }
       })
     }
-    coll.stream().forEach(item => {
+    arr.foreach(item => {
       // b.a_id = a.id
       val b = EntityManager.core(item)
       b.syncField(fieldMeta.right, a, fieldMeta.left)
@@ -180,27 +171,23 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         }
         case FieldMetaTypeKind.ONE_MANY |
              FieldMetaTypeKind.IGNORE_MANY => {
-          val bs = this.fieldMap(field.name).asInstanceOf[util.Collection[Object]]
-          val joins = new ArrayBuffer[String]()
-          bs.forEach(b => {
-            joins += b.toString()
-          })
-          val content = joins.mkString(", ")
-          s"${field.name}: [${content}]"
+          val content = this.fieldMap(field.name).asInstanceOf[Array[Object]]
+            .map(_.toString).mkString(", ")
+          s"${field.name}: [$content]"
         }
       }
     }).mkString(", ")
-    s"{${content}}"
+    s"{$content}"
   }
 
   def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-    if (method.getName() == coreFn) {
+    if (method.getName == coreFn) {
       return this
     }
-    if (method.getName() == "toString") {
+    if (method.getName == "toString") {
       return this.toString()
     }
-    val matcher = pattern.matcher(method.getName())
+    val matcher = pattern.matcher(method.getName)
     if (!matcher.matches()) {
       return proxy.invokeSuper(obj, args)
     }
@@ -212,7 +199,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       return proxy.invokeSuper(obj, args)
     }
 
-    return op match {
+    op match {
       case "get" => this.get(field)
       case "set" => this.set(field, args(0))
       case "clear" => throw new RuntimeException("")
@@ -225,7 +212,7 @@ object EntityCore {
     val map: Map[String, Object] = meta.fieldVec.map((field) => {
       field.typeKind match {
         case FieldMetaTypeKind.ONE_MANY
-             | FieldMetaTypeKind.IGNORE_MANY => (field.name, Kit.newInstance(field.field.getType))
+             | FieldMetaTypeKind.IGNORE_MANY => (field.name, Array[Object]())
         case _ => (field.name, null)
       }
     })(collection.breakOut)

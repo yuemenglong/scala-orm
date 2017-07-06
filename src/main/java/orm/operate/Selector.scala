@@ -1,10 +1,8 @@
 package orm.operate
 
 import java.sql.{Connection, ResultSet}
-import java.util
 
 import orm.entity.{EntityCore, EntityManager}
-import orm.kit.Kit
 import orm.meta.{EntityMeta, OrmMeta}
 
 import scala.collection.mutable.ArrayBuffer
@@ -14,18 +12,22 @@ import scala.collection.mutable.ArrayBuffer
   */
 class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[_] = null) {
   require(meta != null)
-  val withs = ArrayBuffer[(String, Selector[Object])]()
-  var cond: Cond = null
-  var on: JoinCond = null
-  var map = Map[String, EntityCore]() // 过滤结果用
+  val withs: ArrayBuffer[(String, Selector[Object])] = ArrayBuffer[(String, Selector[Object])]()
+  var cond: Cond = _
+  var on: JoinCond = _
+  // 过滤结果用
+  // 1. 该表的对象 pkey
+  // 2. 与该表有一对多关系的对象 field@pkey
+  // 3. 最终的结果集 @pkey
+  var filterMap: Map[String, EntityCore] = Map[String, EntityCore]()
 
   def select(field: String): Selector[Object] = {
     require(meta.fieldMap.contains(field))
     val fieldMeta = meta.fieldMap(field)
     require(!fieldMeta.isNormalOrPkey())
-    val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_${field}", this)
+    val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_$field", this)
     this.withs += ((field, selector))
-    return selector
+    selector
   }
 
   def where(cond: Cond): Selector[T] = {
@@ -35,7 +37,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
   }
 
   private def reset(): Unit = {
-    map = Map()
+    filterMap = Map()
     withs.foreach { case (_, selector) =>
       selector.reset()
     }
@@ -127,7 +129,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     s"SELECT\n\t${columns}\nFROM\n\t${tables}\nWHERE\n\t${cond}"
   }
 
-  def query(conn: Connection): util.Collection[T] = {
+  def query(conn: Connection): Array[T] = {
     val sql = this.getSql()
     println(sql)
     val params = this.getParams().map(_.toString()).mkString(", ")
@@ -138,26 +140,26 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     }
     }
     val rs = stmt.executeQuery()
-    val ret = new util.ArrayList[T]()
+    var ret = ArrayBuffer[Object]()
     while (rs.next()) {
       val core = this.pick(rs)
       val key = s"@${core.getPkey()}"
-      if (!map.contains(key)) {
-        ret.add(EntityManager.wrap(core).asInstanceOf[T])
+      if (!filterMap.contains(key)) {
+        ret += EntityManager.wrap(core)
       }
-      map += (key -> core)
+      filterMap += (key -> core)
     }
     rs.close()
     stmt.close()
     reset()
-    return ret
+    ret.toArray.asInstanceOf[Array[T]]
   }
 
   def first(conn: Connection): T = {
-    val coll = query(conn)
-    coll.size() match {
+    val arr = query(conn)
+    arr.length match {
       case 0 => null.asInstanceOf[T]
-      case _ => coll.iterator().next()
+      case _ => arr(0)
     }
   }
 
@@ -167,13 +169,13 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
       return null
     }
     pickRefer(rs, core)
-    return core
+    core
   }
 
   def pickSelf(rs: ResultSet): EntityCore = {
     val core = new EntityCore(meta, Map())
     meta.managedFieldVec().filter(_.isNormalOrPkey()).foreach(field => {
-      val label = s"${alias}$$${field.name}"
+      val label = s"$alias$$${field.name}"
       val value = rs.getObject(label)
       core.fieldMap += (field.name -> value)
     })
@@ -181,11 +183,11 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     if (key == null) {
       return null
     }
-    if (map.contains(key.toString())) {
-      return map(key.toString())
+    if (filterMap.contains(key.toString)) {
+      return filterMap(key.toString)
     }
-    map += (key.toString() -> core)
-    return core
+    filterMap += (key.toString -> core)
+    core
   }
 
   def pickRefer(rs: ResultSet, core: EntityCore): Unit = {
@@ -203,15 +205,17 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
       else {
         // 一对多的情况
         if (bCore != null) {
-          val key = s"${field}@${bCore.getPkey().toString()}"
-          if (!map.contains(key) && !core.fieldMap.contains(field)) {
-            core.fieldMap += (field -> Kit.newInstance(fieldMeta.field.getType))
+          val b = EntityManager.wrap(bCore)
+          val key = s"$field@${bCore.getPkey().toString}"
+          if (!filterMap.contains(key) && !core.fieldMap.contains(field)) {
+            // 没有就创建
+            core.fieldMap += (field -> Array[Object](b))
+          } else if (!filterMap.contains(key)) {
+            // 有了就追加
+            val arr = core.fieldMap(field).asInstanceOf[Array[Object]] ++ Array[Object](b)
+            core.fieldMap += (field -> arr)
           }
-          if (!map.contains(key)) {
-            val list = core.fieldMap(field).asInstanceOf[util.Collection[Object]]
-            list.add(EntityManager.wrap(bCore))
-          }
-          map += (key -> bCore)
+          filterMap += (key -> bCore)
         }
       }
     }

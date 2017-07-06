@@ -3,9 +3,7 @@ package test.model;
 import orm.lang.anno.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Administrator on 2017/5/17.
@@ -38,7 +36,7 @@ public class Obj {
     Ign ign = null;
 
     @Ignore
-    List<Ign> igns = new ArrayList<Ign>();
+    Ign[] igns = new Ign[0];
 
     @Pointer
     Ptr ptr = null;
@@ -47,7 +45,7 @@ public class Obj {
     OO oo = null;
 
     @OneToMany
-    List<OM> om = new ArrayList<OM>();
+    OM[] om = new OM[0];
 
     public Integer getAge() {
         return age;
@@ -87,14 +85,6 @@ public class Obj {
 
     public void setOo(OO oo) {
         this.oo = oo;
-    }
-
-    public List<OM> getOm() {
-        return om;
-    }
-
-    public void setOm(List<OM> om) {
-        this.om = om;
     }
 
     public Date getBirthday() {
@@ -145,11 +135,19 @@ public class Obj {
         this.ign = ign;
     }
 
-    public List<Ign> getIgns() {
+    public Ign[] getIgns() {
         return igns;
     }
 
-    public void setIgns(List<Ign> igns) {
+    public void setIgns(Ign[] igns) {
         this.igns = igns;
+    }
+
+    public OM[] getOm() {
+        return om;
+    }
+
+    public void setOm(OM[] om) {
+        this.om = om;
     }
 }

@@ -1,10 +1,9 @@
 package orm.operate
 
 import java.sql.{Connection, Statement}
-import java.util
 
 import orm.entity.{EntityCore, EntityManager}
-import orm.meta.{EntityMeta, OrmMeta}
+import orm.meta.EntityMeta
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -230,23 +229,21 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
     }.foreach { case (field, ex) => {
-      val bs = core.fieldMap(field).asInstanceOf[util.Collection[Object]]
-      bs.forEach(b => {
-        spec.contains(b) match {
-          case true => {
-            val specEx = spec(b)
-            if (specEx != null) {
-              ret += specEx.execute(b, conn)
-            }
+      val bs = core.fieldMap(field).asInstanceOf[Array[Object]]
+      bs.foreach(b => {
+        // 配置了特殊处理的方法
+        if (spec.contains(b)) {
+          val specEx = spec(b)
+          if (specEx != null) {
+            ret += specEx.execute(b, conn)
           }
-          case false => {
-            // b.a_id = a.id
-            val fieldMeta = core.meta.fieldMap(field)
-            val bCore = EntityManager.core(b)
-            bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
-            // insert(b)
-            ret += ex.execute(b, conn)
-          }
+        } else {
+          // b.a_id = a.id
+          val fieldMeta = core.meta.fieldMap(field)
+          val bCore = EntityManager.core(b)
+          bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
+          // insert(b)
+          ret += ex.execute(b, conn)
         }
       })
     }

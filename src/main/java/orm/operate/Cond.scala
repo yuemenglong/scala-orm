@@ -1,8 +1,5 @@
 package orm.operate
 
-import java.util
-
-import orm.kit.Kit
 import orm.meta.EntityMeta
 
 import scala.collection.mutable.ArrayBuffer
@@ -49,10 +46,10 @@ class Cond {
   }
 
   def toSql(alias: String, meta: EntityMeta): String = {
-    if (items.length == 0) {
+    if (items.isEmpty) {
       return null
     }
-    return items.map(item => item.toSql(alias, meta)).mkString("\n\tAND ")
+    items.map(item => item.toSql(alias, meta)).mkString("\n\tAND ")
   }
 
   def toParams(): Array[Object] = {
@@ -164,18 +161,18 @@ class Cond {
   }
 
   class In(val field: String, val param: Object) extends CondItem {
-    require(param.isInstanceOf[util.Collection[_]])
-    val coll = param.asInstanceOf[util.Collection[Object]]
+    require(param.getClass.isArray)
+    val arr: Array[Object] = param.asInstanceOf[Array[Object]]
 
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      val placeholder = (1 to coll.size()).map(_ => "?").mkString(", ")
-      s"${alias}.${column} in (${placeholder})"
+      val placeholder = (1 to arr.length).map(_ => "?").mkString(", ")
+      s"$alias.$column in ($placeholder)"
     }
 
     override def toParams(): Array[Object] = {
       val ret = new ArrayBuffer[Object]()
-      coll.forEach(item => {
+      arr.foreach(item => {
         ret += item
       })
       ret.toArray

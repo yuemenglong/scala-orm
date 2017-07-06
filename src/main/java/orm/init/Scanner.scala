@@ -101,7 +101,7 @@ object Scanner {
       }).foreach(fieldMeta => {
         // 放在foreach而不是filter里防止一个实体被多次scan
         if (!OrmMeta.entityMap.contains(fieldMeta.typeName)) {
-          val clazz = Kit.getGenericType(fieldMeta.field)
+          val clazz = fieldMeta.field.getType
           val entityMeta = analyzeClass(clazz, ignore = true)
           entityVec += entityMeta // 需要加入队尾再次循环
         }

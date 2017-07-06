@@ -13,7 +13,6 @@ import test.model.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -33,7 +32,7 @@ public class SimpleTest {
         clazzList.add("test.model.OO");
         clazzList.add("test.model.OM");
         clazzList.add("test.model.Ign");
-        Orm.init(clazzList);
+        Orm.init(clazzList.toArray(new String[0]));
         db = openDb();
         db.rebuild();
     }
@@ -71,10 +70,7 @@ public class SimpleTest {
         // 初始化关系
         person.setPtr(ptr);
         person.setOo(oo);
-        List<OM> oms = person.getOm();
-        oms.add(om);
-        oms.add(om2);
-        person.setOm(oms);
+        person.setOm(new OM[]{om, om2});
 
         // insert
         person = Orm.convert(person);
@@ -101,19 +97,19 @@ public class SimpleTest {
         ArrayList<Integer> inList = new ArrayList<Integer>();
         inList.add(1);
         inList.add(2);
-        selector.where(Cond.byIn("id", inList));
+        selector.where(Cond.byIn("id", inList.toArray(new Integer[0])));
         String sql = selector.getSql();
-        Collection coll = session.query(selector);
-        for (Object obj : coll) {
-            System.out.println(obj);
-        }
-
-        ex = Executor.createDelete(person);
-        ret = session.execute(ex);
-        System.out.println(ret);
-
-        coll = session.query(selector);
-        System.out.println(coll.size());
+//        session.query(selector);
+//        for (Object obj : coll) {
+//            System.out.println(obj);
+//        }
+//
+//        ex = Executor.createDelete(person);
+//        ret = session.execute(ex);
+//        System.out.println(ret);
+//
+//        coll = session.query(selector);
+//        System.out.println(coll.size());
 
         session.close();
     }

@@ -1,13 +1,10 @@
 package orm
 
-import java.util
 
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.meta.OrmMeta
-
-import scala.collection.mutable.ArrayBuffer
 
 object Orm {
 
@@ -18,12 +15,6 @@ object Orm {
 
   def init(paths: Array[String]): Unit = {
     Scanner.scan(paths)
-  }
-
-  def init(paths: util.Collection[String]): Unit = {
-    val ab = ArrayBuffer[String]()
-    paths.forEach(p => ab += p)
-    Scanner.scan(ab.toArray)
   }
 
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
