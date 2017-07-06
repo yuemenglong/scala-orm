@@ -1,4 +1,4 @@
-package modal;
+package model;
 
 import orm.lang.anno.Entity;
 

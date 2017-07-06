@@ -1,4 +1,4 @@
-package modal;
+package model;
 
 import orm.lang.anno.Entity;
 import orm.lang.anno.Id;
@@ -7,7 +7,7 @@ import orm.lang.anno.Id;
  * Created by Administrator on 2017/5/19.
  */
 @Entity
-public class Ptr {
+public class OM {
     @Id(auto = true)
     private Long id;
 

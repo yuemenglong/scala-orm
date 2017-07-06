@@ -2,7 +2,7 @@ package orm
 
 import java.util
 
-import modal.Male
+import model.Male
 import org.jcp.xml.dsig.internal.dom.DOMExcC14NMethod
 import orm.db.Db
 import orm.entity.EntityManager
@@ -31,22 +31,6 @@ object Orm {
 
   def empty[T](clazz: Class[T]): T = {
     EntityManager.empty(clazz)
-  }
-
-  def parse[T](clazz: Class[T], json: String): T = {
-    EntityManager.parse[T](clazz, json)
-  }
-
-  def parseArray[T](clazz: Class[T], json: String): util.Collection[T] = {
-    EntityManager.parseArray[T](clazz, json)
-  }
-
-  def stringify(obj: Object): String = {
-    EntityManager.stringify(obj)
-  }
-
-  def stringifyArray(arr: util.Collection[Object]): String = {
-    EntityManager.stringifyArray(arr)
   }
 
   def convert[T](obj: T): T = {

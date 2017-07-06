@@ -3,8 +3,6 @@ package orm.kit
 import java.lang.reflect.{Field, ParameterizedType}
 import java.util
 
-import orm.meta.FieldMetaTypeKind
-
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -17,25 +15,27 @@ object Kit {
   }
 
   def getGenericType(field: Field): Class[_] = {
-    isGenericType(field) match {
-      case false => field.getType()
-      case true => field.getGenericType().asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]]
+    if (isGenericType(field)) {
+      field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]]
+    } else {
+      field.getType
     }
   }
 
   def isGenericType(field: Field): Boolean = {
-    field.getGenericType().isInstanceOf[ParameterizedType]
+    field.getGenericType.isInstanceOf[ParameterizedType]
   }
 
   def newInstance(clazz: Class[_]): Object = {
-    clazz.isInterface() match {
-      case false => clazz.newInstance().asInstanceOf[Object]
-      case true => clazz.getName() match {
-        case "java.util.Collection" => return new util.ArrayList[Object]
-        case "java.util.List" => return new util.ArrayList[Object]
-        case "java.util.Set" => return new util.HashSet[Object]
+    if (clazz.isInterface) {
+      clazz.getName match {
+        case "java.util.Collection" => new util.ArrayList[Object]
+        case "java.util.List" => new util.ArrayList[Object]
+        case "java.util.Set" => new util.HashSet[Object]
         case _ => throw new RuntimeException(s"Unsupport Interface Type: [${clazz.getName}]")
       }
+    } else {
+      clazz.newInstance().asInstanceOf[Object]
     }
   }
 

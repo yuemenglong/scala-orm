@@ -1,9 +1,8 @@
-package modal;
+package model;
 
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.entity.EntityManager;
 import orm.operate.Cond;
 import orm.operate.Executor;
 import orm.operate.Selector;
@@ -19,13 +18,13 @@ import java.util.List;
  */
 public class Main {
     public static void main(String args[]) {
-        ArrayList clazzList = new ArrayList<String>();
-        clazzList.add("modal.Person");
-        clazzList.add("modal.Male");
-        clazzList.add("modal.Ptr");
-        clazzList.add("modal.OO");
-        clazzList.add("modal.OM");
-        clazzList.add("modal.Ign");
+        ArrayList<String> clazzList = new ArrayList<String>();
+        clazzList.add("model.Person");
+        clazzList.add("model.Male");
+        clazzList.add("model.Ptr");
+        clazzList.add("model.OO");
+        clazzList.add("model.OM");
+        clazzList.add("model.Ign");
         Orm.init(clazzList);
 
         Db db = Orm.openDb("localhost", 3306, "root", "root", "test");
@@ -62,10 +61,10 @@ public class Main {
 
         person = Orm.convert(person);
 
-        String json = Orm.stringify(person);
-        System.out.println(json);
-        person = Orm.parse(Person.class, json);
-        System.out.println(person);
+//        String json = Orm.stringify(person);
+//        System.out.println(json);
+//        person = Orm.parse(Person.class, json);
+//        System.out.println(person);
 
         Executor ex = Executor.createInsert(person);
 

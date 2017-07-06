@@ -150,7 +150,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     if (session == null) {
       return
     }
-    require(!session.isClosed())
+    require(!session.isClosed)
     session.addCache(obj)
   }
 

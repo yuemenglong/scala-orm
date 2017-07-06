@@ -11,12 +11,12 @@ import orm.operate.Table
   */
 class Db(val host: String, val port: Int, val username: String, val password: String, val db: String) {
   val driver = "com.mysql.jdbc.Driver"
-  val url = s"jdbc:mysql://${host}:${port}/${db}"
+  val url = s"jdbc:mysql://$host:$port/$db"
   Class.forName(driver)
 
-  def getConn(): Connection = {
+  def openConnection(): Connection = {
     try {
-      return DriverManager.getConnection(url, username, password)
+      DriverManager.getConnection(url, username, password)
     } catch {
       case e: Throwable => throw new RuntimeException(s"[Open Connection Error] ${e.getMessage}")
     }
@@ -44,18 +44,18 @@ class Db(val host: String, val port: Int, val username: String, val password: St
   }
 
   def openSession(): Session = {
-    new Session(getConn())
+    new Session(openConnection())
   }
 
   def execute(sql: String): Int = execute(sql, Array())
 
   def execute(sql: String, params: Array[Object]): Int = {
-    val conn = this.getConn()
+    val conn = this.openConnection()
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (p, i) => stmt.setObject(i + 1, p) }
     val ret = stmt.executeUpdate()
     conn.close()
-    return ret
+    ret
   }
 
 }
