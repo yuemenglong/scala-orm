@@ -41,8 +41,8 @@ object Scanner {
     fixMeta()
   }
 
-  def scan(paths: java.util.Collection[String]): Unit = {
-    paths.stream().forEach(path => {
+  def scan(paths: Array[String]): Unit = {
+    paths.foreach(path => {
       // 不是entity的过滤掉
       val clazz = Class.forName(path)
       val anno = clazz.getDeclaredAnnotation[Entity](classOf[Entity])

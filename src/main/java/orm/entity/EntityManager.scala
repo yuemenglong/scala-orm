@@ -8,9 +8,6 @@ import orm.kit.Kit
 import orm.lang.interfaces.Entity
 import orm.meta.{EntityMeta, FieldMetaTypeKind, OrmMeta}
 
-import scala.collection.mutable.ArrayBuffer
-import scala.util.parsing.json.{JSON, JSONArray, JSONObject}
-
 /**
   * Created by Administrator on 2017/5/18.
   */

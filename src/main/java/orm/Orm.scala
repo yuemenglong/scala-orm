@@ -3,12 +3,13 @@ package orm
 import java.util
 
 import model.Male
-import org.jcp.xml.dsig.internal.dom.DOMExcC14NMethod
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.kit.Kit
 import orm.meta.OrmMeta
+
+import scala.collection.mutable.ArrayBuffer
 
 object Orm {
 
@@ -16,13 +17,20 @@ object Orm {
     Scanner.scan(path)
   }
 
-  def init(paths: util.Collection[String]): Unit = {
+
+  def init(paths: Array[String]): Unit = {
     Scanner.scan(paths)
+  }
+
+  def init(paths: util.Collection[String]): Unit = {
+    val ab = ArrayBuffer[String]()
+    paths.forEach(p => ab += p)
+    Scanner.scan(ab.toArray)
   }
 
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
     require(OrmMeta.entityVec.length > 0)
-    return new Db(host, port, user, pwd, db)
+    new Db(host, port, user, pwd, db)
   }
 
   def create[T](clazz: Class[T]): T = {

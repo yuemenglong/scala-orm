@@ -84,7 +84,7 @@ public class Main {
         selector.select("oo");
         selector.select("om");
 
-        ArrayList<Integer> inList = new ArrayList<>();
+        ArrayList<Integer> inList = new ArrayList<Integer>();
         inList.add(1);
         inList.add(2);
         selector.where(Cond.byIn("id", inList));
