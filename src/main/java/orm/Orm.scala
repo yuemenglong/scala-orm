@@ -2,11 +2,9 @@ package orm
 
 import java.util
 
-import model.Male
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
-import orm.kit.Kit
 import orm.meta.OrmMeta
 
 import scala.collection.mutable.ArrayBuffer
@@ -43,10 +41,5 @@ object Orm {
 
   def convert[T](obj: T): T = {
     EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
-  }
-
-  def main(args: Array[String]): Unit = {
-    //    Orm.init("")
-    Kit.getDeclaredFields(classOf[Male]).foreach(println(_))
   }
 }

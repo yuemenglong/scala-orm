@@ -1,4 +1,4 @@
-package model;
+package test.model;
 
 import orm.lang.anno.*;
 
@@ -11,7 +11,7 @@ import java.util.List;
  * Created by Administrator on 2017/5/17.
  */
 @Entity
-public class Person {
+public class Obj {
     @Id(auto = true)
     Long id = null;
 
