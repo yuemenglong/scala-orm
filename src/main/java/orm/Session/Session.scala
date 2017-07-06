@@ -6,6 +6,7 @@ import orm.entity.EntityManager
 import orm.operate.{Executor, Selector}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/24.
@@ -45,16 +46,16 @@ class Session(val conn: Connection) {
     ret
   }
 
-  def query[T](selector: Selector[T]): Array[T] = {
+  def query[T: ClassTag](selector: Selector[T]): Array[T] = {
     val ret = selector.query(conn)
     injectSession(ret, this)
-    ret
+    ret.map(item => item.asInstanceOf[T])
   }
 
   def first[T](selector: Selector[T]): T = {
     val ret = selector.first(conn)
     injectSession(ret.asInstanceOf[Object], this)
-    ret
+    ret.asInstanceOf[T]
   }
 
   def beginTransaction(): Transaction = {

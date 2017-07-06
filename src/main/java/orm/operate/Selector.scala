@@ -129,7 +129,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     s"SELECT\n\t${columns}\nFROM\n\t${tables}\nWHERE\n\t${cond}"
   }
 
-  def query(conn: Connection): Array[T] = {
+  def query(conn: Connection): Array[Object] = {
     val sql = this.getSql()
     println(sql)
     val params = this.getParams().map(_.toString()).mkString(", ")
@@ -152,13 +152,13 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     rs.close()
     stmt.close()
     reset()
-    ret.toArray.asInstanceOf[Array[T]]
+    ret.toArray
   }
 
-  def first(conn: Connection): T = {
+  def first(conn: Connection): Object = {
     val arr = query(conn)
     arr.length match {
-      case 0 => null.asInstanceOf[T]
+      case 0 => null
       case _ => arr(0)
     }
   }
