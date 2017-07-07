@@ -46,10 +46,10 @@ class Session(val conn: Connection) {
     ret
   }
 
-  def query[T: ClassTag](selector: Selector[T]): Array[T] = {
+  def query[T](selector: Selector[T]): Array[T] = {
     val ret = selector.query(conn)
     injectSession(ret, this)
-    ret.map(item => item.asInstanceOf[T])
+    ret
   }
 
   def first[T](selector: Selector[T]): T = {

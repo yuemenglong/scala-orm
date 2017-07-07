@@ -6,6 +6,7 @@ import orm.entity.{EntityCore, EntityManager}
 import orm.meta.{EntityMeta, OrmMeta}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/22.
@@ -15,6 +16,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
   val withs: ArrayBuffer[(String, Selector[Object])] = ArrayBuffer[(String, Selector[Object])]()
   var cond: Cond = _
   var on: JoinCond = _
+
   // 过滤结果用
   // 1. 该表的对象 pkey
   // 2. 与该表有一对多关系的对象 field@pkey
@@ -36,11 +38,33 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     this
   }
 
-  private def reset(): Unit = {
+  private def resetFilterMap(): Unit = {
     filterMap = Map()
     withs.foreach { case (_, selector) =>
-      selector.reset()
+      selector.resetFilterMap()
     }
+  }
+
+  private def bufferToArray(ab: ArrayBuffer[Object], ct: ClassTag[Object]): Array[Object] = {
+    ab.map(item => {
+      val core = EntityManager.core(item)
+      val pairs: Array[(String, Array[Object])] = core.fieldMap.toArray.map(pair => {
+        val (name, value) = pair
+        value match {
+          case ab: ArrayBuffer[_] =>
+            val abo = ab.asInstanceOf[ArrayBuffer[Object]]
+            val entityName = core.meta.fieldMap(name).typeName
+            val entityClass = OrmMeta.entityMap(entityName).clazz
+            val ct = ClassTag(entityClass).asInstanceOf[ClassTag[Object]]
+            val array = bufferToArray(abo, ct)
+            (name, array)
+          case _ =>
+            null
+        }
+      }).filter(_ != null)
+      pairs.foreach(p => core.fieldMap += p)
+      item
+    }).toArray(ct)
   }
 
   def getColumns(): String = {
@@ -129,7 +153,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     s"SELECT\n\t${columns}\nFROM\n\t${tables}\nWHERE\n\t${cond}"
   }
 
-  def query(conn: Connection): Array[Object] = {
+  def query(conn: Connection): Array[T] = {
     val sql = this.getSql()
     println(sql)
     val params = this.getParams().map(_.toString()).mkString(", ")
@@ -140,25 +164,25 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     }
     }
     val rs = stmt.executeQuery()
-    var ret = ArrayBuffer[Object]()
+    var ab = ArrayBuffer[Object]()
     while (rs.next()) {
       val core = this.pick(rs)
       val key = s"@${core.getPkey()}"
       if (!filterMap.contains(key)) {
-        ret += EntityManager.wrap(core)
+        ab += EntityManager.wrap(core)
       }
       filterMap += (key -> core)
     }
     rs.close()
     stmt.close()
-    reset()
-    ret.toArray
+    resetFilterMap()
+    bufferToArray(ab, ClassTag(meta.clazz)).asInstanceOf[Array[T]]
   }
 
-  def first(conn: Connection): Object = {
+  def first(conn: Connection): T = {
     val arr = query(conn)
     arr.length match {
-      case 0 => null
+      case 0 => null.asInstanceOf[T]
       case _ => arr(0)
     }
   }
@@ -209,11 +233,12 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
           val key = s"$field@${bCore.getPkey().toString}"
           if (!filterMap.contains(key) && !core.fieldMap.contains(field)) {
             // 没有就创建
-            core.fieldMap += (field -> Array[Object](b))
-          } else if (!filterMap.contains(key)) {
+            core.fieldMap += (field -> new ArrayBuffer[Object]())
+          }
+          if (!filterMap.contains(key)) {
             // 有了就追加
-            val arr = core.fieldMap(field).asInstanceOf[Array[Object]] ++ Array[Object](b)
-            core.fieldMap += (field -> arr)
+            val arr = core.fieldMap(field).asInstanceOf[ArrayBuffer[Object]]
+            arr += b
           }
           filterMap += (key -> bCore)
         }

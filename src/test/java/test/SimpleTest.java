@@ -86,10 +86,11 @@ public class SimpleTest {
         person.setAge(20);
         ex = Executor.createUpdate(person);
         ex.where(Cond.byEq("id", person.getId()));
-        session.execute(ex);
+        ret = session.execute(ex);
+        Assert.assertEquals(ret, 1);
 
         // select
-        Selector selector = Selector.from(Obj.class);
+        Selector<Obj> selector = Selector.from(Obj.class);
         selector.select("ptr");
         selector.select("oo");
         selector.select("om");
@@ -98,18 +99,23 @@ public class SimpleTest {
         inList.add(1);
         inList.add(2);
         selector.where(Cond.byIn("id", inList.toArray(new Integer[0])));
-        String sql = selector.getSql();
-//        session.query(selector);
-//        for (Object obj : coll) {
-//            System.out.println(obj);
-//        }
-//
-//        ex = Executor.createDelete(person);
-//        ret = session.execute(ex);
-//        System.out.println(ret);
-//
-//        coll = session.query(selector);
-//        System.out.println(coll.size());
+        Obj[] res = (Obj[]) session.query(selector);
+        Assert.assertEquals(res.length, 1);
+        Assert.assertEquals(res[0].getId().intValue(), 1);
+        Assert.assertEquals(res[0].getAge().intValue(), 20);
+        Assert.assertEquals(res[0].getPtr().getValue().intValue(), 10);
+        Assert.assertEquals(res[0].getOo().getValue().intValue(), 100);
+        Assert.assertEquals(res[0].getOm()[0].getValue().intValue(), 1000);
+        Assert.assertEquals(res[0].getOm()[1].getValue().intValue(), 2000);
+
+        // delete
+        ex = Executor.createDelete(person);
+        ret = session.execute(ex);
+        Assert.assertEquals(ret, 1);
+
+        // delete then select
+        Obj obj = session.first(selector);
+        Assert.assertEquals(obj, null);
 
         session.close();
     }
