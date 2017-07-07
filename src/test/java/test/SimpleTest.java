@@ -119,4 +119,58 @@ public class SimpleTest {
 
         session.close();
     }
+
+    @Test
+    public void testDeleteRefer() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM()});
+
+        obj = Orm.convert(obj);
+        Executor ex = Executor.createInsert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 5);
+
+        {
+            Selector<Obj> sr = Selector.createSelect(Obj.class);
+            Obj[] objs = (Obj[]) session.query(sr);
+            Assert.assertEquals(objs.length, 1);
+            Selector<Ptr> sr2 = Selector.createSelect(Ptr.class);
+            Ptr[] ptrs = (Ptr[]) session.query(sr2);
+            Assert.assertEquals(ptrs.length, 1);
+            Selector<OO> sr3 = Selector.createSelect(OO.class);
+            OO[] oos = (OO[]) session.query(sr3);
+            Assert.assertEquals(oos.length, 1);
+            Selector<OM> sr4 = Selector.createSelect(OM.class);
+            OM[] oms = (OM[]) session.query(sr4);
+            Assert.assertEquals(oms.length, 2);
+        }
+
+        ex = Executor.createDelete(obj);
+        ex.delete("ptr");
+        ex.delete("oo");
+        ex.delete("om");
+        session.execute(ex);
+
+        {
+            Selector<Obj> sr = Selector.createSelect(Obj.class);
+            Obj[] objs = (Obj[]) session.query(sr);
+            Assert.assertEquals(objs.length, 0);
+            Selector<Ptr> sr2 = Selector.createSelect(Ptr.class);
+            Ptr[] ptrs = (Ptr[]) session.query(sr2);
+            Assert.assertEquals(objs.length, 0);
+            Selector<OO> sr3 = Selector.createSelect(OO.class);
+            OO[] oos = (OO[]) session.query(sr3);
+            Assert.assertEquals(objs.length, 0);
+            Selector<OM> sr4 = Selector.createSelect(OM.class);
+            OM[] oms = (OM[]) session.query(sr4);
+            Assert.assertEquals(objs.length, 0);
+        }
+    }
 }
