@@ -172,4 +172,32 @@ public class SimpleTest {
             Assert.assertEquals(objs.length, 0);
         }
     }
+
+    @Test
+    public void testOrderByLimitOffset() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("");
+        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
+
+        obj = Orm.convert(obj);
+        Executor ex = Executor.createInsert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 7);
+
+        Selector<OM> sr = Selector.createSelect(OM.class);
+        sr.desc("id").limit(3).offset(2);
+
+        OM[] oms = (OM[]) session.query(sr);
+        Assert.assertEquals(oms.length, 3);
+        Assert.assertEquals(oms[0].getId().intValue(), 4);
+        Assert.assertEquals(oms[1].getId().intValue(), 3);
+        Assert.assertEquals(oms[2].getId().intValue(), 2);
+
+    }
+
+
 }

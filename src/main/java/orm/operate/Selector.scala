@@ -13,9 +13,12 @@ import scala.reflect.ClassTag
   */
 class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[_] = null) {
   require(meta != null)
-  val withs: ArrayBuffer[(String, Selector[Object])] = ArrayBuffer[(String, Selector[Object])]()
-  var cond: Cond = _
-  var on: JoinCond = _
+  private val withs: ArrayBuffer[(String, Selector[Object])] = ArrayBuffer[(String, Selector[Object])]()
+  private var cond: Cond = _
+  private var on: JoinCond = _
+  private var order: (String, Array[String]) = _
+  private var limit: Int = -1
+  private var offset: Int = -1
 
   // 过滤结果用
   // 1. 该表的对象 pkey
@@ -145,7 +148,23 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     } else {
       tables = table
     }
-    s"SELECT\n\t$columns\nFROM\n\t$tables\nWHERE\n\t$cond"
+    val orderBySql = if (order != null) {
+      val fields = order._2.map(field => s"$alias$$$field").mkString(", ")
+      s" ORDER By $fields ${order._1}"
+    } else {
+      ""
+    }
+    val limitSql = if (limit != -1) {
+      s" LIMIT $limit"
+    } else {
+      ""
+    }
+    val offsetSql = if (offset != -1) {
+      s" OFFSET $offset"
+    } else {
+      ""
+    }
+    s"SELECT\n\t$columns\nFROM\n\t$tables\nWHERE\n\t$cond$orderBySql$limitSql$offsetSql"
   }
 
   def query(conn: Connection): Array[T] = {
@@ -240,6 +259,51 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     }
   }
 
+  def asc(fields: Array[String]): Selector[T] = {
+    if (!fields.forall(meta.fieldMap.contains(_))) {
+      throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
+    }
+    if (parent != null) {
+      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
+    }
+    order = ("ASC", fields)
+    this
+  }
+
+  def desc(fields: Array[String]): Selector[T] = {
+    if (!fields.forall(meta.fieldMap.contains(_))) {
+      throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
+    }
+    if (parent != null) {
+      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
+    }
+    order = ("DESC", fields)
+    this
+  }
+
+  def asc(field: String): Selector[T] = {
+    asc(Array(field))
+  }
+
+  def desc(field: String): Selector[T] = {
+    desc(Array(field))
+  }
+
+  def limit(l: Int): Selector[T] = {
+    if (parent != null) {
+      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
+    }
+    limit = l
+    this
+  }
+
+  def offset(o: Int): Selector[T] = {
+    if (parent != null) {
+      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
+    }
+    offset = o
+    this
+  }
 }
 
 object Selector {
