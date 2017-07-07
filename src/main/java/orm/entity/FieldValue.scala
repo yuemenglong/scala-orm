@@ -12,17 +12,17 @@ class FieldValue(val tp: Int, value: Object, entity: Option[Object], vec: ArrayB
 
   def asValue(): Object = {
     require(this.tp == FieldValueType.VALUE)
-    return this.value
+    this.value
   }
 
   def asEntity(): Option[Object] = {
     require(this.tp == FieldValueType.ENTITY)
-    return this.entity
+    this.entity
   }
 
   def asVec(): ArrayBuffer[Object] = {
     require(this.tp == FieldValueType.VEC)
-    return this.vec
+    this.vec
   }
 }
 

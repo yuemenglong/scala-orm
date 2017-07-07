@@ -6,7 +6,6 @@ import orm.entity.EntityManager
 import orm.operate.{Executor, Selector}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/24.
@@ -29,7 +28,7 @@ class Session(val conn: Connection) {
     } else {
       val core = EntityManager.core(entity)
       core.setSession(this)
-      core.meta.managedFieldVec().filter(!_.isNormalOrPkey()).foreach(fieldMeta => {
+      core.meta.managedFieldVec().filter(!_.isNormalOrPkey).foreach(fieldMeta => {
         if (core.fieldMap.contains(fieldMeta.name)) {
           injectSession(core.fieldMap(fieldMeta.name), session)
         }
@@ -39,7 +38,7 @@ class Session(val conn: Connection) {
   }
 
   def execute(executor: Executor): Int = {
-    val entity = executor.getEntity()
+    val entity = executor.getEntity
     require(entity != null)
     val ret = executor.execute(conn)
     injectSession(entity, this)

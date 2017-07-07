@@ -9,21 +9,25 @@ import scala.collection.mutable.ArrayBuffer
   */
 object Kit {
   def lodashCase(str: String): String = {
-    val lowerCaseFirst = str.substring(0, 1).toLowerCase() + str.substring(1)
-    """[A-Z]""".r.replaceAllIn(lowerCaseFirst, m => "_" + m.group(0).toLowerCase())
+    //    val lowerCaseFirst = str.substring(0, 1).toLowerCase() + str.substring(1)
+    """[A-Z]""".r.replaceAllIn(lowerCaseFirst(str), m => "_" + m.group(0).toLowerCase())
   }
 
-//  def getGenericType(field: Field): Class[_] = {
-//    if (isGenericType(field)) {
-//      field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]]
-//    } else {
-//      field.getType
-//    }
-//  }
-//
-//  def isGenericType(field: Field): Boolean = {
-//    field.getGenericType.isInstanceOf[ParameterizedType]
-//  }
+  def lowerCaseFirst(str: String): String = {
+    str.substring(0, 1).toLowerCase() + str.substring(1)
+  }
+
+  //  def getGenericType(field: Field): Class[_] = {
+  //    if (isGenericType(field)) {
+  //      field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]]
+  //    } else {
+  //      field.getType
+  //    }
+  //  }
+  //
+  //  def isGenericType(field: Field): Boolean = {
+  //    field.getGenericType.isInstanceOf[ParameterizedType]
+  //  }
 
   def getDeclaredFields(clazz: Class[_]): Array[Field] = {
     val ret = new ArrayBuffer[Field]()

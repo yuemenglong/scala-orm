@@ -85,7 +85,7 @@ object Scanner {
         throw new RuntimeException(s"[${entity.entity}] Has No Pkey")
       }
       // 未标注ignore的字段对应的对象都必须显式标注为entity,也就是已经在orm中
-      entity.managedFieldVec().filter(!_.isNormalOrPkey()).foreach(field => {
+      entity.managedFieldVec().filter(!_.isNormalOrPkey).foreach(field => {
         if (!OrmMeta.entityMap.contains(field.typeName)) {
           throw new RuntimeException(s"[${field.typeName}] Is Not Entity")
         }
@@ -97,7 +97,7 @@ object Scanner {
       // 标注ignore的字段对应的对象如果没有加入entity，都要加进去管理起来, 因为算法都是递归调用的
       val entity = entityVec(pos)
       entity.fieldVec.filter(field => {
-        field.ignore && field.isObject()
+        field.ignore && field.isObject
       }).foreach(fieldMeta => {
         // 放在foreach而不是filter里防止一个实体被多次scan
         if (!OrmMeta.entityMap.contains(fieldMeta.typeName)) {
@@ -113,7 +113,7 @@ object Scanner {
     OrmMeta.entityVec.foreach(entity => {
       // 补关系字段，ignore的不用补
       entity.managedFieldVec().foreach(field => {
-        if (!field.isNormalOrPkey()) {
+        if (!field.isNormalOrPkey) {
           //补左边
           if (!entity.fieldMap.contains(field.left)) {
             val idx = entity.fieldVec.indexOf(field)
@@ -134,7 +134,7 @@ object Scanner {
     // 统一注入refer,这里ignore的也要注入
     OrmMeta.entityVec.foreach(entity => {
       entity.fieldVec.foreach(field => {
-        if (field.isObject()) {
+        if (field.isObject) {
           field.refer = OrmMeta.entityMap(field.typeName)
         }
       })

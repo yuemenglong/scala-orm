@@ -34,21 +34,21 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   }
 
   def insert(field: String): Executor = {
-    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
+    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject)
     val execute = new Executor(meta.fieldMap(field).refer, Cascade.INSERT)
     this.withs.+=((field, execute))
     this.withs.last._2
   }
 
   def update(field: String): Executor = {
-    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
+    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject)
     val execute = new Executor(meta.fieldMap(field).refer, Cascade.UPDATE)
     this.withs.+=((field, execute))
     this.withs.last._2
   }
 
   def delete(field: String): Executor = {
-    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject())
+    require(meta.fieldMap.contains(field) && meta.fieldMap(field).isObject)
     val execute = new Executor(meta.fieldMap(field).refer, Cascade.DELETE)
     this.withs.+=((field, execute))
     this.withs.last._2
@@ -105,7 +105,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 
   private def executeInsert(core: EntityCore, conn: Connection): Int = {
     val validFields = core.meta.managedFieldVec().filter(field => {
-      field.isNormalOrPkey() && core.fieldMap.contains(field.name)
+      field.isNormalOrPkey && core.fieldMap.contains(field.name)
     })
     val columns = validFields.map(field => {
       s"`${field.column}`"
@@ -143,9 +143,9 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   }
 
   private def executeUpdate(core: EntityCore, conn: Connection): Int = {
-    require(core.getPkey() != null)
+    require(core.getPkey != null)
     val validFields = core.meta.managedFieldVec().filter(field => {
-      field.isNormal() && core.fieldMap.contains(field.name)
+      field.isNormal && core.fieldMap.contains(field.name)
     })
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
@@ -156,7 +156,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     validFields.zipWithIndex.foreach { case (field, i) =>
       stmt.setObject(i + 1, core.get(field.name))
     }
-    stmt.setObject(validFields.length + 1, core.getPkey())
+    stmt.setObject(validFields.length + 1, core.getPkey)
     println(sql)
     // id作为条件出现
     val params = validFields.++(Array(core.meta.pkey)).map(item => {
@@ -172,13 +172,13 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   }
 
   private def executeDelete(core: EntityCore, conn: Connection): Int = {
-    require(core.getPkey() != null)
+    require(core.getPkey != null)
     val idCond = s"${core.meta.pkey.name} = ?"
     val sql = s"DELETE FROM ${core.meta.table} WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
-    stmt.setObject(1, core.getPkey())
+    stmt.setObject(1, core.getPkey)
     println(sql)
-    println(s"[Params] => [${core.getPkey()}]")
+    println(s"[Params] => [${core.getPkey}]")
     val ret = stmt.executeUpdate()
     stmt.close()
     ret
@@ -195,7 +195,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   private def executePointer(core: EntityCore, conn: Connection): Int = {
     var ret = 0
     this.withs.filter { case (field, _) =>
-      core.meta.fieldMap(field).isPointer() &&
+      core.meta.fieldMap(field).isPointer &&
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
     }.foreach { case (field, ex) =>
@@ -214,7 +214,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   private def executeOneOne(core: EntityCore, conn: Connection): Int = {
     var ret = 0
     this.withs.filter { case (field, _) =>
-      core.meta.fieldMap(field).isOneOne() &&
+      core.meta.fieldMap(field).isOneOne &&
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
     }.foreach { case (field, ex) =>
@@ -232,7 +232,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   private def executeOneMany(core: EntityCore, conn: Connection): Int = {
     var ret = 0
     this.withs.filter { case (field, _) =>
-      core.meta.fieldMap(field).isOneMany() &&
+      core.meta.fieldMap(field).isOneMany &&
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
     }.foreach { case (field, ex) =>

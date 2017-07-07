@@ -52,12 +52,12 @@ class Cond {
     items.map(item => item.toSql(alias, meta)).mkString("\n\tAND ")
   }
 
-  def toParams(): Array[Object] = {
-    items.flatMap(item => item.toParams()).toArray
+  def toParams: Array[Object] = {
+    items.flatMap(item => item.toParams).toArray
   }
 
   def check(entityMeta: EntityMeta): Unit = {
-    items.map(item => item.check(entityMeta))
+    items.foreach(item => item.check(entityMeta))
   }
 
   //////////////////////////////////////////////////////
@@ -65,7 +65,7 @@ class Cond {
   trait CondItem {
     def toSql(alias: String, meta: EntityMeta): String
 
-    def toParams(): Array[Object]
+    def toParams: Array[Object]
 
     def check(meta: EntityMeta): Unit
   }
@@ -73,10 +73,10 @@ class Cond {
   class Eq(val field: String, val param: Object) extends CondItem {
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      s"${alias}.${column} = ?"
+      s"$alias.$column = ?"
     }
 
-    override def toParams(): Array[Object] = {
+    override def toParams: Array[Object] = {
       Array(param)
     }
 
@@ -88,10 +88,10 @@ class Cond {
   class Ne(val field: String, val param: Object) extends CondItem {
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      s"${alias}.${column} <> ?"
+      s"$alias.$column <> ?"
     }
 
-    override def toParams(): Array[Object] = {
+    override def toParams: Array[Object] = {
       Array(param)
     }
 
@@ -103,10 +103,10 @@ class Cond {
   class Gt(val field: String, val param: Object) extends CondItem {
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      s"${alias}.${column} > ?"
+      s"$alias.$column > ?"
     }
 
-    override def toParams(): Array[Object] = {
+    override def toParams: Array[Object] = {
       Array(param)
     }
 
@@ -118,10 +118,10 @@ class Cond {
   class Lt(val field: String, val param: Object) extends CondItem {
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      s"${alias}.${column} < ?"
+      s"$alias.$column < ?"
     }
 
-    override def toParams(): Array[Object] = {
+    override def toParams: Array[Object] = {
       Array(param)
     }
 
@@ -133,10 +133,10 @@ class Cond {
   class Gte(val field: String, val param: Object) extends CondItem {
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      s"${alias}.${column} >= ?"
+      s"$alias.$column >= ?"
     }
 
-    override def toParams(): Array[Object] = {
+    override def toParams: Array[Object] = {
       Array(param)
     }
 
@@ -148,10 +148,10 @@ class Cond {
   class Lte(val field: String, val param: Object) extends CondItem {
     override def toSql(alias: String, meta: EntityMeta): String = {
       val column = meta.fieldMap(field).column
-      s"${alias}.${column} <= ?"
+      s"$alias.$column <= ?"
     }
 
-    override def toParams(): Array[Object] = {
+    override def toParams: Array[Object] = {
       Array(param)
     }
 
@@ -170,7 +170,7 @@ class Cond {
       s"$alias.$column in ($placeholder)"
     }
 
-    override def toParams(): Array[Object] = {
+    override def toParams: Array[Object] = {
       val ret = new ArrayBuffer[Object]()
       arr.foreach(item => {
         ret += item
