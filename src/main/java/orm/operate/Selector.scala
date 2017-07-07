@@ -3,6 +3,7 @@ package orm.operate
 import java.sql.{Connection, ResultSet}
 
 import orm.entity.{EntityCore, EntityManager}
+import orm.kit.Kit
 import orm.meta.{EntityMeta, OrmMeta}
 
 import scala.collection.mutable.ArrayBuffer
@@ -173,12 +174,18 @@ object Selector {
   def from[T](clazz: Class[T]): Selector[T] = {
     OrmMeta.check()
     val entityMeta = OrmMeta.entityMap(clazz.getSimpleName)
-    new Selector[T](entityMeta, entityMeta.entity)
+    new Selector[T](entityMeta, Kit.lodashCase(entityMeta.entity))
   }
 
   def createSelect[T](clazz: Class[T]): Selector[T] = {
     OrmMeta.check()
     val entityMeta = OrmMeta.entityMap(clazz.getSimpleName)
-    new Selector[T](entityMeta, entityMeta.entity)
+    new Selector[T](entityMeta, Kit.lodashCase(entityMeta.entity))
+  }
+
+  def createMulti(clazz: Class[_]): MultiSelector = {
+    OrmMeta.check()
+    val entityMeta = OrmMeta.entityMap(clazz.getSimpleName)
+    new MultiSelector(entityMeta, Kit.lodashCase(entityMeta.entity))
   }
 }

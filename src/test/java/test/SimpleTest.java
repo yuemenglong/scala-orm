@@ -8,6 +8,7 @@ import orm.Session.Session;
 import orm.db.Db;
 import orm.operate.Cond;
 import orm.operate.Executor;
+import orm.operate.MultiSelector;
 import orm.operate.Selector;
 import test.model.*;
 
@@ -199,5 +200,10 @@ public class SimpleTest {
 
     }
 
-
+    @Test
+    public void testMultiSelect() {
+        MultiSelector ms = Selector.createMulti(Obj.class);
+        ms.count();
+        System.out.println(ms.getSql());
+    }
 }
