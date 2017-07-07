@@ -11,14 +11,13 @@ import scala.reflect.ClassTag
 /**
   * Created by Administrator on 2017/5/22.
   */
-class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[_] = null) {
+
+// table alias: entity_field
+// column alias: entity$field
+class Selector[T](meta: EntityMeta, alias: String, parent: SelectorBase = null) extends SelectorBase(meta, alias, parent) {
   require(meta != null)
-  private val withs: ArrayBuffer[(String, Selector[Object])] = ArrayBuffer[(String, Selector[Object])]()
-  private var cond: Cond = _
-  private var on: JoinCond = _
-  private var order: (String, Array[String]) = _
-  private var limit: Int = -1
-  private var offset: Int = -1
+  // 全部字段都要读取
+  fields = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name)(collection.breakOut)
 
   // 过滤结果用
   // 1. 该表的对象 pkey
@@ -26,25 +25,28 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
   // 3. 最终的结果集 @pkey
   var filterMap: Map[String, EntityCore] = Map[String, EntityCore]()
 
-  def select(field: String): Selector[Object] = {
-    require(meta.fieldMap.contains(field))
-    val fieldMeta = meta.fieldMap(field)
-    require(!fieldMeta.isNormalOrPkey)
-    val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_$field", this)
-    this.withs += ((field, selector))
-    selector
-  }
-
-  def where(cond: Cond): Selector[T] = {
-    cond.check(meta)
-    this.cond = cond
-    this
+  override def select(field: String): Selector[Object] = {
+    super.select(field).asInstanceOf[Selector[Object]]
+    //    if (meta.fieldMap.contains(field)) {
+    //      throw new RuntimeException(s"[$field] Not Field Of [${meta.entity}]")
+    //    }
+    //    val fieldMeta = meta.fieldMap(field)
+    //    if (fieldMeta.isNormalOrPkey) {
+    //      throw new RuntimeException(s"$field Is Not Refer")
+    //    }
+    //    withs.find(_._1 == field) match {
+    //      case None =>
+    //        val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_$field", this)
+    //        this.withs += ((field, selector))
+    //        selector
+    //      case Some(p) => p._2.asInstanceOf[Selector[Object]]
+    //    }
   }
 
   private def resetFilterMap(): Unit = {
     filterMap = Map()
     withs.foreach { case (_, selector) =>
-      selector.resetFilterMap()
+      selector.asInstanceOf[Selector[_]].resetFilterMap()
     }
   }
 
@@ -68,103 +70,6 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
       pairs.foreach(p => core.fieldMap += p)
       item
     }).toArray(ct)
-  }
-
-  def getColumns: String = {
-    val selfColumns = this.meta.managedFieldVec().filter(field => field.isNormalOrPkey).map(field => {
-      s"${this.alias}.${field.column} AS ${this.alias}$$${field.name}"
-    }).mkString(",\n\t")
-    val withColumns = this.withs.map { case (_, selector) =>
-      selector.getColumns
-    }
-    withColumns.insert(0, selfColumns)
-    withColumns.mkString(",\n\n\t")
-  }
-
-  def getTables: String = {
-    val selfWiths = this.withs.map { case (field, selector) =>
-      val table = selector.meta.table
-      val alias = selector.alias
-      val fieldMeta = this.meta.fieldMap(field)
-      val leftColumn = this.meta.fieldMap(fieldMeta.left).column
-      val rightColumn = selector.meta.fieldMap(fieldMeta.right).column
-      val cond = s"${this.alias}.$leftColumn = $alias.$rightColumn"
-      var main = s"LEFT JOIN $table AS $alias ON $cond"
-      val joinCond = this.on match {
-        case null => ""
-        case _ => this.on.toSql(parent.alias, alias, parent.meta, meta)
-      }
-      main = joinCond.length() match {
-        case 0 => main
-        case _ => s"$main AND $joinCond"
-      }
-      val subs = selector.getTables
-      subs.length match {
-        case 0 => s"$main"
-        case _ => s"$main\n\t$subs"
-      }
-    }.mkString("\n\t")
-    selfWiths
-  }
-
-  def getConds: String = {
-    val subConds = this.withs.map { case (_, selector) =>
-      selector.getConds
-    }.filter(item => item != null)
-    this.cond match {
-      case null =>
-      case _ => subConds.insert(0, this.cond.toSql(alias, meta))
-    }
-    if (subConds.isEmpty) {
-      return null
-    }
-    subConds.mkString("\n\tAND ")
-  }
-
-  def getParams: Array[Object] = {
-    val subParams = this.withs.flatMap { case (_, selector) =>
-      selector.getParams
-    }
-    this.cond match {
-      case null =>
-      case _ =>
-        for (item <- this.cond.toParams.reverse) {
-          subParams.insert(0, item)
-        }
-    }
-    subParams.toArray
-  }
-
-  def getSql: String = {
-    val columns = this.getColumns
-    var tables = this.getTables
-    var cond = this.getConds
-    if (cond == null) {
-      cond = "1 = 1"
-    }
-    val table = s"${meta.table} AS $alias"
-    if (tables.length() != 0) {
-      tables = s"$table\n\t$tables"
-    } else {
-      tables = table
-    }
-    val orderBySql = if (order != null) {
-      val fields = order._2.map(field => s"$alias$$$field").mkString(", ")
-      s" ORDER By $fields ${order._1}"
-    } else {
-      ""
-    }
-    val limitSql = if (limit != -1) {
-      s" LIMIT $limit"
-    } else {
-      ""
-    }
-    val offsetSql = if (offset != -1) {
-      s" OFFSET $offset"
-    } else {
-      ""
-    }
-    s"SELECT\n\t$columns\nFROM\n\t$tables\nWHERE\n\t$cond$orderBySql$limitSql$offsetSql"
   }
 
   def query(conn: Connection): Array[T] = {
@@ -229,7 +134,7 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
 
   def pickRefer(rs: ResultSet, core: EntityCore): Unit = {
     withs.foreach { case (field, selector) =>
-      val bCore = selector.pick(rs)
+      val bCore = selector.asInstanceOf[Selector[_]].pick(rs)
       val fieldMeta = meta.fieldMap(field)
       if (!fieldMeta.isOneMany) {
         if (bCore != null) {
@@ -259,50 +164,8 @@ class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[
     }
   }
 
-  def asc(fields: Array[String]): Selector[T] = {
-    if (!fields.forall(meta.fieldMap.contains(_))) {
-      throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
-    }
-    if (parent != null) {
-      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
-    }
-    order = ("ASC", fields)
-    this
-  }
-
-  def desc(fields: Array[String]): Selector[T] = {
-    if (!fields.forall(meta.fieldMap.contains(_))) {
-      throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
-    }
-    if (parent != null) {
-      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
-    }
-    order = ("DESC", fields)
-    this
-  }
-
-  def asc(field: String): Selector[T] = {
-    asc(Array(field))
-  }
-
-  def desc(field: String): Selector[T] = {
-    desc(Array(field))
-  }
-
-  def limit(l: Int): Selector[T] = {
-    if (parent != null) {
-      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
-    }
-    limit = l
-    this
-  }
-
-  def offset(o: Int): Selector[T] = {
-    if (parent != null) {
-      throw new RuntimeException("OrderBy/Limit/Offset Only Call On Root Selector")
-    }
-    offset = o
-    this
+  override def newInstance(meta: EntityMeta, alias: String, parent: SelectorBase = null): SelectorBase = {
+    new Selector[T](meta, alias, parent)
   }
 }
 
