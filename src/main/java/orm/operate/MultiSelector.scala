@@ -1,5 +1,8 @@
 package orm.operate
 
+import java.sql.{Connection, ResultSet}
+
+import orm.entity.{EntityCore, EntityManager}
 import orm.meta.EntityMeta
 
 import scala.collection.mutable.ArrayBuffer
@@ -15,20 +18,28 @@ case class EntityItem(selector: MultiSelector) extends MultiItem
 case class FieldItem(alias: String) extends MultiItem
 
 class MultiSelector(meta: EntityMeta, alias: String, parent: SelectorBase = null) extends SelectorBase(meta, alias, parent) {
+
   private var aggres = ArrayBuffer[(String, String, String)]()
   private var multiItems = ArrayBuffer[MultiItem]()
 
   override def getColumns: String = {
     val aggreSql = aggres.map(_._2).mkString(",\n")
-    if (aggreSql.nonEmpty) {
-      s"$aggreSql\n${super.getColumns}"
-    } else {
-      super.getColumns
+    val columnSql = super.getColumns
+
+    (aggreSql.isEmpty, columnSql.isEmpty) match {
+      case (true, true) => ""
+      case (true, false) => columnSql
+      case (false, true) => aggreSql
+      case (true, true) => s"$aggreSql\n$columnSql"
     }
   }
 
   override def select(field: String): MultiSelector = {
     super.select(field).asInstanceOf[MultiSelector]
+  }
+
+  override def newInstance(meta: EntityMeta, alias: String, parent: SelectorBase): SelectorBase = {
+    new MultiSelector(meta, alias, parent)
   }
 
   private def getRoot: MultiSelector = {
@@ -56,8 +67,40 @@ class MultiSelector(meta: EntityMeta, alias: String, parent: SelectorBase = null
     getRoot.multiItems += FieldItem(fieldAlias)
   }
 
-  override def newInstance(meta: EntityMeta, alias: String, parent: SelectorBase): SelectorBase = {
-    new MultiSelector(meta, alias, parent)
+  def query(conn: Connection): Array[Array[Object]] = {
+    val sql = this.getSql
+    println(sql)
+    val params = this.getParams.map(_.toString()).mkString(", ")
+    println(s"[Params] => [$params]")
+    val stmt = conn.prepareStatement(sql)
+    this.getParams.zipWithIndex.foreach { case (param, i) =>
+      stmt.setObject(i + 1, param)
+    }
+    val rs = stmt.executeQuery()
+    var ab = ArrayBuffer[Array[Object]]()
+    while (rs.next()) {
+      ab += this.pickRow(rs)
+    }
+    rs.close()
+    stmt.close()
+    ab.toArray
+  }
+
+  def pickRow(rs: ResultSet): Array[Object] = {
+    multiItems.map {
+      case EntityItem(selector) => selector.pickEntity(rs)
+      case FieldItem(alias) => rs.getObject(alias)
+    }.toArray
+  }
+
+  def pickEntity(rs: ResultSet): Object = {
+    val core = new EntityCore(meta, Map())
+    meta.managedFieldVec().filter(_.isNormalOrPkey).foreach(field => {
+      val label = s"$alias$$${field.name}"
+      val value = rs.getObject(label)
+      core.fieldMap += (field.name -> value)
+    })
+    EntityManager.wrap(core)
   }
 }
 

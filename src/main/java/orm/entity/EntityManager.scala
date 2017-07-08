@@ -25,7 +25,7 @@ object EntityManager {
     wrap(core).asInstanceOf[T]
   }
 
-  def wrap(core: EntityCore): Object = {
+  def wrap(core: EntityCore): Entity = {
     val enhancer: Enhancer = new Enhancer
     enhancer.setSuperclass(core.meta.clazz)
     enhancer.setInterfaces(Array(classOf[Entity]))
@@ -36,7 +36,7 @@ object EntityManager {
         core.intercept(obj, method, args, proxy)
       }
     })
-    enhancer.create()
+    enhancer.create().asInstanceOf[Entity]
   }
 
   def core(obj: Object): EntityCore = {

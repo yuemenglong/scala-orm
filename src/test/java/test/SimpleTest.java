@@ -14,6 +14,7 @@ import test.model.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -202,8 +203,22 @@ public class SimpleTest {
 
     @Test
     public void testMultiSelect() {
-        MultiSelector ms = Selector.createMulti(Obj.class);
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("");
+        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
+
+        obj = Orm.convert(obj);
+        Executor ex = Executor.createInsert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 7);
+
+        MultiSelector ms = Selector.createMulti(OM.class);
         ms.count();
-        System.out.println(ms.getSql());
+        Object[][] res = ms.query(db.openConnection());
+        Assert.assertEquals(res[0][0].toString(), "6");
     }
 }

@@ -28,20 +28,6 @@ class Selector[T](meta: EntityMeta, alias: String, parent: SelectorBase = null) 
 
   override def select(field: String): Selector[Object] = {
     super.select(field).asInstanceOf[Selector[Object]]
-    //    if (meta.fieldMap.contains(field)) {
-    //      throw new RuntimeException(s"[$field] Not Field Of [${meta.entity}]")
-    //    }
-    //    val fieldMeta = meta.fieldMap(field)
-    //    if (fieldMeta.isNormalOrPkey) {
-    //      throw new RuntimeException(s"$field Is Not Refer")
-    //    }
-    //    withs.find(_._1 == field) match {
-    //      case None =>
-    //        val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_$field", this)
-    //        this.withs += ((field, selector))
-    //        selector
-    //      case Some(p) => p._2.asInstanceOf[Selector[Object]]
-    //    }
   }
 
   private def resetFilterMap(): Unit = {
