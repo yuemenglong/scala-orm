@@ -7,6 +7,7 @@ import java.util.Date
 
 import orm.kit.Kit
 import orm.lang.anno._
+import orm.logger.Logger
 
 object FieldMetaTypeKind {
   val BUILT_IN: Int = 0
@@ -34,11 +35,12 @@ class FieldMeta(val entity: EntityMeta,
 
                 val left: String,
                 val right: String) {
-  var refer: EntityMeta = null // 最后统一注入，因为第一遍扫描时可能还没有生成
+  var refer: EntityMeta = _ // 最后统一注入，因为第一遍扫描时可能还没有生成
+  Logger.info(s"[Entity: ${entity.entity}, Field: ${name}, Column: ${column}]")
 
   def getDbSql(): String = {
     var length = FieldMeta.DEFAULT_LEN
-    var notnull = FieldMeta.DEFAULT_NOT_NULL;
+    var notnull = FieldMeta.DEFAULT_NOT_NULL
     var bigDecimalDetail = ""
 
     if (columnAnno != null) {
@@ -303,7 +305,7 @@ object FieldMeta {
 
     val (left, right) = FieldMeta.pickLeftRight(entity, field, typeKind)
 
-    return new FieldMeta(entity, field,
+    new FieldMeta(entity, field,
       pkey, auto,
       typeKind, typeName,
       name, column, columnAnno, ignore,
@@ -327,7 +329,7 @@ object FieldMeta {
     val left: String = null
     val right: String = null
 
-    return new FieldMeta(entity, field,
+    new FieldMeta(entity, field,
       pkey, auto,
       typeKind, typeName,
       name, column, columnAnno, ignore,

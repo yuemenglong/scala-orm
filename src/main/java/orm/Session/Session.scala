@@ -3,7 +3,6 @@ package orm.Session
 import java.sql.Connection
 import java.util
 
-import orm.db.Db
 import orm.entity.EntityManager
 import orm.operate.{Executor, Selector}
 
@@ -45,19 +44,19 @@ class Session(private val conn: Connection) {
     require(entity != null)
     val ret = executor.execute(conn)
     injectSession(entity, this)
-    return ret
+     ret
   }
 
   def query[T](selector: Selector[T]): util.Collection[T] = {
     val ret = selector.query(conn)
     injectSession(ret, this)
-    return ret
+     ret
   }
 
   def first[T](selector: Selector[T]): T = {
     val ret = selector.first(conn)
     injectSession(ret.asInstanceOf[Object], this)
-    return ret
+     ret
   }
 
   def beginTransaction(): Transaction = {
@@ -68,12 +67,12 @@ class Session(private val conn: Connection) {
     cache += obj
   }
 
-  def isClosed(): Boolean = {
+  def isClosed: Boolean = {
     closed
   }
 
   def flush(): Unit = {
-    require(closed == false)
+    require(!closed)
     cache.foreach(item => {
       val ex = Executor.createUpdate(item)
       this.execute(ex)
@@ -82,8 +81,8 @@ class Session(private val conn: Connection) {
   }
 
   def close(): Unit = {
-    require(closed == false)
-    flush()
+    require(!closed)
+    //    flush()
     conn.close()
     this.closed = true
   }

@@ -6,6 +6,7 @@ import java.nio.file.Paths
 
 import orm.kit.Kit
 import orm.lang.anno.Entity
+import orm.logger.Logger
 import orm.meta.{EntityMeta, FieldMeta, OrmMeta}
 
 /**
@@ -13,15 +14,15 @@ import orm.meta.{EntityMeta, FieldMeta, OrmMeta}
   */
 object Scanner {
   def scan(path: String): Unit = {
-    val loader = Thread.currentThread().getContextClassLoader()
+    val loader = Thread.currentThread().getContextClassLoader
     val filePath = path.replace(".", "/")
     val url = loader.getResource(filePath)
-    require(url != null && url.getProtocol() == "file")
-    val fullPath = new File(url.getPath()).getPath().replaceAll("\\\\", "/")
-    val basePath = Paths.get(fullPath.replaceAll(s"${filePath}$$", ""))
-    scanFile(url.getPath()).map(path => {
+    require(url != null && url.getProtocol == "file")
+    val fullPath = new File(url.getPath).getPath.replaceAll("\\\\", "/")
+    val basePath = Paths.get(fullPath.replaceAll(s"$filePath$$", ""))
+    scanFile(url.getPath).map(path => {
       // 全路径转为相对路径，将/变为.
-      basePath.relativize(Paths.get(path)).toString().replaceAll("(\\\\)|(/)", ".").replaceAll("\\.class$", "")
+      basePath.relativize(Paths.get(path)).toString.replaceAll("(\\\\)|(/)", ".").replaceAll("\\.class$", "")
     }).filter(path => {
       // 将带有$的去掉，主要是为了去掉scala的部分
       "[^$]*".r.pattern.matcher(path).matches()
@@ -40,11 +41,11 @@ object Scanner {
     fixMeta()
   }
 
-  def scan(paths: java.util.Collection[String]): Unit = {
-    paths.stream().forEach(path=>{
+  def scan(paths: Array[String]): Unit = {
+    paths.foreach(path => {
       // 不是entity的过滤掉
       val clazz = Class.forName(path)
-      val anno = clazz.getAnnotation[Entity](classOf[Entity])
+      val anno = clazz.getDeclaredAnnotation[Entity](classOf[Entity])
       if (anno != null) {
         analyzeClass(clazz)
       }
@@ -53,17 +54,18 @@ object Scanner {
   }
 
   def analyzeClass(clazz: Class[_], ignore: Boolean = false): EntityMeta = {
-    val ignoreStr = ignore match {
-      case true => "Ignore "
-      case false => ""
+    val ignoreStr = if (ignore) {
+      "Ignore "
+    } else {
+      ""
     }
-    println(s"[Scanner] Find ${ignoreStr}Entity: [${clazz.getName()}]")
+    println(s"[Scanner] Find ${ignoreStr}Entity: [${clazz.getName}]")
     var entityMeta = new EntityMeta(clazz, ignore)
     OrmMeta.entityVec += entityMeta
     OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
 
-    clazz.getDeclaredFields().foreach(field => analyzeField(entityMeta, field))
-    return entityMeta
+    Kit.getDeclaredFields(clazz).foreach(field => analyzeField(entityMeta, field))
+    entityMeta
   }
 
   def analyzeField(entityMeta: EntityMeta, field: Field): Unit = {
@@ -79,7 +81,7 @@ object Scanner {
   def fixMeta(): Unit = {
     OrmMeta.entityVec.foreach(entity => {
       // 检查是否配置主键
-      if(entity.pkey == null){
+      if (entity.pkey == null) {
         throw new RuntimeException(s"[${entity.entity}] Has No Pkey")
       }
       // 未标注ignore的字段对应的对象都必须显式标注为entity,也就是已经在orm中
@@ -92,18 +94,22 @@ object Scanner {
     var entityVec = OrmMeta.entityVec.clone()
     var pos = 0
     while (pos < entityVec.size) {
-      // 标注ignore的字段对应的对象如果没有加入entity，都要加进去管理起来
+      // 标注ignore的字段对应的对象如果没有加入entity，都要加进去管理起来, 因为算法都是递归调用的
       val entity = entityVec(pos)
       entity.fieldVec.filter(field => {
-        field.ignore && field.isObject() && !OrmMeta.entityMap.contains(field.typeName)
+        field.ignore && field.isObject()
       }).foreach(fieldMeta => {
-        val clazz = Kit.getGenericType(fieldMeta.field)
-        val entityMeta = analyzeClass(clazz, true)
-        entityVec += entityMeta
+        // 放在foreach而不是filter里防止一个实体被多次scan
+        if (!OrmMeta.entityMap.contains(fieldMeta.typeName)) {
+          val clazz = Kit.getGenericType(fieldMeta.field)
+          val entityMeta = analyzeClass(clazz, ignore = true)
+          entityVec += entityMeta // 需要加入队尾再次循环
+        }
       })
       pos += 1
     }
 
+    Logger.info("[Scanner] Start To Fix Refer Field / Column")
     OrmMeta.entityVec.foreach(entity => {
       // 补关系字段，ignore的不用补
       entity.managedFieldVec().foreach(field => {
@@ -118,7 +124,7 @@ object Scanner {
           //补右边
           val referEntityMeta = OrmMeta.entityMap(field.typeName)
           if (!referEntityMeta.fieldMap.contains(field.right)) {
-            val refer = FieldMeta.createReferMeta(entity, field.right)
+            val refer = FieldMeta.createReferMeta(referEntityMeta, field.right)
             referEntityMeta.fieldVec += refer
             referEntityMeta.fieldMap += (field.right -> refer)
           }
@@ -137,13 +143,13 @@ object Scanner {
 
   def scanFile(path: String): Array[String] = {
     val file = new File(path)
-    if (file.isFile()) {
+    if (file.isFile) {
       return Array(path)
     }
-    val list = file.listFiles();
+    val list = file.listFiles()
     if (list == null) {
       return Array()
     }
-    return list.flatMap(f => scanFile(f.getPath()))
+    list.flatMap(f => scanFile(f.getPath))
   }
 }

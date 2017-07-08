@@ -1,4 +1,4 @@
-package modal;
+package test.model;
 
 import orm.lang.anno.Entity;
 import orm.lang.anno.Id;
