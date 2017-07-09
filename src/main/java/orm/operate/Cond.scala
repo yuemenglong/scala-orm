@@ -47,7 +47,7 @@ class Cond {
 
   def toSql(alias: String, meta: EntityMeta): String = {
     if (items.isEmpty) {
-      return null
+      return "1 = 1"
     }
     items.map(item => item.toSql(alias, meta)).mkString("\n\tAND ")
   }
