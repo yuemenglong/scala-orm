@@ -28,12 +28,18 @@ object Main {
     ex.insert("om")
     session.execute(ex)
 
-    val s = new RootSelector[Obj](OrmMeta.entityMap("Obj"))
-    s.where().eq("id", new Integer(1))
-    s.join("ptr")
-    s.join("oo")
-    s.join("om")
-    val os = Selector.query(s, db.openConnection())
-    os.foreach(println)
+    //    val s = new RootSelector[Obj](OrmMeta.entityMap("Obj"))
+    //    s.where().eq("id", new Integer(1))
+    //    s.select("ptr")
+    //    s.select("oo")
+    //    s.select("om")
+    //    val os = Selector.query(s, db.openConnection())
+    //    os.foreach(println)
+    //
+
+    val rs = new RootSelector[OM](OrmMeta.entityMap("OM"))
+    val count = rs.count(classOf[Long])
+    val res = Selector.query(count, db.openConnection())
+    res.foreach(println)
   }
 }

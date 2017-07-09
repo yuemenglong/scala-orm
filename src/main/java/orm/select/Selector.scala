@@ -15,8 +15,15 @@ import scala.reflect.ClassTag
 /**
   * Created by yml on 2017/7/9.
   */
+trait SelectorNode {
+  def root: RootSelector[_]
+
+  def setTarget(value: Boolean)
+}
+
 // select column from table where cond. param
-abstract class Selector {
+abstract class Selector(parent: SelectorImpl) extends SelectorNode {
+  protected var isTarget = false
 
   def getColumn: Array[String]
 
@@ -25,20 +32,28 @@ abstract class Selector {
   def getCond: Array[String]
 
   def getParam: Array[Object]
+
+  def setTarget(value: Boolean): Unit = {
+    isTarget = value
+  }
+
+  def root: RootSelector[_] = {
+    if (parent == null) {
+      this.asInstanceOf[RootSelector[_]]
+    } else {
+      parent.root
+    }
+  }
 }
 
-class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: SelectorImpl) extends Selector {
+class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: SelectorImpl)
+  extends Selector(parent) {
   protected var joins: ArrayBuffer[(String, Boolean, SelectorImpl)] = new ArrayBuffer[(String, Boolean, SelectorImpl)]()
   protected var fields: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
+  protected var aggres: ArrayBuffer[(String, FieldSelector[Object])] = new ArrayBuffer[(String, FieldSelector[Object])]()
 
   protected val alias: String = getAlias
   protected val cond: Cond = new Cond
-  protected var asResult = true
-
-
-  def setAsResult(value: Boolean): Unit = {
-    asResult = value
-  }
 
   def getAlias: String = {
     if (parent == null) {
@@ -63,8 +78,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     joins.find(_._1 == field)
   }
 
-
-  def join(field: String): SelectorImpl = {
+  def select(field: String): SelectorImpl = {
     val flag = true
     findExists(field) match {
       case Some(t) =>
@@ -81,18 +95,18 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     }
   }
 
-  def get(field: String): SelectorImpl = {
+  def get[T](field: String): EntitySelector[T] = {
     val flag = false
     findExists(field) match {
       case Some(t) =>
         if (t._2 != flag) {
           throw new RuntimeException(s"Already Join $field")
         } else {
-          t._3
+          t._3.asInstanceOf[EntitySelector[T]]
         }
       case None =>
         val fieldMeta = meta.fieldMap(field)
-        val selector = new SelectorImpl(fieldMeta.refer, fieldMeta, this)
+        val selector = new EntitySelector[T](fieldMeta.refer, fieldMeta, this)
         joins += ((field, flag, selector))
         selector
     }
@@ -102,15 +116,30 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     cond
   }
 
+  def count[T](clazz: Class[T]): FieldSelector[T] = {
+    val fieldAlias = s"$$count_$alias"
+    val sql = s"COUNT(*) AS $fieldAlias"
+    val ret = new FieldSelector[T](clazz, sql, fieldAlias, this)
+    aggres += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
+    ret
+  }
+
+  def count[T](field: String, clazz: Class[T]): FieldSelector[T] = {
+    val fieldAlias = s"$$count_$alias$$$field"
+    val sql = s"COUNT(*) AS $fieldAlias"
+    val ret = new FieldSelector[T](clazz, sql, fieldAlias, this)
+    aggres += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
+    ret
+  }
 
   override def getColumn: Array[String] = {
-    val selfColumn = if (asResult) {
+    val selfColumn = if (isTarget) {
       fields.map(meta.fieldMap(_))
         .map(field => s"$alias.${field.column} AS ${getFieldAlias(field.name)}")
     } else {
       Array[String]()
     }
-    selfColumn ++ joins.flatMap(_._3.getColumn)
+    selfColumn ++ aggres.flatMap(_._2.getColumn) ++ joins.flatMap(_._3.getColumn)
   }
 
   override def getTable: Array[String] = {
@@ -192,15 +221,26 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
       }
     }
   }
+}
 
+trait TargetSelector[T] extends SelectorNode {
+  def pick(resultSet: ResultSet): T
+
+  def key(value: T): String
 }
 
 class EntitySelector[T](override val meta: EntityMeta, override val joinField: FieldMeta, override val parent: SelectorImpl)
-  extends SelectorImpl(meta, null, null) {
+  extends SelectorImpl(meta, null, null)
+    with TargetSelector[T] {
+
+  override def setTarget(value: Boolean): Unit = {
+    super.setTarget(value)
+    joins.foreach(_._3.setTarget(value))
+  }
 
   private val filterMap = mutable.Map[String, EntityCore]()
 
-  def pick(resultSet: ResultSet): T = {
+  override def pick(resultSet: ResultSet): T = {
     val core = pick(resultSet, filterMap)
     if (core == null) {
       null.asInstanceOf[T]
@@ -209,6 +249,9 @@ class EntitySelector[T](override val meta: EntityMeta, override val joinField: F
     }
   }
 
+  override def key(obj: T): String = {
+    EntityManager.core(obj.asInstanceOf[Object]).getPkey.toString
+  }
 }
 
 
@@ -223,6 +266,38 @@ class RootSelector[T](meta: EntityMeta)
       case s => s
     }
     s"SELECT\n$columns\nFROM\n$tables\nWHERE\n$conds"
+  }
+}
+
+class FieldSelector[T](val clazz: Class[T], sql: String, alias: String, parent: SelectorImpl)
+  extends Selector(parent)
+    with TargetSelector[T] {
+  override def getColumn: Array[String] = {
+    if (isTarget) {
+      Array(sql)
+    } else {
+      Array()
+    }
+  }
+
+  override def getTable: Array[String] = {
+    Array()
+  }
+
+  override def getCond: Array[String] = {
+    Array()
+  }
+
+  override def getParam: Array[Object] = {
+    Array()
+  }
+
+  override def pick(resultSet: ResultSet): T = {
+    resultSet.getObject(alias).asInstanceOf[T]
+  }
+
+  override def key(value: T): String = {
+    value.toString
   }
 }
 
@@ -250,30 +325,37 @@ object Selector {
     }).toArray(ct)
   }
 
-  def query[T](rootSelector: RootSelector[T], conn: Connection): Array[T] = {
+  def query[T](selector: TargetSelector[T], conn: Connection): Array[T] = {
+    selector.setTarget(true)
     var filterSet = Set[String]()
-    val sql = rootSelector.getSql
+    val root = selector.root
+    val sql = root.getSql
     println(sql)
-    val params = rootSelector.getParam
+    val params = root.getParam
     println(s"""[Params] => [${params.map(_.toString).mkString(", ")}]""")
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>
       stmt.setObject(i + 1, param)
     }
     val rs = stmt.executeQuery()
-    var ab = ArrayBuffer[Object]()
+    var ab = ArrayBuffer[T]()
     while (rs.next()) {
-      val entity = rootSelector.pick(rs)
-      val core = EntityManager.core(entity.asInstanceOf[Object])
-      val key = core.getPkey.toString
+      val value = selector.pick(rs)
+      //      val core = EntityManager.core(entity.asInstanceOf[Object])
+      //      val key = core.getPkey.toString
+      val key = selector.key(value)
       if (!filterSet.contains(key)) {
-        ab += entity.asInstanceOf[Object]
+        ab += value
       }
       filterSet += key
     }
     rs.close()
     stmt.close()
-    bufferToArray(ab, ClassTag(rootSelector.meta.clazz)).asInstanceOf[Array[T]]
+    selector match {
+      case es: EntitySelector[T] => bufferToArray(ab.asInstanceOf[ArrayBuffer[Object]],
+        ClassTag(es.meta.clazz)).asInstanceOf[Array[T]]
+      case fs: FieldSelector[T] => ab.toArray(ClassTag(fs.clazz))
+    }
   }
 }
 
