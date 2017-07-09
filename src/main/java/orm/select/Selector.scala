@@ -118,7 +118,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
       s"${meta.table} AS $alias"
     } else {
       val left = parent.meta.fieldMap(joinField.left).column
-      val right = parent.meta.fieldMap(joinField.left).column
+      val right = meta.fieldMap(joinField.right).column
       s"LEFT JOIN ${meta.table} AS $alias ON ${parent.alias}.$left = $alias.$right"
     }
     Array(selfTable) ++ joins.flatMap(_._3.getTable)
@@ -126,7 +126,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
 
   override def getCond: Array[String] = {
     val selfCond = cond.toSql(alias, meta)
-    Array(selfCond) ++ joins.flatMap(_._3.getCond)
+    (Array(selfCond) ++ joins.flatMap(_._3.getCond)).filter(_ != null)
   }
 
   override def getParam: Array[Object] = {
@@ -217,8 +217,11 @@ class RootSelector[T](meta: EntityMeta)
 
   def getSql: String = {
     val columns = getColumn.mkString(",\n")
-    val tables = getTable.mkString(",\n")
-    val conds = getCond.mkString("\nAND ")
+    val tables = getTable.mkString("\n")
+    val conds = getCond.mkString(" \nAND ") match {
+      case "" => "1 = 1"
+      case s => s
+    }
     s"SELECT\n$columns\nFROM\n$tables\nWHERE\n$conds"
   }
 }
