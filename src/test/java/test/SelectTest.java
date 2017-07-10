@@ -8,6 +8,7 @@ import orm.Session.Session;
 import orm.db.Db;
 import orm.operate.Executor;
 import orm.select.*;
+import scala.Tuple2;
 import test.model.OM;
 import test.model.OO;
 import test.model.Obj;
@@ -101,7 +102,6 @@ public class SelectTest {
 
         RootSelector<Obj> rs = Selector.createSelect(Obj.class);
         EntitySelector<OM> s1 = rs.get("om", OM.class);
-        System.out.println(s1.parent());
         Object[][] res = Selector.query(new TargetSelector[]{rs, s1}, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(((Obj) (res[0][0])).getName(), "name");
@@ -110,5 +110,32 @@ public class SelectTest {
         Assert.assertEquals(((Obj) (res[1][0])).getId().longValue(), 1);
         Assert.assertEquals(((OM) (res[0][1])).getId().longValue(), 1);
         Assert.assertEquals(((OM) (res[1][1])).getId().longValue(), 2);
+    }
+
+    @Test
+    public void testMultiTarget2() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM()});
+        obj = Orm.convert(obj);
+        Executor ex = Executor.createInsert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        session.execute(ex);
+
+        RootSelector<Obj> rs = Selector.createSelect(Obj.class);
+        EntitySelector<OM> s1 = rs.get("om", OM.class);
+        Tuple2<Obj, OM>[] res = Selector.query(rs, s1, db.openConnection());
+        Assert.assertEquals(res.length, 2);
+        Assert.assertEquals(res[0]._1().getId().longValue(), 1);
+        Assert.assertEquals(res[1]._1().getId().longValue(), 1);
+        Assert.assertEquals(res[0]._1().getName(), "name");
+        Assert.assertEquals(res[1]._1().getName(), "name");
+        Assert.assertEquals(res[0]._2().getId().longValue(), 1);
+        Assert.assertEquals(res[1]._2().getId().longValue(), 2);
     }
 }

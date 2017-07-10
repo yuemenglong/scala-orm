@@ -310,28 +310,6 @@ object Selector {
     new RootSelector[T](meta)
   }
 
-  private def bufferToArray(ab: ArrayBuffer[Object], ct: ClassTag[Object]): Array[Object] = {
-    ab.map(item => {
-      val core = EntityManager.core(item)
-      val pairs: Array[(String, Array[Object])] = core.fieldMap.toArray.map(pair => {
-        val (name, value) = pair
-        value match {
-          case ab: ArrayBuffer[_] =>
-            val abo = ab.asInstanceOf[ArrayBuffer[Object]]
-            val entityName = core.meta.fieldMap(name).typeName
-            val entityClass = OrmMeta.entityMap(entityName).clazz
-            val ct = ClassTag(entityClass).asInstanceOf[ClassTag[Object]]
-            val array = bufferToArray(abo, ct)
-            (name, array)
-          case _ =>
-            null
-        }
-      }).filter(_ != null)
-      pairs.foreach(p => core.fieldMap += p)
-      item
-    }).toArray(ct)
-  }
-
   private def bufferToArray(entity: Entity): Entity = {
     val core = entity.$$core()
     core.fieldMap.toArray.map(pair => {
@@ -355,10 +333,16 @@ object Selector {
       case es: EntitySelector[_] => ClassTag(es.meta.clazz)
       case fs: FieldSelector[_] => ClassTag(fs.clazz)
     }
-    query(Array[TargetSelector[_]](selector), conn).map(row => {
-      row(0).asInstanceOf[T]
-    }).toArray(ct)
+    query(Array[TargetSelector[_]](selector), conn).map(row => row(0).asInstanceOf[T]).toArray(ct)
   }
+
+  def query[T0, T1](s1: TargetSelector[T0], s2: TargetSelector[T1], conn: Connection): Array[(T0, T1)] = {
+    val selectors = Array[TargetSelector[_]](s1, s2)
+    query(selectors, conn).map(row => {
+      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1])
+    })
+  }
+
 
   def query(selectors: Array[TargetSelector[_]], conn: Connection): Array[Array[Object]] = {
     if (selectors.length == 0) {
