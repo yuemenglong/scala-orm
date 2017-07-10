@@ -198,7 +198,6 @@ public class SimpleTest {
         Assert.assertEquals(oms[0].getId().intValue(), 4);
         Assert.assertEquals(oms[1].getId().intValue(), 3);
         Assert.assertEquals(oms[2].getId().intValue(), 2);
-
     }
 
     @Test

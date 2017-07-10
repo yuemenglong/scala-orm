@@ -63,6 +63,28 @@ public class SelectTest {
     }
 
     @Test
+    public void testSingleTarget() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM()});
+        obj = Orm.convert(obj);
+        Executor ex = Executor.createInsert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        session.execute(ex);
+
+        RootSelector<OM> rs = Selector.createSelect(OM.class);
+        OM[] res = (OM[]) Selector.query(rs, db.openConnection());
+        Assert.assertEquals(res.length, 2);
+        Assert.assertEquals(res[0].getId().longValue(), 1);
+        Assert.assertEquals(res[1].getId().longValue(), 2);
+    }
+
+    @Test
     public void testMultiTarget() {
         Session session = db.openSession();
         Obj obj = new Obj();

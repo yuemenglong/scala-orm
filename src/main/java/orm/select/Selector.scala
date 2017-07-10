@@ -351,36 +351,13 @@ object Selector {
   }
 
   def query[T](selector: TargetSelector[T], conn: Connection): Array[T] = {
-    selector.setTarget(true)
-    var filterSet = Set[String]()
-    val root = selector.root
-    val sql = root.getSql
-    println(sql)
-    val params = root.getParam
-    println(s"""[Params] => [${params.map(_.toString).mkString(", ")}]""")
-    val stmt = conn.prepareStatement(sql)
-    params.zipWithIndex.foreach { case (param, i) =>
-      stmt.setObject(i + 1, param)
+    val ct: ClassTag[T] = selector match {
+      case es: EntitySelector[_] => ClassTag(es.meta.clazz)
+      case fs: FieldSelector[_] => ClassTag(fs.clazz)
     }
-    val rs = stmt.executeQuery()
-    var ab = ArrayBuffer[T]()
-    while (rs.next()) {
-      val value = selector.pick(rs)
-      //      val core = EntityManager.core(entity.asInstanceOf[Object])
-      //      val key = core.getPkey.toString
-      val key = selector.key(value.asInstanceOf[Object])
-      if (!filterSet.contains(key)) {
-        ab += value
-      }
-      filterSet += key
-    }
-    rs.close()
-    stmt.close()
-    selector match {
-      case es: EntitySelector[T] => bufferToArray(ab.asInstanceOf[ArrayBuffer[Object]],
-        ClassTag(es.meta.clazz)).asInstanceOf[Array[T]]
-      case fs: FieldSelector[T] => ab.toArray(ClassTag(fs.clazz))
-    }
+    query(Array[TargetSelector[_]](selector), conn).map(row => {
+      row(0).asInstanceOf[T]
+    }).toArray(ct)
   }
 
   def query(selectors: Array[TargetSelector[_]], conn: Connection): Array[Array[Object]] = {
