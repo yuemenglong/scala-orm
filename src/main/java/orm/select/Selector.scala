@@ -38,6 +38,7 @@ abstract class Selector(parent: SelectorImpl) extends SelectorNode {
   }
 
   def root: RootSelector[_] = {
+    println(parent)
     if (parent == null) {
       this.asInstanceOf[RootSelector[_]]
     } else {
@@ -95,7 +96,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     }
   }
 
-  def get[T](field: String): EntitySelector[T] = {
+  def get[T](field: String, clazz: Class[T]): EntitySelector[T] = {
     val flag = false
     findExists(field) match {
       case Some(t) =>
@@ -231,7 +232,7 @@ trait TargetSelector[T] extends SelectorNode {
 }
 
 class EntitySelector[T](override val meta: EntityMeta, override val joinField: FieldMeta, override val parent: SelectorImpl)
-  extends SelectorImpl(meta, null, null)
+  extends SelectorImpl(meta, null, parent)
     with TargetSelector[T] {
 
   override def setTarget(value: Boolean): Unit = {
@@ -413,6 +414,7 @@ object Selector {
     }
     rs.close()
     stmt.close()
+    ab.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(bufferToArray))
     ab.toArray
   }
 }
