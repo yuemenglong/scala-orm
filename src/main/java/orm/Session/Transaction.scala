@@ -5,16 +5,18 @@ import java.sql.Connection
 /**
   * Created by Administrator on 2017/6/6.
   */
-class Transaction(conn: Connection) {
-  conn.setAutoCommit(false)
+class Transaction(session: Session) {
+  session.getConnection.setAutoCommit(false)
 
   def commit(): Unit = {
-    conn.commit()
-    conn.setAutoCommit(true)
+    session.getConnection.commit()
+    session.getConnection.setAutoCommit(true)
+    session.clearTransaction
   }
 
   def rollback(): Unit = {
-    conn.rollback()
-    conn.setAutoCommit(true)
+    session.getConnection.rollback()
+    session.getConnection.setAutoCommit(true)
+    session.clearTransaction
   }
 }

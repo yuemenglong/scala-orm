@@ -11,9 +11,10 @@ import scala.collection.mutable.ArrayBuffer
   * Created by Administrator on 2017/5/24.
   */
 
-class Session(val conn: Connection) {
-  var cache = new ArrayBuffer[Object]()
-  var closed = false
+class Session(private val conn: Connection) {
+  private var cache = new ArrayBuffer[Object]()
+  private var closed = false
+  private var tx: Transaction = _
 
   def injectSession(entity: Object, session: Session): Unit = {
     if (entity == null) {
@@ -34,7 +35,6 @@ class Session(val conn: Connection) {
         }
       })
     }
-
   }
 
   def execute(executor: Executor): Int = {
@@ -57,8 +57,19 @@ class Session(val conn: Connection) {
     ret.asInstanceOf[T]
   }
 
+  def inTransaction(): Boolean = {
+    tx != null
+  }
+
   def beginTransaction(): Transaction = {
-    new Transaction(conn)
+    if (tx == null) {
+      tx = new Transaction(this)
+    }
+    tx
+  }
+
+  def clearTransaction(): Unit = {
+    tx = null
   }
 
   def addCache(obj: Object): Unit = {
@@ -80,8 +91,11 @@ class Session(val conn: Connection) {
 
   def close(): Unit = {
     require(!closed)
-    //    flush()
     conn.close()
     this.closed = true
+  }
+
+  def getConnection: Connection = {
+    conn
   }
 }

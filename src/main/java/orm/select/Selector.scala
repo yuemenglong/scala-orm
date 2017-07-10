@@ -21,7 +21,6 @@ trait SelectorNode {
   def setTarget(value: Boolean)
 }
 
-// select column from table where cond. param
 abstract class Selector(parent: SelectorImpl) extends SelectorNode {
   protected var isTarget = false
 
@@ -47,6 +46,7 @@ abstract class Selector(parent: SelectorImpl) extends SelectorNode {
   }
 }
 
+// select column from table where cond. param
 class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: SelectorImpl)
   extends Selector(parent) {
   protected var joins: ArrayBuffer[(String, Boolean, SelectorImpl)] = new ArrayBuffer[(String, Boolean, SelectorImpl)]()
