@@ -6,7 +6,7 @@ import orm.entity.{EntityCore, EntityManager}
 import orm.kit.Kit
 import orm.lang.interfaces.Entity
 import orm.meta.{EntityMeta, FieldMeta, OrmMeta}
-import orm.operate.{Cond, EntityItem}
+import orm.operate.Cond
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -172,16 +172,16 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     s"$alias@$field@${core.getPkey.toString}"
   }
 
-  def pick(resultSet: ResultSet, filterMap: mutable.Map[String, EntityCore]): EntityCore = {
-    val core = pickSelf(resultSet, filterMap)
-    if (core == null) {
+  def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+    val a = pickSelf(resultSet, filterMap)
+    if (a == null) {
       return null
     }
-    pickRefer(core, resultSet, filterMap)
-    core
+    pickRefer(a, resultSet, filterMap)
+    a
   }
 
-  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, EntityCore]): EntityCore = {
+  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
     val map: Map[String, Object] = fields.map(field => {
       val alias = getFieldAlias(field)
       val value = resultSet.getObject(alias)
@@ -195,28 +195,29 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     if (filterMap.contains(key)) {
       return filterMap(key)
     }
-    filterMap += (key -> core)
-    core
+    val a = EntityManager.wrap(core)
+    filterMap += (key -> a)
+    a
   }
 
-  def pickRefer(a: EntityCore, resultSet: ResultSet, filterMap: mutable.Map[String, EntityCore]) {
+  def pickRefer(a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
+    val aCore = EntityManager.core(a)
     joins.filter(_._2).foreach { case (field, _, subSelector) =>
       val fieldMeta = meta.fieldMap(field)
-      val bCore = subSelector.pick(resultSet, filterMap)
-      (bCore, fieldMeta.isOneMany) match {
-        case (null, false) => a.fieldMap += (field -> null)
-        case (null, true) => a.fieldMap += (field -> new ArrayBuffer[Object]())
-        case (_, false) => a.fieldMap += (field -> EntityManager.wrap(bCore))
+      val b = subSelector.pick(resultSet, filterMap)
+      (b, fieldMeta.isOneMany) match {
+        case (null, false) => aCore.fieldMap += (field -> null)
+        case (null, true) => aCore.fieldMap += (field -> new ArrayBuffer[Entity]())
+        case (_, false) => aCore.fieldMap += (field -> b)
         case (_, true) =>
-          val b = EntityManager.wrap(bCore)
-          val key = getOneManyFilterKey(field, bCore)
+          val key = getOneManyFilterKey(field, b.$$core())
           if (filterMap.contains(key)) {
             //
-          } else if (!a.fieldMap.contains(field)) {
-            a.fieldMap += (field -> new ArrayBuffer[Object]())
-            a.fieldMap(field).asInstanceOf[ArrayBuffer[Object]] += b
+          } else if (!aCore.fieldMap.contains(field)) {
+            aCore.fieldMap += (field -> new ArrayBuffer[Entity]())
+            aCore.fieldMap(field).asInstanceOf[ArrayBuffer[Entity]] += b
           } else {
-            a.fieldMap(field).asInstanceOf[ArrayBuffer[Object]] += b
+            aCore.fieldMap(field).asInstanceOf[ArrayBuffer[Entity]] += b
           }
       }
     }
@@ -238,14 +239,14 @@ class EntitySelector[T](override val meta: EntityMeta, override val joinField: F
     joins.foreach(_._3.setTarget(value))
   }
 
-  private val filterMap = mutable.Map[String, EntityCore]()
+  private val filterMap = mutable.Map[String, Entity]()
 
   override def pick(resultSet: ResultSet): T = {
-    val core = pick(resultSet, filterMap)
-    if (core == null) {
+    val a = pick(resultSet, filterMap)
+    if (a == null) {
       null.asInstanceOf[T]
     } else {
-      EntityManager.wrap(core).asInstanceOf[T]
+      a.asInstanceOf[T]
     }
   }
 
@@ -302,6 +303,11 @@ class FieldSelector[T](val clazz: Class[T], sql: String, alias: String, parent: 
 }
 
 object Selector {
+
+  def createSelect[T](clazz: Class[T]): RootSelector[T] = {
+    val meta = OrmMeta.entityMap(clazz.getSimpleName)
+    new RootSelector[T](meta)
+  }
 
   private def bufferToArray(ab: ArrayBuffer[Object], ct: ClassTag[Object]): Array[Object] = {
     ab.map(item => {

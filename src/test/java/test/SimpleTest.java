@@ -14,7 +14,6 @@ import test.model.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -24,6 +23,7 @@ public class SimpleTest {
 
     private static Db db;
 
+    @SuppressWarnings("Duplicates")
     @Before
     public void before() {
         ArrayList<String> clazzList = new ArrayList<String>();
@@ -221,4 +221,6 @@ public class SimpleTest {
         Object[][] res = ms.query(db.openConnection());
         Assert.assertEquals(res[0][0].toString(), "6");
     }
+
+
 }

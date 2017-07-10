@@ -30,7 +30,7 @@ class MultiSelector(meta: EntityMeta, alias: String, parent: SelectorBase = null
       case (true, true) => ""
       case (true, false) => columnSql
       case (false, true) => aggreSql
-      case (true, true) => s"$aggreSql\n$columnSql"
+      case (false, false) => s"$aggreSql\n$columnSql"
     }
   }
 
