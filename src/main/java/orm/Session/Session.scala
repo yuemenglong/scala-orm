@@ -2,7 +2,6 @@ package orm.Session
 
 import java.sql.Connection
 
-import orm.entity.EntityManager
 import orm.lang.interfaces.Entity
 import orm.operate._
 

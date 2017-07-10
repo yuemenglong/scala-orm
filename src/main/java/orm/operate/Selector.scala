@@ -168,7 +168,6 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     selfParam ++ joins.flatMap(_._3.getParam)
   }
 
-
   def getFilterKey(core: EntityCore): String = {
     s"$alias@${core.getPkey.toString}"
   }

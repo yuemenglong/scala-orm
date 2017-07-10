@@ -3,6 +3,7 @@ package orm.operate
 import java.sql.{Connection, Statement}
 
 import orm.entity.{EntityCore, EntityManager}
+import orm.lang.interfaces.Entity
 import orm.meta.EntityMeta
 
 import scala.collection.mutable.ArrayBuffer
@@ -17,15 +18,15 @@ object Cascade {
 class Executor(val meta: EntityMeta, val cascade: Int) {
   // 只有顶层有entity
   private var withs = new ArrayBuffer[(String, Executor)]()
-  private var entity: Object = _
+  private var entity: Entity = _
   private var cond: Cond = _
   private var spec = Map[Object, Executor]()
 
-  private def setEntity(entity: Object): Unit = {
+  private def setEntity(entity: Entity): Unit = {
     this.entity = entity
   }
 
-  def getEntity: Object = {
+  def getEntity: Entity = {
     entity
   }
 
@@ -260,22 +261,25 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 }
 
 object Executor {
-  def createInsert(entity: Object): Executor = {
-    val meta = EntityManager.core(entity).meta
+  def createInsert(obj: Object): Executor = {
+    val entity = obj.asInstanceOf[Entity]
+    val meta = entity.$$core().meta
     val ret = new Executor(meta, Cascade.INSERT)
     ret.setEntity(entity)
     ret
   }
 
-  def createUpdate(entity: Object): Executor = {
-    val meta = EntityManager.core(entity).meta
+  def createUpdate(obj: Object): Executor = {
+    val entity = obj.asInstanceOf[Entity]
+    val meta = entity.$$core().meta
     val ret = new Executor(meta, Cascade.UPDATE)
     ret.setEntity(entity)
     ret
   }
 
-  def createDelete(entity: Object): Executor = {
-    val meta = EntityManager.core(entity).meta
+  def createDelete(obj: Object): Executor = {
+    val entity = obj.asInstanceOf[Entity]
+    val meta = entity.$$core().meta
     val ret = new Executor(meta, Cascade.DELETE)
     ret.setEntity(entity)
     ret
