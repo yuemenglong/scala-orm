@@ -3,7 +3,7 @@ package test
 import orm.Orm
 import orm.meta.OrmMeta
 import orm.operate.Executor
-import orm.select.{RootSelector, Selector}
+import orm.select.{RootSelector, Selector, TargetSelector}
 import test.model.{OM, OO, Obj, Ptr}
 
 /**
@@ -39,7 +39,7 @@ object Main {
 
     val rs = new RootSelector[OM](OrmMeta.entityMap("OM"))
     val count = rs.count(classOf[Long])
-    val res = Selector.query(count, db.openConnection())
-    res.foreach(println)
+    val res = Selector.query(Array[TargetSelector[_]](count), db.openConnection())
+    res.foreach(_.foreach(println))
   }
 }

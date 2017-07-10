@@ -227,7 +227,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
 trait TargetSelector[T] extends SelectorNode {
   def pick(resultSet: ResultSet): T
 
-  def key(value: T): String
+  def key(value: Object): String
 }
 
 class EntitySelector[T](override val meta: EntityMeta, override val joinField: FieldMeta, override val parent: SelectorImpl)
@@ -250,7 +250,7 @@ class EntitySelector[T](override val meta: EntityMeta, override val joinField: F
     }
   }
 
-  override def key(obj: T): String = {
+  override def key(obj: Object): String = {
     EntityManager.core(obj.asInstanceOf[Object]).getPkey.toString
   }
 }
@@ -297,7 +297,7 @@ class FieldSelector[T](val clazz: Class[T], sql: String, alias: String, parent: 
     resultSet.getObject(alias).asInstanceOf[T]
   }
 
-  override def key(value: T): String = {
+  override def key(value: Object): String = {
     value.toString
   }
 }
@@ -331,6 +331,24 @@ object Selector {
     }).toArray(ct)
   }
 
+  private def bufferToArray(entity: Entity): Entity = {
+    val core = entity.$$core()
+    core.fieldMap.toArray.map(pair => {
+      val (name, value) = pair
+      value match {
+        case ab: ArrayBuffer[_] =>
+          val entityName = core.meta.fieldMap(name).typeName
+          val entityClass = OrmMeta.entityMap(entityName).clazz
+          val ct = ClassTag(entityClass).asInstanceOf[ClassTag[Object]]
+          val array = ab.map(_.asInstanceOf[Entity]).map(bufferToArray).toArray(ct)
+          (name, array)
+        case _ =>
+          null
+      }
+    }).filter(_ != null).foreach(p => core.fieldMap += p)
+    entity
+  }
+
   def query[T](selector: TargetSelector[T], conn: Connection): Array[T] = {
     selector.setTarget(true)
     var filterSet = Set[String]()
@@ -349,7 +367,7 @@ object Selector {
       val value = selector.pick(rs)
       //      val core = EntityManager.core(entity.asInstanceOf[Object])
       //      val key = core.getPkey.toString
-      val key = selector.key(value)
+      val key = selector.key(value.asInstanceOf[Object])
       if (!filterSet.contains(key)) {
         ab += value
       }
@@ -362,6 +380,40 @@ object Selector {
         ClassTag(es.meta.clazz)).asInstanceOf[Array[T]]
       case fs: FieldSelector[T] => ab.toArray(ClassTag(fs.clazz))
     }
+  }
+
+  def query(selectors: Array[TargetSelector[_]], conn: Connection): Array[Array[Object]] = {
+    if (selectors.length == 0) {
+      throw new RuntimeException("No Selector")
+    }
+    selectors.foreach(_.setTarget(true))
+    var filterSet = Set[String]()
+    val roots = selectors.map(_.root)
+    if (roots.exists(_ != roots(0))) {
+      throw new RuntimeException("Root Not Match")
+    }
+    val root = roots(0)
+    val sql = root.getSql
+    println(sql)
+    val params = root.getParam
+    println(s"""[Params] => [${params.map(_.toString).mkString(", ")}]""")
+    val stmt = conn.prepareStatement(sql)
+    params.zipWithIndex.foreach { case (param, i) =>
+      stmt.setObject(i + 1, param)
+    }
+    val rs = stmt.executeQuery()
+    var ab = ArrayBuffer[Array[Object]]()
+    while (rs.next()) {
+      val values = selectors.map(_.pick(rs).asInstanceOf[Object])
+      val key = (selectors, values).zipped.map(_.key(_)).mkString("$")
+      if (!filterSet.contains(key)) {
+        ab += values
+      }
+      filterSet += key
+    }
+    rs.close()
+    stmt.close()
+    ab.toArray
   }
 }
 
