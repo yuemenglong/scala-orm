@@ -2,8 +2,7 @@ package test
 
 import orm.Orm
 import orm.meta.OrmMeta
-import orm.operate.Executor
-import orm.select.{RootSelector, Selector, TargetSelector}
+import orm.operate.{Executor, RootSelector, Selector, TargetSelector}
 import test.model.{OM, OO, Obj, Ptr}
 
 /**
@@ -28,6 +27,7 @@ object Main {
     ex.insert("om")
     session.execute(ex)
 
+
     //    val s = new RootSelector[Obj](OrmMeta.entityMap("Obj"))
     //    s.where().eq("id", new Integer(1))
     //    s.select("ptr")
@@ -40,6 +40,5 @@ object Main {
     val rs = new RootSelector[OM](OrmMeta.entityMap("OM"))
     val count = rs.count(classOf[Long])
     val res = Selector.query(Array[TargetSelector[_]](count), db.openConnection())
-    res.foreach(_.foreach(println))
   }
 }

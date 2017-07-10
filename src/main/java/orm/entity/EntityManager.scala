@@ -50,12 +50,12 @@ object EntityManager {
     obj.isInstanceOf[Entity]
   }
 
-  def convert(obj: Object): Object = {
+  def convert(obj: Object): Entity = {
     if (obj == null) {
       return null
     }
     if (isEntity(obj)) {
-      return obj
+      return obj.asInstanceOf[Entity]
     }
     if (!OrmMeta.entityMap.contains(obj.getClass.getSimpleName)) {
       throw new RuntimeException(s"[${obj.getClass.getSimpleName}] Is Not Entity")

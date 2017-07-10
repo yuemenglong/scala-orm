@@ -6,10 +6,8 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.Cond;
-import orm.operate.Executor;
-import orm.operate.MultiSelector;
-import orm.operate.Selector;
+import orm.lang.interfaces.Entity;
+import orm.operate.*;
 import test.model.*;
 
 import java.math.BigDecimal;
@@ -91,7 +89,7 @@ public class SimpleTest {
         Assert.assertEquals(ret, 1);
 
         // select
-        Selector<Obj> selector = Selector.from(Obj.class);
+        RootSelector<Obj> selector = Selector.createSelect(Obj.class);
         selector.select("ptr");
         selector.select("oo");
         selector.select("om");
@@ -99,7 +97,7 @@ public class SimpleTest {
         ArrayList<Integer> inList = new ArrayList<Integer>();
         inList.add(1);
         inList.add(2);
-        selector.where(Cond.byIn("id", inList.toArray(new Integer[0])));
+        selector.where().in("id", inList.toArray(new Integer[0]));
         Obj[] res = (Obj[]) session.query(selector);
         Assert.assertEquals(res.length, 1);
         Assert.assertEquals(res[0].getId().intValue(), 1);
@@ -139,16 +137,16 @@ public class SimpleTest {
         Assert.assertEquals(ret, 5);
 
         {
-            Selector<Obj> sr = Selector.createSelect(Obj.class);
+            RootSelector<Obj> sr = Selector.createSelect(Obj.class);
             Obj[] objs = (Obj[]) session.query(sr);
             Assert.assertEquals(objs.length, 1);
-            Selector<Ptr> sr2 = Selector.createSelect(Ptr.class);
+            RootSelector<Ptr> sr2 = Selector.createSelect(Ptr.class);
             Ptr[] ptrs = (Ptr[]) session.query(sr2);
             Assert.assertEquals(ptrs.length, 1);
-            Selector<OO> sr3 = Selector.createSelect(OO.class);
+            RootSelector<OO> sr3 = Selector.createSelect(OO.class);
             OO[] oos = (OO[]) session.query(sr3);
             Assert.assertEquals(oos.length, 1);
-            Selector<OM> sr4 = Selector.createSelect(OM.class);
+            RootSelector<OM> sr4 = Selector.createSelect(OM.class);
             OM[] oms = (OM[]) session.query(sr4);
             Assert.assertEquals(oms.length, 2);
         }
@@ -160,16 +158,16 @@ public class SimpleTest {
         session.execute(ex);
 
         {
-            Selector<Obj> sr = Selector.createSelect(Obj.class);
+            RootSelector<Obj> sr = Selector.createSelect(Obj.class);
             Obj[] objs = (Obj[]) session.query(sr);
             Assert.assertEquals(objs.length, 0);
-            Selector<Ptr> sr2 = Selector.createSelect(Ptr.class);
+            RootSelector<Ptr> sr2 = Selector.createSelect(Ptr.class);
             Ptr[] ptrs = (Ptr[]) session.query(sr2);
             Assert.assertEquals(objs.length, 0);
-            Selector<OO> sr3 = Selector.createSelect(OO.class);
+            RootSelector<OO> sr3 = Selector.createSelect(OO.class);
             OO[] oos = (OO[]) session.query(sr3);
             Assert.assertEquals(objs.length, 0);
-            Selector<OM> sr4 = Selector.createSelect(OM.class);
+            RootSelector<OM> sr4 = Selector.createSelect(OM.class);
             OM[] oms = (OM[]) session.query(sr4);
             Assert.assertEquals(objs.length, 0);
         }
@@ -190,7 +188,7 @@ public class SimpleTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        Selector<OM> sr = Selector.createSelect(OM.class);
+        RootSelector<OM> sr = Selector.createSelect(OM.class);
         sr.desc("id").limit(3).offset(2);
 
         OM[] oms = (OM[]) session.query(sr);
@@ -215,10 +213,10 @@ public class SimpleTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        MultiSelector ms = Selector.createMulti(OM.class);
-        ms.count();
-        Object[][] res = ms.query(db.openConnection());
-        Assert.assertEquals(res[0][0].toString(), "6");
+        RootSelector<OM> ms = Selector.createSelect(OM.class);
+        FieldSelector<Long> count = ms.count(Long.class);
+        Long c = session.first(count);
+        Assert.assertEquals(c.intValue(), 6);
     }
 
 
