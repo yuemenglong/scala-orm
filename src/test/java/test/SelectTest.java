@@ -162,4 +162,34 @@ public class SelectTest {
         Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
         Assert.assertEquals(res[1]._2(), null);
     }
+
+    @Test
+    public void testDistinctCount() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM(), new OM()});
+        obj = Orm.convert(obj);
+        Executor ex = Executor.createInsert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om").insert("mo");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 6);
+
+        {
+            RootSelector<OM> root = Selector.createSelect(OM.class);
+            FieldSelector<Long> count = root.count("objId", Long.class);
+            Long res = session.first(count);
+            Assert.assertEquals(res.longValue(), 1);
+        }
+        {
+            RootSelector<OM> root = Selector.createSelect(OM.class);
+            FieldSelector<Long> count = root.count(Long.class);
+            Long res = session.first(count);
+            Assert.assertEquals(res.longValue(), 3);
+        }
+    }
 }

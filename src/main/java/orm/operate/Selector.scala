@@ -120,7 +120,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
 
   def get(field: String): SelectorImpl = {
     if (!meta.fieldMap.contains(field)) {
-      throw new RuntimeException(s"Unknown Field ${field} For ${meta.entity}")
+      throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
     }
     get(field, meta.fieldMap(field).refer.clazz)
   }
@@ -130,7 +130,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
   }
 
   def count[T](clazz: Class[T]): FieldSelector[T] = {
-    val fieldAlias = s"$$count_$alias"
+    val fieldAlias = s"count$$$alias"
     val sql = s"COUNT(*) AS $fieldAlias"
     val ret = new FieldSelector[T](clazz, sql, fieldAlias, this)
     aggres += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
@@ -138,8 +138,12 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
   }
 
   def count[T](field: String, clazz: Class[T]): FieldSelector[T] = {
-    val fieldAlias = s"$$count_$alias$$$field"
-    val sql = s"COUNT(*) AS $fieldAlias"
+    if (!meta.fieldMap.contains(field)) {
+      throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
+    }
+    val fieldAlias = s"count$$$alias$$$field"
+    val column = meta.fieldMap(field).column
+    val sql = s"COUNT(DISTINCT $alias.$column) AS $fieldAlias"
     val ret = new FieldSelector[T](clazz, sql, fieldAlias, this)
     aggres += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
     ret
