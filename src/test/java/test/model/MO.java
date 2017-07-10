@@ -2,20 +2,16 @@ package test.model;
 
 import orm.lang.anno.Entity;
 import orm.lang.anno.Id;
-import orm.lang.anno.Pointer;
 
 /**
- * Created by Administrator on 2017/5/19.
+ * Created by Administrator on 2017/7/10.
  */
 @Entity
-public class OM {
+public class MO {
     @Id(auto = true)
     private Long id;
 
     private Integer value;
-
-    @Pointer
-    private MO mo;
 
     public Long getId() {
         return id;
@@ -31,13 +27,5 @@ public class OM {
 
     public void setValue(Integer value) {
         this.value = value;
-    }
-
-    public MO getMo() {
-        return mo;
-    }
-
-    public void setMo(MO mo) {
-        this.mo = mo;
     }
 }

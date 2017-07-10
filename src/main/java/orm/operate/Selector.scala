@@ -47,6 +47,7 @@ abstract class Selector(parent: SelectorImpl) extends SelectorNode {
 // select column from table where cond. param
 class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: SelectorImpl)
   extends Selector(parent) {
+  // Boolean 表示是否关联查询，而不是另一个target
   protected var joins: ArrayBuffer[(String, Boolean, SelectorImpl)] = new ArrayBuffer[(String, Boolean, SelectorImpl)]()
   protected var fields: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
   protected var aggres: ArrayBuffer[(String, FieldSelector[Object])] = new ArrayBuffer[(String, FieldSelector[Object])]()
@@ -56,7 +57,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
 
   def getAlias: String = {
     if (parent == null) {
-      Kit.lowerCaseFirst(meta.entity)
+      Kit.lodashCase(meta.entity)
     } else {
       s"${parent.alias}_${joinField.name}"
     }
@@ -115,6 +116,13 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
         joins += ((field, flag, selector))
         selector
     }
+  }
+
+  def get(field: String): SelectorImpl = {
+    if (!meta.fieldMap.contains(field)) {
+      throw new RuntimeException(s"Unknown Field ${field} For ${meta.entity}")
+    }
+    get(field, meta.fieldMap(field).refer.clazz)
   }
 
   def where(): Cond = {
@@ -240,7 +248,7 @@ class EntitySelector[T](override val meta: EntityMeta, override val joinField: F
 
   override def setTarget(value: Boolean): Unit = {
     super.setTarget(value)
-    joins.foreach(_._3.setTarget(value))
+    joins.filter(_._2).foreach(_._3.setTarget(value))
   }
 
   private val filterMap = mutable.Map[String, Entity]()
@@ -255,7 +263,11 @@ class EntitySelector[T](override val meta: EntityMeta, override val joinField: F
   }
 
   override def key(obj: Object): String = {
-    EntityManager.core(obj.asInstanceOf[Object]).getPkey.toString
+    if (obj == null) {
+      ""
+    } else {
+      EntityManager.core(obj.asInstanceOf[Object]).getPkey.toString
+    }
   }
 }
 

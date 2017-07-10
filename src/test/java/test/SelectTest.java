@@ -8,10 +8,7 @@ import orm.Session.Session;
 import orm.db.Db;
 import orm.operate.*;
 import scala.Tuple2;
-import test.model.OM;
-import test.model.OO;
-import test.model.Obj;
-import test.model.Ptr;
+import test.model.*;
 
 import java.util.ArrayList;
 
@@ -30,7 +27,7 @@ public class SelectTest {
         clazzList.add("test.model.Ptr");
         clazzList.add("test.model.OO");
         clazzList.add("test.model.OM");
-        clazzList.add("test.model.Ign");
+        clazzList.add("test.model.MO");
         Orm.init(clazzList.toArray(new String[0]));
         db = openDb();
         db.rebuild();
@@ -136,5 +133,33 @@ public class SelectTest {
         Assert.assertEquals(res[1]._1().getName(), "name");
         Assert.assertEquals(res[0]._2().getId().longValue(), 1);
         Assert.assertEquals(res[1]._2().getId().longValue(), 2);
+    }
+
+    @Test
+    public void testGet() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM()});
+        obj.getOm()[0].setMo(new MO());
+        obj.getOm()[0].getMo().setValue(100);
+        obj = Orm.convert(obj);
+        Executor ex = Executor.createInsert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om").insert("mo");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 6);
+
+        RootSelector<Obj> root = Selector.createSelect(Obj.class);
+        EntitySelector<MO> mo = root.get("om").get("mo", MO.class);
+        Tuple2<Obj, MO>[] res = session.query(root, mo);
+        Assert.assertEquals(res.length, 2);
+        Assert.assertEquals(res[0]._1().getPtr(), null);
+        Assert.assertEquals(res[0]._1().getOm(), null);
+        Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
+        Assert.assertEquals(res[1]._2(), null);
     }
 }

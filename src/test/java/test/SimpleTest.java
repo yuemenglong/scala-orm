@@ -30,7 +30,7 @@ public class SimpleTest {
         clazzList.add("test.model.Ptr");
         clazzList.add("test.model.OO");
         clazzList.add("test.model.OM");
-        clazzList.add("test.model.Ign");
+        clazzList.add("test.model.MO");
         Orm.init(clazzList.toArray(new String[0]));
         db = openDb();
         db.rebuild();
