@@ -1,6 +1,5 @@
 package test;
 
-import jdk.nashorn.internal.scripts.JO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -99,7 +98,7 @@ public class SelectTest {
 
         Root<Obj> rs = Selector.createSelect(Obj.class);
         Join<OM> s1 = rs.join("om", OM.class);
-        Object[][] res = Selector.query(new TargetSelector[]{rs, s1}, db.openConnection());
+        Object[][] res = Selector.query(new Target[]{rs, s1}, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(((Obj) (res[0][0])).getName(), "name");
         Assert.assertEquals(((Obj) (res[1][0])).getName(), "name");

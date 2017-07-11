@@ -49,7 +49,7 @@ abstract class CondFV(f: FieldImpl, v: Object) extends CondImpl {
   def op(): String
 
   override def toSql: String = {
-    s"${f.alias} ${op()} ?"
+    s"${f.column} ${op()} ?"
   }
 
   override def toParam: Array[Object] = {
@@ -61,7 +61,7 @@ abstract class CondFF(f1: FieldImpl, f2: FieldImpl) extends CondImpl {
   def op(): String
 
   override def toSql: String = {
-    s"${f1.alias} ${op()} ${f2.alias}"
+    s"${f1.column} ${op()} ${f2.column}"
   }
 
   override def toParam: Array[Object] = {

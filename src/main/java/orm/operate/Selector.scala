@@ -19,12 +19,14 @@ trait SelectorTrait {
   def root: Root[_]
 }
 
-trait TargetSelector[T] extends SelectorTrait {
+trait Target[T] extends SelectorTrait {
   def getColumn: Array[String]
 
   def pick(resultSet: ResultSet): T
 
   def key(value: Object): String = value.toString
+
+  def classT(): Class[T]
 }
 
 abstract class Selector(parent: JoinImpl) extends SelectorTrait {
@@ -44,7 +46,7 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
   // Boolean 表示是否关联查询，即是否为select
   protected var fields: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
   protected var joins: ArrayBuffer[(String, Boolean, JoinImpl)] = new ArrayBuffer[(String, Boolean, JoinImpl)]()
-  protected var targets: ArrayBuffer[(String, TargetSelector[Object])] = new ArrayBuffer[(String, TargetSelector[Object])]()
+  protected var targets: ArrayBuffer[(String, Target[Object])] = new ArrayBuffer[(String, Target[Object])]()
 
   val alias: String = getEntityAlias
 
@@ -220,7 +222,7 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
 
 class Join[T](meta: EntityMeta, joinField: FieldMeta, parent: JoinImpl)
   extends JoinImpl(meta, null, parent)
-    with TargetSelector[T] {
+    with Target[T] {
 
   private val filterMap = mutable.Map[String, Entity]()
 
@@ -250,6 +252,8 @@ class Join[T](meta: EntityMeta, joinField: FieldMeta, parent: JoinImpl)
       EntityManager.core(obj.asInstanceOf[Object]).getPkey.toString
     }
   }
+
+  override def classT(): Class[T] = meta.clazz.asInstanceOf[Class[T]]
 }
 
 class Root[T](meta: EntityMeta)
@@ -303,9 +307,14 @@ class Root[T](meta: EntityMeta)
     this
   }
 
-  def getParam: Array[Object] = cond.toParam
+  def getParam: Array[Object] = {
+    cond match {
+      case null => Array()
+      case _ => cond.toParam
+    }
+  }
 
-  def getSql(targets: Array[TargetSelector[_]]): String = {
+  def getSql(targets: Array[Target[_]]): String = {
     val columns = targets.flatMap(_.getColumn).mkString(",\n")
     val tables = getTable.mkString("\n")
     val conds = cond match {
@@ -356,7 +365,7 @@ class FieldImpl(val clazz: Class[_], field: String, parent: JoinImpl)
 
 class Field[T](clazz: Class[T], field: String, parent: JoinImpl)
   extends FieldImpl(clazz, field, parent)
-    with TargetSelector[T] {
+    with Target[T] {
 
   override def getColumn: Array[String] = {
     Array(s"$column AS $alias")
@@ -365,13 +374,15 @@ class Field[T](clazz: Class[T], field: String, parent: JoinImpl)
   override def pick(resultSet: ResultSet): T = {
     resultSet.getObject(alias).asInstanceOf[T]
   }
+
+  override def classT(): Class[T] = clazz
 }
 
 // aggre -------------------------------------------------------
 
 case class Count[T](clazz: Class[T], field: FieldImpl, parent: JoinImpl)
   extends Selector(parent)
-    with TargetSelector[T] {
+    with Target[T] {
 
   val column: String = s"COUNT(DISTINCT ${field.column})"
   val alias: String = s"count$$${field.alias}"
@@ -383,11 +394,13 @@ case class Count[T](clazz: Class[T], field: FieldImpl, parent: JoinImpl)
   override def pick(resultSet: ResultSet): T = {
     resultSet.getObject(alias).asInstanceOf[T]
   }
+
+  override def classT(): Class[T] = clazz
 }
 
 case class Count_[T](clazz: Class[T], parent: JoinImpl)
   extends Selector(parent)
-    with TargetSelector[T] {
+    with Target[T] {
 
   val column: String = s"COUNT(*)"
   val alias: String = s"count$$${parent.alias}"
@@ -399,6 +412,8 @@ case class Count_[T](clazz: Class[T], parent: JoinImpl)
   override def pick(resultSet: ResultSet): T = {
     resultSet.getObject(alias).asInstanceOf[T]
   }
+
+  override def classT(): Class[T] = clazz
 }
 
 // static -------------------------------------------------------
@@ -430,22 +445,22 @@ object Selector {
     entity
   }
 
-  def query[T](selector: TargetSelector[T], conn: Connection): Array[T] = {
+  def query[T](selector: Target[T], conn: Connection): Array[T] = {
     val ct: ClassTag[T] = selector match {
       case es: Join[_] => ClassTag(es.meta.clazz)
-      case fs: Field[_] => ClassTag(fs.clazz)
+      case fs: Target[_] => ClassTag(fs.classT())
     }
-    query(Array[TargetSelector[_]](selector), conn).map(row => row(0).asInstanceOf[T]).toArray(ct)
+    query(Array[Target[_]](selector), conn).map(row => row(0).asInstanceOf[T]).toArray(ct)
   }
 
-  def query[T0, T1](s1: TargetSelector[T0], s2: TargetSelector[T1], conn: Connection): Array[(T0, T1)] = {
-    val selectors = Array[TargetSelector[_]](s1, s2)
+  def query[T0, T1](s1: Target[T0], s2: Target[T1], conn: Connection): Array[(T0, T1)] = {
+    val selectors = Array[Target[_]](s1, s2)
     query(selectors, conn).map(row => {
       (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1])
     })
   }
 
-  def query(selectors: Array[TargetSelector[_]], conn: Connection): Array[Array[Object]] = {
+  def query(selectors: Array[Target[_]], conn: Connection): Array[Array[Object]] = {
     if (selectors.length == 0) {
       throw new RuntimeException("No Selector")
     }
