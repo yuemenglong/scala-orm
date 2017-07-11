@@ -16,7 +16,7 @@ import scala.reflect.ClassTag
   */
 // select column from table where cond. param
 trait SelectorTrait {
-  def root: RootSelector[_]
+  def root: Root[_]
 }
 
 trait TargetSelector[T] extends SelectorTrait {
@@ -24,13 +24,13 @@ trait TargetSelector[T] extends SelectorTrait {
 
   def pick(resultSet: ResultSet): T
 
-  def key(value: Object): String
+  def key(value: Object): String = value.toString
 }
 
-abstract class Selector(parent: EntitySelectorImpl) extends SelectorTrait {
-  def root: RootSelector[_] = {
+abstract class Selector(parent: JoinImpl) extends SelectorTrait {
+  def root: Root[_] = {
     if (parent == null) {
-      this.asInstanceOf[RootSelector[_]]
+      this.asInstanceOf[Root[_]]
     } else {
       parent.root
     }
@@ -39,12 +39,12 @@ abstract class Selector(parent: EntitySelectorImpl) extends SelectorTrait {
 
 // entity -------------------------------------------------------
 
-class EntitySelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: EntitySelectorImpl)
+class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinImpl)
   extends Selector(parent) {
   // Boolean 表示是否关联查询，即是否为select
   protected var fields: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
-  protected var joins: ArrayBuffer[(String, Boolean, EntitySelectorImpl)] = new ArrayBuffer[(String, Boolean, EntitySelectorImpl)]()
-  protected var attaches: ArrayBuffer[(String, FieldSelector[Object])] = new ArrayBuffer[(String, FieldSelector[Object])]()
+  protected var joins: ArrayBuffer[(String, Boolean, JoinImpl)] = new ArrayBuffer[(String, Boolean, JoinImpl)]()
+  protected var targets: ArrayBuffer[(String, TargetSelector[Object])] = new ArrayBuffer[(String, TargetSelector[Object])]()
 
   val alias: String = getEntityAlias
 
@@ -68,14 +68,14 @@ class EntitySelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val par
     this.fields = fields
   }
 
-  private def findExists(field: String): Option[(String, Boolean, EntitySelectorImpl)] = {
+  private def findExists(field: String): Option[(String, Boolean, JoinImpl)] = {
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"Join Non Object Field, $field")
     }
     joins.find(_._1 == field)
   }
 
-  def select(field: String): EntitySelectorImpl = {
+  def select(field: String): JoinImpl = {
     val flag = true
     findExists(field) match {
       case Some(t) =>
@@ -86,13 +86,13 @@ class EntitySelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val par
         }
       case None =>
         val fieldMeta = meta.fieldMap(field)
-        val selector = new EntitySelectorImpl(fieldMeta.refer, fieldMeta, this)
+        val selector = new JoinImpl(fieldMeta.refer, fieldMeta, this)
         joins += ((field, flag, selector))
         selector
     }
   }
 
-  def join[T](field: String, clazz: Class[T]): EntitySelector[T] = {
+  def join[T](field: String, clazz: Class[T]): Join[T] = {
     val flag = false
     findExists(field) match {
       case Some(t) =>
@@ -102,27 +102,27 @@ class EntitySelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val par
           if (t._3.meta.clazz != clazz) {
             throw new RuntimeException("Class Not Match")
           }
-          t._3.asInstanceOf[EntitySelector[T]]
+          t._3.asInstanceOf[Join[T]]
         }
       case None =>
         val fieldMeta = meta.fieldMap(field)
         if (fieldMeta.refer.clazz != clazz) {
           throw new RuntimeException("Class Not Match")
         }
-        val selector = new EntitySelector[T](fieldMeta.refer, fieldMeta, this)
+        val selector = new Join[T](fieldMeta.refer, fieldMeta, this)
         joins += ((field, flag, selector))
         selector
     }
   }
 
-  def join(field: String): EntitySelectorImpl = {
+  def join(field: String): JoinImpl = {
     if (!meta.fieldMap.contains(field)) {
       throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
     }
     join(field, meta.fieldMap(field).refer.clazz)
   }
 
-  def get[T](field: String, clazz: Class[T]): FieldSelector[T] = {
+  def get[T](field: String, clazz: Class[T]): Field[T] = {
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
     }
@@ -130,43 +130,22 @@ class EntitySelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val par
     if (clazz != fieldMeta.field.getType) {
       throw new RuntimeException("Class Not Match")
     }
-    attaches.find(_._1 == field) match {
-      case Some((_, fs)) => fs.asInstanceOf[FieldSelector[T]]
+    targets.find(_._1 == field) match {
+      case Some((_, fs)) => fs.asInstanceOf[Field[T]]
       case None =>
-        val ret = new FieldSelector[T](clazz, field, this)
-        attaches += ((field, ret.asInstanceOf[FieldSelector[Object]]))
+        val ret = new Field[T](clazz, field, this)
+        targets += ((field, ret.asInstanceOf[Field[Object]]))
         ret
     }
   }
 
-  def get(field: String): FieldSelectorImpl = {
+  def get(field: String): FieldImpl = {
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
     }
     val clazz = meta.fieldMap(field).field.getType
     get(field, clazz)
   }
-
-  def count[T](clazz: Class[T]): AggreSelector[T] = {
-    val fieldAlias = s"count$$$alias"
-    val sql = s"COUNT(*) AS $fieldAlias"
-    val ret = new AggreSelector[T](clazz, sql, fieldAlias, this)
-    attaches += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
-    ret
-  }
-
-  def count[T](field: String, clazz: Class[T]): AggreSelector[T] = {
-    if (!meta.fieldMap.contains(field)) {
-      throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
-    }
-    val fieldAlias = s"count$$$alias$$$field"
-    val column = meta.fieldMap(field).column
-    val sql = s"COUNT(DISTINCT $alias.$column) AS $fieldAlias"
-    val ret = new AggreSelector[T](clazz, sql, fieldAlias, this)
-    attaches += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
-    ret
-  }
-
 
   def getTable: Array[String] = {
     val selfTable = if (parent == null) {
@@ -239,17 +218,17 @@ class EntitySelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val par
   }
 }
 
-class EntitySelector[T](meta: EntityMeta, joinField: FieldMeta, parent: EntitySelectorImpl)
-  extends EntitySelectorImpl(meta, null, parent)
+class Join[T](meta: EntityMeta, joinField: FieldMeta, parent: JoinImpl)
+  extends JoinImpl(meta, null, parent)
     with TargetSelector[T] {
 
   private val filterMap = mutable.Map[String, Entity]()
 
   override def getColumn: Array[String] = {
-    def go(entitySelector: EntitySelectorImpl): Array[String] = {
+    def go(entitySelector: JoinImpl): Array[String] = {
       val selfColumn = fields.map(field => s"${getFieldColumn(field)} AS ${getFieldAlias(field)}")
       // 1. 属于自己的字段 2. 关联的字段（聚合） 3. 级联的部分
-      selfColumn ++ attaches.flatMap(_._2.getColumn) ++ joins.flatMap(t => go(t._3))
+      selfColumn ++ targets.flatMap(_._2.getColumn) ++ joins.flatMap(t => go(t._3))
     }
 
     go(this)
@@ -273,20 +252,24 @@ class EntitySelector[T](meta: EntityMeta, joinField: FieldMeta, parent: EntitySe
   }
 }
 
-class RootSelector[T](meta: EntityMeta)
-  extends EntitySelector[T](meta, null, null) {
+class Root[T](meta: EntityMeta)
+  extends Join[T](meta, null, null) {
 
   private var cond: Cond = _
   private var order: (String, Array[String]) = _
   private var limit: Int = -1
   private var offset: Int = -1
 
-  def where(c: Cond): RootSelector[T] = {
+  def where(c: Cond): Root[T] = {
     cond = c
     this
   }
 
-  def asc(fields: Array[String]): RootSelector[T] = {
+  def count[R](field: FieldImpl, clazz: Class[R]): Count[R] = Count(clazz, field, this)
+
+  def count[R](clazz: Class[R]): Count_[R] = Count_(clazz, this)
+
+  def asc(fields: Array[String]): Root[T] = {
     if (!fields.forall(meta.fieldMap.contains(_))) {
       throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
     }
@@ -294,7 +277,7 @@ class RootSelector[T](meta: EntityMeta)
     this
   }
 
-  def desc(fields: Array[String]): RootSelector[T] = {
+  def desc(fields: Array[String]): Root[T] = {
     if (!fields.forall(meta.fieldMap.contains(_))) {
       throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
     }
@@ -302,20 +285,20 @@ class RootSelector[T](meta: EntityMeta)
     this
   }
 
-  def asc(field: String): RootSelector[T] = {
+  def asc(field: String): Root[T] = {
     asc(Array(field))
   }
 
-  def desc(field: String): RootSelector[T] = {
+  def desc(field: String): Root[T] = {
     desc(Array(field))
   }
 
-  def limit(l: Int): RootSelector[T] = {
+  def limit(l: Int): Root[T] = {
     limit = l
     this
   }
 
-  def offset(o: Int): RootSelector[T] = {
+  def offset(o: Int): Root[T] = {
     offset = o
     this
   }
@@ -355,7 +338,7 @@ class RootSelector[T](meta: EntityMeta)
 
 // field -------------------------------------------------------
 
-class FieldSelectorImpl(val clazz: Class[_], field: String, parent: EntitySelectorImpl)
+class FieldImpl(val clazz: Class[_], field: String, parent: JoinImpl)
   extends Selector(parent)
     with FieldOp {
 
@@ -366,14 +349,13 @@ class FieldSelectorImpl(val clazz: Class[_], field: String, parent: EntitySelect
 
   override def eql(v: Object): Cond = EqFV(this, v)
 
-  override def eql(f: FieldSelectorImpl): Cond = EqFF(this, f)
+  override def eql(f: FieldImpl): Cond = EqFF(this, f)
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 }
 
-
-class FieldSelector[T](clazz: Class[T], field: String, parent: EntitySelectorImpl)
-  extends FieldSelectorImpl(clazz, field, parent)
+class Field[T](clazz: Class[T], field: String, parent: JoinImpl)
+  extends FieldImpl(clazz, field, parent)
     with TargetSelector[T] {
 
   override def getColumn: Array[String] = {
@@ -383,22 +365,16 @@ class FieldSelector[T](clazz: Class[T], field: String, parent: EntitySelectorImp
   override def pick(resultSet: ResultSet): T = {
     resultSet.getObject(alias).asInstanceOf[T]
   }
-
-  override def key(value: Object): String = {
-    value.toString
-  }
 }
 
 // aggre -------------------------------------------------------
 
-class AggreSelectorImpl(val clazz: Class[_], column: String, val alias: String, parent: EntitySelectorImpl)
-  extends Selector(parent) {
-
-}
-
-class AggreSelector[T](clazz: Class[T], column: String, alias: String, parent: EntitySelectorImpl)
-  extends AggreSelectorImpl(clazz, column, alias, parent)
+case class Count[T](clazz: Class[T], field: FieldImpl, parent: JoinImpl)
+  extends Selector(parent)
     with TargetSelector[T] {
+
+  val column: String = s"COUNT(DISTINCT ${field.column})"
+  val alias: String = s"count$$${field.alias}"
 
   override def getColumn: Array[String] = {
     Array(column)
@@ -407,21 +383,33 @@ class AggreSelector[T](clazz: Class[T], column: String, alias: String, parent: E
   override def pick(resultSet: ResultSet): T = {
     resultSet.getObject(alias).asInstanceOf[T]
   }
+}
 
-  override def key(value: Object): String = {
-    value.toString
+case class Count_[T](clazz: Class[T], parent: JoinImpl)
+  extends Selector(parent)
+    with TargetSelector[T] {
+
+  val column: String = s"COUNT(*)"
+  val alias: String = s"count$$${parent.alias}"
+
+  override def getColumn: Array[String] = {
+    Array(column)
+  }
+
+  override def pick(resultSet: ResultSet): T = {
+    resultSet.getObject(alias).asInstanceOf[T]
   }
 }
 
-// static
+// static -------------------------------------------------------
 
 object Selector {
-  def createSelect[T](clazz: Class[T]): RootSelector[T] = {
+  def createSelect[T](clazz: Class[T]): Root[T] = {
     val meta = OrmMeta.entityMap(clazz.getSimpleName)
     if (meta.clazz != clazz) {
       throw new RuntimeException("Class Not Match")
     }
-    new RootSelector[T](meta)
+    new Root[T](meta)
   }
 
   private def bufferToArray(entity: Entity): Entity = {
@@ -444,8 +432,8 @@ object Selector {
 
   def query[T](selector: TargetSelector[T], conn: Connection): Array[T] = {
     val ct: ClassTag[T] = selector match {
-      case es: EntitySelector[_] => ClassTag(es.meta.clazz)
-      case fs: FieldSelector[_] => ClassTag(fs.clazz)
+      case es: Join[_] => ClassTag(es.meta.clazz)
+      case fs: Field[_] => ClassTag(fs.clazz)
     }
     query(Array[TargetSelector[_]](selector), conn).map(row => row(0).asInstanceOf[T]).toArray(ct)
   }

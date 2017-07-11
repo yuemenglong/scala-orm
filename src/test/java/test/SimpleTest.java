@@ -88,7 +88,7 @@ public class SimpleTest {
         Assert.assertEquals(ret, 1);
 
         // select
-        RootSelector<Obj> root = Selector.createSelect(Obj.class);
+        Root<Obj> root = Selector.createSelect(Obj.class);
         root.select("ptr");
         root.select("oo");
         root.select("om");
@@ -136,16 +136,16 @@ public class SimpleTest {
         Assert.assertEquals(ret, 5);
 
         {
-            RootSelector<Obj> sr = Selector.createSelect(Obj.class);
+            Root<Obj> sr = Selector.createSelect(Obj.class);
             Obj[] objs = (Obj[]) session.query(sr);
             Assert.assertEquals(objs.length, 1);
-            RootSelector<Ptr> sr2 = Selector.createSelect(Ptr.class);
+            Root<Ptr> sr2 = Selector.createSelect(Ptr.class);
             Ptr[] ptrs = (Ptr[]) session.query(sr2);
             Assert.assertEquals(ptrs.length, 1);
-            RootSelector<OO> sr3 = Selector.createSelect(OO.class);
+            Root<OO> sr3 = Selector.createSelect(OO.class);
             OO[] oos = (OO[]) session.query(sr3);
             Assert.assertEquals(oos.length, 1);
-            RootSelector<OM> sr4 = Selector.createSelect(OM.class);
+            Root<OM> sr4 = Selector.createSelect(OM.class);
             OM[] oms = (OM[]) session.query(sr4);
             Assert.assertEquals(oms.length, 2);
         }
@@ -157,16 +157,16 @@ public class SimpleTest {
         session.execute(ex);
 
         {
-            RootSelector<Obj> sr = Selector.createSelect(Obj.class);
+            Root<Obj> sr = Selector.createSelect(Obj.class);
             Obj[] objs = (Obj[]) session.query(sr);
             Assert.assertEquals(objs.length, 0);
-            RootSelector<Ptr> sr2 = Selector.createSelect(Ptr.class);
+            Root<Ptr> sr2 = Selector.createSelect(Ptr.class);
             Ptr[] ptrs = (Ptr[]) session.query(sr2);
             Assert.assertEquals(objs.length, 0);
-            RootSelector<OO> sr3 = Selector.createSelect(OO.class);
+            Root<OO> sr3 = Selector.createSelect(OO.class);
             OO[] oos = (OO[]) session.query(sr3);
             Assert.assertEquals(objs.length, 0);
-            RootSelector<OM> sr4 = Selector.createSelect(OM.class);
+            Root<OM> sr4 = Selector.createSelect(OM.class);
             OM[] oms = (OM[]) session.query(sr4);
             Assert.assertEquals(objs.length, 0);
         }
@@ -187,7 +187,7 @@ public class SimpleTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        RootSelector<OM> sr = Selector.createSelect(OM.class);
+        Root<OM> sr = Selector.createSelect(OM.class);
         sr.desc("id").limit(3).offset(2);
 
         OM[] oms = (OM[]) session.query(sr);
@@ -212,8 +212,8 @@ public class SimpleTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        RootSelector<OM> ms = Selector.createSelect(OM.class);
-        AggreSelector<Long> count = ms.count(Long.class);
+        Root<OM> ms = Selector.createSelect(OM.class);
+        Count_<Long> count = ms.count(Long.class);
         Long c = session.first(count);
         Assert.assertEquals(c.intValue(), 6);
     }

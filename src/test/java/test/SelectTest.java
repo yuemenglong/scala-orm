@@ -1,5 +1,6 @@
 package test;
 
+import jdk.nashorn.internal.scripts.JO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,8 +53,8 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        RootSelector<OM> rs = Selector.createSelect(OM.class);
-        AggreSelector<Long> count = rs.count(Long.class);
+        Root<OM> rs = Selector.createSelect(OM.class);
+        Count_<Long> count = rs.count(Long.class);
         Long[] res = (Long[]) Selector.query(count, db.openConnection());
         Assert.assertEquals(res.length, 1);
         Assert.assertEquals(res[0].longValue(), 2);
@@ -74,7 +75,7 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        RootSelector<OM> rs = Selector.createSelect(OM.class);
+        Root<OM> rs = Selector.createSelect(OM.class);
         OM[] res = (OM[]) Selector.query(rs, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0].getId().longValue(), 1);
@@ -96,8 +97,8 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        RootSelector<Obj> rs = Selector.createSelect(Obj.class);
-        EntitySelector<OM> s1 = rs.join("om", OM.class);
+        Root<Obj> rs = Selector.createSelect(Obj.class);
+        Join<OM> s1 = rs.join("om", OM.class);
         Object[][] res = Selector.query(new TargetSelector[]{rs, s1}, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(((Obj) (res[0][0])).getName(), "name");
@@ -123,8 +124,8 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        RootSelector<Obj> rs = Selector.createSelect(Obj.class);
-        EntitySelector<OM> s1 = rs.join("om", OM.class);
+        Root<Obj> rs = Selector.createSelect(Obj.class);
+        Join<OM> s1 = rs.join("om", OM.class);
         Tuple2<Obj, OM>[] res = Selector.query(rs, s1, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0]._1().getId().longValue(), 1);
@@ -153,8 +154,8 @@ public class SelectTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 6);
 
-        RootSelector<Obj> root = Selector.createSelect(Obj.class);
-        EntitySelector<MO> mo = root.join("om").join("mo", MO.class);
+        Root<Obj> root = Selector.createSelect(Obj.class);
+        Join<MO> mo = root.join("om").join("mo", MO.class);
         Tuple2<Obj, MO>[] res = session.query(root, mo);
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0]._1().getPtr(), null);
@@ -180,14 +181,14 @@ public class SelectTest {
         Assert.assertEquals(ret, 6);
 
         {
-            RootSelector<OM> root = Selector.createSelect(OM.class);
-            AggreSelector<Long> count = root.count("objId", Long.class);
+            Root<OM> root = Selector.createSelect(OM.class);
+            Count<Long> count = root.count(root.get("objId"), Long.class);
             Long res = session.first(count);
             Assert.assertEquals(res.longValue(), 1);
         }
         {
-            RootSelector<OM> root = Selector.createSelect(OM.class);
-            AggreSelector<Long> count = root.count(Long.class);
+            Root<OM> root = Selector.createSelect(OM.class);
+            Count_<Long> count = root.count(Long.class);
             Long res = session.first(count);
             Assert.assertEquals(res.longValue(), 3);
         }
@@ -205,12 +206,12 @@ public class SelectTest {
             Assert.assertEquals(ret, 1);
         }
 
-        RootSelector<Obj> root = Selector.createSelect(Obj.class);
-        FieldSelector<Long> id = root.get("id", Long.class);
-        FieldSelector<String> name = root.get("name", String.class);
+        Root<Obj> root = Selector.createSelect(Obj.class);
+        Field<Long> id = root.get("id", Long.class);
+        Field<String> name = root.get("name", String.class);
 
-        FieldSelectorImpl a = root.get("id");
-        FieldSelector<Long> b = root.get("id", Long.class);
+        FieldImpl a = root.get("id");
+        Field<Long> b = root.get("id", Long.class);
         Assert.assertEquals(a, b);
 
         Tuple2<Long, String>[] res = session.query(id, name);

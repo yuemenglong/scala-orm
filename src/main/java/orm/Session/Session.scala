@@ -92,8 +92,8 @@ class Session(private val conn: Connection) {
 
   def query[T](selector: TargetSelector[T]): Array[T] = {
     val ct: ClassTag[T] = selector match {
-      case es: EntitySelector[_] => ClassTag(es.meta.clazz)
-      case fs: FieldSelector[_] => ClassTag(fs.clazz)
+      case es: Join[_] => ClassTag(es.meta.clazz)
+      case fs: Field[_] => ClassTag(fs.clazz)
     }
     query(Array[TargetSelector[_]](selector))
       .map(row => row(0).asInstanceOf[T])

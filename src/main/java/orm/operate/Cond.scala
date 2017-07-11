@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 trait FieldOp {
   def eql(v: Object): Cond
 
-  def eql(f: FieldSelectorImpl): Cond
+  def eql(f: FieldImpl): Cond
 
   def in(a: Array[Object]): Cond
 }
@@ -45,7 +45,7 @@ abstract class CondImpl extends Cond {
   def and(cond: Cond): Cond = And(this, cond)
 }
 
-abstract class CondFV(f: FieldSelectorImpl, v: Object) extends CondImpl {
+abstract class CondFV(f: FieldImpl, v: Object) extends CondImpl {
   def op(): String
 
   override def toSql: String = {
@@ -57,7 +57,7 @@ abstract class CondFV(f: FieldSelectorImpl, v: Object) extends CondImpl {
   }
 }
 
-abstract class CondFF(f1: FieldSelectorImpl, f2: FieldSelectorImpl) extends CondImpl {
+abstract class CondFF(f1: FieldImpl, f2: FieldImpl) extends CondImpl {
   def op(): String
 
   override def toSql: String = {
@@ -69,15 +69,15 @@ abstract class CondFF(f1: FieldSelectorImpl, f2: FieldSelectorImpl) extends Cond
   }
 }
 
-case class EqFV(f: FieldSelectorImpl, v: Object) extends CondFV(f, v) {
+case class EqFV(f: FieldImpl, v: Object) extends CondFV(f, v) {
   override def op(): String = "="
 }
 
-case class EqFF(f1: FieldSelectorImpl, f2: FieldSelectorImpl) extends CondFF(f1, f2) {
+case class EqFF(f1: FieldImpl, f2: FieldImpl) extends CondFF(f1, f2) {
   override def op(): String = "="
 }
 
-case class InFA(f: FieldSelectorImpl, a: Array[Object]) extends CondImpl {
+case class InFA(f: FieldImpl, a: Array[Object]) extends CondImpl {
   override def toSql: String = {
     s"${f.alias} IN (${a.map(_ => "?").mkString(", ")})"
   }
