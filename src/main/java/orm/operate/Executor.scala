@@ -19,7 +19,6 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   // 只有顶层有entity
   private var withs = new ArrayBuffer[(String, Executor)]()
   private var entity: Entity = _
-  private var cond: Cond = _
   private var spec = Map[Object, Executor]()
 
   private def setEntity(entity: Entity): Unit = {
@@ -28,10 +27,6 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 
   def getEntity: Entity = {
     entity
-  }
-
-  def where(cond: Cond): Unit = {
-    this.cond = cond
   }
 
   def insert(field: String): Executor = {
@@ -151,7 +146,7 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
     }).mkString(", ")
-    val idCond = s"${core.meta.pkey.name} = ?"
+    val idCond = s"${core.meta.pkey.column} = ?"
     val sql = s"UPDATE ${core.meta.table} SET $columns WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     validFields.zipWithIndex.foreach { case (field, i) =>

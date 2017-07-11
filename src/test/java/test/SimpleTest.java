@@ -6,7 +6,6 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.lang.interfaces.Entity;
 import orm.operate.*;
 import test.model.*;
 
@@ -84,21 +83,21 @@ public class SimpleTest {
         // update
         person.setAge(20);
         ex = Executor.createUpdate(person);
-        ex.where(Cond.byEq("id", person.getId()));
+//        ex.where(Cond2.byEq("id", person.getId()));
         ret = session.execute(ex);
         Assert.assertEquals(ret, 1);
 
         // select
-        RootSelector<Obj> selector = Selector.createSelect(Obj.class);
-        selector.select("ptr");
-        selector.select("oo");
-        selector.select("om");
+        RootSelector<Obj> root = Selector.createSelect(Obj.class);
+        root.select("ptr");
+        root.select("oo");
+        root.select("om");
 
         ArrayList<Integer> inList = new ArrayList<Integer>();
         inList.add(1);
         inList.add(2);
-        selector.where().in("id", inList.toArray(new Integer[0]));
-        Obj[] res = (Obj[]) session.query(selector);
+        root.where(root.get("id").in(new Integer[]{1, 2}));
+        Obj[] res = (Obj[]) session.query(root);
         Assert.assertEquals(res.length, 1);
         Assert.assertEquals(res[0].getId().intValue(), 1);
         Assert.assertEquals(res[0].getAge().intValue(), 20);
@@ -113,7 +112,7 @@ public class SimpleTest {
         Assert.assertEquals(ret, 1);
 
         // delete then select
-        Obj obj = session.first(selector);
+        Obj obj = session.first(root);
         Assert.assertEquals(obj, null);
 
         session.close();
@@ -214,7 +213,7 @@ public class SimpleTest {
         Assert.assertEquals(ret, 7);
 
         RootSelector<OM> ms = Selector.createSelect(OM.class);
-        FieldSelector<Long> count = ms.count(Long.class);
+        AggreSelector<Long> count = ms.count(Long.class);
         Long c = session.first(count);
         Assert.assertEquals(c.intValue(), 6);
     }

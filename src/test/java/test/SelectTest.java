@@ -53,7 +53,7 @@ public class SelectTest {
         session.execute(ex);
 
         RootSelector<OM> rs = Selector.createSelect(OM.class);
-        FieldSelector<Long> count = rs.count(Long.class);
+        AggreSelector<Long> count = rs.count(Long.class);
         Long[] res = (Long[]) Selector.query(count, db.openConnection());
         Assert.assertEquals(res.length, 1);
         Assert.assertEquals(res[0].longValue(), 2);
@@ -158,7 +158,7 @@ public class SelectTest {
         Tuple2<Obj, MO>[] res = session.query(root, mo);
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0]._1().getPtr(), null);
-        Assert.assertEquals(res[0]._1().getOm(), null);
+        Assert.assertArrayEquals(res[0]._1().getOm(), null);
         Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
         Assert.assertEquals(res[1]._2(), null);
     }
@@ -181,13 +181,13 @@ public class SelectTest {
 
         {
             RootSelector<OM> root = Selector.createSelect(OM.class);
-            FieldSelector<Long> count = root.count("objId", Long.class);
+            AggreSelector<Long> count = root.count("objId", Long.class);
             Long res = session.first(count);
             Assert.assertEquals(res.longValue(), 1);
         }
         {
             RootSelector<OM> root = Selector.createSelect(OM.class);
-            FieldSelector<Long> count = root.count(Long.class);
+            AggreSelector<Long> count = root.count(Long.class);
             Long res = session.first(count);
             Assert.assertEquals(res.longValue(), 3);
         }
@@ -208,6 +208,10 @@ public class SelectTest {
         RootSelector<Obj> root = Selector.createSelect(Obj.class);
         FieldSelector<Long> id = root.get("id", Long.class);
         FieldSelector<String> name = root.get("name", String.class);
+
+        FieldSelectorImpl a = root.get("id");
+        FieldSelector<Long> b = root.get("id", Long.class);
+        Assert.assertEquals(a, b);
 
         Tuple2<Long, String>[] res = session.query(id, name);
         Assert.assertEquals(res.length, 2);
