@@ -14,13 +14,20 @@ import scala.reflect.ClassTag
 /**
   * Created by yml on 2017/7/9.
   */
+// select column from table where cond. param
 trait SelectorNode {
   def root: RootSelector[_]
 
   def setTarget(value: Boolean)
 }
 
-abstract class Selector(parent: SelectorImpl) extends SelectorNode {
+trait TargetSelector[T] extends SelectorNode {
+  def pick(resultSet: ResultSet): T
+
+  def key(value: Object): String
+}
+
+abstract class Selector(parent: EntitySelectorImpl) extends SelectorNode {
   protected var isTarget = false
 
   def getColumn: Array[String]
@@ -44,12 +51,13 @@ abstract class Selector(parent: SelectorImpl) extends SelectorNode {
   }
 }
 
-// select column from table where cond. param
-class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: SelectorImpl)
+// entity
+
+class EntitySelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: EntitySelectorImpl)
   extends Selector(parent) {
   // Boolean 表示是否关联查询，即是否为select
   protected var withs: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
-  protected var joins: ArrayBuffer[(String, Boolean, SelectorImpl)] = new ArrayBuffer[(String, Boolean, SelectorImpl)]()
+  protected var joins: ArrayBuffer[(String, Boolean, EntitySelectorImpl)] = new ArrayBuffer[(String, Boolean, EntitySelectorImpl)]()
   protected var fields: ArrayBuffer[(String, FieldSelector[Object])] = new ArrayBuffer[(String, FieldSelector[Object])]()
 
   protected val alias: String = getAlias
@@ -71,14 +79,14 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     this.withs = fields
   }
 
-  private def findExists(field: String): Option[(String, Boolean, SelectorImpl)] = {
+  private def findExists(field: String): Option[(String, Boolean, EntitySelectorImpl)] = {
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"Join Non Object Field, $field")
     }
     joins.find(_._1 == field)
   }
 
-  def select(field: String): SelectorImpl = {
+  def select(field: String): EntitySelectorImpl = {
     val flag = true
     findExists(field) match {
       case Some(t) =>
@@ -89,7 +97,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
         }
       case None =>
         val fieldMeta = meta.fieldMap(field)
-        val selector = new SelectorImpl(fieldMeta.refer, fieldMeta, this)
+        val selector = new EntitySelectorImpl(fieldMeta.refer, fieldMeta, this)
         joins += ((field, flag, selector))
         selector
     }
@@ -118,11 +126,31 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     }
   }
 
-  def join(field: String): SelectorImpl = {
+  def join(field: String): EntitySelectorImpl = {
     if (!meta.fieldMap.contains(field)) {
       throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
     }
     join(field, meta.fieldMap(field).refer.clazz)
+  }
+
+  def get[T](field: String, clazz: Class[T]): FieldSelector[T] = {
+    if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
+      throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
+    }
+    val fieldMeta = meta.fieldMap(field)
+    if (clazz != fieldMeta.field.getType) {
+      throw new RuntimeException("Class Not Match")
+    }
+    fields.find(_._1 == field) match {
+      case Some(fs) => fs.asInstanceOf[FieldSelector[T]]
+      case None =>
+        val column = fieldMeta.column
+        val fieldAlias = getFieldAlias(field)
+        val sql = s"$alias.$column AS $fieldAlias"
+        val ret = new FieldSelector[T](clazz, sql, fieldAlias, this)
+        fields += ((field, ret.asInstanceOf[FieldSelector[Object]]))
+        ret
+    }
   }
 
   def where(): Cond = {
@@ -240,14 +268,8 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
   }
 }
 
-trait TargetSelector[T] extends SelectorNode {
-  def pick(resultSet: ResultSet): T
-
-  def key(value: Object): String
-}
-
-class EntitySelector[T](override val meta: EntityMeta, override val joinField: FieldMeta, override val parent: SelectorImpl)
-  extends SelectorImpl(meta, null, parent)
+class EntitySelector[T](meta: EntityMeta, joinField: FieldMeta, parent: EntitySelectorImpl)
+  extends EntitySelectorImpl(meta, null, parent)
     with TargetSelector[T] {
 
   override def setTarget(value: Boolean): Unit = {
@@ -274,7 +296,6 @@ class EntitySelector[T](override val meta: EntityMeta, override val joinField: F
     }
   }
 }
-
 
 class RootSelector[T](meta: EntityMeta)
   extends EntitySelector[T](meta, null, null) {
@@ -344,9 +365,10 @@ class RootSelector[T](meta: EntityMeta)
 
 }
 
-class FieldSelector[T](val clazz: Class[T], sql: String, alias: String, parent: SelectorImpl)
-  extends Selector(parent)
-    with TargetSelector[T] {
+// field
+
+class FieldSelectorImpl(val clazz: Class[_], sql: String, alias: String, parent: EntitySelectorImpl)
+  extends Selector(parent) {
   override def getColumn: Array[String] = {
     if (isTarget) {
       Array(sql)
@@ -367,6 +389,12 @@ class FieldSelector[T](val clazz: Class[T], sql: String, alias: String, parent: 
     Array()
   }
 
+}
+
+class FieldSelector[T](clazz: Class[T], sql: String, alias: String, parent: EntitySelectorImpl)
+  extends FieldSelectorImpl(clazz, sql, alias, parent)
+    with TargetSelector[T] {
+
   override def pick(resultSet: ResultSet): T = {
     resultSet.getObject(alias).asInstanceOf[T]
   }
@@ -375,6 +403,8 @@ class FieldSelector[T](val clazz: Class[T], sql: String, alias: String, parent: 
     value.toString
   }
 }
+
+// staitc
 
 object Selector {
 

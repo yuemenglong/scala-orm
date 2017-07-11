@@ -136,7 +136,7 @@ public class SelectTest {
     }
 
     @Test
-    public void testGet() {
+    public void testJoin() {
         Session session = db.openSession();
         Obj obj = new Obj();
         obj.setName("name");
@@ -191,5 +191,30 @@ public class SelectTest {
             Long res = session.first(count);
             Assert.assertEquals(res.longValue(), 3);
         }
+    }
+
+    @Test
+    public void testGet() {
+        Session session = db.openSession();
+        for (int i = 0; i < 2; i++) {
+            Obj obj = new Obj();
+            obj.setName("name" + i);
+            obj = Orm.convert(obj);
+            Executor ex = Executor.createInsert(obj);
+            int ret = session.execute(ex);
+            Assert.assertEquals(ret, 1);
+        }
+
+        RootSelector<Obj> root = Selector.createSelect(Obj.class);
+        FieldSelector<Long> id = root.get("id", Long.class);
+        FieldSelector<String> name = root.get("name", String.class);
+
+        Tuple2<Long, String>[] res = session.query(id, name);
+        Assert.assertEquals(res.length, 2);
+        Assert.assertEquals(res[0]._1().longValue(), 1);
+        Assert.assertEquals(res[1]._1().longValue(), 2);
+        Assert.assertEquals(res[0]._2(), "name0");
+        Assert.assertEquals(res[1]._2(), "name1");
+
     }
 }
