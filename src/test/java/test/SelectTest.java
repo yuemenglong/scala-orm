@@ -97,7 +97,7 @@ public class SelectTest {
         session.execute(ex);
 
         RootSelector<Obj> rs = Selector.createSelect(Obj.class);
-        EntitySelector<OM> s1 = rs.get("om", OM.class);
+        EntitySelector<OM> s1 = rs.join("om", OM.class);
         Object[][] res = Selector.query(new TargetSelector[]{rs, s1}, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(((Obj) (res[0][0])).getName(), "name");
@@ -124,7 +124,7 @@ public class SelectTest {
         session.execute(ex);
 
         RootSelector<Obj> rs = Selector.createSelect(Obj.class);
-        EntitySelector<OM> s1 = rs.get("om", OM.class);
+        EntitySelector<OM> s1 = rs.join("om", OM.class);
         Tuple2<Obj, OM>[] res = Selector.query(rs, s1, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0]._1().getId().longValue(), 1);
@@ -154,7 +154,7 @@ public class SelectTest {
         Assert.assertEquals(ret, 6);
 
         RootSelector<Obj> root = Selector.createSelect(Obj.class);
-        EntitySelector<MO> mo = root.get("om").get("mo", MO.class);
+        EntitySelector<MO> mo = root.join("om").join("mo", MO.class);
         Tuple2<Obj, MO>[] res = session.query(root, mo);
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0]._1().getPtr(), null);

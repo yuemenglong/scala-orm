@@ -47,10 +47,10 @@ abstract class Selector(parent: SelectorImpl) extends SelectorNode {
 // select column from table where cond. param
 class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: SelectorImpl)
   extends Selector(parent) {
-  // Boolean 表示是否关联查询，而不是另一个target
+  // Boolean 表示是否关联查询，即是否为select
+  protected var withs: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
   protected var joins: ArrayBuffer[(String, Boolean, SelectorImpl)] = new ArrayBuffer[(String, Boolean, SelectorImpl)]()
-  protected var fields: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
-  protected var aggres: ArrayBuffer[(String, FieldSelector[Object])] = new ArrayBuffer[(String, FieldSelector[Object])]()
+  protected var fields: ArrayBuffer[(String, FieldSelector[Object])] = new ArrayBuffer[(String, FieldSelector[Object])]()
 
   protected val alias: String = getAlias
   protected val cond: Cond = new Cond
@@ -68,7 +68,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
   }
 
   def setFields(fields: Array[String]): Unit = {
-    this.fields = fields
+    this.withs = fields
   }
 
   private def findExists(field: String): Option[(String, Boolean, SelectorImpl)] = {
@@ -95,7 +95,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     }
   }
 
-  def get[T](field: String, clazz: Class[T]): EntitySelector[T] = {
+  def join[T](field: String, clazz: Class[T]): EntitySelector[T] = {
     val flag = false
     findExists(field) match {
       case Some(t) =>
@@ -118,11 +118,11 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     }
   }
 
-  def get(field: String): SelectorImpl = {
+  def join(field: String): SelectorImpl = {
     if (!meta.fieldMap.contains(field)) {
       throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
     }
-    get(field, meta.fieldMap(field).refer.clazz)
+    join(field, meta.fieldMap(field).refer.clazz)
   }
 
   def where(): Cond = {
@@ -133,7 +133,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     val fieldAlias = s"count$$$alias"
     val sql = s"COUNT(*) AS $fieldAlias"
     val ret = new FieldSelector[T](clazz, sql, fieldAlias, this)
-    aggres += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
+    fields += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
     ret
   }
 
@@ -145,18 +145,18 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
     val column = meta.fieldMap(field).column
     val sql = s"COUNT(DISTINCT $alias.$column) AS $fieldAlias"
     val ret = new FieldSelector[T](clazz, sql, fieldAlias, this)
-    aggres += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
+    fields += ((fieldAlias, ret.asInstanceOf[FieldSelector[Object]]))
     ret
   }
 
   override def getColumn: Array[String] = {
     val selfColumn = if (isTarget) {
-      fields.map(meta.fieldMap(_))
+      withs.map(meta.fieldMap(_))
         .map(field => s"$alias.${field.column} AS ${getFieldAlias(field.name)}")
     } else {
       Array[String]()
     }
-    selfColumn ++ aggres.flatMap(_._2.getColumn) ++ joins.flatMap(_._3.getColumn)
+    selfColumn ++ fields.flatMap(_._2.getColumn) ++ joins.flatMap(_._3.getColumn)
   }
 
   override def getTable: Array[String] = {
@@ -198,7 +198,7 @@ class SelectorImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: S
   }
 
   def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
-    val map: Map[String, Object] = fields.map(field => {
+    val map: Map[String, Object] = withs.map(field => {
       val alias = getFieldAlias(field)
       val value = resultSet.getObject(alias)
       (field, value)
