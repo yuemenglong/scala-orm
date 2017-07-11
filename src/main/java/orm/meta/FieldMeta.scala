@@ -19,6 +19,8 @@ object FieldMetaTypeKind {
 
 class FieldMeta(val entity: EntityMeta,
                 val field: Field,
+                val clazz: Class[_],
+
                 val pkey: Boolean,
                 val auto: Boolean,
 
@@ -249,6 +251,7 @@ object FieldMeta {
   }
 
   def createFieldMeta(entity: EntityMeta, field: Field): FieldMeta = {
+    val clazz = field.getType
     val pkey: Boolean = FieldMeta.pickId(field)
     val auto: Boolean = pkey && FieldMeta.pickIdAuto(field)
 
@@ -262,7 +265,7 @@ object FieldMeta {
 
     val (left, right) = FieldMeta.pickLeftRight(entity, field, typeKind)
 
-    new FieldMeta(entity, field,
+    new FieldMeta(entity, field, clazz,
       pkey, auto,
       typeKind, typeName,
       name, column, columnAnno, ignore,
@@ -272,6 +275,8 @@ object FieldMeta {
   def createReferMeta(entity: EntityMeta, fieldName: String): FieldMeta = {
     // 默认Long
     val field: Field = null
+    val clazz = classOf[Long]
+
     val pkey: Boolean = false
     val auto: Boolean = false
 
@@ -286,7 +291,7 @@ object FieldMeta {
     val left: String = null
     val right: String = null
 
-    new FieldMeta(entity, field,
+    new FieldMeta(entity, field, clazz,
       pkey, auto,
       typeKind, typeName,
       name, column, columnAnno, ignore,

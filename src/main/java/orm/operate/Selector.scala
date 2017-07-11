@@ -20,7 +20,7 @@ trait SelectorTrait {
 }
 
 trait Target[T] extends SelectorTrait {
-  def getColumn: Array[String]
+  def getColumnWithAs: Array[String]
 
   def pick(resultSet: ResultSet): T
 
@@ -129,7 +129,7 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
       throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
     }
     val fieldMeta = meta.fieldMap(field)
-    if (clazz != fieldMeta.field.getType) {
+    if (clazz != fieldMeta.clazz) {
       throw new RuntimeException("Class Not Match")
     }
     targets.find(_._1 == field) match {
@@ -145,11 +145,11 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
     }
-    val clazz = meta.fieldMap(field).field.getType
+    val clazz = meta.fieldMap(field).clazz
     get(field, clazz)
   }
 
-  def getTable: Array[String] = {
+  def getTableWithJoin: Array[String] = {
     val selfTable = if (parent == null) {
       s"${meta.table} AS $alias"
     } else {
@@ -157,7 +157,17 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
       val right = meta.fieldMap(joinField.right).column
       s"LEFT JOIN ${meta.table} AS $alias ON ${parent.alias}.$left = $alias.$right"
     }
-    Array(selfTable) ++ joins.flatMap(_._3.getTable)
+    Array(selfTable) ++ joins.flatMap(_._3.getTableWithJoin)
+  }
+
+  def getColumnWithAs: Array[String] = {
+    def go(join: JoinImpl): Array[String] = {
+      val selfColumn = join.fields.map(field => s"${join.getFieldColumn(field)} AS ${join.getFieldAlias(field)}")
+      // 1. 属于自己的字段 2. 关联的字段（聚合） 3. 级联的部分
+      selfColumn ++ join.targets.flatMap(_._2.getColumnWithAs) ++ join.joins.flatMap(t => go(t._3))
+    }
+
+    go(this)
   }
 
   def getFilterKey(core: EntityCore): String = {
@@ -221,20 +231,12 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
 }
 
 class Join[T](meta: EntityMeta, joinField: FieldMeta, parent: JoinImpl)
-  extends JoinImpl(meta, null, parent)
+  extends JoinImpl(meta, joinField, parent)
     with Target[T] {
 
   private val filterMap = mutable.Map[String, Entity]()
 
-  override def getColumn: Array[String] = {
-    def go(entitySelector: JoinImpl): Array[String] = {
-      val selfColumn = fields.map(field => s"${getFieldColumn(field)} AS ${getFieldAlias(field)}")
-      // 1. 属于自己的字段 2. 关联的字段（聚合） 3. 级联的部分
-      selfColumn ++ targets.flatMap(_._2.getColumn) ++ joins.flatMap(t => go(t._3))
-    }
-
-    go(this)
-  }
+  override def getColumnWithAs: Array[String] = super.getColumnWithAs
 
   override def pick(resultSet: ResultSet): T = {
     val a = pick(resultSet, filterMap)
@@ -315,8 +317,8 @@ class Root[T](meta: EntityMeta)
   }
 
   def getSql(targets: Array[Target[_]]): String = {
-    val columns = targets.flatMap(_.getColumn).mkString(",\n")
-    val tables = getTable.mkString("\n")
+    val columns = targets.flatMap(_.getColumnWithAs).mkString(",\n")
+    val tables = getTableWithJoin.mkString("\n")
     val conds = cond match {
       case null => "1 = 1"
       case c: Cond => c.toSql match {
@@ -367,7 +369,7 @@ class Field[T](clazz: Class[T], field: String, parent: JoinImpl)
   extends FieldImpl(clazz, field, parent)
     with Target[T] {
 
-  override def getColumn: Array[String] = {
+  override def getColumnWithAs: Array[String] = {
     Array(s"$column AS $alias")
   }
 
@@ -384,11 +386,11 @@ case class Count[T](clazz: Class[T], field: FieldImpl, parent: JoinImpl)
   extends Selector(parent)
     with Target[T] {
 
-  val column: String = s"COUNT(DISTINCT ${field.column})"
   val alias: String = s"count$$${field.alias}"
+  val column: String = s"COUNT(DISTINCT ${field.column})"
 
-  override def getColumn: Array[String] = {
-    Array(column)
+  override def getColumnWithAs: Array[String] = {
+    Array(s"$column AS $alias")
   }
 
   override def pick(resultSet: ResultSet): T = {
@@ -403,10 +405,10 @@ case class Count_[T](clazz: Class[T], parent: JoinImpl)
     with Target[T] {
 
   val column: String = s"COUNT(*)"
-  val alias: String = s"count$$${parent.alias}"
+  val alias: String = s"count$$"
 
-  override def getColumn: Array[String] = {
-    Array(column)
+  override def getColumnWithAs: Array[String] = {
+    Array(s"$column AS $alias")
   }
 
   override def pick(resultSet: ResultSet): T = {

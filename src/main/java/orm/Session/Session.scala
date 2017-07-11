@@ -93,7 +93,7 @@ class Session(private val conn: Connection) {
   def query[T](selector: Target[T]): Array[T] = {
     val ct: ClassTag[T] = selector match {
       case es: Join[_] => ClassTag(es.meta.clazz)
-      case fs: Field[_] => ClassTag(fs.clazz)
+      case fs: Target[_] => ClassTag(fs.classT())
     }
     query(Array[Target[_]](selector))
       .map(row => row(0).asInstanceOf[T])

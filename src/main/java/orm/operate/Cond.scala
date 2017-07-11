@@ -79,7 +79,7 @@ case class EqFF(f1: FieldImpl, f2: FieldImpl) extends CondFF(f1, f2) {
 
 case class InFA(f: FieldImpl, a: Array[Object]) extends CondImpl {
   override def toSql: String = {
-    s"${f.alias} IN (${a.map(_ => "?").mkString(", ")})"
+    s"${f.column} IN (${a.map(_ => "?").mkString(", ")})"
   }
 
   override def toParam: Array[Object] = a
