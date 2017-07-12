@@ -258,8 +258,8 @@ class JoinT[T](meta: EntityMeta, joinField: FieldMeta, parent: Join)
   override def classT(): Class[T] = meta.clazz.asInstanceOf[Class[T]]
 }
 
-class Root[T](meta: EntityMeta)
-  extends JoinT[T](meta, null, null) {
+class Root[T](clazz: Class[T])
+  extends JoinT[T](OrmMeta.entityMap(clazz.getSimpleName), null, null) {
 
   private var cond: Cond = _
   private var order: (String, Array[String]) = _
@@ -421,13 +421,6 @@ case class Count_[T](clazz: Class[T], parent: Join)
 // static -------------------------------------------------------
 
 object Selector {
-  def createSelect[T](clazz: Class[T]): Root[T] = {
-    val meta = OrmMeta.entityMap(clazz.getSimpleName)
-    if (meta.clazz != clazz) {
-      throw new RuntimeException("Class Not Match")
-    }
-    new Root[T](meta)
-  }
 
   private def bufferToArray(entity: Entity): Entity = {
     val core = entity.$$core()

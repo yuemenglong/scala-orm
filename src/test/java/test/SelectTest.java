@@ -52,7 +52,7 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        Root<OM> rs = Selector.createSelect(OM.class);
+        Root<OM> rs = new Root<>(OM.class);
         Count_<Long> count = rs.count(Long.class);
         Long[] res = (Long[]) Selector.query(count, db.openConnection());
         Assert.assertEquals(res.length, 1);
@@ -74,7 +74,7 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        Root<OM> rs = Selector.createSelect(OM.class);
+        Root<OM> rs = new Root<>(OM.class);
         OM[] res = (OM[]) Selector.query(rs, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0].getId().longValue(), 1);
@@ -96,7 +96,7 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        Root<Obj> rs = Selector.createSelect(Obj.class);
+        Root<Obj> rs = new Root<>(Obj.class);
         JoinT<OM> s1 = rs.join("om", OM.class);
         Object[][] res = Selector.query(new Target[]{rs, s1}, db.openConnection());
         Assert.assertEquals(res.length, 2);
@@ -123,7 +123,7 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        Root<Obj> rs = Selector.createSelect(Obj.class);
+        Root<Obj> rs = new Root<>(Obj.class);
         JoinT<OM> s1 = rs.join("om", OM.class);
         Tuple2<Obj, OM>[] res = Selector.query(rs, s1, db.openConnection());
         Assert.assertEquals(res.length, 2);
@@ -153,7 +153,7 @@ public class SelectTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 6);
 
-        Root<Obj> root = Selector.createSelect(Obj.class);
+        Root<Obj> root = new Root<>(Obj.class);
         JoinT<MO> mo = root.join("om").join("mo", MO.class);
         Tuple2<Obj, MO>[] res = session.query(root, mo);
         Assert.assertEquals(res.length, 2);
@@ -180,13 +180,13 @@ public class SelectTest {
         Assert.assertEquals(ret, 6);
 
         {
-            Root<OM> root = Selector.createSelect(OM.class);
+            Root<OM> root = new Root<>(OM.class);
             Count<Long> count = root.count(root.get("objId"), Long.class);
             Long res = session.first(count);
             Assert.assertEquals(res.longValue(), 1);
         }
         {
-            Root<OM> root = Selector.createSelect(OM.class);
+            Root<OM> root = new Root<>(OM.class);
             Count_<Long> count = root.count(Long.class);
             Long res = session.first(count);
             Assert.assertEquals(res.longValue(), 3);
@@ -205,7 +205,7 @@ public class SelectTest {
             Assert.assertEquals(ret, 1);
         }
 
-        Root<Obj> root = Selector.createSelect(Obj.class);
+        Root<Obj> root = new Root<>(Obj.class);
         FieldT<Long> id = root.get("id", Long.class);
         FieldT<String> name = root.get("name", String.class);
 
