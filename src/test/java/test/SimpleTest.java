@@ -187,10 +187,10 @@ public class SimpleTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        Root<OM> sr = new Root<>(OM.class);
-        sr.desc("id").limit(3).offset(2);
+        Root<OM> root = new Root<>(OM.class);
+        root.desc(root.get("id")).limit(3).offset(2);
 
-        OM[] oms = (OM[]) session.query(sr);
+        OM[] oms = (OM[]) session.query(root);
         Assert.assertEquals(oms.length, 3);
         Assert.assertEquals(oms[0].getId().intValue(), 4);
         Assert.assertEquals(oms[1].getId().intValue(), 3);
