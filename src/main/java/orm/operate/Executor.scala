@@ -15,6 +15,12 @@ object Cascade {
   val DELETE: Int = 3
 }
 
+trait Executable {
+  def execute(conn: Connection): Int
+
+  def postExecute(fn: (Entity) => Unit): Unit
+}
+
 class Executor(val meta: EntityMeta, val cascade: Int) {
   // 只有顶层有entity
   private var withs = new ArrayBuffer[(String, Executor)]()
@@ -81,12 +87,12 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
   }
 
 
-  def execute(conn: Connection): Int = {
-    require(entity != null)
-    execute(entity, conn)
-  }
+  //  def execute(conn: Connection): Int = {
+  //    require(entity != null)
+  //    execute(entity, conn)
+  //  }
 
-  private def execute(entity: Object, conn: Connection): Int = {
+  protected def execute(entity: Object, conn: Connection): Int = {
     if (entity == null) {
       return 0
     }
@@ -255,28 +261,19 @@ class Executor(val meta: EntityMeta, val cascade: Int) {
 
 }
 
-object Executor {
-  def createInsert(obj: Object): Executor = {
-    val entity = obj.asInstanceOf[Entity]
-    val meta = entity.$$core().meta
-    val ret = new Executor(meta, Cascade.INSERT)
-    ret.setEntity(entity)
-    ret
+abstract class ExecutableBase(obj: Object, cascade: Int)
+  extends Executor(obj.asInstanceOf[Entity].$$core().meta, cascade)
+    with Executable {
+  override def execute(conn: Connection): Int = {
+    execute(obj, conn)
   }
 
-  def createUpdate(obj: Object): Executor = {
-    val entity = obj.asInstanceOf[Entity]
-    val meta = entity.$$core().meta
-    val ret = new Executor(meta, Cascade.UPDATE)
-    ret.setEntity(entity)
-    ret
-  }
-
-  def createDelete(obj: Object): Executor = {
-    val entity = obj.asInstanceOf[Entity]
-    val meta = entity.$$core().meta
-    val ret = new Executor(meta, Cascade.DELETE)
-    ret.setEntity(entity)
-    ret
-  }
+  override def postExecute(fn: (Entity) => Unit): Unit = fn(obj.asInstanceOf[Entity])
 }
+
+case class Insert(obj: Object) extends ExecutableBase(obj, Cascade.INSERT) {}
+
+case class Update(obj: Object) extends ExecutableBase(obj, Cascade.UPDATE) {}
+
+case class Delete(obj: Object) extends ExecutableBase(obj, Cascade.DELETE) {}
+

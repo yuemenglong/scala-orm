@@ -29,7 +29,7 @@ trait Target[T] extends SelectorTrait {
   def classT(): Class[T]
 }
 
-abstract class Selector(parent: JoinImpl) extends SelectorTrait {
+abstract class Selector(parent: Join) extends SelectorTrait {
   def root: Root[_] = {
     if (parent == null) {
       this.asInstanceOf[Root[_]]
@@ -41,11 +41,11 @@ abstract class Selector(parent: JoinImpl) extends SelectorTrait {
 
 // entity -------------------------------------------------------
 
-class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinImpl)
+class Join(val meta: EntityMeta, val joinField: FieldMeta, val parent: Join)
   extends Selector(parent) {
   // Boolean 表示是否关联查询，即是否为select
   protected var fields: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
-  protected var joins: ArrayBuffer[(String, Boolean, JoinImpl)] = new ArrayBuffer[(String, Boolean, JoinImpl)]()
+  protected var joins: ArrayBuffer[(String, Boolean, Join)] = new ArrayBuffer[(String, Boolean, Join)]()
   protected var targets: ArrayBuffer[(String, Target[Object])] = new ArrayBuffer[(String, Target[Object])]()
 
   val alias: String = getEntityAlias
@@ -70,14 +70,14 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
     this.fields = fields
   }
 
-  private def findExists(field: String): Option[(String, Boolean, JoinImpl)] = {
+  private def findExists(field: String): Option[(String, Boolean, Join)] = {
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"Join Non Object Field, $field")
     }
     joins.find(_._1 == field)
   }
 
-  def select(field: String): JoinImpl = {
+  def select(field: String): Join = {
     val flag = true
     findExists(field) match {
       case Some(t) =>
@@ -88,13 +88,13 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
         }
       case None =>
         val fieldMeta = meta.fieldMap(field)
-        val selector = new JoinImpl(fieldMeta.refer, fieldMeta, this)
+        val selector = new Join(fieldMeta.refer, fieldMeta, this)
         joins += ((field, flag, selector))
         selector
     }
   }
 
-  def join[T](field: String, clazz: Class[T]): Join[T] = {
+  def join[T](field: String, clazz: Class[T]): JoinT[T] = {
     val flag = false
     findExists(field) match {
       case Some(t) =>
@@ -104,27 +104,27 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
           if (t._3.meta.clazz != clazz) {
             throw new RuntimeException("Class Not Match")
           }
-          t._3.asInstanceOf[Join[T]]
+          t._3.asInstanceOf[JoinT[T]]
         }
       case None =>
         val fieldMeta = meta.fieldMap(field)
         if (fieldMeta.refer.clazz != clazz) {
           throw new RuntimeException("Class Not Match")
         }
-        val selector = new Join[T](fieldMeta.refer, fieldMeta, this)
+        val selector = new JoinT[T](fieldMeta.refer, fieldMeta, this)
         joins += ((field, flag, selector))
         selector
     }
   }
 
-  def join(field: String): JoinImpl = {
+  def join(field: String): Join = {
     if (!meta.fieldMap.contains(field)) {
       throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
     }
     join(field, meta.fieldMap(field).refer.clazz)
   }
 
-  def get[T](field: String, clazz: Class[T]): Field[T] = {
+  def get[T](field: String, clazz: Class[T]): FieldT[T] = {
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
     }
@@ -133,15 +133,15 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
       throw new RuntimeException("Class Not Match")
     }
     targets.find(_._1 == field) match {
-      case Some((_, fs)) => fs.asInstanceOf[Field[T]]
+      case Some((_, fs)) => fs.asInstanceOf[FieldT[T]]
       case None =>
-        val ret = new Field[T](clazz, field, this)
-        targets += ((field, ret.asInstanceOf[Field[Object]]))
+        val ret = new FieldT[T](clazz, field, this)
+        targets += ((field, ret.asInstanceOf[FieldT[Object]]))
         ret
     }
   }
 
-  def get(field: String): FieldImpl = {
+  def get(field: String): Field = {
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
       throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
     }
@@ -161,7 +161,7 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
   }
 
   def getColumnWithAs: Array[String] = {
-    def go(join: JoinImpl): Array[String] = {
+    def go(join: Join): Array[String] = {
       val selfColumn = join.fields.map(field => s"${join.getFieldColumn(field)} AS ${join.getFieldAlias(field)}")
       // 1. 属于自己的字段 2. 关联的字段（聚合） 3. 级联的部分
       selfColumn ++ join.targets.flatMap(_._2.getColumnWithAs) ++ join.joins.flatMap(t => go(t._3))
@@ -230,8 +230,8 @@ class JoinImpl(val meta: EntityMeta, val joinField: FieldMeta, val parent: JoinI
   }
 }
 
-class Join[T](meta: EntityMeta, joinField: FieldMeta, parent: JoinImpl)
-  extends JoinImpl(meta, joinField, parent)
+class JoinT[T](meta: EntityMeta, joinField: FieldMeta, parent: Join)
+  extends Join(meta, joinField, parent)
     with Target[T] {
 
   private val filterMap = mutable.Map[String, Entity]()
@@ -259,7 +259,7 @@ class Join[T](meta: EntityMeta, joinField: FieldMeta, parent: JoinImpl)
 }
 
 class Root[T](meta: EntityMeta)
-  extends Join[T](meta, null, null) {
+  extends JoinT[T](meta, null, null) {
 
   private var cond: Cond = _
   private var order: (String, Array[String]) = _
@@ -271,7 +271,7 @@ class Root[T](meta: EntityMeta)
     this
   }
 
-  def count[R](field: FieldImpl, clazz: Class[R]): Count[R] = Count(clazz, field, this)
+  def count[R](field: Field, clazz: Class[R]): Count[R] = Count(clazz, field, this)
 
   def count[R](clazz: Class[R]): Count_[R] = Count_(clazz, this)
 
@@ -349,7 +349,7 @@ class Root[T](meta: EntityMeta)
 
 // field -------------------------------------------------------
 
-class FieldImpl(val clazz: Class[_], field: String, parent: JoinImpl)
+class Field(val clazz: Class[_], field: String, parent: Join)
   extends Selector(parent)
     with FieldOp {
 
@@ -360,13 +360,13 @@ class FieldImpl(val clazz: Class[_], field: String, parent: JoinImpl)
 
   override def eql(v: Object): Cond = EqFV(this, v)
 
-  override def eql(f: FieldImpl): Cond = EqFF(this, f)
+  override def eql(f: Field): Cond = EqFF(this, f)
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 }
 
-class Field[T](clazz: Class[T], field: String, parent: JoinImpl)
-  extends FieldImpl(clazz, field, parent)
+class FieldT[T](clazz: Class[T], field: String, parent: Join)
+  extends Field(clazz, field, parent)
     with Target[T] {
 
   override def getColumnWithAs: Array[String] = {
@@ -382,7 +382,7 @@ class Field[T](clazz: Class[T], field: String, parent: JoinImpl)
 
 // aggre -------------------------------------------------------
 
-case class Count[T](clazz: Class[T], field: FieldImpl, parent: JoinImpl)
+case class Count[T](clazz: Class[T], field: Field, parent: Join)
   extends Selector(parent)
     with Target[T] {
 
@@ -400,7 +400,7 @@ case class Count[T](clazz: Class[T], field: FieldImpl, parent: JoinImpl)
   override def classT(): Class[T] = clazz
 }
 
-case class Count_[T](clazz: Class[T], parent: JoinImpl)
+case class Count_[T](clazz: Class[T], parent: Join)
   extends Selector(parent)
     with Target[T] {
 
@@ -449,7 +449,7 @@ object Selector {
 
   def query[T](selector: Target[T], conn: Connection): Array[T] = {
     val ct: ClassTag[T] = selector match {
-      case es: Join[_] => ClassTag(es.meta.clazz)
+      case es: JoinT[_] => ClassTag(es.meta.clazz)
       case fs: Target[_] => ClassTag(fs.classT())
     }
     query(Array[Target[_]](selector), conn).map(row => row(0).asInstanceOf[T]).toArray(ct)

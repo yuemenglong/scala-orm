@@ -61,7 +61,7 @@ class Session(private val conn: Connection) {
   def flush(): Unit = {
     require(!closed)
     cache.foreach(item => {
-      val ex = Executor.createUpdate(item)
+      val ex = Update(item)
       this.execute(ex)
     })
     cache.clear()
@@ -77,10 +77,9 @@ class Session(private val conn: Connection) {
     conn
   }
 
-  def execute(executor: Executor): Int = {
-    require(executor.getEntity != null)
+  def execute(executor: Executable): Int = {
     val ret = executor.execute(conn)
-    injectSession(executor.getEntity)
+    executor.postExecute(injectSession)
     ret
   }
 
@@ -92,7 +91,7 @@ class Session(private val conn: Connection) {
 
   def query[T](selector: Target[T]): Array[T] = {
     val ct: ClassTag[T] = selector match {
-      case es: Join[_] => ClassTag(es.meta.clazz)
+      case es: JoinT[_] => ClassTag(es.meta.clazz)
       case fs: Target[_] => ClassTag(fs.classT())
     }
     query(Array[Target[_]](selector))

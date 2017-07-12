@@ -46,7 +46,7 @@ public class SelectTest {
         obj.setOo(new OO());
         obj.setOm(new OM[]{new OM(), new OM()});
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -68,7 +68,7 @@ public class SelectTest {
         obj.setOo(new OO());
         obj.setOm(new OM[]{new OM(), new OM()});
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -90,14 +90,14 @@ public class SelectTest {
         obj.setOo(new OO());
         obj.setOm(new OM[]{new OM(), new OM()});
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
         session.execute(ex);
 
         Root<Obj> rs = Selector.createSelect(Obj.class);
-        Join<OM> s1 = rs.join("om", OM.class);
+        JoinT<OM> s1 = rs.join("om", OM.class);
         Object[][] res = Selector.query(new Target[]{rs, s1}, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(((Obj) (res[0][0])).getName(), "name");
@@ -117,14 +117,14 @@ public class SelectTest {
         obj.setOo(new OO());
         obj.setOm(new OM[]{new OM(), new OM()});
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
         session.execute(ex);
 
         Root<Obj> rs = Selector.createSelect(Obj.class);
-        Join<OM> s1 = rs.join("om", OM.class);
+        JoinT<OM> s1 = rs.join("om", OM.class);
         Tuple2<Obj, OM>[] res = Selector.query(rs, s1, db.openConnection());
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0]._1().getId().longValue(), 1);
@@ -146,7 +146,7 @@ public class SelectTest {
         obj.getOm()[0].setMo(new MO());
         obj.getOm()[0].getMo().setValue(100);
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om").insert("mo");
@@ -154,7 +154,7 @@ public class SelectTest {
         Assert.assertEquals(ret, 6);
 
         Root<Obj> root = Selector.createSelect(Obj.class);
-        Join<MO> mo = root.join("om").join("mo", MO.class);
+        JoinT<MO> mo = root.join("om").join("mo", MO.class);
         Tuple2<Obj, MO>[] res = session.query(root, mo);
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0]._1().getPtr(), null);
@@ -172,7 +172,7 @@ public class SelectTest {
         obj.setOo(new OO());
         obj.setOm(new OM[]{new OM(), new OM(), new OM()});
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om").insert("mo");
@@ -200,17 +200,17 @@ public class SelectTest {
             Obj obj = new Obj();
             obj.setName("name" + i);
             obj = Orm.convert(obj);
-            Executor ex = Executor.createInsert(obj);
+            Insert ex = new Insert(obj);
             int ret = session.execute(ex);
             Assert.assertEquals(ret, 1);
         }
 
         Root<Obj> root = Selector.createSelect(Obj.class);
-        Field<Long> id = root.get("id", Long.class);
-        Field<String> name = root.get("name", String.class);
+        FieldT<Long> id = root.get("id", Long.class);
+        FieldT<String> name = root.get("name", String.class);
 
-        FieldImpl a = root.get("id");
-        Field<Long> b = root.get("id", Long.class);
+        Field a = root.get("id");
+        FieldT<Long> b = root.get("id", Long.class);
         Assert.assertEquals(a, b);
 
         Tuple2<Long, String>[] res = session.query(id, name);

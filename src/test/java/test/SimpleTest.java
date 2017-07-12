@@ -72,7 +72,7 @@ public class SimpleTest {
 
         // insert
         person = Orm.convert(person);
-        Executor ex = Executor.createInsert(person);
+        Insert ex = new Insert(person);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -82,9 +82,9 @@ public class SimpleTest {
 
         // update
         person.setAge(20);
-        ex = Executor.createUpdate(person);
+        Update update = new Update(person);
 //        ex.where(Cond2.byEq("id", person.getId()));
-        ret = session.execute(ex);
+        ret = session.execute(update);
         Assert.assertEquals(ret, 1);
 
         // select
@@ -107,8 +107,8 @@ public class SimpleTest {
         Assert.assertEquals(res[0].getOm()[1].getValue().intValue(), 2000);
 
         // delete
-        ex = Executor.createDelete(person);
-        ret = session.execute(ex);
+        Delete delete = new Delete(person);
+        ret = session.execute(delete);
         Assert.assertEquals(ret, 1);
 
         // delete then select
@@ -128,7 +128,7 @@ public class SimpleTest {
         obj.setOm(new OM[]{new OM(), new OM()});
 
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -150,11 +150,11 @@ public class SimpleTest {
             Assert.assertEquals(oms.length, 2);
         }
 
-        ex = Executor.createDelete(obj);
-        ex.delete("ptr");
-        ex.delete("oo");
-        ex.delete("om");
-        session.execute(ex);
+        Delete delete = new Delete(obj);
+        delete.delete("ptr");
+        delete.delete("oo");
+        delete.delete("om");
+        session.execute(delete);
 
         {
             Root<Obj> sr = Selector.createSelect(Obj.class);
@@ -180,7 +180,7 @@ public class SimpleTest {
         obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
 
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -205,7 +205,7 @@ public class SimpleTest {
         obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
 
         obj = Orm.convert(obj);
-        Executor ex = Executor.createInsert(obj);
+        Insert ex = new Insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
