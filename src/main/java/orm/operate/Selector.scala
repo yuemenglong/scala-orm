@@ -262,7 +262,7 @@ class Root[T](clazz: Class[T])
   extends JoinT[T](OrmMeta.entityMap(clazz.getSimpleName), null, null) {
 
   private var cond: Cond = _
-  private var order: (String, Array[String]) = _
+  private var orders: ArrayBuffer[(Field, String)] = ArrayBuffer[(Field, String)]()
   private var limit: Int = -1
   private var offset: Int = -1
 
@@ -275,28 +275,14 @@ class Root[T](clazz: Class[T])
 
   def count[R](clazz: Class[R]): Count_[R] = Count_(clazz, this)
 
-  def asc(fields: Array[String]): Root[T] = {
-    if (!fields.forall(meta.fieldMap.contains(_))) {
-      throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
-    }
-    order = ("ASC", fields)
+  def asc(field: Field): Root[T] = {
+    orders += ((field, "ASC"))
     this
   }
 
-  def desc(fields: Array[String]): Root[T] = {
-    if (!fields.forall(meta.fieldMap.contains(_))) {
-      throw new RuntimeException(s"Field Not Match When Call Asc On ${meta.entity}")
-    }
-    order = ("DESC", fields)
+  def desc(field: Field): Root[T] = {
+    orders += ((field, "DESC"))
     this
-  }
-
-  def asc(field: String): Root[T] = {
-    asc(Array(field))
-  }
-
-  def desc(field: String): Root[T] = {
-    desc(Array(field))
   }
 
   def limit(l: Int): Root[T] = {
@@ -326,11 +312,9 @@ class Root[T](clazz: Class[T])
         case sql: String => sql
       }
     }
-    val orderBySql = if (order != null) {
-      val fields = order._2.map(field => s"$alias$$$field").mkString(", ")
-      s" ORDER By $fields ${order._1}"
-    } else {
-      ""
+    val orderBySql = orders.size match {
+      case 0 => ""
+      case _ => " ORDER BY " + orders.map { case (f, o) => s"${f.column} $o" }.mkString(", ")
     }
     val limitSql = if (limit != -1) {
       s" LIMIT $limit"
@@ -342,7 +326,11 @@ class Root[T](clazz: Class[T])
     } else {
       ""
     }
-    s"SELECT\n$columns\nFROM\n$tables\nWHERE\n$conds$orderBySql$limitSql$offsetSql"
+    val postfix = s"$orderBySql$limitSql$offsetSql" match {
+      case "" => ""
+      case s => "\n" + s
+    }
+    s"SELECT\n$columns\nFROM\n$tables\nWHERE\n$conds$postfix"
   }
 
 }
