@@ -16,8 +16,6 @@ import java.util.Date;
 /**
  * Created by Administrator on 2017/7/6.
  */
-// TODO: update spec field
-
 public class SimpleTest {
 
     private static Db db;
@@ -118,6 +116,32 @@ public class SimpleTest {
         Assert.assertEquals(obj, null);
 
         session.close();
+    }
+
+    @Test
+    public void testUpdateSpec() {
+        Session session = db.openSession();
+
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setAge(100);
+
+        obj = Orm.convert(obj);
+        Executable ex = new Insert(obj);
+        session.execute(ex);
+
+        Long id = obj.getId();
+        obj = Orm.empty(Obj.class);
+        obj.setId(id);
+        obj.setAge(200);
+
+        ex = new Update(obj);
+        session.execute(ex);
+
+        Root<Obj> root = new Root<>(Obj.class);
+        obj = session.first(root);
+        Assert.assertEquals(obj.getName(), "name");
+        Assert.assertEquals(obj.getAge().intValue(), 200);
     }
 
     @Test
