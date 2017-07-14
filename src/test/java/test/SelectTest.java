@@ -194,7 +194,7 @@ public class SelectTest {
     }
 
     @Test
-    public void testGet() {
+    public void testGetTarget() {
         Session session = db.openSession();
         for (int i = 0; i < 2; i++) {
             Obj obj = new Obj();
@@ -219,6 +219,5 @@ public class SelectTest {
         Assert.assertEquals(res[1]._1().longValue(), 2);
         Assert.assertEquals(res[0]._2(), "name0");
         Assert.assertEquals(res[1]._2(), "name1");
-
     }
 }

@@ -1,14 +1,12 @@
 package test;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.Cond;
-import orm.operate.Executor;
-import orm.operate.Root;
-import orm.operate.Selector;
+import orm.operate.*;
 import test.model.OM;
 import test.model.Obj;
 import test.model.Ptr;
@@ -42,7 +40,7 @@ public class CondTest {
     }
 
     @Test
-    public void testCond() {
+    public void testOr() {
         Session session = db.openSession();
         for (int i = 0; i < 10; i++) {
             Obj obj = new Obj();
@@ -54,8 +52,19 @@ public class CondTest {
                 om.setValue(i * i);
             }
             obj = Orm.convert(obj);
-
+            Insert ex = new Insert(obj);
+            ex.insert("om");
+            session.execute(ex);
         }
+
+        Root<Obj> root = new Root<>(Obj.class);
+        Cond cond = root.get("id").lt(2).or(root.get("id").gt(9))
+                .and(root.select("om").get("id").gt(2));
+        root.where(cond);
+        Obj[] objs = (Obj[]) session.query(root);
+        Assert.assertEquals(objs.length, 2);
+        Assert.assertEquals(objs[0].getOm().length, 1);
+        Assert.assertEquals(objs[1].getOm().length, 3);
     }
 
 }

@@ -40,18 +40,19 @@ trait Cond {
   def toParam: Array[Object]
 
   def and(cond: Cond): Cond
+
+  def or(cond: Cond): Cond
 }
 
-abstract class JointCond() extends Cond {
-  var conds: ArrayBuffer[Cond] = ArrayBuffer[Cond]()
+abstract class JointCond(cs: Cond*) extends Cond {
+  var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]
 
   override def toParam: Array[Object] = {
     conds.flatMap(_.toParam).toArray
   }
 }
 
-case class And(cs: Cond*) extends JointCond {
-  cs.foreach(conds += _)
+case class And(cs: Cond*) extends JointCond(cs: _*) {
 
   override def toSql: String = conds.map(_.toSql).mkString(" AND ")
 
@@ -59,13 +60,32 @@ case class And(cs: Cond*) extends JointCond {
     conds += cond
     this
   }
+
+  override def or(cond: Cond): Cond = Or(this, cond)
 }
 
-abstract class CondImpl extends Cond {
+case class Or(cs: Cond*) extends JointCond(cs: _*) {
+
+  override def toSql: String = conds.size match {
+    case 1 => conds(0).toSql
+    case n if n > 1 => s"""(${conds.map(_.toSql).mkString(" OR ")})"""
+  }
+
+  override def and(cond: Cond): Cond = And(this, cond)
+
+  override def or(cond: Cond): Cond = {
+    conds += cond
+    this
+  }
+}
+
+abstract class CondItem extends Cond {
   def and(cond: Cond): Cond = And(this, cond)
+
+  def or(cond: Cond): Cond = Or(this, cond)
 }
 
-abstract class CondFV(f: Field, v: Object) extends CondImpl {
+abstract class CondFV(f: Field, v: Object) extends CondItem {
   def op(): String
 
   override def toSql: String = {
@@ -77,7 +97,7 @@ abstract class CondFV(f: Field, v: Object) extends CondImpl {
   }
 }
 
-abstract class CondFF(f1: Field, f2: Field) extends CondImpl {
+abstract class CondFF(f1: Field, f2: Field) extends CondItem {
   def op(): String
 
   override def toSql: String = {
@@ -137,7 +157,7 @@ case class LteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
   override def op(): String = "<="
 }
 
-case class InFA(f: Field, a: Array[Object]) extends CondImpl {
+case class InFA(f: Field, a: Array[Object]) extends CondItem {
   override def toSql: String = {
     s"${f.column} IN (${a.map(_ => "?").mkString(", ")})"
   }

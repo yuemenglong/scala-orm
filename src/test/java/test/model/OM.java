@@ -6,7 +6,7 @@ import orm.lang.anno.OneToMany;
 import orm.lang.anno.Pointer;
 
 /**
- * Created by Administrator on 2017/5/19.
+ * Created by <yuemenglong@126.com> on 2017/5/19.
  */
 @Entity
 public class OM {

@@ -42,7 +42,7 @@ object Scanner {
   }
 
   def scan(paths: Array[String]): Unit = {
-    scan(paths.map(Class.forName(_)))
+    scan(paths.map(Class.forName))
   }
 
   def scan(clazzs: Array[Class[_]]): Unit = {

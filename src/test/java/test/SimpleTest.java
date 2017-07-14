@@ -16,6 +16,8 @@ import java.util.Date;
 /**
  * Created by Administrator on 2017/7/6.
  */
+// TODO: update spec field
+
 public class SimpleTest {
 
     private static Db db;
