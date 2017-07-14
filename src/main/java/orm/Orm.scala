@@ -4,6 +4,7 @@ package orm
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
+import orm.kit.Kit
 import orm.meta.OrmMeta
 
 object Orm {
@@ -36,4 +37,6 @@ object Orm {
   def convert[T](obj: T): T = {
     EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
   }
+
+  def getEmptyConstructorMap: Map[Class[_], () => Object] = Kit.getEmptyConstructorMap
 }
