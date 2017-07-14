@@ -11,6 +11,26 @@ trait FieldOp {
 
   def eql(f: Field): Cond
 
+  def neq(v: Object): Cond
+
+  def neq(f: Field): Cond
+
+  def gt(v: Object): Cond
+
+  def gt(f: Field): Cond
+
+  def gte(v: Object): Cond
+
+  def gte(f: Field): Cond
+
+  def lt(v: Object): Cond
+
+  def lt(f: Field): Cond
+
+  def lte(v: Object): Cond
+
+  def lte(f: Field): Cond
+
   def in(a: Array[Object]): Cond
 }
 
@@ -75,6 +95,46 @@ case class EqFV(f: Field, v: Object) extends CondFV(f, v) {
 
 case class EqFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
   override def op(): String = "="
+}
+
+case class NeFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = "<>"
+}
+
+case class NeFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = "<>"
+}
+
+case class GtFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = ">"
+}
+
+case class GtFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = ">"
+}
+
+case class LtFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = "<"
+}
+
+case class LtFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = "<"
+}
+
+case class GteFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = ">="
+}
+
+case class GteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = ">="
+}
+
+case class LteFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = "<="
+}
+
+case class LteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = "<="
 }
 
 case class InFA(f: Field, a: Array[Object]) extends CondImpl {

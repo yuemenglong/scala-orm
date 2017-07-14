@@ -2,6 +2,7 @@ package test.model;
 
 import orm.lang.anno.Entity;
 import orm.lang.anno.Id;
+import orm.lang.anno.OneToMany;
 import orm.lang.anno.Pointer;
 
 /**
@@ -16,6 +17,9 @@ public class OM {
 
     @Pointer
     private MO mo;
+
+    @OneToMany
+    private Obj[] objs = new Obj[0];
 
     public Long getId() {
         return id;
@@ -40,4 +44,5 @@ public class OM {
     public void setMo(MO mo) {
         this.mo = mo;
     }
+
 }

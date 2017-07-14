@@ -12,9 +12,12 @@ object Orm {
     Scanner.scan(path)
   }
 
-
   def init(paths: Array[String]): Unit = {
     Scanner.scan(paths)
+  }
+
+  def init(clazzs: Array[Class[_]]): Unit = {
+    Scanner.scan(clazzs)
   }
 
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {

@@ -42,9 +42,12 @@ object Scanner {
   }
 
   def scan(paths: Array[String]): Unit = {
-    paths.foreach(path => {
+    scan(paths.map(Class.forName(_)))
+  }
+
+  def scan(clazzs: Array[Class[_]]): Unit = {
+    clazzs.foreach(clazz => {
       // 不是entity的过滤掉
-      val clazz = Class.forName(path)
       val anno = clazz.getDeclaredAnnotation[Entity](classOf[Entity])
       if (anno != null) {
         analyzeClass(clazz)

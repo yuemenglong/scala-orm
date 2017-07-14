@@ -345,12 +345,31 @@ class Field(val clazz: Class[_], field: String, parent: Join)
   val alias: String = parent.getFieldAlias(field)
 
   // cond
+  override def in(a: Array[Object]): Cond = InFA(this, a)
 
   override def eql(v: Object): Cond = EqFV(this, v)
 
   override def eql(f: Field): Cond = EqFF(this, f)
 
-  override def in(a: Array[Object]): Cond = InFA(this, a)
+  override def neq(v: Object): Cond = NeFV(this, v)
+
+  override def neq(f: Field): Cond = NeFF(this, f)
+
+  override def gt(v: Object): Cond = GtFV(this, v)
+
+  override def gt(f: Field): Cond = GtFF(this, f)
+
+  override def gte(v: Object): Cond = GteFV(this, v)
+
+  override def gte(f: Field): Cond = GteFF(this, f)
+
+  override def lt(v: Object): Cond = LtFV(this, v)
+
+  override def lt(f: Field): Cond = LtFF(this, f)
+
+  override def lte(v: Object): Cond = LteFV(this, v)
+
+  override def lte(f: Field): Cond = LteFF(this, f)
 }
 
 class FieldT[T](clazz: Class[T], field: String, parent: Join)
