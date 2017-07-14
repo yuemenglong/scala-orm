@@ -2,6 +2,10 @@ package orm.kit
 
 import java.lang.reflect.Field
 
+import orm.Orm
+import orm.entity.EntityManager
+import orm.meta.OrmMeta
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -17,18 +21,6 @@ object Kit {
     str.substring(0, 1).toLowerCase() + str.substring(1)
   }
 
-  //  def getGenericType(field: Field): Class[_] = {
-  //    if (isGenericType(field)) {
-  //      field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[_]]
-  //    } else {
-  //      field.getType
-  //    }
-  //  }
-  //
-  //  def isGenericType(field: Field): Boolean = {
-  //    field.getGenericType.isInstanceOf[ParameterizedType]
-  //  }
-
   def getDeclaredFields(clazz: Class[_]): Array[Field] = {
     val ret = new ArrayBuffer[Field]()
     clazz.getDeclaredFields.foreach(ret += _)
@@ -38,5 +30,14 @@ object Kit {
       parent = parent.getSuperclass
     }
     ret.toArray
+  }
+
+  def getEmptyConstructorMap: Map[Class[_], () => Object] = {
+    OrmMeta.entityMap.toArray.map { case (name, meta) =>
+      val fn = () => {
+        Orm.empty(meta.clazz).asInstanceOf[Object]
+      }
+      (meta.clazz, fn)
+    }.toMap
   }
 }
