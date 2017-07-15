@@ -1,5 +1,7 @@
 package orm.operate.impl
 
+import java.sql.ResultSet
+
 import orm.kit.Kit
 import orm.meta.{EntityMeta, FieldMeta}
 import orm.operate.traits.core._
@@ -24,7 +26,7 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
 }
 
 class JoinImpl(val field: String, val meta: EntityMeta, val parent: JoinImpl) extends Join {
-  private val joins = new ArrayBuffer[JoinImpl]()
+  val joins = new ArrayBuffer[JoinImpl]()
   private val fields = new ArrayBuffer[FieldImpl]()
 
   override def join(field: String): Join = {
@@ -81,3 +83,49 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: JoinImpl) ex
   }
 }
 
+class SelectJoinImpl[T](val clazz: Class[T], val impl: JoinImpl) extends Join with SelectJoin with Selectable[T] {
+  if (clazz != impl.meta.clazz) {
+    throw new RuntimeException("Class Not Match")
+  }
+  var selects = new ArrayBuffer[SelectJoinImpl[_]]()
+  var fields = impl.meta.managedFieldVec().map(f => new FieldImpl(f.name, f, impl))
+
+  override def getAlias: String = impl.getAlias
+
+  override def getTableWithJoinCond: String = impl.getTableWithJoinCond
+
+  override def join(field: String): Join = impl.join(field)
+
+  override def get(field: String): Field = impl.get(field)
+
+  override def getParent: Node = impl.getParent
+
+  override def as[R](clazz: Class[R]): Selectable[R] = throw new RuntimeException("Already Selectable")
+
+  override def pick(rs: ResultSet): T = ???
+
+  override def getColumnWithAs: String = {
+    def go(join: JoinImpl): String = {
+      val selfColumn = fields.map(field => s"${field.getColumn} AS ${field.getAlias}")
+      // 1. 属于自己的字段 2. 级联的部分
+      (selfColumn ++ selects.flatMap(_.getColumnWithAs)).mkString("\n")
+    }
+
+    go(impl)
+  }
+
+  override def select(field: String): SelectJoin = {
+    if (!impl.meta.fieldMap.contains(field) || !impl.meta.fieldMap(field).isObject) {
+      throw new RuntimeException(s"Unknown Object Field $field")
+    }
+    selects.find(_.impl.field == field) match {
+      case Some(s) => s
+      case None =>
+        val refer = impl.meta.fieldMap(field).refer
+        val j = new JoinImpl(field, refer, impl)
+        val s = new SelectJoinImpl(refer.clazz, j)
+        selects += s
+        s
+    }
+  }
+}
