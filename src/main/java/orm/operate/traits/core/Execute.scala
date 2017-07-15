@@ -13,25 +13,25 @@ trait Executable {
   def postExecute(fn: (Entity) => Unit): Unit
 }
 
-trait ExecutableJoin {
-  def insert(field: String): ExecutableJoin
+trait ExecuteJoin {
+  def insert(field: String): ExecuteJoin
 
-  def update(field: String): ExecutableJoin
+  def update(field: String): ExecuteJoin
 
-  def delete(field: String): ExecutableJoin
+  def delete(field: String): ExecuteJoin
 
-  def ignore(field: String): ExecutableJoin
+  def ignore(field: String): ExecuteJoin
 
-  def insert(obj: Object): ExecutableJoin
+  def insert(obj: Object): ExecuteJoin
 
-  def update(obj: Object): ExecutableJoin
+  def update(obj: Object): ExecuteJoin
 
-  def delete(obj: Object): ExecutableJoin
+  def delete(obj: Object): ExecuteJoin
 
-  def ignore(obj: Object): ExecutableJoin
+  def ignore(obj: Object): ExecuteJoin
 }
 
-trait ExecutableRoot extends ExecutableJoin with Executable
+trait ExecuteRoot extends ExecuteJoin with Executable
 
 
 

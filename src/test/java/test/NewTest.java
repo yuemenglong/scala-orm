@@ -6,7 +6,7 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.traits.core.ExecutableRoot;
+import orm.operate.traits.core.ExecuteRoot;
 import test.model.*;
 
 import java.math.BigDecimal;
@@ -64,7 +64,7 @@ public class NewTest {
 
         // insert
         person = Orm.convert(person);
-        ExecutableRoot ex = Orm.insert(person);
+        ExecuteRoot ex = Orm.insert(person);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -74,7 +74,7 @@ public class NewTest {
 
         // update
         person.setAge(20);
-        ExecutableRoot update = Orm.update(person);
+        ExecuteRoot update = Orm.update(person);
 //        ex.where(Cond2.byEq("id", person.getId()));
         ret = session.execute(update);
         Assert.assertEquals(ret, 1);
@@ -99,7 +99,7 @@ public class NewTest {
 //        Assert.assertEquals(res[0].getOm()[1].getValue().intValue(), 2000);
 
         // delete
-        ExecutableRoot delete = Orm.delete(person);
+        ExecuteRoot delete = Orm.delete(person);
         ret = session.execute(delete);
         Assert.assertEquals(ret, 1);
 

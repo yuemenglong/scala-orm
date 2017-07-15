@@ -6,8 +6,8 @@ import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.kit.Kit
 import orm.meta.OrmMeta
-import orm.operate.impl.ExecutableRootImpl
-import orm.operate.traits.core.{Executable, ExecutableRoot}
+import orm.operate.impl.ExecuteRootImpl
+import orm.operate.traits.core.{Executable, ExecuteRoot}
 
 object Orm {
 
@@ -42,9 +42,9 @@ object Orm {
 
   def getEmptyConstructorMap: Map[Class[_], () => Object] = Kit.getEmptyConstructorMap
 
-  def insert(obj: Object): ExecutableRoot = ExecutableRootImpl.insert(obj)
+  def insert(obj: Object): ExecuteRoot = ExecuteRootImpl.insert(obj)
 
-  def update(obj: Object): ExecutableRoot = ExecutableRootImpl.update(obj)
+  def update(obj: Object): ExecuteRoot = ExecuteRootImpl.update(obj)
 
-  def delete(obj: Object): ExecutableRoot = ExecutableRootImpl.delete(obj)
+  def delete(obj: Object): ExecuteRoot = ExecuteRootImpl.delete(obj)
 }

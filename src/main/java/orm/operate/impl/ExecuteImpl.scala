@@ -5,16 +5,16 @@ import java.sql.{Connection, Statement}
 import orm.entity.{EntityCore, EntityManager}
 import orm.lang.interfaces.Entity
 import orm.meta.{EntityMeta, OrmMeta}
-import orm.operate.traits.core.{ExecutableJoin, ExecutableRoot}
+import orm.operate.traits.core.{ExecuteJoin, ExecuteRoot}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by yml on 2017/7/15.
   */
-abstract class ExecutableJoinImpl(meta: EntityMeta) extends ExecutableJoin {
-  private var withs = new ArrayBuffer[(String, ExecutableJoinImpl)]()
-  private var spec = Map[Object, ExecutableJoinImpl]()
+abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
+  private var withs = new ArrayBuffer[(String, ExecuteJoinImpl)]()
+  private var spec = Map[Object, ExecuteJoinImpl]()
 
   def execute(entity: Entity, conn: Connection): Int = {
     if (entity.$$core().meta != meta) {
@@ -103,34 +103,34 @@ abstract class ExecutableJoinImpl(meta: EntityMeta) extends ExecutableJoin {
     if (!meta.fieldMap(field).isObject) throw new RuntimeException(s"$field Is Not Object")
   }
 
-  override def insert(field: String): ExecutableJoin = {
+  override def insert(field: String): ExecuteJoin = {
     checkField(field)
     val execute = new Insert(meta.fieldMap(field).refer)
     withs.+=((field, execute))
     withs.last._2
   }
 
-  override def update(field: String): ExecutableJoin = {
+  override def update(field: String): ExecuteJoin = {
     checkField(field)
     val execute = new Update(meta.fieldMap(field).refer)
     withs.+=((field, execute))
     withs.last._2
   }
 
-  override def delete(field: String): ExecutableJoin = {
+  override def delete(field: String): ExecuteJoin = {
     checkField(field)
     val execute = new Delete(meta.fieldMap(field).refer)
     withs.+=((field, execute))
     withs.last._2
   }
 
-  override def ignore(field: String): ExecutableJoin = {
+  override def ignore(field: String): ExecuteJoin = {
     checkField(field)
     withs.remove(withs.indexWhere(_._1 == field))
     this
   }
 
-  override def insert(obj: Object): ExecutableJoin = {
+  override def insert(obj: Object): ExecuteJoin = {
     val core = EntityManager.core(obj)
     val referMeta = core.meta
     val executor = new Insert(referMeta)
@@ -138,7 +138,7 @@ abstract class ExecutableJoinImpl(meta: EntityMeta) extends ExecutableJoin {
     executor
   }
 
-  override def update(obj: Object): ExecutableJoin = {
+  override def update(obj: Object): ExecuteJoin = {
     val core = EntityManager.core(obj)
     val referMeta = core.meta
     val executor = new Update(referMeta)
@@ -146,7 +146,7 @@ abstract class ExecutableJoinImpl(meta: EntityMeta) extends ExecutableJoin {
     executor
   }
 
-  override def delete(obj: Object): ExecutableJoin = {
+  override def delete(obj: Object): ExecuteJoin = {
     val core = EntityManager.core(obj)
     val referMeta = core.meta
     val executor = new Delete(referMeta)
@@ -154,14 +154,14 @@ abstract class ExecutableJoinImpl(meta: EntityMeta) extends ExecutableJoin {
     executor
   }
 
-  override def ignore(obj: Object): ExecutableJoin = {
+  override def ignore(obj: Object): ExecuteJoin = {
     spec += ((obj, null))
     this
   }
 
 }
 
-class Insert(meta: EntityMeta) extends ExecutableJoinImpl(meta) {
+class Insert(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     val validFields = core.meta.managedFieldVec().filter(field => {
       field.isNormalOrPkey && core.fieldMap.contains(field.name)
@@ -202,7 +202,7 @@ class Insert(meta: EntityMeta) extends ExecutableJoinImpl(meta) {
   }
 }
 
-class Update(meta: EntityMeta) extends ExecutableJoinImpl(meta) {
+class Update(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Update Entity Must Has Pkey")
     val validFields = core.meta.managedFieldVec().filter(field => {
@@ -233,7 +233,7 @@ class Update(meta: EntityMeta) extends ExecutableJoinImpl(meta) {
   }
 }
 
-class Delete(meta: EntityMeta) extends ExecutableJoinImpl(meta) {
+class Delete(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Delete Entity Must Has Pkey")
     val idCond = s"${core.meta.pkey.name} = ?"
@@ -248,54 +248,54 @@ class Delete(meta: EntityMeta) extends ExecutableJoinImpl(meta) {
   }
 }
 
-class ExecutableRootImpl(obj: Object, impl: ExecutableJoinImpl) extends ExecutableRoot {
+class ExecuteRootImpl(obj: Object, impl: ExecuteJoinImpl) extends ExecuteRoot {
 
   override def execute(conn: Connection): Int = impl.execute(obj.asInstanceOf[Entity], conn)
 
-  override def insert(field: String): ExecutableJoin = impl.insert(field)
+  override def insert(field: String): ExecuteJoin = impl.insert(field)
 
-  override def update(field: String): ExecutableJoin = impl.update(field)
+  override def update(field: String): ExecuteJoin = impl.update(field)
 
-  override def delete(field: String): ExecutableJoin = impl.delete(field)
+  override def delete(field: String): ExecuteJoin = impl.delete(field)
 
-  override def ignore(field: String): ExecutableJoin = impl.ignore(field)
+  override def ignore(field: String): ExecuteJoin = impl.ignore(field)
 
-  override def insert(obj: Object): ExecutableJoin = impl.insert(obj)
+  override def insert(obj: Object): ExecuteJoin = impl.insert(obj)
 
-  override def update(obj: Object): ExecutableJoin = impl.update(obj)
+  override def update(obj: Object): ExecuteJoin = impl.update(obj)
 
-  override def delete(obj: Object): ExecutableJoin = impl.delete(obj)
+  override def delete(obj: Object): ExecuteJoin = impl.delete(obj)
 
-  override def ignore(obj: Object): ExecutableJoin = impl.ignore(obj)
+  override def ignore(obj: Object): ExecuteJoin = impl.ignore(obj)
 
   override def postExecute(fn: (Entity) => Unit): Unit = fn(obj.asInstanceOf[Entity])
 }
 
-object ExecutableRootImpl {
+object ExecuteRootImpl {
   private def check(obj: Object): Unit = {
     if (!obj.isInstanceOf[Entity]) {
       throw new RuntimeException("Not Entity")
     }
   }
 
-  def insert(obj: Object): ExecutableRoot = {
+  def insert(obj: Object): ExecuteRoot = {
     check(obj)
     val meta = obj.asInstanceOf[Entity].$$core().meta
     val ex = new Insert(meta)
-    new ExecutableRootImpl(obj, ex)
+    new ExecuteRootImpl(obj, ex)
   }
 
-  def update(obj: Object): ExecutableRoot = {
+  def update(obj: Object): ExecuteRoot = {
     check(obj)
     val meta = obj.asInstanceOf[Entity].$$core().meta
     val ex = new Update(meta)
-    new ExecutableRootImpl(obj, ex)
+    new ExecuteRootImpl(obj, ex)
   }
 
-  def delete(obj: Object): ExecutableRoot = {
+  def delete(obj: Object): ExecuteRoot = {
     check(obj)
     val meta = obj.asInstanceOf[Entity].$$core().meta
     val ex = new Delete(meta)
-    new ExecutableRootImpl(obj, ex)
+    new ExecuteRootImpl(obj, ex)
   }
 }
