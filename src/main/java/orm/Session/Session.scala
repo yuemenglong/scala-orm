@@ -2,8 +2,10 @@ package orm.Session
 
 import java.sql.Connection
 
+import orm.Orm
 import orm.lang.interfaces.Entity
-import orm.operate._
+import orm.operate.traits.core.Executable
+import orm.operatebak.{JoinT, Selector, Target}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -61,7 +63,7 @@ class Session(private val conn: Connection) {
   def flush(): Unit = {
     require(!closed)
     cache.foreach(item => {
-      val ex = Update(item)
+      val ex = Orm.update(item)
       this.execute(ex)
     })
     cache.clear()

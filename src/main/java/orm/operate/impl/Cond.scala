@@ -1,60 +1,23 @@
-package orm.operate
+package orm.operate.impl
+
+import orm.operate.traits.core.{Cond, Field}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by Administrator on 2017/7/11.
+  * Created by yml on 2017/7/15.
   */
-
-trait FieldOp {
-  def eql(v: Object): Cond
-
-  def eql(f: Field): Cond
-
-  def neq(v: Object): Cond
-
-  def neq(f: Field): Cond
-
-  def gt(v: Object): Cond
-
-  def gt(f: Field): Cond
-
-  def gte(v: Object): Cond
-
-  def gte(f: Field): Cond
-
-  def lt(v: Object): Cond
-
-  def lt(f: Field): Cond
-
-  def lte(v: Object): Cond
-
-  def lte(f: Field): Cond
-
-  def in(a: Array[Object]): Cond
-}
-
-trait Cond {
-  def toSql: String
-
-  def toParam: Array[Object]
-
-  def and(cond: Cond): Cond
-
-  def or(cond: Cond): Cond
-}
 
 abstract class JointCond(cs: Cond*) extends Cond {
   var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]
 
-  override def toParam: Array[Object] = {
-    conds.flatMap(_.toParam).toArray
+  override def getParam: Array[Object] = {
+    conds.flatMap(_.getParam).toArray
   }
 }
 
 case class And(cs: Cond*) extends JointCond(cs: _*) {
-
-  override def toSql: String = conds.map(_.toSql).mkString(" AND ")
+  override def getSql: String = conds.map(_.getSql).mkString(" AND ")
 
   override def and(cond: Cond): Cond = {
     conds += cond
@@ -65,10 +28,9 @@ case class And(cs: Cond*) extends JointCond(cs: _*) {
 }
 
 case class Or(cs: Cond*) extends JointCond(cs: _*) {
-
-  override def toSql: String = conds.size match {
-    case 1 => conds(0).toSql
-    case n if n > 1 => s"""(${conds.map(_.toSql).mkString(" OR ")})"""
+  override def getSql: String = conds.size match {
+    case 1 => conds(0).getSql
+    case n if n > 1 => s"""(${conds.map(_.getSql).mkString(" OR ")})"""
   }
 
   override def and(cond: Cond): Cond = And(this, cond)
@@ -88,11 +50,11 @@ abstract class CondItem extends Cond {
 abstract class CondFV(f: Field, v: Object) extends CondItem {
   def op(): String
 
-  override def toSql: String = {
-    s"${f.column} ${op()} ?"
+  override def getSql: String = {
+    s"${f.getColumn} ${op()} ?"
   }
 
-  override def toParam: Array[Object] = {
+  override def getParam: Array[Object] = {
     Array(v)
   }
 }
@@ -100,11 +62,11 @@ abstract class CondFV(f: Field, v: Object) extends CondItem {
 abstract class CondFF(f1: Field, f2: Field) extends CondItem {
   def op(): String
 
-  override def toSql: String = {
-    s"${f1.column} ${op()} ${f2.column}"
+  override def getSql: String = {
+    s"${f1.getColumn} ${op()} ${f2.getColumn}"
   }
 
-  override def toParam: Array[Object] = {
+  override def getParam: Array[Object] = {
     Array()
   }
 }
@@ -158,9 +120,9 @@ case class LteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
 }
 
 case class InFA(f: Field, a: Array[Object]) extends CondItem {
-  override def toSql: String = {
-    s"${f.column} IN (${a.map(_ => "?").mkString(", ")})"
+  override def getSql: String = {
+    s"${f.getColumn} IN (${a.map(_ => "?").mkString(", ")})"
   }
 
-  override def toParam: Array[Object] = a
+  override def getParam: Array[Object] = a
 }
