@@ -3,6 +3,7 @@ package orm.operate.traits.core
 import java.sql.{Connection, ResultSet}
 
 import orm.lang.interfaces.Entity
+import orm.operate.traits.core.JoinType.JoinType
 
 import scala.collection.mutable
 
@@ -29,6 +30,8 @@ trait Selectable[T] extends Node {
 
 trait SelectJoin extends Join {
   def select(field: String): SelectJoin
+
+  override def join(field: String): Join = join(field, JoinType.LEFT)
 }
 
 trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {

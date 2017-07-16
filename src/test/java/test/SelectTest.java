@@ -7,6 +7,7 @@ import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
 import orm.operate.traits.core.ExecuteRoot;
+import orm.operate.traits.core.JoinType;
 import orm.operate.traits.core.Query1;
 import orm.operate.traits.core.SelectRoot;
 import test.model.OM;

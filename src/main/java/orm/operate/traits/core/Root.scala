@@ -1,6 +1,7 @@
 package orm.operate.traits.core
 
 import orm.meta.EntityMeta
+import orm.operate.traits.core.JoinType.JoinType
 
 /**
   * Created by yml on 2017/7/15.
@@ -36,7 +37,9 @@ trait Join extends Node with AsSelectable with Expr {
 
   def getTableWithJoinCond: String
 
-  def join(field: String): Join
+  def join(field: String): Join = join(field, JoinType.INNER)
+
+  def join(field: String, joinType: JoinType): Join
 
   def get(field: String): Field
 
