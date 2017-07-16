@@ -15,7 +15,7 @@ import test.model.Obj;
 import java.util.ArrayList;
 
 /**
- * Created by Administrator on 2017/7/10.
+ * Created by <yuemenglong@126.com> on 2017/7/10.
  */
 public class SelectTest {
     private static Db db;
@@ -57,6 +57,28 @@ public class SelectTest {
 
         SelectRoot<OM> ms = Orm.root(OM.class).asSelect();
         Query1<Long> query = Orm.select(ms.count()).from(ms);
+        Long c = session.first(query);
+        Assert.assertEquals(c.intValue(), 6);
+    }
+
+    @Test
+    public void testField() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("");
+        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
+
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 7);
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Query1<Long> query = Orm.select(root.join("om").get("id").as(Long.class)).from(root)
+                .limit(1).offset(5);
         Long c = session.first(query);
         Assert.assertEquals(c.intValue(), 6);
     }

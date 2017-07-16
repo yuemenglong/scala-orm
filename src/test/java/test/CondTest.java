@@ -16,7 +16,7 @@ import test.model.Ptr;
 import java.util.ArrayList;
 
 /**
- * Created by Administrator on 2017/7/11.
+ * Created by <yuemenglong@126.com> on 2017/7/11.
  */
 public class CondTest {
     private static Db db;

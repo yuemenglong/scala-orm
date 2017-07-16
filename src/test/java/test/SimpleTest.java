@@ -6,9 +6,9 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.traits.Update;
-import orm.operate.traits.core.*;
-import orm.operatebak.Count_;
+import orm.operate.traits.core.ExecuteRoot;
+import orm.operate.traits.core.Query1;
+import orm.operate.traits.core.SelectRoot;
 import test.model.*;
 
 import java.math.BigDecimal;
@@ -16,8 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 /**
- * Created by Administrator on 2017/7/6.
- * //
+ * Created by <yuemenglong@126.com> on 2017/7/6.
  */
 public class SimpleTest {
 
