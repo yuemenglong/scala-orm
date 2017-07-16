@@ -18,6 +18,9 @@ public class OM {
     @Pointer
     private MO mo;
 
+    @Pointer
+    private Obj obj;
+
     public Long getId() {
         return id;
     }
