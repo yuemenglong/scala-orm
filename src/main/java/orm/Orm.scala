@@ -1,13 +1,12 @@
 package orm
 
-
-import com.sun.prism.impl.Disposer.Target
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.kit.Kit
 import orm.meta.OrmMeta
-import orm.operate.impl.{ExecuteRootImpl, RootImpl, SelectBuilder1Impl, SelectBuilderImpl}
+import orm.operate.impl.{ExecuteRootImpl, RootImpl, SelectBuilder1Impl, UpdateBuilderImpl}
+import orm.operate.traits.UpdateBuilder
 import orm.operate.traits.core._
 
 object Orm {
@@ -59,4 +58,8 @@ object Orm {
   def select[T](target: Selectable[T]): SelectBuilder1[T] = new SelectBuilder1Impl(target)
 
   def from[T](root: SelectRoot[T]): Query1[T] = select(root).from(root)
+
+  def from[T](clazz: Class[T]): Query1[T] = from(Orm.root(clazz).asSelect())
+
+  def update(root: Root[_]): UpdateBuilder = new UpdateBuilderImpl(root)
 }

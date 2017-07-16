@@ -6,11 +6,11 @@ import orm.operate.traits.core.{Assign, Cond, Executable}
   * Created by yml on 2017/7/15.
   */
 trait UpdateBuilder {
-  def set(assign: Assign): Update
+  def set(as: Assign*): ExecutableUpdate
 
-  def set(assigns: Array[Assign]): Update
+  def set(a: Assign): ExecutableUpdate
 }
 
-trait Update extends UpdateBuilder with Executable {
+trait ExecutableUpdate extends UpdateBuilder with Executable {
   def where(c: Cond): core.Executable
 }

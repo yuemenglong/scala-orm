@@ -4,11 +4,9 @@ import java.sql.Connection
 
 import orm.Orm
 import orm.lang.interfaces.Entity
-import orm.operate.traits.core.{Executable, Query, Query1, Queryable}
-import orm.operatebak.{JoinT, Selector, Target}
+import orm.operate.traits.core.{Executable, Query1, Queryable}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/24.
@@ -82,12 +80,6 @@ class Session(private val conn: Connection) {
   def execute(executor: Executable): Int = {
     val ret = executor.execute(conn)
     executor.postExecute(injectSession)
-    ret
-  }
-
-  def query(selectors: Array[Target[_]]): Array[Array[Object]] = {
-    val ret = Selector.query(selectors, conn)
-    ret.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(injectSession))
     ret
   }
 

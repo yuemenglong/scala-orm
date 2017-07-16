@@ -1,9 +1,9 @@
-package orm.operatebak
+package orm.db
 
 import orm.meta.{EntityMeta, OrmMeta}
 
 /**
-  * Created by Administrator on 2017/6/2.
+  * Created by <yuemenglong@126.com> on 2017/7/16.
   */
 object Table {
   def getCreateSql(meta: EntityMeta): String = {
@@ -29,3 +29,4 @@ object Table {
     sql
   }
 }
+

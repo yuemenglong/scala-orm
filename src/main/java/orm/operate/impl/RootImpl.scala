@@ -49,9 +49,9 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
-  override def assign(f: Field): Assign = ???
+  override def assign(f: Field): Assign = AssignFF(this, f)
 
-  override def assign(v: Object): Assign = ???
+  override def assign(v: Object): Assign = AssignFV(this, v)
 }
 
 class SelectableFieldImpl[T](clazz: Class[T], val impl: FieldImpl) extends Field with Selectable[T] {
