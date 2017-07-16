@@ -222,26 +222,7 @@ public class SimpleTest {
         Assert.assertEquals(oms[2].getId().intValue(), 2);
     }
 
-    @Test
-    public void testMultiSelect() {
-        Session session = db.openSession();
-        Obj obj = new Obj();
-        obj.setName("");
-        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
 
-        obj = Orm.convert(obj);
-        ExecuteRoot ex = Orm.insert(obj);
-        ex.insert("ptr");
-        ex.insert("oo");
-        ex.insert("om");
-        int ret = session.execute(ex);
-        Assert.assertEquals(ret, 7);
-
-        SelectRoot<OM> ms = Orm.root(OM.class).asSelect();
-        Query1<Long> query = Orm.select(ms.count()).from(ms);
-        Long c = session.first(query);
-        Assert.assertEquals(c.intValue(), 6);
-    }
 
 
 }
