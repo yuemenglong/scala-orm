@@ -1,11 +1,13 @@
 package orm
 
-
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.kit.Kit
 import orm.meta.OrmMeta
+import orm.operate.impl._
+import orm.operate.traits.{DeleteBuilder, UpdateBuilder}
+import orm.operate.traits.core._
 
 object Orm {
 
@@ -39,4 +41,27 @@ object Orm {
   }
 
   def getEmptyConstructorMap: Map[Class[_], () => Object] = Kit.getEmptyConstructorMap
+
+  def insert(obj: Object): ExecuteRoot = ExecuteRootImpl.insert(obj)
+
+  def update(obj: Object): ExecuteRoot = ExecuteRootImpl.update(obj)
+
+  def delete(obj: Object): ExecuteRoot = ExecuteRootImpl.delete(obj)
+
+  def root[T](clazz: Class[T]): Root[T] = {
+    if (!OrmMeta.entityMap.contains(clazz.getSimpleName)) {
+      throw new RuntimeException("Not Entity Class")
+    }
+    new RootImpl[T](clazz, OrmMeta.entityMap(clazz.getSimpleName))
+  }
+
+  def select[T](target: Selectable[T]): SelectBuilder1[T] = new SelectBuilder1Impl(target)
+
+  def from[T](root: SelectRoot[T]): Query1[T] = select(root).from(root)
+
+  def from[T](clazz: Class[T]): Query1[T] = from(Orm.root(clazz).asSelect())
+
+  def update(root: Root[_]): UpdateBuilder = new UpdateBuilderImpl(root)
+
+  def delete(root: Root[_]): DeleteBuilder = new DeleteBuilderImpl(root)
 }

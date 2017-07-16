@@ -6,16 +6,17 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.*;
+import orm.operate.traits.core.Cond;
+import orm.operate.traits.core.ExecuteRoot;
+import orm.operate.traits.core.SelectRoot;
 import test.model.OM;
 import test.model.Obj;
 import test.model.Ptr;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
- * Created by Administrator on 2017/7/11.
+ * Created by <yuemenglong@126.com> on 2017/7/11.
  */
 public class CondTest {
     private static Db db;
@@ -52,16 +53,15 @@ public class CondTest {
                 om.setValue(i * i);
             }
             obj = Orm.convert(obj);
-            Insert ex = new Insert(obj);
+            ExecuteRoot ex = Orm.insert(obj);
             ex.insert("om");
             session.execute(ex);
         }
 
-        Root<Obj> root = new Root<>(Obj.class);
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
         Cond cond = root.get("id").lt(2).or(root.get("id").gt(9))
                 .and(root.select("om").get("id").gt(2));
-        root.where(cond);
-        Obj[] objs = (Obj[]) session.query(root);
+        Obj[] objs = (Obj[]) session.query(Orm.from(root).where(cond));
         Assert.assertEquals(objs.length, 2);
         Assert.assertEquals(objs[0].getOm().length, 1);
         Assert.assertEquals(objs[1].getOm().length, 3);

@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * Created by Administrator on 2017/5/17.
+ * Created by <yuemenglong@126.com> on 2017/5/17.
  */
 @Entity
 public class Obj {

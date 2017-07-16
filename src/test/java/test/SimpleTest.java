@@ -6,7 +6,9 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.*;
+import orm.operate.traits.core.ExecuteRoot;
+import orm.operate.traits.core.Query1;
+import orm.operate.traits.core.SelectRoot;
 import test.model.*;
 
 import java.math.BigDecimal;
@@ -14,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 /**
- * Created by Administrator on 2017/7/6.
+ * Created by <yuemenglong@126.com> on 2017/7/6.
  */
 public class SimpleTest {
 
@@ -72,7 +74,7 @@ public class SimpleTest {
 
         // insert
         person = Orm.convert(person);
-        Insert ex = new Insert(person);
+        ExecuteRoot ex = Orm.insert(person);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -82,22 +84,18 @@ public class SimpleTest {
 
         // update
         person.setAge(20);
-        Update update = new Update(person);
-//        ex.where(Cond2.byEq("id", person.getId()));
+        ExecuteRoot update = Orm.update(person);
         ret = session.execute(update);
         Assert.assertEquals(ret, 1);
 
         // select
-        Root<Obj> root = new Root<>(Obj.class);
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
         root.select("ptr");
         root.select("oo");
         root.select("om");
 
-        ArrayList<Integer> inList = new ArrayList<Integer>();
-        inList.add(1);
-        inList.add(2);
-        root.where(root.get("id").in(new Integer[]{1, 2}));
-        Obj[] res = (Obj[]) session.query(root);
+        Query1<Obj> query = Orm.select(root).from(root).where(root.get("id").in(new Integer[]{1, 2,}));
+        Obj[] res = (Obj[]) session.query(query);
         Assert.assertEquals(res.length, 1);
         Assert.assertEquals(res[0].getId().intValue(), 1);
         Assert.assertEquals(res[0].getAge().intValue(), 20);
@@ -107,12 +105,12 @@ public class SimpleTest {
         Assert.assertEquals(res[0].getOm()[1].getValue().intValue(), 2000);
 
         // delete
-        Delete delete = new Delete(person);
+        ExecuteRoot delete = Orm.delete(person);
         ret = session.execute(delete);
         Assert.assertEquals(ret, 1);
 
         // delete then select
-        Obj obj = session.first(root);
+        Obj obj = session.first(Orm.select(root).from(root));
         Assert.assertEquals(obj, null);
 
         session.close();
@@ -127,7 +125,7 @@ public class SimpleTest {
         obj.setAge(100);
 
         obj = Orm.convert(obj);
-        Executable ex = new Insert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
         session.execute(ex);
 
         Long id = obj.getId();
@@ -135,11 +133,11 @@ public class SimpleTest {
         obj.setId(id);
         obj.setAge(200);
 
-        ex = new Update(obj);
+        ex = Orm.update(obj);
         session.execute(ex);
 
-        Root<Obj> root = new Root<>(Obj.class);
-        obj = session.first(root);
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        obj = session.first(Orm.select(root).from(root));
         Assert.assertEquals(obj.getName(), "name");
         Assert.assertEquals(obj.getAge().intValue(), 200);
     }
@@ -154,7 +152,7 @@ public class SimpleTest {
         obj.setOm(new OM[]{new OM(), new OM()});
 
         obj = Orm.convert(obj);
-        Insert ex = new Insert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
@@ -162,39 +160,39 @@ public class SimpleTest {
         Assert.assertEquals(ret, 5);
 
         {
-            Root<Obj> sr = new Root<>(Obj.class);
-            Obj[] objs = (Obj[]) session.query(sr);
+            SelectRoot<Obj> sr = Orm.root(Obj.class).asSelect();
+            Obj[] objs = (Obj[]) session.query(Orm.select(sr).from(sr));
             Assert.assertEquals(objs.length, 1);
-            Root<Ptr> sr2 = new Root<>(Ptr.class);
-            Ptr[] ptrs = (Ptr[]) session.query(sr2);
+            SelectRoot<Ptr> sr2 = Orm.root(Ptr.class).asSelect();
+            Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
             Assert.assertEquals(ptrs.length, 1);
-            Root<OO> sr3 = new Root<>(OO.class);
-            OO[] oos = (OO[]) session.query(sr3);
+            SelectRoot<OO> sr3 = Orm.root(OO.class).asSelect();
+            OO[] oos = (OO[]) session.query(Orm.from(sr3));
             Assert.assertEquals(oos.length, 1);
-            Root<OM> sr4 = new Root<>(OM.class);
-            OM[] oms = (OM[]) session.query(sr4);
+            SelectRoot<OM> sr4 = Orm.root(OM.class).asSelect();
+            OM[] oms = (OM[]) session.query(Orm.from(sr4));
             Assert.assertEquals(oms.length, 2);
         }
 
-        Delete delete = new Delete(obj);
+        ExecuteRoot delete = Orm.delete(obj);
         delete.delete("ptr");
         delete.delete("oo");
         delete.delete("om");
         session.execute(delete);
 
         {
-            Root<Obj> sr = new Root<>(Obj.class);
-            Obj[] objs = (Obj[]) session.query(sr);
+            SelectRoot<Obj> sr = Orm.root(Obj.class).asSelect();
+            Obj[] objs = (Obj[]) session.query(Orm.select(sr).from(sr));
             Assert.assertEquals(objs.length, 0);
-            Root<Ptr> sr2 = new Root<>(Ptr.class);
-            Ptr[] ptrs = (Ptr[]) session.query(sr2);
-            Assert.assertEquals(objs.length, 0);
-            Root<OO> sr3 = new Root<>(OO.class);
-            OO[] oos = (OO[]) session.query(sr3);
-            Assert.assertEquals(objs.length, 0);
-            Root<OM> sr4 = new Root<>(OM.class);
-            OM[] oms = (OM[]) session.query(sr4);
-            Assert.assertEquals(objs.length, 0);
+            SelectRoot<Ptr> sr2 = Orm.root(Ptr.class).asSelect();
+            Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
+            Assert.assertEquals(ptrs.length, 0);
+            SelectRoot<OO> sr3 = Orm.root(OO.class).asSelect();
+            OO[] oos = (OO[]) session.query(Orm.from(sr3));
+            Assert.assertEquals(oos.length, 0);
+            SelectRoot<OM> sr4 = Orm.root(OM.class).asSelect();
+            OM[] oms = (OM[]) session.query(Orm.from(sr4));
+            Assert.assertEquals(oms.length, 0);
         }
     }
 
@@ -206,43 +204,24 @@ public class SimpleTest {
         obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
 
         obj = Orm.convert(obj);
-        Insert ex = new Insert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
         ex.insert("ptr");
         ex.insert("oo");
         ex.insert("om");
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        Root<OM> root = new Root<>(OM.class);
-        root.desc(root.get("id")).limit(3).offset(2);
+        SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+        Query1<OM> query = Orm.select(root).from(root).desc(root.get("id")).limit(3).offset(2);
 
-        OM[] oms = (OM[]) session.query(root);
+        OM[] oms = (OM[]) session.query(query);
         Assert.assertEquals(oms.length, 3);
         Assert.assertEquals(oms[0].getId().intValue(), 4);
         Assert.assertEquals(oms[1].getId().intValue(), 3);
         Assert.assertEquals(oms[2].getId().intValue(), 2);
     }
 
-    @Test
-    public void testMultiSelect() {
-        Session session = db.openSession();
-        Obj obj = new Obj();
-        obj.setName("");
-        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
 
-        obj = Orm.convert(obj);
-        Insert ex = new Insert(obj);
-        ex.insert("ptr");
-        ex.insert("oo");
-        ex.insert("om");
-        int ret = session.execute(ex);
-        Assert.assertEquals(ret, 7);
-
-        Root<OM> ms = new Root<>(OM.class);
-        Count_<Long> count = ms.count(Long.class);
-        Long c = session.first(count);
-        Assert.assertEquals(c.intValue(), 6);
-    }
 
 
 }

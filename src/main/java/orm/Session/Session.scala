@@ -2,11 +2,11 @@ package orm.Session
 
 import java.sql.Connection
 
+import orm.Orm
 import orm.lang.interfaces.Entity
-import orm.operate._
+import orm.operate.traits.core.{Executable, Query1, Queryable}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/24.
@@ -61,7 +61,7 @@ class Session(private val conn: Connection) {
   def flush(): Unit = {
     require(!closed)
     cache.foreach(item => {
-      val ex = Update(item)
+      val ex = Orm.update(item)
       this.execute(ex)
     })
     cache.clear()
@@ -83,54 +83,65 @@ class Session(private val conn: Connection) {
     ret
   }
 
-  def query(selectors: Array[Target[_]]): Array[Array[Object]] = {
-    val ret = Selector.query(selectors, conn)
+  private def commonQuery(q: Queryable): Array[Array[Object]] = {
+    val ret = q.query(conn)
     ret.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(injectSession))
     ret
   }
 
-  def query[T](selector: Target[T]): Array[T] = {
-    val ct: ClassTag[T] = selector match {
-      case es: JoinT[_] => ClassTag(es.meta.clazz)
-      case fs: Target[_] => ClassTag(fs.classT())
-    }
-    query(Array[Target[_]](selector))
-      .map(row => row(0).asInstanceOf[T])
-      .toArray(ct)
+  def query[T](query1: Query1[T]): Array[T] = {
+    query1.transform(commonQuery(query1))
   }
 
-  def first[T](selector: Target[T]): T = {
-    query(selector) match {
+  def first[T](query1: Query1[T]): T = {
+    query(query1) match {
       case Array() => null.asInstanceOf[T]
       case arr => arr(0)
     }
   }
 
-  def query[T0, T1](s0: Target[T0], s1: Target[T1]): Array[(T0, T1)] = {
-    val selectors = Array[Target[_]](s0, s1)
-    query(selectors).map(row => {
-      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1])
-    })
-  }
+  //  def query[T](selector: Target[T]): Array[T] = {
+  //    val ct: ClassTag[T] = selector match {
+  //      case es: JoinT[_] => ClassTag(es.meta.clazz)
+  //      case fs: Target[_] => ClassTag(fs.classT())
+  //    }
+  //    query(Array[Target[_]](selector))
+  //      .map(row => row(0).asInstanceOf[T])
+  //      .toArray(ct)
+  //  }
 
-  def first[T0, T1](s0: Target[T0], s1: Target[T1]): (T0, T1) = {
-    query(s0, s1) match {
-      case Array() => null.asInstanceOf[(T0, T1)]
-      case arr => arr(0)
-    }
-  }
-
-  def query[T0, T1, T2](s0: Target[T0], s1: Target[T1], s2: Target[T2]): Array[(T0, T1, T2)] = {
-    val selectors = Array[Target[_]](s0, s1, s2)
-    query(selectors).map(row => {
-      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1], row(2).asInstanceOf[T2])
-    })
-  }
-
-  def first[T0, T1, T2](s0: Target[T0], s1: Target[T1], s2: Target[T2]): (T0, T1, T2) = {
-    query(s0, s1, s2) match {
-      case Array() => null.asInstanceOf[(T0, T1, T2)]
-      case arr => arr(0)
-    }
-  }
+  //  def first[T](selector: Target[T]): T = {
+  //    query(selector) match {
+  //      case Array() => null.asInstanceOf[T]
+  //      case arr => arr(0)
+  //    }
+  //  }
+  //
+  //  def query[T0, T1](s0: Target[T0], s1: Target[T1]): Array[(T0, T1)] = {
+  //    val selectors = Array[Target[_]](s0, s1)
+  //    query(selectors).map(row => {
+  //      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1])
+  //    })
+  //  }
+  //
+  //  def first[T0, T1](s0: Target[T0], s1: Target[T1]): (T0, T1) = {
+  //    query(s0, s1) match {
+  //      case Array() => null.asInstanceOf[(T0, T1)]
+  //      case arr => arr(0)
+  //    }
+  //  }
+  //
+  //  def query[T0, T1, T2](s0: Target[T0], s1: Target[T1], s2: Target[T2]): Array[(T0, T1, T2)] = {
+  //    val selectors = Array[Target[_]](s0, s1, s2)
+  //    query(selectors).map(row => {
+  //      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1], row(2).asInstanceOf[T2])
+  //    })
+  //  }
+  //
+  //  def first[T0, T1, T2](s0: Target[T0], s1: Target[T1], s2: Target[T2]): (T0, T1, T2) = {
+  //    query(s0, s1, s2) match {
+  //      case Array() => null.asInstanceOf[(T0, T1, T2)]
+  //      case arr => arr(0)
+  //    }
+  //  }
 }

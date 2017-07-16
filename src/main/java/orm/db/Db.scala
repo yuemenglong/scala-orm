@@ -4,7 +4,6 @@ import java.sql.{Connection, DriverManager}
 
 import orm.Session.Session
 import orm.meta.OrmMeta
-import orm.operate.Table
 
 /**
   * Created by Administrator on 2017/5/16.

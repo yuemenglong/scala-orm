@@ -35,7 +35,7 @@ class FieldMeta(val entity: EntityMeta,
                 val left: String,
                 val right: String) {
   var refer: EntityMeta = _ // 最后统一注入，因为第一遍扫描时可能还没有生成
-  Logger.info(s"[Entity: ${entity.entity}, Field: $name, Column: $column]")
+  Logger.info(s"[Entity: ${entity.entity}, Table: ${entity.table}, Field: $name, Column: $column]")
 
   def getDbSql: String = {
     var length = FieldMeta.DEFAULT_LEN
