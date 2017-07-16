@@ -106,16 +106,16 @@ public class SimpleTest {
         Assert.assertEquals(res[0].getOm()[0].getValue().intValue(), 1000);
         Assert.assertEquals(res[0].getOm()[1].getValue().intValue(), 2000);
 
-//        // delete
-//        Delete delete = new Delete(person);
-//        ret = session.execute(delete);
-//        Assert.assertEquals(ret, 1);
-//
-//        // delete then select
-//        Obj obj = session.first(root);
-//        Assert.assertEquals(obj, null);
-//
-//        session.close();
+        // delete
+        ExecuteRoot delete = Orm.delete(person);
+        ret = session.execute(delete);
+        Assert.assertEquals(ret, 1);
+
+        // delete then select
+        Obj obj = session.first(Orm.select(root).from(root));
+        Assert.assertEquals(obj, null);
+
+        session.close();
     }
 //
 //    @Test

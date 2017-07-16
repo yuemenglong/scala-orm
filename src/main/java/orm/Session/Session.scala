@@ -97,19 +97,26 @@ class Session(private val conn: Connection) {
     ret
   }
 
-  def query[T](q: Query1[T]): Array[T] = {
-    q.transform(commonQuery(q))
+  def query[T](query1: Query1[T]): Array[T] = {
+    query1.transform(commonQuery(query1))
   }
 
-  def query[T](selector: Target[T]): Array[T] = {
-    val ct: ClassTag[T] = selector match {
-      case es: JoinT[_] => ClassTag(es.meta.clazz)
-      case fs: Target[_] => ClassTag(fs.classT())
+  def first[T](query1: Query1[T]): T = {
+    query(query1) match {
+      case Array() => null.asInstanceOf[T]
+      case arr => arr(0)
     }
-    query(Array[Target[_]](selector))
-      .map(row => row(0).asInstanceOf[T])
-      .toArray(ct)
   }
+
+  //  def query[T](selector: Target[T]): Array[T] = {
+  //    val ct: ClassTag[T] = selector match {
+  //      case es: JoinT[_] => ClassTag(es.meta.clazz)
+  //      case fs: Target[_] => ClassTag(fs.classT())
+  //    }
+  //    query(Array[Target[_]](selector))
+  //      .map(row => row(0).asInstanceOf[T])
+  //      .toArray(ct)
+  //  }
 
   //  def first[T](selector: Target[T]): T = {
   //    query(selector) match {
