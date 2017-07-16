@@ -1,199 +1,166 @@
 package orm.operate
 
-import java.util
-
-import orm.kit.Kit
-import orm.meta.EntityMeta
-
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by Administrator on 2017/5/22.
+  * Created by Administrator on 2017/7/11.
   */
-class Cond {
-  var items = new ArrayBuffer[CondItem]()
 
-  def eq(field: String, param: Object): Cond = {
-    items += new Eq(field, param)
-    this
-  }
+trait FieldOp {
+  def eql(v: Object): Cond
 
-  def ne(field: String, param: Object): Cond = {
-    items += new Ne(field, param)
-    this
-  }
+  def eql(f: Field): Cond
 
-  def gt(field: String, param: Object): Cond = {
-    items += new Gt(field, param)
-    this
-  }
+  def neq(v: Object): Cond
 
-  def lt(field: String, param: Object): Cond = {
-    items += new Lt(field, param)
-    this
-  }
+  def neq(f: Field): Cond
 
-  def gte(field: String, param: Object): Cond = {
-    items += new Gte(field, param)
-    this
-  }
+  def gt(v: Object): Cond
 
-  def lte(field: String, param: Object): Cond = {
-    items += new Lte(field, param)
-    this
-  }
+  def gt(f: Field): Cond
 
-  def in(field: String, param: Object): Cond = {
-    items += new In(field, param)
-    this
-  }
+  def gte(v: Object): Cond
 
-  def toSql(alias: String, meta: EntityMeta): String = {
-    if (items.length == 0) {
-      return null
-    }
-    return items.map(item => item.toSql(alias, meta)).mkString("\n\tAND ")
-  }
+  def gte(f: Field): Cond
 
-  def toParams(): Array[Object] = {
-    items.flatMap(item => item.toParams()).toArray
-  }
+  def lt(v: Object): Cond
 
-  def check(entityMeta: EntityMeta): Unit = {
-    items.map(item => item.check(entityMeta))
-  }
+  def lt(f: Field): Cond
 
-  //////////////////////////////////////////////////////
+  def lte(v: Object): Cond
 
-  trait CondItem {
-    def toSql(alias: String, meta: EntityMeta): String
+  def lte(f: Field): Cond
 
-    def toParams(): Array[Object]
-
-    def check(meta: EntityMeta): Unit
-  }
-
-  class Eq(val field: String, val param: Object) extends CondItem {
-    override def toSql(alias: String, meta: EntityMeta): String = {
-      val column = meta.fieldMap(field).column
-      s"${alias}.${column} = ?"
-    }
-
-    override def toParams(): Array[Object] = {
-      Array(param)
-    }
-
-    override def check(meta: EntityMeta): Unit = {
-      require(meta.fieldMap.contains(field))
-    }
-  }
-
-  class Ne(val field: String, val param: Object) extends CondItem {
-    override def toSql(alias: String, meta: EntityMeta): String = {
-      val column = meta.fieldMap(field).column
-      s"${alias}.${column} <> ?"
-    }
-
-    override def toParams(): Array[Object] = {
-      Array(param)
-    }
-
-    override def check(meta: EntityMeta): Unit = {
-      require(meta.fieldMap.contains(field))
-    }
-  }
-
-  class Gt(val field: String, val param: Object) extends CondItem {
-    override def toSql(alias: String, meta: EntityMeta): String = {
-      val column = meta.fieldMap(field).column
-      s"${alias}.${column} > ?"
-    }
-
-    override def toParams(): Array[Object] = {
-      Array(param)
-    }
-
-    override def check(meta: EntityMeta): Unit = {
-      require(meta.fieldMap.contains(field))
-    }
-  }
-
-  class Lt(val field: String, val param: Object) extends CondItem {
-    override def toSql(alias: String, meta: EntityMeta): String = {
-      val column = meta.fieldMap(field).column
-      s"${alias}.${column} < ?"
-    }
-
-    override def toParams(): Array[Object] = {
-      Array(param)
-    }
-
-    override def check(meta: EntityMeta): Unit = {
-      require(meta.fieldMap.contains(field))
-    }
-  }
-
-  class Gte(val field: String, val param: Object) extends CondItem {
-    override def toSql(alias: String, meta: EntityMeta): String = {
-      val column = meta.fieldMap(field).column
-      s"${alias}.${column} >= ?"
-    }
-
-    override def toParams(): Array[Object] = {
-      Array(param)
-    }
-
-    override def check(meta: EntityMeta): Unit = {
-      require(meta.fieldMap.contains(field))
-    }
-  }
-
-  class Lte(val field: String, val param: Object) extends CondItem {
-    override def toSql(alias: String, meta: EntityMeta): String = {
-      val column = meta.fieldMap(field).column
-      s"${alias}.${column} <= ?"
-    }
-
-    override def toParams(): Array[Object] = {
-      Array(param)
-    }
-
-    override def check(meta: EntityMeta): Unit = {
-      require(meta.fieldMap.contains(field))
-    }
-  }
-
-  class In(val field: String, val param: Object) extends CondItem {
-    require(param.isInstanceOf[util.Collection[_]])
-    val coll = param.asInstanceOf[util.Collection[Object]]
-
-    override def toSql(alias: String, meta: EntityMeta): String = {
-      val column = meta.fieldMap(field).column
-      val placeholder = (1 to coll.size()).map(_ => "?").mkString(", ")
-      s"${alias}.${column} in (${placeholder})"
-    }
-
-    override def toParams(): Array[Object] = {
-      val ret = new ArrayBuffer[Object]()
-      coll.forEach(item => {
-        ret += item
-      })
-      ret.toArray
-    }
-
-    override def check(meta: EntityMeta): Unit = {
-      require(meta.fieldMap.contains(field))
-    }
-  }
-
+  def in(a: Array[Object]): Cond
 }
 
-object Cond {
-  def byEq(field: String, param: Object): Cond = {
-    new Cond().eq(field, param)
+trait Cond {
+  def toSql: String
+
+  def toParam: Array[Object]
+
+  def and(cond: Cond): Cond
+
+  def or(cond: Cond): Cond
+}
+
+abstract class JointCond(cs: Cond*) extends Cond {
+  var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]
+
+  override def toParam: Array[Object] = {
+    conds.flatMap(_.toParam).toArray
+  }
+}
+
+case class And(cs: Cond*) extends JointCond(cs: _*) {
+
+  override def toSql: String = conds.map(_.toSql).mkString(" AND ")
+
+  override def and(cond: Cond): Cond = {
+    conds += cond
+    this
   }
 
-  def byIn(field: String, param: Object): Cond = {
-    new Cond().in(field, param)
+  override def or(cond: Cond): Cond = Or(this, cond)
+}
+
+case class Or(cs: Cond*) extends JointCond(cs: _*) {
+
+  override def toSql: String = conds.size match {
+    case 1 => conds(0).toSql
+    case n if n > 1 => s"""(${conds.map(_.toSql).mkString(" OR ")})"""
   }
+
+  override def and(cond: Cond): Cond = And(this, cond)
+
+  override def or(cond: Cond): Cond = {
+    conds += cond
+    this
+  }
+}
+
+abstract class CondItem extends Cond {
+  def and(cond: Cond): Cond = And(this, cond)
+
+  def or(cond: Cond): Cond = Or(this, cond)
+}
+
+abstract class CondFV(f: Field, v: Object) extends CondItem {
+  def op(): String
+
+  override def toSql: String = {
+    s"${f.column} ${op()} ?"
+  }
+
+  override def toParam: Array[Object] = {
+    Array(v)
+  }
+}
+
+abstract class CondFF(f1: Field, f2: Field) extends CondItem {
+  def op(): String
+
+  override def toSql: String = {
+    s"${f1.column} ${op()} ${f2.column}"
+  }
+
+  override def toParam: Array[Object] = {
+    Array()
+  }
+}
+
+case class EqFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = "="
+}
+
+case class EqFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = "="
+}
+
+case class NeFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = "<>"
+}
+
+case class NeFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = "<>"
+}
+
+case class GtFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = ">"
+}
+
+case class GtFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = ">"
+}
+
+case class LtFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = "<"
+}
+
+case class LtFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = "<"
+}
+
+case class GteFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = ">="
+}
+
+case class GteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = ">="
+}
+
+case class LteFV(f: Field, v: Object) extends CondFV(f, v) {
+  override def op(): String = "<="
+}
+
+case class LteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+  override def op(): String = "<="
+}
+
+case class InFA(f: Field, a: Array[Object]) extends CondItem {
+  override def toSql: String = {
+    s"${f.column} IN (${a.map(_ => "?").mkString(", ")})"
+  }
+
+  override def toParam: Array[Object] = a
 }

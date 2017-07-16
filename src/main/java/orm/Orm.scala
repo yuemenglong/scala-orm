@@ -1,13 +1,11 @@
 package orm
 
-import java.util
 
 import orm.db.Db
 import orm.entity.EntityManager
 import orm.init.Scanner
+import orm.kit.Kit
 import orm.meta.OrmMeta
-
-import scala.collection.mutable.ArrayBuffer
 
 object Orm {
 
@@ -15,19 +13,16 @@ object Orm {
     Scanner.scan(path)
   }
 
-
   def init(paths: Array[String]): Unit = {
     Scanner.scan(paths)
   }
 
-  def init(paths: util.Collection[String]): Unit = {
-    val ab = ArrayBuffer[String]()
-    paths.forEach(p => ab += p)
-    Scanner.scan(ab.toArray)
+  def init(clazzs: Array[Class[_]]): Unit = {
+    Scanner.scan(clazzs)
   }
 
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
-    require(OrmMeta.entityVec.length > 0)
+    require(OrmMeta.entityVec.nonEmpty)
     new Db(host, port, user, pwd, db)
   }
 
@@ -42,4 +37,6 @@ object Orm {
   def convert[T](obj: T): T = {
     EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
   }
+
+  def getEmptyConstructorMap: Map[Class[_], () => Object] = Kit.getEmptyConstructorMap
 }

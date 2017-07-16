@@ -1,16 +1,11 @@
 package orm.entity
 
 import java.lang.reflect.Method
-import java.util
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 import net.sf.cglib.proxy.MethodProxy
 import orm.Session.Session
-import orm.kit.Kit
 import orm.meta.{EntityMeta, FieldMetaTypeKind}
-
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by Administrator on 2017/5/18.
@@ -19,9 +14,9 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   private val pattern = Pattern.compile("(get|set|clear)(.+)")
   private val coreFn = "$$core"
-  private var session: Session = null
+  private var session: Session = _
 
-  def getPkey(): Object = {
+  def getPkey: Object = {
     if (!fieldMap.contains(meta.pkey.name)) {
       return null
     }
@@ -43,15 +38,16 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       case FieldMetaTypeKind.POINTER => this.setPointer(field, value)
       case FieldMetaTypeKind.ONE_ONE => this.setOneOne(field, value)
       case FieldMetaTypeKind.ONE_MANY => this.setOneMany(field, value)
-      case _ => throw new RuntimeException(s"Unknown Field Meta Type: [${field}]")
+      case _ => throw new RuntimeException(s"Unknown Field Meta Type: [$field]")
     }
-    return null
+    null
   }
 
   def getValue(field: String): Object = {
-    this.fieldMap.contains(field) match {
-      case true => this.fieldMap(field)
-      case false => null
+    if (this.fieldMap.contains(field)) {
+      this.fieldMap(field)
+    } else {
+      null
     }
   }
 
@@ -78,16 +74,16 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     val a = this
     val fieldMeta = this.meta.fieldMap(field)
     // oldb.a_id = null
-    this.fieldMap.contains(field) match {
-      case false => {}
-      case true => this.fieldMap(field) match {
-        case null => {}
-        case _ => {
+    if (this.fieldMap.contains(field)) {
+      this.fieldMap(field) match {
+        case null =>
+        case _ =>
           val oldb = EntityManager.core(this.fieldMap(field))
           oldb.fieldMap += (fieldMeta.right -> null)
           addSessionCache(this.fieldMap(field))
-        }
       }
+    } else {
+      {}
     }
     // a.b = b
     a.fieldMap += (field -> value)
@@ -99,32 +95,27 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   }
 
   def setOneMany(field: String, value: Object): Unit = {
-    require(value != null)
-    val a = this;
+    require(value != null && value.getClass.isArray)
+    val a = this
     val fieldMeta = a.meta.fieldMap(field)
-    val coll = value.asInstanceOf[java.util.Collection[Object]]
-    var newIds = Set[String]()
-    coll.stream().forEach(item => {
-      EntityManager.core(item).getPkey() match {
-        case null => {}
-        case pkey: Object => {
-          newIds += pkey.toString
-        }
-      }
-    })
-    a.fieldMap.contains(field) match {
-      case false => {}
-      case true => a.fieldMap(field).asInstanceOf[util.Collection[Object]].forEach(item => {
+    val arr = value.asInstanceOf[Array[Object]]
+    // 新id的集合，用来判断老数据是否需要断开id
+    val newIds: Set[String] = arr.map(EntityManager.core(_).getPkey)
+      .filter(_ != null)
+      .map(_.toString)(collection.breakOut)
+    // 老数据断开id
+    if (a.fieldMap.contains(field)) {
+      a.fieldMap(field).asInstanceOf[Array[Object]].foreach(item => {
         val core = EntityManager.core(item)
         // 不在新数组里，说明关系断开了
-        if (core.getPkey() != null && !newIds.contains(core.getPkey().toString())) {
+        if (core.getPkey != null && !newIds.contains(core.getPkey.toString)) {
           // oldb.a_id = null
           core.fieldMap += ((fieldMeta.right, null))
           addSessionCache(item)
         }
       })
     }
-    coll.stream().forEach(item => {
+    arr.foreach(item => {
       // b.a_id = a.id
       val b = EntityManager.core(item)
       b.syncField(fieldMeta.right, a, fieldMeta.left)
@@ -160,7 +151,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     }).map(field => {
       field.typeKind match {
         case FieldMetaTypeKind.BUILT_IN |
-             FieldMetaTypeKind.IGNORE_BUILT_IN => {
+             FieldMetaTypeKind.IGNORE_BUILT_IN =>
           val value = this.fieldMap(field.name)
           if (value == null) {
             s"${field.name}: null"
@@ -171,36 +162,29 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
           } else {
             s"""${field.name}: ${this.fieldMap(field.name)}"""
           }
-        }
         case FieldMetaTypeKind.IGNORE_REFER |
              FieldMetaTypeKind.REFER |
              FieldMetaTypeKind.POINTER |
-             FieldMetaTypeKind.ONE_ONE => {
+             FieldMetaTypeKind.ONE_ONE =>
           s"""${field.name}: ${this.fieldMap(field.name)}"""
-        }
         case FieldMetaTypeKind.ONE_MANY |
-             FieldMetaTypeKind.IGNORE_MANY => {
-          val bs = this.fieldMap(field.name).asInstanceOf[util.Collection[Object]]
-          val joins = new ArrayBuffer[String]()
-          bs.forEach(b => {
-            joins += b.toString()
-          })
-          val content = joins.mkString(", ")
-          s"${field.name}: [${content}]"
-        }
+             FieldMetaTypeKind.IGNORE_MANY =>
+          val content = this.fieldMap(field.name).asInstanceOf[Array[Object]]
+            .map(_.toString).mkString(", ")
+          s"${field.name}: [$content]"
       }
     }).mkString(", ")
-    s"{${content}}"
+    s"{$content}"
   }
 
   def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-    if (method.getName() == coreFn) {
+    if (method.getName == coreFn) {
       return this
     }
-    if (method.getName() == "toString") {
+    if (method.getName == "toString") {
       return this.toString()
     }
-    val matcher = pattern.matcher(method.getName())
+    val matcher = pattern.matcher(method.getName)
     if (!matcher.matches()) {
       return proxy.invokeSuper(obj, args)
     }
@@ -212,7 +196,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       return proxy.invokeSuper(obj, args)
     }
 
-    return op match {
+    op match {
       case "get" => this.get(field)
       case "set" => this.set(field, args(0))
       case "clear" => throw new RuntimeException("")
@@ -225,7 +209,7 @@ object EntityCore {
     val map: Map[String, Object] = meta.fieldVec.map((field) => {
       field.typeKind match {
         case FieldMetaTypeKind.ONE_MANY
-             | FieldMetaTypeKind.IGNORE_MANY => (field.name, Kit.newInstance(field.field.getType))
+             | FieldMetaTypeKind.IGNORE_MANY => (field.name, Array[Object]())
         case _ => (field.name, null)
       }
     })(collection.breakOut)

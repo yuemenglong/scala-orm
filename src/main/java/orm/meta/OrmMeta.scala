@@ -10,7 +10,7 @@ object OrmMeta {
   var entityMap: Map[String, EntityMeta] = Map()
 
   def check(): Unit = {
-    require(entityVec.length > 0)
+    require(entityVec.nonEmpty)
   }
 }
 

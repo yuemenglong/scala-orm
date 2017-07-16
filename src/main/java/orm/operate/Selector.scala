@@ -1,235 +1,499 @@
 package orm.operate
 
 import java.sql.{Connection, ResultSet}
-import java.util
 
 import orm.entity.{EntityCore, EntityManager}
 import orm.kit.Kit
-import orm.meta.{EntityMeta, OrmMeta}
+import orm.lang.interfaces.Entity
+import orm.meta.{EntityMeta, FieldMeta, OrmMeta}
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 /**
-  * Created by Administrator on 2017/5/22.
+  * Created by yml on 2017/7/9.
   */
-class Selector[T](val meta: EntityMeta, val alias: String, val parent: Selector[_] = null) {
-  require(meta != null)
-  val withs = ArrayBuffer[(String, Selector[Object])]()
-  var cond: Cond = null
-  var on: JoinCond = null
-  var map = Map[String, EntityCore]() // 过滤结果用
+// select column from table where cond. param
+trait SelectorTrait {
+  def root: Root[_]
+}
 
-  def select(field: String): Selector[Object] = {
-    require(meta.fieldMap.contains(field))
-    val fieldMeta = meta.fieldMap(field)
-    require(!fieldMeta.isNormalOrPkey())
-    val selector = new Selector[Object](fieldMeta.refer, s"${this.alias}_${field}", this)
-    this.withs += ((field, selector))
-    return selector
+trait Target[T] extends SelectorTrait {
+  def getColumnWithAs: Array[String]
+
+  def pick(resultSet: ResultSet): T
+
+  def key(value: Object): String = value.toString
+
+  def classT(): Class[T]
+}
+
+abstract class Selector(parent: Join) extends SelectorTrait {
+  def root: Root[_] = {
+    if (parent == null) {
+      this.asInstanceOf[Root[_]]
+    } else {
+      parent.root
+    }
+  }
+}
+
+// entity -------------------------------------------------------
+
+class Join(val meta: EntityMeta, val joinField: FieldMeta, val parent: Join)
+  extends Selector(parent) {
+  // Boolean 表示是否关联查询，即是否为select
+  protected var fields: Array[String] = meta.managedFieldVec().filter(_.isNormalOrPkey).map(_.name).toArray
+  protected var joins: ArrayBuffer[(String, Boolean, Join)] = new ArrayBuffer[(String, Boolean, Join)]()
+  protected var targets: ArrayBuffer[(String, Target[Object])] = new ArrayBuffer[(String, Target[Object])]()
+
+  val alias: String = getEntityAlias
+
+  def getEntityAlias: String = {
+    if (parent == null) {
+      Kit.lodashCase(meta.entity)
+    } else {
+      s"${parent.alias}_${joinField.name}"
+    }
   }
 
-  def where(cond: Cond): Selector[T] = {
-    cond.check(meta)
-    this.cond = cond
+  def getFieldColumn(field: String): String = {
+    s"$alias.${meta.fieldMap(field).column}"
+  }
+
+  def getFieldAlias(field: String): String = {
+    s"$alias$$$field"
+  }
+
+  def setFields(fields: Array[String]): Unit = {
+    this.fields = fields
+  }
+
+  private def findExists(field: String): Option[(String, Boolean, Join)] = {
+    if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isObject) {
+      throw new RuntimeException(s"Join Non Object Field, $field")
+    }
+    joins.find(_._1 == field)
+  }
+
+  def select(field: String): Join = {
+    val flag = true
+    findExists(field) match {
+      case Some(t) =>
+        if (t._2 != flag) {
+          throw new RuntimeException(s"Already Get $field")
+        } else {
+          t._3
+        }
+      case None =>
+        val fieldMeta = meta.fieldMap(field)
+        val selector = new Join(fieldMeta.refer, fieldMeta, this)
+        joins += ((field, flag, selector))
+        selector
+    }
+  }
+
+  def join[T](field: String, clazz: Class[T]): JoinT[T] = {
+    val flag = false
+    findExists(field) match {
+      case Some(t) =>
+        if (t._2 != flag) {
+          throw new RuntimeException(s"Already Join $field")
+        } else {
+          if (t._3.meta.clazz != clazz) {
+            throw new RuntimeException("Class Not Match")
+          }
+          t._3.asInstanceOf[JoinT[T]]
+        }
+      case None =>
+        val fieldMeta = meta.fieldMap(field)
+        if (fieldMeta.refer.clazz != clazz) {
+          throw new RuntimeException("Class Not Match")
+        }
+        val selector = new JoinT[T](fieldMeta.refer, fieldMeta, this)
+        joins += ((field, flag, selector))
+        selector
+    }
+  }
+
+  def join(field: String): Join = {
+    if (!meta.fieldMap.contains(field)) {
+      throw new RuntimeException(s"Unknown Field $field For ${meta.entity}")
+    }
+    join(field, meta.fieldMap(field).refer.clazz)
+  }
+
+  def get[T](field: String, clazz: Class[T]): FieldT[T] = {
+    if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
+      throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
+    }
+    val fieldMeta = meta.fieldMap(field)
+    if (clazz != fieldMeta.clazz) {
+      throw new RuntimeException("Class Not Match")
+    }
+    targets.find(_._1 == field) match {
+      case Some((_, fs)) => fs.asInstanceOf[FieldT[T]]
+      case None =>
+        val ret = new FieldT[T](clazz, field, this)
+        targets += ((field, ret.asInstanceOf[FieldT[Object]]))
+        ret
+    }
+  }
+
+  def get(field: String): Field = {
+    if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
+      throw new RuntimeException(s"No Normal Field $field In ${meta.entity}")
+    }
+    val clazz = meta.fieldMap(field).clazz
+    get(field, clazz)
+  }
+
+  def getTableWithJoin: Array[String] = {
+    val selfTable = if (parent == null) {
+      s"${meta.table} AS $alias"
+    } else {
+      val left = parent.meta.fieldMap(joinField.left).column
+      val right = meta.fieldMap(joinField.right).column
+      s"LEFT JOIN ${meta.table} AS $alias ON ${parent.alias}.$left = $alias.$right"
+    }
+    Array(selfTable) ++ joins.flatMap(_._3.getTableWithJoin)
+  }
+
+  def getColumnWithAs: Array[String] = {
+    def go(join: Join): Array[String] = {
+      val selfColumn = join.fields.map(field => s"${join.getFieldColumn(field)} AS ${join.getFieldAlias(field)}")
+      // 1. 属于自己的字段 2. 关联的字段（聚合） 3. 级联的部分
+      selfColumn ++ join.targets.flatMap(_._2.getColumnWithAs) ++ join.joins.flatMap(t => go(t._3))
+    }
+
+    go(this)
+  }
+
+  def getFilterKey(core: EntityCore): String = {
+    s"$alias@${core.getPkey.toString}"
+  }
+
+  def getOneManyFilterKey(field: String, core: EntityCore): String = {
+    s"$alias@$field@${core.getPkey.toString}"
+  }
+
+  def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+    val a = pickSelf(resultSet, filterMap)
+    if (a == null) {
+      return null
+    }
+    pickRefer(a, resultSet, filterMap)
+    a
+  }
+
+  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+    val map: Map[String, Object] = fields.map(field => {
+      val alias = getFieldAlias(field)
+      val value = resultSet.getObject(alias)
+      (field, value)
+    })(collection.breakOut)
+    val core = new EntityCore(meta, map)
+    if (core.getPkey == null) {
+      return null
+    }
+    val key = getFilterKey(core)
+    if (filterMap.contains(key)) {
+      return filterMap(key)
+    }
+    val a = EntityManager.wrap(core)
+    filterMap += (key -> a)
+    a
+  }
+
+  def pickRefer(a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
+    val aCore = EntityManager.core(a)
+    joins.filter(_._2).foreach { case (field, _, subSelector) =>
+      val fieldMeta = meta.fieldMap(field)
+      val b = subSelector.pick(resultSet, filterMap)
+      (b, fieldMeta.isOneMany) match {
+        case (null, false) => aCore.fieldMap += (field -> null)
+        case (null, true) => aCore.fieldMap += (field -> new ArrayBuffer[Entity]())
+        case (_, false) => aCore.fieldMap += (field -> b)
+        case (_, true) =>
+          val key = getOneManyFilterKey(field, b.$$core())
+          if (filterMap.contains(key)) {
+            //
+          } else if (!aCore.fieldMap.contains(field)) {
+            aCore.fieldMap += (field -> new ArrayBuffer[Entity]())
+            aCore.fieldMap(field).asInstanceOf[ArrayBuffer[Entity]] += b
+          } else {
+            aCore.fieldMap(field).asInstanceOf[ArrayBuffer[Entity]] += b
+          }
+      }
+    }
+  }
+}
+
+class JoinT[T](meta: EntityMeta, joinField: FieldMeta, parent: Join)
+  extends Join(meta, joinField, parent)
+    with Target[T] {
+
+  private val filterMap = mutable.Map[String, Entity]()
+
+  override def getColumnWithAs: Array[String] = super.getColumnWithAs
+
+  override def pick(resultSet: ResultSet): T = {
+    val a = pick(resultSet, filterMap)
+    if (a == null) {
+      null.asInstanceOf[T]
+    } else {
+      a.asInstanceOf[T]
+    }
+  }
+
+  override def key(obj: Object): String = {
+    if (obj == null) {
+      ""
+    } else {
+      EntityManager.core(obj.asInstanceOf[Object]).getPkey.toString
+    }
+  }
+
+  override def classT(): Class[T] = meta.clazz.asInstanceOf[Class[T]]
+}
+
+class Root[T](clazz: Class[T])
+  extends JoinT[T](OrmMeta.entityMap(clazz.getSimpleName), null, null) {
+
+  private var cond: Cond = _
+  private var orders: ArrayBuffer[(Field, String)] = ArrayBuffer[(Field, String)]()
+  private var limit: Int = -1
+  private var offset: Int = -1
+
+  def where(c: Cond): Root[T] = {
+    cond = c
     this
   }
 
-  private def reset(): Unit = {
-    map = Map()
-    withs.foreach { case (_, selector) =>
-      selector.reset()
+  def count[R](field: Field, clazz: Class[R]): Count[R] = Count(clazz, field, this)
+
+  def count[R](clazz: Class[R]): Count_[R] = Count_(clazz, this)
+
+  def asc(field: Field): Root[T] = {
+    orders += ((field, "ASC"))
+    this
+  }
+
+  def desc(field: Field): Root[T] = {
+    orders += ((field, "DESC"))
+    this
+  }
+
+  def limit(l: Int): Root[T] = {
+    limit = l
+    this
+  }
+
+  def offset(o: Int): Root[T] = {
+    offset = o
+    this
+  }
+
+  def getParam: Array[Object] = {
+    cond match {
+      case null => Array()
+      case _ => cond.toParam
     }
   }
 
-  def getColumns(): String = {
-    val selfColumns = this.meta.managedFieldVec.filter(field => field.isNormalOrPkey()).map(field => {
-      s"${this.alias}.${field.column} AS ${this.alias}$$${field.name}"
-    }).mkString(",\n\t")
-    val withColumns = this.withs.map { case (_, selector) => {
-      selector.getColumns()
-    }
-    }
-    withColumns.insert(0, selfColumns)
-    withColumns.mkString(",\n\n\t")
-  }
-
-  def getTables(): String = {
-    val selfWiths = this.withs.map { case (field, selector) => {
-      val table = selector.meta.table
-      val alias = selector.alias
-      val fieldMeta = this.meta.fieldMap(field)
-      val leftColumn = this.meta.fieldMap(fieldMeta.left).column
-      val rightColumn = selector.meta.fieldMap(fieldMeta.right).column
-      val cond = s"${this.alias}.${leftColumn} = ${alias}.${rightColumn}"
-      var main = s"LEFT JOIN ${table} AS ${alias} ON ${cond}"
-      val joinCond = this.on match {
-        case null => ""
-        case _ => this.on.toSql(parent.alias, alias, parent.meta, meta)
-      }
-      main = joinCond.length() match {
-        case 0 => main
-        case _ => s"${main} AND ${joinCond}"
-      }
-      val subs = selector.getTables()
-      subs.length match {
-        case 0 => s"${main}"
-        case _ => s"${main}\n\t${subs}"
-      }
-    }
-    }.mkString("\n\t")
-    return selfWiths
-  }
-
-  def getConds(): String = {
-    val subConds = this.withs.map { case (_, selector) => {
-      selector.getConds()
-    }
-    }.filter(item => item != null)
-    this.cond match {
-      case null => {}
-      case _ => subConds.insert(0, this.cond.toSql(alias, meta))
-    }
-    if (subConds.length == 0) {
-      return null
-    }
-    return subConds.mkString("\n\tAND ")
-  }
-
-  def getParams(): Array[Object] = {
-    val subParams = this.withs.flatMap { case (_, selector) => {
-      selector.getParams()
-    }
-    }
-    this.cond match {
-      case null => {}
-      case _ => {
-        for (item <- this.cond.toParams().reverse) {
-          subParams.insert(0, item)
-        }
+  def getSql(targets: Array[Target[_]]): String = {
+    val columns = targets.flatMap(_.getColumnWithAs).mkString(",\n")
+    val tables = getTableWithJoin.mkString("\n")
+    val conds = cond match {
+      case null => "1 = 1"
+      case c: Cond => c.toSql match {
+        case "" => "1=1"
+        case sql: String => sql
       }
     }
-    return subParams.toArray
-  }
-
-  def getSql(): String = {
-    val columns = this.getColumns()
-    var tables = this.getTables()
-    var cond = this.getConds()
-    if (cond == null) {
-      cond = "1 = 1"
+    val orderBySql = orders.size match {
+      case 0 => ""
+      case _ => " ORDER BY " + orders.map { case (f, o) => s"${f.column} $o" }.mkString(", ")
     }
-    val table = s"${meta.table} AS ${alias}"
-    if (tables.length() != 0) {
-      tables = s"${table}\n\t${tables}"
+    val limitSql = if (limit != -1) {
+      s" LIMIT $limit"
     } else {
-      tables = table
+      ""
     }
-    s"SELECT\n\t${columns}\nFROM\n\t${tables}\nWHERE\n\t${cond}"
+    val offsetSql = if (offset != -1) {
+      s" OFFSET $offset"
+    } else {
+      ""
+    }
+    val postfix = s"$orderBySql$limitSql$offsetSql" match {
+      case "" => ""
+      case s => "\n" + s
+    }
+    s"SELECT\n$columns\nFROM\n$tables\nWHERE\n$conds$postfix"
   }
 
-  def query(conn: Connection): util.Collection[T] = {
-    val sql = this.getSql()
+}
+
+// field -------------------------------------------------------
+
+class Field(val clazz: Class[_], field: String, parent: Join)
+  extends Selector(parent)
+    with FieldOp {
+
+  val column: String = parent.getFieldColumn(field)
+  val alias: String = parent.getFieldAlias(field)
+
+  // cond
+  override def in(a: Array[Object]): Cond = InFA(this, a)
+
+  override def eql(v: Object): Cond = EqFV(this, v)
+
+  override def eql(f: Field): Cond = EqFF(this, f)
+
+  override def neq(v: Object): Cond = NeFV(this, v)
+
+  override def neq(f: Field): Cond = NeFF(this, f)
+
+  override def gt(v: Object): Cond = GtFV(this, v)
+
+  override def gt(f: Field): Cond = GtFF(this, f)
+
+  override def gte(v: Object): Cond = GteFV(this, v)
+
+  override def gte(f: Field): Cond = GteFF(this, f)
+
+  override def lt(v: Object): Cond = LtFV(this, v)
+
+  override def lt(f: Field): Cond = LtFF(this, f)
+
+  override def lte(v: Object): Cond = LteFV(this, v)
+
+  override def lte(f: Field): Cond = LteFF(this, f)
+}
+
+class FieldT[T](clazz: Class[T], field: String, parent: Join)
+  extends Field(clazz, field, parent)
+    with Target[T] {
+
+  override def getColumnWithAs: Array[String] = {
+    Array(s"$column AS $alias")
+  }
+
+  override def pick(resultSet: ResultSet): T = {
+    resultSet.getObject(alias).asInstanceOf[T]
+  }
+
+  override def classT(): Class[T] = clazz
+}
+
+// aggre -------------------------------------------------------
+
+case class Count[T](clazz: Class[T], field: Field, parent: Join)
+  extends Selector(parent)
+    with Target[T] {
+
+  val alias: String = s"count$$${field.alias}"
+  val column: String = s"COUNT(DISTINCT ${field.column})"
+
+  override def getColumnWithAs: Array[String] = {
+    Array(s"$column AS $alias")
+  }
+
+  override def pick(resultSet: ResultSet): T = {
+    resultSet.getObject(alias).asInstanceOf[T]
+  }
+
+  override def classT(): Class[T] = clazz
+}
+
+case class Count_[T](clazz: Class[T], parent: Join)
+  extends Selector(parent)
+    with Target[T] {
+
+  val column: String = s"COUNT(*)"
+  val alias: String = s"count$$"
+
+  override def getColumnWithAs: Array[String] = {
+    Array(s"$column AS $alias")
+  }
+
+  override def pick(resultSet: ResultSet): T = {
+    resultSet.getObject(alias).asInstanceOf[T]
+  }
+
+  override def classT(): Class[T] = clazz
+}
+
+// static -------------------------------------------------------
+
+object Selector {
+
+  private def bufferToArray(entity: Entity): Entity = {
+    val core = entity.$$core()
+    core.fieldMap.toArray.map(pair => {
+      val (name, value) = pair
+      value match {
+        case ab: ArrayBuffer[_] =>
+          val entityName = core.meta.fieldMap(name).typeName
+          val entityClass = OrmMeta.entityMap(entityName).clazz
+          val ct = ClassTag(entityClass).asInstanceOf[ClassTag[Object]]
+          val array = ab.map(_.asInstanceOf[Entity]).map(bufferToArray).toArray(ct)
+          (name, array)
+        case _ =>
+          null
+      }
+    }).filter(_ != null).foreach(p => core.fieldMap += p)
+    entity
+  }
+
+  def query[T](selector: Target[T], conn: Connection): Array[T] = {
+    val ct: ClassTag[T] = selector match {
+      case es: JoinT[_] => ClassTag(es.meta.clazz)
+      case fs: Target[_] => ClassTag(fs.classT())
+    }
+    query(Array[Target[_]](selector), conn).map(row => row(0).asInstanceOf[T]).toArray(ct)
+  }
+
+  def query[T0, T1](s1: Target[T0], s2: Target[T1], conn: Connection): Array[(T0, T1)] = {
+    val selectors = Array[Target[_]](s1, s2)
+    query(selectors, conn).map(row => {
+      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1])
+    })
+  }
+
+  def query(selectors: Array[Target[_]], conn: Connection): Array[Array[Object]] = {
+    if (selectors.length == 0) {
+      throw new RuntimeException("No Selector")
+    }
+    var filterSet = Set[String]()
+    val roots = selectors.map(_.root)
+    if (roots.exists(_ != roots(0))) {
+      throw new RuntimeException("Root Not Match")
+    }
+    val root = roots(0)
+    val sql = root.getSql(selectors)
     println(sql)
-    val params = this.getParams().map(_.toString()).mkString(", ")
-    println(s"[Params] => [${params}]")
+    val params = root.getParam
+    println(s"""[Params] => [${params.map(_.toString).mkString(", ")}]""")
     val stmt = conn.prepareStatement(sql)
-    this.getParams().zipWithIndex.foreach { case (param, i) => {
+    params.zipWithIndex.foreach { case (param, i) =>
       stmt.setObject(i + 1, param)
     }
-    }
     val rs = stmt.executeQuery()
-    val ret = new util.ArrayList[T]()
+    var ab = ArrayBuffer[Array[Object]]()
     while (rs.next()) {
-      val core = this.pick(rs)
-      val key = s"@${core.getPkey()}"
-      if (!map.contains(key)) {
-        ret.add(EntityManager.wrap(core).asInstanceOf[T])
+      val values = selectors.map(_.pick(rs).asInstanceOf[Object])
+      val key = (selectors, values).zipped.map(_.key(_)).mkString("$")
+      if (!filterSet.contains(key)) {
+        ab += values
       }
-      map += (key -> core)
+      filterSet += key
     }
     rs.close()
     stmt.close()
-    reset()
-    return ret
-  }
-
-  def first(conn: Connection): T = {
-    val coll = query(conn)
-    coll.size() match {
-      case 0 => null.asInstanceOf[T]
-      case _ => coll.iterator().next()
-    }
-  }
-
-  def pick(rs: ResultSet): EntityCore = {
-    val core = pickSelf(rs)
-    if (core == null) {
-      return null
-    }
-    pickRefer(rs, core)
-    return core
-  }
-
-  def pickSelf(rs: ResultSet): EntityCore = {
-    val core = new EntityCore(meta, Map())
-    meta.managedFieldVec().filter(_.isNormalOrPkey()).foreach(field => {
-      val label = s"${alias}$$${field.name}"
-      val value = rs.getObject(label)
-      core.fieldMap += (field.name -> value)
-    })
-    val key = core.getPkey()
-    if (key == null) {
-      return null
-    }
-    if (map.contains(key.toString())) {
-      return map(key.toString())
-    }
-    map += (key.toString() -> core)
-    return core
-  }
-
-  def pickRefer(rs: ResultSet, core: EntityCore): Unit = {
-    withs.foreach { case (field, selector) => {
-      val bCore = selector.pick(rs)
-      val fieldMeta = meta.fieldMap(field)
-      if (!fieldMeta.isOneMany()) {
-        if (bCore != null) {
-          val entity = EntityManager.wrap(bCore)
-          core.fieldMap += (field -> entity)
-        } else {
-          core.fieldMap += (field -> null)
-        }
-      }
-      else {
-        // 一对多的情况
-        if (bCore != null) {
-          val key = s"${field}@${bCore.getPkey().toString()}"
-          if (!map.contains(key) && !core.fieldMap.contains(field)) {
-            core.fieldMap += (field -> Kit.newInstance(fieldMeta.field.getType))
-          }
-          if (!map.contains(key)) {
-            val list = core.fieldMap(field).asInstanceOf[util.Collection[Object]]
-            list.add(EntityManager.wrap(bCore))
-          }
-          map += (key -> bCore)
-        }
-      }
-    }
-    }
-  }
-
-}
-
-object Selector {
-  def from[T](clazz: Class[T]): Selector[T] = {
-    OrmMeta.check()
-    val entityMeta = OrmMeta.entityMap(clazz.getSimpleName())
-    new Selector[T](entityMeta, entityMeta.entity)
-  }
-
-  def createSelect[T](clazz: Class[T]): Selector[T] = {
-    OrmMeta.check()
-    val entityMeta = OrmMeta.entityMap(clazz.getSimpleName())
-    new Selector[T](entityMeta, entityMeta.entity)
+    ab.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(bufferToArray))
+    ab.toArray
   }
 }
+
