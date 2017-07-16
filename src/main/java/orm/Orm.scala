@@ -6,8 +6,8 @@ import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.kit.Kit
 import orm.meta.OrmMeta
-import orm.operate.impl.ExecuteRootImpl
-import orm.operate.traits.core.{Executable, ExecuteRoot}
+import orm.operate.impl.{ExecuteRootImpl, RootImpl, SelectBuilderImpl, SelectBuilder1Impl}
+import orm.operate.traits.core._
 
 object Orm {
 
@@ -47,4 +47,15 @@ object Orm {
   def update(obj: Object): ExecuteRoot = ExecuteRootImpl.update(obj)
 
   def delete(obj: Object): ExecuteRoot = ExecuteRootImpl.delete(obj)
+
+  def root[T](clazz: Class[T]): Root[T] = {
+    if (!OrmMeta.entityMap.contains(clazz.getSimpleName)) {
+      throw new RuntimeException("Not Entity Class")
+    }
+    new RootImpl[T](clazz, OrmMeta.entityMap(clazz.getSimpleName))
+  }
+
+  def select[T](target: Selectable[T]): SelectBuilder1[T] = {
+    new SelectBuilder1Impl(target)
+  }
 }

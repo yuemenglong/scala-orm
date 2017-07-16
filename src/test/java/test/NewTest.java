@@ -6,7 +6,8 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.traits.core.ExecuteRoot;
+import orm.operate.impl.QueryImpl;
+import orm.operate.traits.core.*;
 import test.model.*;
 
 import java.math.BigDecimal;
@@ -78,6 +79,13 @@ public class NewTest {
 //        ex.where(Cond2.byEq("id", person.getId()));
         ret = session.execute(update);
         Assert.assertEquals(ret, 1);
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        SelectBuilder1<Obj> sb = Orm.select(root);
+        Query1<Obj> query = sb.from(root);
+        Obj[] res = (Obj[]) session.query(query);
+
+
 
         // select
 //        Root<Obj> root = new Root<>(Obj.class);

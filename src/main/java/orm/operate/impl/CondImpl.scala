@@ -7,12 +7,21 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by yml on 2017/7/15.
   */
+class CondRoot extends Cond {
+  override def and(cond: Cond): Cond = And(cond)
+
+  override def or(cond: Cond): Cond = Or(cond)
+
+  override def getParams: Array[Object] = Array()
+
+  override def getSql: String = ""
+}
 
 abstract class JointCond(cs: Cond*) extends Cond {
   var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]
 
-  override def getParam: Array[Object] = {
-    conds.flatMap(_.getParam).toArray
+  override def getParams: Array[Object] = {
+    conds.flatMap(_.getParams).toArray
   }
 }
 
@@ -54,7 +63,7 @@ abstract class CondFV(f: Field, v: Object) extends CondItem {
     s"${f.getColumn} ${op()} ?"
   }
 
-  override def getParam: Array[Object] = {
+  override def getParams: Array[Object] = {
     Array(v)
   }
 }
@@ -66,7 +75,7 @@ abstract class CondFF(f1: Field, f2: Field) extends CondItem {
     s"${f1.getColumn} ${op()} ${f2.getColumn}"
   }
 
-  override def getParam: Array[Object] = {
+  override def getParams: Array[Object] = {
     Array()
   }
 }
@@ -124,5 +133,5 @@ case class InFA(f: Field, a: Array[Object]) extends CondItem {
     s"${f.getColumn} IN (${a.map(_ => "?").mkString(", ")})"
   }
 
-  override def getParam: Array[Object] = a
+  override def getParams: Array[Object] = a
 }

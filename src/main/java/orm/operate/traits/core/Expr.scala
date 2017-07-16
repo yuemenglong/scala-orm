@@ -7,9 +7,11 @@ trait GetSql {
   def getSql: String
 }
 
-trait Expr extends GetSql {
-  def getParam: Array[Object]
+trait GetParams {
+  def getParams: Array[Object]
 }
+
+trait Expr extends GetSql with GetParams
 
 trait Cond extends Expr {
   def and(cond: Cond): Cond

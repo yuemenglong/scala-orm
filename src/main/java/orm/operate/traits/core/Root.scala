@@ -21,7 +21,7 @@ trait Field extends Node with CondOp with AssignOp with AsSelectable {
   def getAlias: String
 }
 
-trait Join extends Node with AsSelectable {
+trait Join extends Node with AsSelectable with Expr {
 
   def getAlias: String
 
@@ -30,8 +30,15 @@ trait Join extends Node with AsSelectable {
   def join(field: String): Join
 
   def get(field: String): Field
+
+  def on(c: Cond): Join
+
+  override def getSql: String = getTableWithJoinCond
 }
 
-trait Root extends Join {
+
+trait Root[T] extends Join {
   def getFromExpr: String
+
+  def asSelect(): SelectRoot[T]
 }
