@@ -1,6 +1,7 @@
 package orm.kit
 
 import java.lang.reflect.Field
+import java.sql.Connection
 
 import orm.Orm
 import orm.entity.EntityManager
@@ -39,5 +40,17 @@ object Kit {
       }
       (meta.clazz, fn)
     }.toMap
+  }
+
+  def execute(conn:Connection, sql:String, params:Array[Object]):Int={
+    val stmt = conn.prepareStatement(sql)
+    params.zipWithIndex.foreach { case (param, i) =>
+      stmt.setObject(i + 1, param)
+    }
+    println(sql)
+    println(s"[Params] => [${params.map(_.toString).mkString(", ")}]")
+    val ret = stmt.executeUpdate()
+    stmt.close()
+    ret
   }
 }

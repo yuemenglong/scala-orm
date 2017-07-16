@@ -71,4 +71,23 @@ public class SpecTest {
         Assert.assertEquals(res[1].getOm().length, 2);
     }
 
+//    @Test
+//    public void testDelete() {
+//        Session session = db.openSession();
+//        Obj obj = new Obj();
+//        obj.setName("");
+//        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
+//
+//        obj = Orm.convert(obj);
+//        ExecuteRoot er = Orm.insert(obj);
+//        er.insert("ptr");
+//        er.insert("oo");
+//        er.insert("om");
+//        int ret = session.execute(er);
+//        Assert.assertEquals(ret, 7);
+//
+//        Root<Obj> root = Orm.root(Obj.class);
+//        ret = session.execute(Orm.delete(root).where(root.join("om").get("id").gt(2)));
+//        Assert.assertEquals(ret, 5);
+//    }
 }

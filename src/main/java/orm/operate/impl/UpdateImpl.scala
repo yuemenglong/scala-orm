@@ -4,9 +4,7 @@ import java.sql.Connection
 
 import orm.kit.Kit
 import orm.lang.interfaces.Entity
-import orm.meta.EntityMeta
-import orm.operate.traits.UpdateBuilder
-import orm.operate.traits.ExecutableUpdate
+import orm.operate.traits.{ExecutableUpdate, UpdateBuilder}
 import orm.operate.traits.core.{Assign, Cond, Executable, Root}
 
 /**
@@ -40,19 +38,7 @@ class UpdateImpl(root: Root[_], as: Array[Assign]) extends ExecutableUpdate {
     assigns.flatMap(_.getParams) ++ cond.getParams
   }
 
-  override def execute(conn: Connection): Int = {
-    val sql = getSql
-    val stmt = conn.prepareStatement(sql)
-    val params = getParams
-    params.zipWithIndex.foreach { case (param, i) =>
-      stmt.setObject(i + 1, param)
-    }
-    println(sql)
-    println(s"[Params] => [${params.map(_.toString).mkString(", ")}]")
-    val ret = stmt.executeUpdate()
-    stmt.close()
-    ret
-  }
+  override def execute(conn: Connection): Int = Kit.execute(conn, getSql, getParams)
 
   override def postExecute(fn: (Entity) => Unit): Unit = {}
 

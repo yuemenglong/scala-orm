@@ -5,6 +5,11 @@ import orm.meta.EntityMeta
 /**
   * Created by yml on 2017/7/15.
   */
+object JoinType extends Enumeration {
+  type JoinType = Value
+  val INNER, LEFT, RIGHT, OUTER = Value
+}
+
 trait Node {
   def getParent: Node
 

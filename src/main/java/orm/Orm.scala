@@ -5,8 +5,8 @@ import orm.entity.EntityManager
 import orm.init.Scanner
 import orm.kit.Kit
 import orm.meta.OrmMeta
-import orm.operate.impl.{ExecuteRootImpl, RootImpl, SelectBuilder1Impl, UpdateBuilderImpl}
-import orm.operate.traits.UpdateBuilder
+import orm.operate.impl._
+import orm.operate.traits.{DeleteBuilder, UpdateBuilder}
 import orm.operate.traits.core._
 
 object Orm {
@@ -62,4 +62,6 @@ object Orm {
   def from[T](clazz: Class[T]): Query1[T] = from(Orm.root(clazz).asSelect())
 
   def update(root: Root[_]): UpdateBuilder = new UpdateBuilderImpl(root)
+
+  def delete(root: Root[_]): DeleteBuilder = new DeleteBuilderImpl(root)
 }
