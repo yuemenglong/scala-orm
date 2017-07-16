@@ -31,7 +31,9 @@ trait SelectJoin extends Join {
   def select(field: String): SelectJoin
 }
 
-trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin
+trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {
+  def count(): Selectable[java.lang.Long]
+}
 
 trait SelectBuilder {
   def from(selectRoot: SelectRoot[_]): Query

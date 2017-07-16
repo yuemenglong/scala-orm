@@ -21,7 +21,7 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
 
   override def getParent: Node = parent
 
-  override def as[T](clazz: Class[T]): Selectable[T] = ???
+  override def as[T](clazz: Class[T]): Selectable[T] = new SelectableFieldImpl[T](clazz, this)
 
   override def eql(v: Object): Cond = EqFV(this, v)
 
@@ -54,10 +54,60 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
   override def assign(v: Object): Assign = ???
 }
 
-class JoinImpl(val field: String, val meta: EntityMeta, val parent: JoinImpl) extends Join {
+class SelectableFieldImpl[T](clazz: Class[T], val impl: FieldImpl) extends Field with Selectable[T] {
+  override def getColumn: String = impl.getColumn
+
+  override def getAlias: String = impl.getAlias
+
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = resultSet.getObject(getAlias, clazz)
+
+  override def getColumnWithAs: String = s"${getColumn} AS ${getAlias}"
+
+  override def getType: Class[T] = clazz
+
+  override def getKey(value: Object): String = value.toString
+
+  override def getParent: Node = impl.getParent
+
+  override def assign(v: Object): Assign = impl.assign(v)
+
+  override def assign(f: Field): Assign = impl.assign(f)
+
+  override def eql(v: Object): Cond = impl.eql(v)
+
+  override def eql(f: Field): Cond = impl.eql(f)
+
+  override def neq(v: Object): Cond = impl.neq(v)
+
+  override def neq(f: Field): Cond = impl.neq(f)
+
+  override def gt(v: Object): Cond = impl.gt(v)
+
+  override def gt(f: Field): Cond = impl.gt(f)
+
+  override def gte(v: Object): Cond = impl.gte(v)
+
+  override def gte(f: Field): Cond = impl.gte(f)
+
+  override def lt(v: Object): Cond = impl.lt(v)
+
+  override def lt(f: Field): Cond = impl.lt(f)
+
+  override def lte(v: Object): Cond = impl.lte(v)
+
+  override def lte(f: Field): Cond = impl.lte(f)
+
+  override def in(a: Array[Object]): Cond = impl.in(a)
+
+  override def as[T](clazz: Class[T]): Selectable[T] = ???
+}
+
+class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join) extends Join {
   private var cond: Cond = new CondRoot
   private[impl] val joins = new ArrayBuffer[JoinImpl]()
   private val fields = new ArrayBuffer[FieldImpl]()
+
+  override def getMeta: EntityMeta = meta
 
   override def join(field: String): Join = {
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isObject) {
@@ -103,8 +153,8 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: JoinImpl) ex
     if (parent == null) {
       s"${meta.table} AS $getAlias"
     } else {
-      val fieldMeta = parent.meta.fieldMap(field)
-      val leftColumn = parent.meta.fieldMap(fieldMeta.left).column
+      val fieldMeta = parent.getMeta.fieldMap(field)
+      val leftColumn = parent.getMeta.fieldMap(fieldMeta.left).column
       val rightColumn = meta.fieldMap(fieldMeta.right).column
       val leftTable = parent.getAlias
       val rightTable = getAlias
@@ -222,6 +272,8 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   override def on(c: Cond): Join = impl.on(c)
 
   override def getParams: Array[Object] = impl.getParams
+
+  override def getMeta: EntityMeta = impl.getMeta
 }
 
 class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl) extends SelectJoinImpl(impl) with Selectable[T] {
@@ -278,6 +330,8 @@ class RootImpl[T](clazz: Class[T], meta: EntityMeta) extends Root[T] {
 
   override def getParent: Node = null
 
+  override def getRoot: Node = impl
+
   override def asSelect(): SelectRoot[T] = new SelectRootImpl[T](clazz, meta, this)
 
   override def as[R](clazz: Class[R]): Selectable[R] = throw new RuntimeException("Use asSelect Instead When Call As On Root")
@@ -285,6 +339,8 @@ class RootImpl[T](clazz: Class[T], meta: EntityMeta) extends Root[T] {
   override def on(c: Cond): Join = throw new RuntimeException("Root Not Need On Cond")
 
   override def getParams: Array[Object] = impl.getParams
+
+  override def getMeta: EntityMeta = meta
 }
 
 class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta,
@@ -319,11 +375,16 @@ class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta,
 
   override def on(c: Cond): Join = rootImpl.on(c)
 
-  override def getParent: Node = null
+  override def getParent: Node = rootImpl.getParent
 
-  override def as[T](clazz: Class[T]): Selectable[T] = throw new RuntimeException("ALready Selectable")
+  override def getRoot: Node = rootImpl.getRoot
+
+  override def as[R](clazz: Class[R]): Selectable[R] = throw new RuntimeException("ALready Selectable")
 
   override def getParams: Array[Object] = rootImpl.getParams
 
+  override def getMeta: EntityMeta = meta
+
+  override def count(): Selectable[java.lang.Long] = new Count_(this)
 }
 

@@ -1,6 +1,6 @@
 package orm.operate.impl
 
-import java.sql.Connection
+import java.sql.{Connection, ResultSet}
 
 import orm.lang.interfaces.Entity
 import orm.meta.OrmMeta
@@ -63,7 +63,7 @@ class QueryableImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends 
     if (targets.length == 0) {
       throw new RuntimeException("No Selector")
     }
-    if (targets.map(_.getRoot.asInstanceOf[SelectRoot[_]]).exists(_ != root)) {
+    if (targets.map(_.getRoot).exists(_ != root.getRoot)) {
       throw new RuntimeException("Root Not Match")
     }
     var filterSet = Set[String]()
@@ -171,4 +171,18 @@ class QueryImpl(ts: Array[Selectable[_]], root: SelectRoot[_])
     cond = c
     this
   }
+}
+
+class Count_(root: SelectRoot[_]) extends Selectable[java.lang.Long] {
+  def getAlias: String = "$count$"
+
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): java.lang.Long = resultSet.getObject(getAlias, classOf[java.lang.Long])
+
+  override def getColumnWithAs: String = s"COUNT(*) AS $getAlias"
+
+  override def getType: Class[java.lang.Long] = classOf[java.lang.Long]
+
+  override def getKey(value: Object): String = value.toString
+
+  override def getParent: Node = root.getRoot
 }

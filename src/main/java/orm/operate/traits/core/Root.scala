@@ -1,5 +1,7 @@
 package orm.operate.traits.core
 
+import orm.meta.EntityMeta
+
 /**
   * Created by yml on 2017/7/15.
   */
@@ -23,6 +25,8 @@ trait Field extends Node with CondOp with AssignOp with AsSelectable {
 
 trait Join extends Node with AsSelectable with Expr {
 
+  def getMeta: EntityMeta
+
   def getAlias: String
 
   def getTableWithJoinCond: String
@@ -36,9 +40,9 @@ trait Join extends Node with AsSelectable with Expr {
   override def getSql: String = getTableWithJoinCond
 }
 
-
 trait Root[T] extends Join {
   def getFromExpr: String
 
   def asSelect(): SelectRoot[T]
+
 }

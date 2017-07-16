@@ -8,6 +8,7 @@ import orm.Session.Session;
 import orm.db.Db;
 import orm.operate.traits.Update;
 import orm.operate.traits.core.*;
+import orm.operatebak.Count_;
 import test.model.*;
 
 import java.math.BigDecimal;
@@ -195,52 +196,52 @@ public class SimpleTest {
             Assert.assertEquals(oms.length, 0);
         }
     }
-//
-//    @Test
-//    public void testOrderByLimitOffset() {
-//        Session session = db.openSession();
-//        Obj obj = new Obj();
-//        obj.setName("");
-//        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
-//
-//        obj = Orm.convert(obj);
-//        Insert ex = Orm.insert(obj);
-//        ex.insert("ptr");
-//        ex.insert("oo");
-//        ex.insert("om");
-//        int ret = session.execute(ex);
-//        Assert.assertEquals(ret, 7);
-//
-//        SelectRoot<OM> root = Orm.root(OM.class);
-//        root.desc(root.get("id")).limit(3).offset(2);
-//
-//        OM[] oms = (OM[]) session.query(root);
-//        Assert.assertEquals(oms.length, 3);
-//        Assert.assertEquals(oms[0].getId().intValue(), 4);
-//        Assert.assertEquals(oms[1].getId().intValue(), 3);
-//        Assert.assertEquals(oms[2].getId().intValue(), 2);
-//    }
-//
-//    @Test
-//    public void testMultiSelect() {
-//        Session session = db.openSession();
-//        Obj obj = new Obj();
-//        obj.setName("");
-//        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
-//
-//        obj = Orm.convert(obj);
-//        Insert ex = Orm.insert(obj);
-//        ex.insert("ptr");
-//        ex.insert("oo");
-//        ex.insert("om");
-//        int ret = session.execute(ex);
-//        Assert.assertEquals(ret, 7);
-//
-//        SelectRoot<OM> ms = Orm.root(OM.class);
-//        Count_<Long> count = ms.count(Long.class);
-//        Long c = session.first(count);
-//        Assert.assertEquals(c.intValue(), 6);
-//    }
-//
-//
+
+    @Test
+    public void testOrderByLimitOffset() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("");
+        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
+
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 7);
+
+        SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+        Query1<OM> query = Orm.select(root).from(root).desc(root.get("id")).limit(3).offset(2);
+
+        OM[] oms = (OM[]) session.query(query);
+        Assert.assertEquals(oms.length, 3);
+        Assert.assertEquals(oms[0].getId().intValue(), 4);
+        Assert.assertEquals(oms[1].getId().intValue(), 3);
+        Assert.assertEquals(oms[2].getId().intValue(), 2);
+    }
+
+    @Test
+    public void testMultiSelect() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("");
+        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
+
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 7);
+
+        SelectRoot<OM> ms = Orm.root(OM.class).asSelect();
+        Query1<Long> query = Orm.select(ms.count()).from(ms);
+        Long c = session.first(query);
+        Assert.assertEquals(c.intValue(), 6);
+    }
+
+
 }
