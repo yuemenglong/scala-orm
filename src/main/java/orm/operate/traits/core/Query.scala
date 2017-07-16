@@ -2,6 +2,9 @@ package orm.operate.traits.core
 
 import java.sql.{Connection, ResultSet}
 
+import orm.lang.interfaces.Entity
+
+import scala.collection.mutable
 
 /**
   * Created by yml on 2017/7/14.
@@ -15,7 +18,7 @@ trait AsSelectable {
 }
 
 trait Selectable[T] extends Node {
-  def pick(rs: ResultSet): T
+  def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T
 
   def getColumnWithAs: String
 
@@ -50,6 +53,16 @@ trait SelectBuilder1[T] {
   def from(selectRoot: SelectRoot[_]): Query1[T]
 }
 
-trait Query1[T] extends Query {
+trait Query1[T] extends Queryable {
   def transform(res: Array[Array[Object]]): Array[T]
+
+  def limit(l: Long): Query1[T]
+
+  def offset(l: Long): Query1[T]
+
+  def asc(field: Field): Query1[T]
+
+  def desc(field: Field): Query1[T]
+
+  def where(cond: Cond): Query1[T]
 }

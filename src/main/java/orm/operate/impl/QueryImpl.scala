@@ -1,11 +1,12 @@
 package orm.operate.impl
 
-import java.sql.{Connection, ResultSet}
+import java.sql.Connection
 
 import orm.lang.interfaces.Entity
 import orm.meta.OrmMeta
 import orm.operate.traits.core._
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
@@ -20,43 +21,42 @@ class SelectBuilder1Impl[T](target: Selectable[T]) extends SelectBuilder1[T] {
   override def from(root: SelectRoot[_]): Query1[T] = new Query1Impl(target, root)
 }
 
-class Query1Impl[T](val t: Selectable[T], root: SelectRoot[_])
-  extends QueryImpl(Array(t), root) with Query1[T] {
-  def transform(res: Array[Array[Object]]): Array[T] = {
-    val ct = ClassTag(t.getType)
-    res.map(r => r(0).asInstanceOf[T]).toArray(ct.asInstanceOf[ClassTag[T]])
-  }
-}
+class QueryableImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends Queryable {
+  protected var cond: Cond = new CondRoot()
+  protected var limitVar: Long = -1
+  protected var offsetVar: Long = -1
+  protected var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
 
-class QueryImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends Query {
-  var cond: Cond = new CondRoot()
-  var limit: Long = -1
-  var offset: Long = -1
-  var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
-
-  override def limit(l: Long): Query = {
-    limit = l
-    this
+  def getParams: Array[Object] = {
+    val loParams = (limitVar, offsetVar) match {
+      case (-1, -1) => Array()
+      case (l, -1) => Array[Object](new java.lang.Long(l))
+      case (-1, o) => Array[Object](new java.lang.Long(o))
+      case (l, o) => Array[Object](new java.lang.Long(l), new java.lang.Long(o))
+    }
+    root.getParams ++ cond.getParams ++ loParams
   }
 
-  override def offset(l: Long): Query = {
-    offset = l
-    this
-  }
-
-  override def asc(field: Field): Query = {
-    orders += ((field, "ASC"))
-    this
-  }
-
-  override def desc(field: Field): Query = {
-    orders += ((field, "DESC"))
-    this
-  }
-
-  override def where(c: Cond): Query = {
-    cond = c
-    this
+  def getSql: String = {
+    val columnsSql = targets.map(_.getColumnWithAs).mkString(",\n")
+    val tableSql = root.getTableWithJoinCond
+    val condSql = cond.getSql match {
+      case "" => "1 = 1"
+      case s => s
+    }
+    val orderBySql = orders.length match {
+      case 0 => ""
+      case _ =>
+        val content = orders.map { case (f, s) => s"${f.getColumn} $s" }.mkString(", ")
+        s"\nORDER BY $content"
+    }
+    val loSql = (limitVar, offsetVar) match {
+      case (-1, -1) => ""
+      case (_, -1) => "\nLIMIT ?"
+      case (-1, _) => "\nOFFSET ?"
+      case (_, _) => "\nLIMIT ? OFFSET ?"
+    }
+    s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$orderBySql$loSql"
   }
 
   override def query(conn: Connection): Array[Array[Object]] = {
@@ -77,8 +77,9 @@ class QueryImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends Quer
     }
     val rs = stmt.executeQuery()
     var ab = ArrayBuffer[Array[Object]]()
+    val filterMap = mutable.Map[String, Entity]()
     while (rs.next()) {
-      val values = targets.map(_.pick(rs).asInstanceOf[Object])
+      val values = targets.map(_.pick(rs, filterMap).asInstanceOf[Object])
       val key = (targets, values).zipped.map(_.getKey(_)).mkString("$")
       if (!filterSet.contains(key)) {
         ab += values
@@ -89,21 +90,6 @@ class QueryImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends Quer
     stmt.close()
     ab.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(bufferToArray))
     ab.toArray
-  }
-
-  def getParams: Array[Object] = {
-    // TODO: order by limit offset
-    root.getParams ++ cond.getParams
-  }
-
-  def getSql: String = {
-    val columns = targets.map(_.getColumnWithAs).mkString(",\n")
-    val table = root.getTableWithJoinCond
-    val condSql = cond.getSql match {
-      case "" => "1 = 1"
-      case s => s
-    }
-    s"SELECT\n$columns\nFROM\n$table\nWHERE\n$condSql"
   }
 
   private def bufferToArray(entity: Entity): Entity = {
@@ -122,5 +108,67 @@ class QueryImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends Quer
       }
     }).filter(_ != null).foreach(p => core.fieldMap += p)
     entity
+  }
+}
+
+class Query1Impl[T](val t: Selectable[T], root: SelectRoot[_])
+  extends QueryableImpl(Array(t), root) with Query1[T] {
+  def transform(res: Array[Array[Object]]): Array[T] = {
+    val ct = ClassTag(t.getType)
+    res.map(r => r(0).asInstanceOf[T]).toArray(ct.asInstanceOf[ClassTag[T]])
+  }
+
+  override def limit(l: Long): Query1[T] = {
+    limitVar = l
+    this
+  }
+
+  override def offset(l: Long): Query1[T] = {
+    offsetVar = l
+    this
+  }
+
+  override def asc(field: Field): Query1[T] = {
+    orders += ((field, "ASC"))
+    this
+  }
+
+  override def desc(field: Field): Query1[T] = {
+    orders += ((field, "DESC"))
+    this
+  }
+
+  override def where(c: Cond): Query1[T] = {
+    cond = c
+    this
+  }
+}
+
+class QueryImpl(ts: Array[Selectable[_]], root: SelectRoot[_])
+  extends QueryableImpl(ts, root) with Query {
+
+  override def limit(l: Long): Query = {
+    limitVar = l
+    this
+  }
+
+  override def offset(l: Long): Query = {
+    offsetVar = l
+    this
+  }
+
+  override def asc(field: Field): Query = {
+    orders += ((field, "ASC"))
+    this
+  }
+
+  override def desc(field: Field): Query = {
+    orders += ((field, "DESC"))
+    this
+  }
+
+  override def where(c: Cond): Query = {
+    cond = c
+    this
   }
 }

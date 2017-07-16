@@ -4,7 +4,7 @@ import java.sql.Connection
 
 import orm.Orm
 import orm.lang.interfaces.Entity
-import orm.operate.traits.core.{Executable, Query, Query1}
+import orm.operate.traits.core.{Executable, Query, Query1, Queryable}
 import orm.operatebak.{JoinT, Selector, Target}
 
 import scala.collection.mutable.ArrayBuffer
@@ -91,7 +91,7 @@ class Session(private val conn: Connection) {
     ret
   }
 
-  private def commonQuery(q: Query): Array[Array[Object]] = {
+  private def commonQuery(q: Queryable): Array[Array[Object]] = {
     val ret = q.query(conn)
     ret.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(injectSession))
     ret

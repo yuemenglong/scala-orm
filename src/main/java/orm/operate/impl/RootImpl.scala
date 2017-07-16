@@ -21,11 +21,37 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
 
   override def getParent: Node = parent
 
-  override def eql(value: Object): Cond = ???
-
-  override def assign(value: Object): Assign = ???
-
   override def as[T](clazz: Class[T]): Selectable[T] = ???
+
+  override def eql(v: Object): Cond = EqFV(this, v)
+
+  override def eql(f: Field): Cond = EqFF(this, f)
+
+  override def neq(v: Object): Cond = NeFV(this, v)
+
+  override def neq(f: Field): Cond = NeFF(this, f)
+
+  override def gt(v: Object): Cond = GtFV(this, v)
+
+  override def gt(f: Field): Cond = GtFF(this, f)
+
+  override def gte(v: Object): Cond = GteFV(this, v)
+
+  override def gte(f: Field): Cond = GteFF(this, f)
+
+  override def lt(v: Object): Cond = LtFV(this, v)
+
+  override def lt(f: Field): Cond = LteFF(this, f)
+
+  override def lte(v: Object): Cond = LteFV(this, v)
+
+  override def lte(f: Field): Cond = LteFF(this, f)
+
+  override def in(a: Array[Object]): Cond = InFA(this, a)
+
+  override def assign(f: Field): Assign = ???
+
+  override def assign(v: Object): Assign = ???
 }
 
 class JoinImpl(val field: String, val meta: EntityMeta, val parent: JoinImpl) extends Join {
@@ -80,9 +106,13 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: JoinImpl) ex
       val fieldMeta = parent.meta.fieldMap(field)
       val leftColumn = parent.meta.fieldMap(fieldMeta.left).column
       val rightColumn = meta.fieldMap(fieldMeta.right).column
-      val leftTable = parent.meta.table
-      val rightTable = meta.table
-      s"LEFT JOIN $getAlias ON $leftTable.$leftColumn = $rightTable.$rightColumn"
+      val leftTable = parent.getAlias
+      val rightTable = getAlias
+      val joinCondSql = cond.getSql match {
+        case "" => ""
+        case s => s" AND $s"
+      }
+      s"LEFT JOIN ${meta.table} AS $getAlias ON $leftTable.$leftColumn = $rightTable.$rightColumn$joinCondSql"
     }
   }
 
@@ -121,8 +151,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
     selects.find(_.impl.field == field) match {
       case Some(s) => s
       case None =>
-        val refer = impl.meta.fieldMap(field).refer
-        val j = new JoinImpl(field, refer, impl)
+        val j = impl.join(field).asInstanceOf[JoinImpl]
         val s = new SelectJoinImpl(j)
         selects += s
         s
@@ -137,7 +166,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
     s"$getAlias@$field@${core.getPkey.toString}"
   }
 
-  protected def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+  protected def pickResult(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
     val a = pickSelf(resultSet, filterMap)
     if (a == null) {
       return null
@@ -170,7 +199,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
     selects.foreach { select =>
       val field = select.impl.field
       val fieldMeta = impl.meta.fieldMap(field)
-      val b = select.pick(resultSet, filterMap)
+      val b = select.pickResult(resultSet, filterMap)
       (b, fieldMeta.isOneMany) match {
         case (null, false) => aCore.fieldMap += (field -> null)
         case (null, true) => aCore.fieldMap += (field -> new ArrayBuffer[Entity]())
@@ -185,6 +214,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
           } else {
             aCore.fieldMap(field).asInstanceOf[ArrayBuffer[Entity]] += b
           }
+          filterMap += (key -> b)
       }
     }
   }
@@ -199,31 +229,28 @@ class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl) extends SelectJ
     throw new RuntimeException("Class Not Match")
   }
 
-  override def pick(rs: ResultSet): T = {
-    val filterMap = mutable.Map[String, Entity]()
-    pick(rs, filterMap).asInstanceOf[T]
-  }
-
   override def getColumnWithAs: String = {
-    def go(select: SelectJoinImpl): String = {
+    def go(select: SelectJoinImpl): Array[String] = {
       val selfColumn = select.fields.map(field => s"${field.getColumn} AS ${field.getAlias}")
       // 1. 属于自己的字段 2. 级联的部分
-      (selfColumn ++ select.selects.flatMap(go)).mkString(",\n")
+      selfColumn ++ select.selects.flatMap(go)
     }
 
-    go(this)
+    go(this).mkString(",\n")
   }
 
   override def getType: Class[T] = clazz
 
   override def getKey(value: Object): String = value.asInstanceOf[Entity].$$core().getPkey.toString
+
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = pickResult(resultSet, filterMap).asInstanceOf[T]
 }
 
 class RootImpl[T](clazz: Class[T], meta: EntityMeta) extends Root[T] {
   if (clazz != meta.clazz) {
     throw new RuntimeException("Class Not Match")
   }
-  protected val impl = new JoinImpl(null, meta, null)
+  private[impl] val impl = new JoinImpl(null, meta, null)
 
   override def getFromExpr: String = {
     def go(join: JoinImpl): Array[String] = {
@@ -235,7 +262,15 @@ class RootImpl[T](clazz: Class[T], meta: EntityMeta) extends Root[T] {
 
   override def getAlias: String = impl.getAlias
 
-  override def getTableWithJoinCond: String = impl.getTableWithJoinCond
+  override def getTableWithJoinCond: String = {
+    def go(join: JoinImpl): Array[String] = {
+      val self = Array(join.getTableWithJoinCond)
+      val joins = join.joins.flatMap(go).toArray[String]
+      self ++ joins
+    }
+
+    go(impl).mkString("\n")
+  }
 
   override def join(field: String): Join = impl.join(field)
 
@@ -243,10 +278,7 @@ class RootImpl[T](clazz: Class[T], meta: EntityMeta) extends Root[T] {
 
   override def getParent: Node = null
 
-  override def asSelect(): SelectRoot[T] = {
-    val selectableJoinImpl = new SelectableJoinImpl[T](clazz, impl)
-    new SelectRootImpl[T](clazz, meta, selectableJoinImpl)
-  }
+  override def asSelect(): SelectRoot[T] = new SelectRootImpl[T](clazz, meta, this)
 
   override def as[R](clazz: Class[R]): Selectable[R] = throw new RuntimeException("Use asSelect Instead When Call As On Root")
 
@@ -255,17 +287,43 @@ class RootImpl[T](clazz: Class[T], meta: EntityMeta) extends Root[T] {
   override def getParams: Array[Object] = impl.getParams
 }
 
-class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta, impl: SelectableJoinImpl[T])
-  extends RootImpl[T](clazz, meta) with SelectRoot[T] {
+class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta,
+                        rootImpl: RootImpl[T])
+  extends Root[T] with SelectRoot[T] {
 
-  override def select(field: String): SelectJoin = impl.select(field)
+  private[impl] val selectImpl = new SelectableJoinImpl[T](clazz, rootImpl.impl)
 
-  override def pick(rs: ResultSet): T = impl.pick(rs)
+  override def select(field: String): SelectJoin = selectImpl.select(field)
 
-  override def getColumnWithAs: String = impl.getColumnWithAs
+  override def getColumnWithAs: String = selectImpl.getColumnWithAs
 
-  override def getType: Class[T] = impl.getType
+  override def getType: Class[T] = selectImpl.getType
 
-  override def getKey(value: Object): String = impl.getKey(value)
+  override def getKey(value: Object): String = selectImpl.getKey(value)
+
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = selectImpl.pick(resultSet, filterMap)
+
+  // A---Selectable---A   V---Root---V
+
+  override def getFromExpr: String = rootImpl.getFromExpr
+
+  override def asSelect(): SelectRoot[T] = throw new RuntimeException("Already Select Root")
+
+  override def getAlias: String = rootImpl.getAlias
+
+  override def getTableWithJoinCond: String = rootImpl.getTableWithJoinCond
+
+  override def join(field: String): Join = rootImpl.join(field)
+
+  override def get(field: String): Field = rootImpl.get(field)
+
+  override def on(c: Cond): Join = rootImpl.on(c)
+
+  override def getParent: Node = null
+
+  override def as[T](clazz: Class[T]): Selectable[T] = throw new RuntimeException("ALready Selectable")
+
+  override def getParams: Array[Object] = rootImpl.getParams
+
 }
 
