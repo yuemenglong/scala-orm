@@ -18,9 +18,6 @@ public class OM {
     @Pointer
     private MO mo;
 
-    @OneToMany
-    private Obj[] objs = new Obj[0];
-
     public Long getId() {
         return id;
     }

@@ -6,10 +6,8 @@ import org.junit.Test;
 import orm.Orm;
 import orm.Session.Session;
 import orm.db.Db;
-import orm.operate.traits.core.ExecuteRoot;
-import orm.operate.traits.core.Query;
-import orm.operate.traits.core.Query1;
-import orm.operate.traits.core.SelectRoot;
+import orm.operate.traits.Update;
+import orm.operate.traits.core.*;
 import test.model.*;
 
 import java.math.BigDecimal;
@@ -117,86 +115,86 @@ public class SimpleTest {
 
         session.close();
     }
-//
-//    @Test
-//    public void testUpdateSpec() {
-//        Session session = db.openSession();
-//
-//        Obj obj = new Obj();
-//        obj.setName("name");
-//        obj.setAge(100);
-//
-//        obj = Orm.convert(obj);
-//        Executable ex = new Insert(obj);
-//        session.execute(ex);
-//
-//        Long id = obj.getId();
-//        obj = Orm.empty(Obj.class);
-//        obj.setId(id);
-//        obj.setAge(200);
-//
-//        ex = new Update(obj);
-//        session.execute(ex);
-//
-//        Root<Obj> root = new Root<>(Obj.class);
-//        obj = session.first(root);
-//        Assert.assertEquals(obj.getName(), "name");
-//        Assert.assertEquals(obj.getAge().intValue(), 200);
-//    }
-//
-//    @Test
-//    public void testDeleteRefer() {
-//        Session session = db.openSession();
-//        Obj obj = new Obj();
-//        obj.setName("");
-//        obj.setPtr(new Ptr());
-//        obj.setOo(new OO());
-//        obj.setOm(new OM[]{new OM(), new OM()});
-//
-//        obj = Orm.convert(obj);
-//        Insert ex = new Insert(obj);
-//        ex.insert("ptr");
-//        ex.insert("oo");
-//        ex.insert("om");
-//        int ret = session.execute(ex);
-//        Assert.assertEquals(ret, 5);
-//
-//        {
-//            Root<Obj> sr = new Root<>(Obj.class);
-//            Obj[] objs = (Obj[]) session.query(sr);
-//            Assert.assertEquals(objs.length, 1);
-//            Root<Ptr> sr2 = new Root<>(Ptr.class);
-//            Ptr[] ptrs = (Ptr[]) session.query(sr2);
-//            Assert.assertEquals(ptrs.length, 1);
-//            Root<OO> sr3 = new Root<>(OO.class);
-//            OO[] oos = (OO[]) session.query(sr3);
-//            Assert.assertEquals(oos.length, 1);
-//            Root<OM> sr4 = new Root<>(OM.class);
-//            OM[] oms = (OM[]) session.query(sr4);
-//            Assert.assertEquals(oms.length, 2);
-//        }
-//
-//        Delete delete = new Delete(obj);
-//        delete.delete("ptr");
-//        delete.delete("oo");
-//        delete.delete("om");
-//        session.execute(delete);
-//
-//        {
-//            Root<Obj> sr = new Root<>(Obj.class);
-//            Obj[] objs = (Obj[]) session.query(sr);
-//            Assert.assertEquals(objs.length, 0);
-//            Root<Ptr> sr2 = new Root<>(Ptr.class);
-//            Ptr[] ptrs = (Ptr[]) session.query(sr2);
-//            Assert.assertEquals(objs.length, 0);
-//            Root<OO> sr3 = new Root<>(OO.class);
-//            OO[] oos = (OO[]) session.query(sr3);
-//            Assert.assertEquals(objs.length, 0);
-//            Root<OM> sr4 = new Root<>(OM.class);
-//            OM[] oms = (OM[]) session.query(sr4);
-//            Assert.assertEquals(objs.length, 0);
-//        }
-//    }
+
+    @Test
+    public void testUpdateSpec() {
+        Session session = db.openSession();
+
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setAge(100);
+
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        session.execute(ex);
+
+        Long id = obj.getId();
+        obj = Orm.empty(Obj.class);
+        obj.setId(id);
+        obj.setAge(200);
+
+        ex = Orm.update(obj);
+        session.execute(ex);
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        obj = session.first(Orm.select(root).from(root));
+        Assert.assertEquals(obj.getName(), "name");
+        Assert.assertEquals(obj.getAge().intValue(), 200);
+    }
+
+    @Test
+    public void testDeleteRefer() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM()});
+
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 5);
+
+        {
+            SelectRoot<Obj> sr = Orm.root(Obj.class).asSelect();
+            Obj[] objs = (Obj[]) session.query(Orm.select(sr).from(sr));
+            Assert.assertEquals(objs.length, 1);
+            SelectRoot<Ptr> sr2 = Orm.root(Ptr.class).asSelect();
+            Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
+            Assert.assertEquals(ptrs.length, 1);
+            SelectRoot<OO> sr3 = Orm.root(OO.class).asSelect();
+            OO[] oos = (OO[]) session.query(Orm.from(sr3));
+            Assert.assertEquals(oos.length, 1);
+            SelectRoot<OM> sr4 = Orm.root(OM.class).asSelect();
+            OM[] oms = (OM[]) session.query(Orm.from(sr4));
+            Assert.assertEquals(oms.length, 2);
+        }
+
+        ExecuteRoot delete = Orm.delete(obj);
+        delete.delete("ptr");
+        delete.delete("oo");
+        delete.delete("om");
+        session.execute(delete);
+
+        {
+            SelectRoot<Obj> sr = Orm.root(Obj.class).asSelect();
+            Obj[] objs = (Obj[]) session.query(Orm.select(sr).from(sr));
+            Assert.assertEquals(objs.length, 0);
+            SelectRoot<Ptr> sr2 = Orm.root(Ptr.class).asSelect();
+            Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
+            Assert.assertEquals(ptrs.length, 0);
+            SelectRoot<OO> sr3 = Orm.root(OO.class).asSelect();
+            OO[] oos = (OO[]) session.query(Orm.from(sr3));
+            Assert.assertEquals(oos.length, 0);
+            SelectRoot<OM> sr4 = Orm.root(OM.class).asSelect();
+            OM[] oms = (OM[]) session.query(Orm.from(sr4));
+            Assert.assertEquals(oms.length, 0);
+        }
+    }
 //
 //    @Test
 //    public void testOrderByLimitOffset() {
@@ -206,14 +204,14 @@ public class SimpleTest {
 //        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
 //
 //        obj = Orm.convert(obj);
-//        Insert ex = new Insert(obj);
+//        Insert ex = Orm.insert(obj);
 //        ex.insert("ptr");
 //        ex.insert("oo");
 //        ex.insert("om");
 //        int ret = session.execute(ex);
 //        Assert.assertEquals(ret, 7);
 //
-//        Root<OM> root = new Root<>(OM.class);
+//        SelectRoot<OM> root = Orm.root(OM.class);
 //        root.desc(root.get("id")).limit(3).offset(2);
 //
 //        OM[] oms = (OM[]) session.query(root);
@@ -231,14 +229,14 @@ public class SimpleTest {
 //        obj.setOm(new OM[]{new OM(), new OM(), new OM(), new OM(), new OM(), new OM()});
 //
 //        obj = Orm.convert(obj);
-//        Insert ex = new Insert(obj);
+//        Insert ex = Orm.insert(obj);
 //        ex.insert("ptr");
 //        ex.insert("oo");
 //        ex.insert("om");
 //        int ret = session.execute(ex);
 //        Assert.assertEquals(ret, 7);
 //
-//        Root<OM> ms = new Root<>(OM.class);
+//        SelectRoot<OM> ms = Orm.root(OM.class);
 //        Count_<Long> count = ms.count(Long.class);
 //        Long c = session.first(count);
 //        Assert.assertEquals(c.intValue(), 6);
