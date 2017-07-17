@@ -38,36 +38,4 @@ trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {
   def count(): Selectable[java.lang.Long]
 }
 
-trait SelectBuilder {
-  def from(selectRoot: SelectRoot[_]): Query
-}
 
-trait Query extends Queryable {
-  def limit(l: Long): Query
-
-  def offset(l: Long): Query
-
-  def asc(field: Field): Query
-
-  def desc(field: Field): Query
-
-  def where(cond: Cond): Query
-}
-
-trait SelectBuilder1[T] {
-  def from(selectRoot: SelectRoot[_]): Query1[T]
-}
-
-trait Query1[T] extends Queryable {
-  def transform(res: Array[Array[Object]]): Array[T]
-
-  def limit(l: Long): Query1[T]
-
-  def offset(l: Long): Query1[T]
-
-  def asc(field: Field): Query1[T]
-
-  def desc(field: Field): Query1[T]
-
-  def where(cond: Cond): Query1[T]
-}
