@@ -7,18 +7,15 @@ import orm.lang.interfaces.Entity
 import orm.operate.traits.{ExecutableUpdate, UpdateBuilder}
 import orm.operate.traits.core.{Assign, Cond, Executable, Root}
 
+import scala.annotation.varargs
+
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
-class UpdateBuilderImpl(root: Root[_]) extends UpdateBuilder {
-  override def set(as: Assign*): ExecutableUpdate = new UpdateImpl(root, as.toArray)
 
-  override def set(a: Assign): ExecutableUpdate = new UpdateImpl(root, Array(a))
-}
-
-class UpdateImpl(root: Root[_], as: Array[Assign]) extends ExecutableUpdate {
+class UpdateImpl(root: Root[_]) extends ExecutableUpdate {
   var cond: Cond = new CondRoot
-  var assigns: Array[Assign] = as
+  var assigns: Array[Assign] = Array()
 
   override def where(c: Cond): Executable = {
     cond = c
@@ -42,7 +39,7 @@ class UpdateImpl(root: Root[_], as: Array[Assign]) extends ExecutableUpdate {
 
   override def postExecute(fn: (Entity) => Unit): Unit = {}
 
-  override def set(as: Assign*): ExecutableUpdate = {
+  @varargs override def set(as: Assign*): ExecutableUpdate = {
     assigns ++= as
     this
   }

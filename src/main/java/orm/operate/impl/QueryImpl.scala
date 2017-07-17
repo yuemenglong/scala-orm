@@ -4,6 +4,7 @@ import java.sql.{Connection, ResultSet}
 
 import orm.lang.interfaces.Entity
 import orm.meta.OrmMeta
+import orm.operate.traits.{Query, Query1, SelectBuilder, SelectBuilder1}
 import orm.operate.traits.core._
 
 import scala.collection.mutable

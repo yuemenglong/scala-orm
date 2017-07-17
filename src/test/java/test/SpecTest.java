@@ -99,22 +99,4 @@ public class SpecTest {
                 (root.join("obj").get("id").gt(1).or(root.get("id").lt(3))));
         Assert.assertEquals(ret, 8);
     }
-
-    @Test
-    public void test() {
-        Obj obj = new Obj();
-        obj.setName("name");
-        ExecuteRoot ex = Orm.insert(Orm.convert(obj));
-
-        Root<Obj> root = Orm.root(Obj.class);
-
-        Executable ex2 = Orm.update(root).set(root.get("status").assign("succ"),root.get("a").assign("b")).where(root.get("recver").eql(1));
-
-        Orm.delete(root).where(root.get("orderID").eql(1));
-
-        db.openSession().execute(ex);
-    }
-
-    public static void test2(Integer... values) {
-    }
 }

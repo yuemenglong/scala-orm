@@ -4,7 +4,8 @@ import java.sql.Connection
 
 import orm.Orm
 import orm.lang.interfaces.Entity
-import orm.operate.traits.core.{Executable, Query1, Queryable}
+import orm.operate.traits.Query1
+import orm.operate.traits.core.{Executable, Queryable}
 
 import scala.collection.mutable.ArrayBuffer
 
