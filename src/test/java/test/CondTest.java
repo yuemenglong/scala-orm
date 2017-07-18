@@ -61,7 +61,7 @@ public class CondTest {
         SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
         Cond cond = root.get("id").lt(2).or(root.get("id").gt(9))
                 .and(root.select("om").get("id").gt(2));
-        Obj[] objs = (Obj[]) session.query(Orm.from(root).where(cond));
+        Obj[] objs = (Obj[]) session.query(Orm.select(root).from(root).where(cond));
         Assert.assertEquals(objs.length, 2);
         Assert.assertEquals(objs[0].getOm().length, 1);
         Assert.assertEquals(objs[1].getOm().length, 3);

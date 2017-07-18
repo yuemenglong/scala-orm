@@ -10,8 +10,8 @@ import scala.collection.mutable
 /**
   * Created by yml on 2017/7/14.
   */
-trait Queryable {
-  def query(conn: Connection): Array[Array[Object]]
+trait Queryable[T] {
+  def query(conn: Connection): Array[T]
 }
 
 trait AsSelectable {

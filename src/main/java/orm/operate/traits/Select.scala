@@ -1,41 +1,36 @@
 package orm.operate.traits
 
-import orm.operate.traits.core.{Cond, Field, Queryable, SelectRoot}
+import java.sql.ResultSet
+
+import orm.lang.interfaces.Entity
+import orm.operate.traits.core._
+
+import scala.annotation.varargs
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/17.
   */
 
-trait SelectBuilder {
-  def from(selectRoot: SelectRoot[_]): Query
+trait Query[T] extends Queryable[T] {
+
+  def select[T1](t: Selectable[T1]): Query[T1]
+
+  def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)]
+
+  def from(selectRoot: SelectRoot[_]): Query[T]
+
+  def limit(l: Long): Query[T]
+
+  def offset(l: Long): Query[T]
+
+  def asc(field: Field): Query[T]
+
+  def desc(field: Field): Query[T]
+
+  def where(cond: Cond): Query[T]
 }
 
-trait Query extends Queryable {
-  def limit(l: Long): Query
-
-  def offset(l: Long): Query
-
-  def asc(field: Field): Query
-
-  def desc(field: Field): Query
-
-  def where(cond: Cond): Query
+trait SelectableTuple[T] extends Selectable[T] {
+  def walk(tuple: T, fn: (Entity) => Entity): T
 }
 
-trait SelectBuilder1[T] {
-  def from(selectRoot: SelectRoot[_]): Query1[T]
-}
-
-trait Query1[T] extends Queryable {
-  def transform(res: Array[Array[Object]]): Array[T]
-
-  def limit(l: Long): Query1[T]
-
-  def offset(l: Long): Query1[T]
-
-  def asc(field: Field): Query1[T]
-
-  def desc(field: Field): Query1[T]
-
-  def where(cond: Cond): Query1[T]
-}

@@ -4,7 +4,6 @@ import java.sql.Connection
 
 import orm.Orm
 import orm.lang.interfaces.Entity
-import orm.operate.traits.Query1
 import orm.operate.traits.core.{Executable, Queryable}
 
 import scala.collection.mutable.ArrayBuffer
@@ -84,22 +83,16 @@ class Session(private val conn: Connection) {
     ret
   }
 
-  private def commonQuery(q: Queryable): Array[Array[Object]] = {
-    val ret = q.query(conn)
-    ret.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(injectSession))
-    ret
+  def query[T](query: Queryable[T]): Array[T] = {
+    query.query(conn)
   }
 
-  def query[T](query1: Query1[T]): Array[T] = {
-    query1.transform(commonQuery(query1))
-  }
-
-  def first[T](query1: Query1[T]): T = {
-    query(query1) match {
-      case Array() => null.asInstanceOf[T]
-      case arr => arr(0)
-    }
-  }
+  //  def first[T](query1: Query1[T]): T = {
+  //    query(query1) match {
+  //      case Array() => null.asInstanceOf[T]
+  //      case arr => arr(0)
+  //    }
+  //  }
 
   //  def query[T](selector: Target[T]): Array[T] = {
   //    val ct: ClassTag[T] = selector match {

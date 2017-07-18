@@ -4,8 +4,8 @@ import java.sql.{Connection, ResultSet}
 
 import orm.lang.interfaces.Entity
 import orm.meta.OrmMeta
-import orm.operate.traits.{Query, Query1, SelectBuilder, SelectBuilder1}
 import orm.operate.traits.core._
+import orm.operate.traits.{Query, SelectableTuple}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -14,15 +14,10 @@ import scala.reflect.ClassTag
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
-class SelectBuilderImpl(targets: Array[Selectable[_]]) extends SelectBuilder {
-  override def from(root: SelectRoot[_]): Query = new QueryImpl(targets, root)
-}
 
-class SelectBuilder1Impl[T](target: Selectable[T]) extends SelectBuilder1[T] {
-  override def from(root: SelectRoot[_]): Query1[T] = new Query1Impl(target, root)
-}
+class QueryImpl[T](clazz: Class[T], var st: SelectableTuple[T], var root: SelectRoot[_])
+  extends Query[T] {
 
-class QueryableImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends Queryable {
   protected var cond: Cond = new CondRoot()
   protected var limitVar: Long = -1
   protected var offsetVar: Long = -1
@@ -39,7 +34,7 @@ class QueryableImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends 
   }
 
   def getSql: String = {
-    val columnsSql = targets.map(_.getColumnWithAs).mkString(",\n")
+    val columnsSql = st.getColumnWithAs
     val tableSql = root.getTableWithJoinCond
     val condSql = cond.getSql match {
       case "" => "1 = 1"
@@ -60,13 +55,13 @@ class QueryableImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends 
     s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$orderBySql$loSql"
   }
 
-  override def query(conn: Connection): Array[Array[Object]] = {
-    if (targets.length == 0) {
-      throw new RuntimeException("No Selector")
-    }
-    if (targets.map(_.getRoot).exists(_ != root.getRoot)) {
-      throw new RuntimeException("Root Not Match")
-    }
+  override def query(conn: Connection): Array[T] = {
+    //    if (targets.length == 0) {
+    //      throw new RuntimeException("No Selector")
+    //    }
+    //    if (targets.map(_.getRoot).exists(_ != root.getRoot)) {
+    //      throw new RuntimeException("Root Not Match")
+    //    }
     var filterSet = Set[String]()
     val sql = getSql
     println(sql)
@@ -77,20 +72,24 @@ class QueryableImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends 
       stmt.setObject(i + 1, param)
     }
     val rs = stmt.executeQuery()
-    var ab = ArrayBuffer[Array[Object]]()
+    var ab = ArrayBuffer[T]()
     val filterMap = mutable.Map[String, Entity]()
     while (rs.next()) {
-      val values = targets.map(_.pick(rs, filterMap).asInstanceOf[Object])
-      val key = (targets, values).zipped.map(_.getKey(_)).mkString("$")
+      val value = st.pick(rs, filterMap)
+      val key = st.getKey(value.asInstanceOf[Object])
+      //      val values = targets.map(_.pick(rs, filterMap).asInstanceOf[Object])
+      //      val key = (targets, values).zipped.map(_.getKey(_)).mkString("$")
       if (!filterSet.contains(key)) {
-        ab += values
+        ab += value
       }
       filterSet += key
     }
     rs.close()
     stmt.close()
-    ab.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(bufferToArray))
-    ab.toArray
+    ab.map(st.walk(_, bufferToArray)).toArray(ClassTag(clazz))
+    //    ab.foreach(st.bufferToArray(_))
+    //    ab.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(bufferToArray))
+    //    ab.toArray
   }
 
   private def bufferToArray(entity: Entity): Entity = {
@@ -110,69 +109,91 @@ class QueryableImpl(targets: Array[Selectable[_]], root: SelectRoot[_]) extends 
     }).filter(_ != null).foreach(p => core.fieldMap += p)
     entity
   }
-}
 
-class Query1Impl[T](val t: Selectable[T], root: SelectRoot[_])
-  extends QueryableImpl(Array(t), root) with Query1[T] {
-  def transform(res: Array[Array[Object]]): Array[T] = {
-    val ct = ClassTag(t.getType)
-    res.map(r => r(0).asInstanceOf[T]).toArray(ct.asInstanceOf[ClassTag[T]])
+  //////
+
+  override def select[T1](t: Selectable[T1]): Query[T1] = {
+    new QueryImpl[T1](null, new SelectableTupleImpl[T1](t.getType, t), root)
   }
 
-  override def limit(l: Long): Query1[T] = {
+  override def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)] = {
+    new QueryImpl[(T1, T2)](null, new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2), root)
+  }
+
+  override def from(selectRoot: SelectRoot[_]): Query[T] = {
+    root = selectRoot
+    this
+  }
+
+  override def limit(l: Long): Query[T] = {
     limitVar = l
     this
   }
 
-  override def offset(l: Long): Query1[T] = {
-    offsetVar = l
+  override def offset(o: Long): Query[T] = {
+    offsetVar = o
     this
   }
 
-  override def asc(field: Field): Query1[T] = {
+  override def asc(field: Field): Query[T] = {
     orders += ((field, "ASC"))
     this
   }
 
-  override def desc(field: Field): Query1[T] = {
+  override def desc(field: Field): Query[T] = {
     orders += ((field, "DESC"))
     this
   }
 
-  override def where(c: Cond): Query1[T] = {
+  override def where(c: Cond): Query[T] = {
     cond = c
     this
   }
 }
 
-class QueryImpl(ts: Array[Selectable[_]], root: SelectRoot[_])
-  extends QueryableImpl(ts, root) with Query {
+class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {
+  val selects: Array[Selectable[_]] = ss.toArray
+  val tuple2Class: Class[(_, _)] = classOf[(_, _)]
 
-  override def limit(l: Long): Query = {
-    limitVar = l
-    this
+  override def pick(rs: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
+    val row = selects.map(_.pick(rs, filterMap).asInstanceOf[Object])
+    arrayToTuple(row)
   }
 
-  override def offset(l: Long): Query = {
-    offsetVar = l
-    this
+  override def getColumnWithAs: String = selects.map(_.getColumnWithAs).mkString(",\n")
+
+  override def getType: Class[T] = clazz
+
+  override def getKey(value: Object): String = {
+    (selects, tupleToArray(value.asInstanceOf[T]))
+      .zipped.map(_.getKey(_)).mkString("$")
   }
 
-  override def asc(field: Field): Query = {
-    orders += ((field, "ASC"))
-    this
+  def tupleToArray(tuple: T): Array[Object] = {
+    tuple match {
+      case (t1: Object, t2: Object) => Array(t1, t2)
+      case t: Object => Array(t)
+    }
   }
 
-  override def desc(field: Field): Query = {
-    orders += ((field, "DESC"))
-    this
+  def arrayToTuple(arr: Array[Object]): T = {
+    clazz match {
+      case `tuple2Class` => (arr(0), arr(1)).asInstanceOf[T]
+      case _ => arr(0).asInstanceOf[T]
+    }
   }
 
-  override def where(c: Cond): Query = {
-    cond = c
-    this
+  override def getParent: Node = getRoot
+
+  override def walk(tuple: T, fn: (Entity) => Entity): T = {
+    val arr = tupleToArray(tuple).map {
+      case e: Entity => fn(e)
+      case obj => obj
+    }
+    arrayToTuple(arr)
   }
 }
+
 
 class Count_(root: SelectRoot[_]) extends Selectable[java.lang.Long] {
   def getAlias: String = "$count$"

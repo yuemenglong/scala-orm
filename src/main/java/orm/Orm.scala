@@ -6,8 +6,10 @@ import orm.init.Scanner
 import orm.kit.Kit
 import orm.meta.OrmMeta
 import orm.operate.impl._
-import orm.operate.traits.{DeleteBuilder, Query1, SelectBuilder1, UpdateBuilder}
 import orm.operate.traits.core._
+import orm.operate.traits.{DeleteBuilder, Query, UpdateBuilder}
+
+import scala.annotation.varargs
 
 object Orm {
 
@@ -55,11 +57,10 @@ object Orm {
     new RootImpl[T](clazz, OrmMeta.entityMap(clazz.getSimpleName))
   }
 
-  def select[T](target: Selectable[T]): SelectBuilder1[T] = new SelectBuilder1Impl(target)
-
-  def from[T](root: SelectRoot[T]): Query1[T] = select(root).from(root)
-
-  def from[T](clazz: Class[T]): Query1[T] = from(Orm.root(clazz).asSelect())
+  def select[T](s: Selectable[T]): Query[T] = {
+    val st = new SelectableTupleImpl[T](s.getType, s)
+    new QueryImpl[T](s.getType, st, null)
+  }
 
   def update(root: Root[_]): UpdateBuilder = new UpdateImpl(root)
 
