@@ -16,16 +16,15 @@ import scala.reflect.ClassTag
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
 
-class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectRoot[_])
+class QueryImpl[T](private var st: SelectableTuple[T],
+                   private var root: SelectRoot[_] = null,
+                   private var cond: Cond = new CondRoot(),
+                   private var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)](),
+                   private var limitOffset: (Long, Long) = (-1, -1))
   extends Query[T] {
 
-  private var cond: Cond = new CondRoot()
-  private var limitVar: Long = -1
-  private var offsetVar: Long = -1
-  private var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
-
   def getParams: Array[Object] = {
-    val loParams = (limitVar, offsetVar) match {
+    val loParams = limitOffset match {
       case (-1, -1) => Array()
       case (l, -1) => Array[Object](new java.lang.Long(l))
       case (-1, o) => Array[Object](new java.lang.Long(o))
@@ -47,7 +46,7 @@ class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectR
         val content = orders.map { case (f, s) => s"${f.getColumn} $s" }.mkString(", ")
         s"\nORDER BY $content"
     }
-    val loSql = (limitVar, offsetVar) match {
+    val loSql = limitOffset match {
       case (-1, -1) => ""
       case (_, -1) => "\nLIMIT ?"
       case (-1, _) => "\nOFFSET ?"
@@ -57,12 +56,6 @@ class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectR
   }
 
   override def query(conn: Connection): Array[T] = {
-    //    if (targets.length == 0) {
-    //      throw new RuntimeException("No Selector")
-    //    }
-    //    if (targets.map(_.getRoot).exists(_ != root.getRoot)) {
-    //      throw new RuntimeException("Root Not Match")
-    //    }
     var filterSet = Set[String]()
     val sql = getSql
     println(sql)
@@ -78,8 +71,6 @@ class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectR
     while (rs.next()) {
       val value = st.pick(rs, filterMap)
       val key = st.getKey(value.asInstanceOf[Object])
-      //      val values = targets.map(_.pick(rs, filterMap).asInstanceOf[Object])
-      //      val key = (targets, values).zipped.map(_.getKey(_)).mkString("$")
       if (!filterSet.contains(key)) {
         ab += value
       }
@@ -88,9 +79,6 @@ class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectR
     rs.close()
     stmt.close()
     ab.map(st.walk(_, bufferToArray)).toArray(ClassTag(st.getType))
-    //    ab.foreach(st.bufferToArray(_))
-    //    ab.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(bufferToArray))
-    //    ab.toArray
   }
 
   private def bufferToArray(entity: Entity): Entity = {
@@ -114,11 +102,13 @@ class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectR
   //////
 
   override def select[T1](t: Selectable[T1]): Query[T1] = {
-    new QueryImpl[T1](new SelectableTupleImpl[T1](t.getType, t), root)
+    val st = new SelectableTupleImpl[T1](t.getType, t)
+    new QueryImpl[T1](st, root, cond, orders, limitOffset)
   }
 
   override def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)] = {
-    new QueryImpl[(T1, T2)](new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2), root)
+    val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2)
+    new QueryImpl[(T1, T2)](st, root, cond, orders, limitOffset)
   }
 
   override def from(selectRoot: SelectRoot[_]): Query[T] = {
@@ -127,12 +117,12 @@ class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectR
   }
 
   override def limit(l: Long): Query[T] = {
-    limitVar = l
+    limitOffset = (l, limitOffset._2)
     this
   }
 
   override def offset(o: Long): Query[T] = {
-    offsetVar = o
+    limitOffset = (limitOffset._1, o)
     this
   }
 
@@ -150,6 +140,8 @@ class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectR
     cond = c
     this
   }
+
+  override def getRoot: SelectRoot[_] = root
 }
 
 class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {
@@ -166,15 +158,16 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
   override def getType: Class[T] = clazz
 
   override def getKey(value: Object): String = {
-    (selects, tupleToArray(value.asInstanceOf[T]))
-      .zipped.map(_.getKey(_)).mkString("$")
+    val values = tupleToArray(value.asInstanceOf[T])
+    (selects, values).zipped.map(_.getKey(_)).mkString("$")
   }
 
   def tupleToArray(tuple: T): Array[Object] = {
-    tuple match {
-      case (t1: Object, t2: Object) => Array(t1, t2)
-      case t: Object => Array(t)
+    val ret: Array[Any] = tuple match {
+      case (t1, t2) => Array(t1, t2)
+      case t => Array(t)
     }
+    ret.map(_.asInstanceOf[Object])
   }
 
   def arrayToTuple(arr: Array[Object]): T = {
@@ -184,7 +177,7 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
     }
   }
 
-  override def getParent: Node = getRoot
+  override def getParent: Node = selects(0).getParent
 
   override def walk(tuple: T, fn: (Entity) => Entity): T = {
     val arr = tupleToArray(tuple).map {

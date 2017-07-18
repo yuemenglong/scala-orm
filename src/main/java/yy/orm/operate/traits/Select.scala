@@ -1,11 +1,7 @@
 package yy.orm.operate.traits
 
-import java.sql.ResultSet
-
 import yy.orm.lang.interfaces.Entity
 import yy.orm.operate.traits.core._
-
-import scala.annotation.varargs
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/17.
@@ -28,6 +24,8 @@ trait Query[T] extends Queryable[T] {
   def desc(field: Field): Query[T]
 
   def where(cond: Cond): Query[T]
+
+  def getRoot: SelectRoot[_]
 }
 
 trait SelectableTuple[T] extends Selectable[T] {

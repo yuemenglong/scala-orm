@@ -9,7 +9,6 @@ import yy.orm.db.Db;
 import yy.orm.operate.traits.core.*;
 import test.model.OM;
 import test.model.Obj;
-import test.model.Ptr;
 
 import java.util.ArrayList;
 

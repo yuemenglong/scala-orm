@@ -14,9 +14,9 @@ trait Queryable[T] {
   def query(conn: Connection): Array[T]
 }
 
-trait AsSelectable {
-  def as[T](clazz: Class[T]): Selectable[T]
-}
+//trait AsSelectable {
+//  def as[T](clazz: Class[T]): Selectable[T]
+//}
 
 trait Selectable[T] extends Node {
   def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T
@@ -33,6 +33,10 @@ trait SelectJoin extends Join {
 
   override def join(field: String): Join = join(field, JoinType.LEFT)
 }
+
+trait SelectableJoin[T] extends Selectable[T] with SelectJoin
+
+trait SelectableField[T] extends Field with Selectable[T]
 
 trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {
   def count(): Selectable[java.lang.Long]

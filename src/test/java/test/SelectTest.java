@@ -3,14 +3,13 @@ package test;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import scala.Tuple2;
+import test.model.*;
 import yy.orm.Orm;
 import yy.orm.Session.Session;
 import yy.orm.db.Db;
 import yy.orm.operate.traits.Query;
-import yy.orm.operate.traits.core.ExecuteRoot;
-import yy.orm.operate.traits.core.SelectRoot;
-import test.model.OM;
-import test.model.Obj;
+import yy.orm.operate.traits.core.*;
 
 import java.util.ArrayList;
 
@@ -82,88 +81,65 @@ public class SelectTest {
         Long c = session.first(query);
         Assert.assertEquals(c.intValue(), 6);
     }
-//
-//    @Test
-//    public void testMultiTarget() {
-//        Session session = db.openSession();
-//        Obj obj = new Obj();
-//        obj.setName("name");
-//        obj.setPtr(new Ptr());
-//        obj.setOo(new OO());
-//        obj.setOm(new OM[]{new OM(), new OM()});
-//        obj = Orm.convert(obj);
-//        Insert ex = Orm.insert(obj);
-//        ex.insert("ptr");
-//        ex.insert("oo");
-//        ex.insert("om");
-//        session.execute(ex);
-//
-//        Root<Obj> rs = Orm.root(Obj.class);
-//        JoinT<OM> s1 = rs.join("om", OM.class);
-//        Object[][] res = Selector.query(new Target[]{rs, s1}, db.openConnection());
-//        Assert.assertEquals(res.length, 2);
-//        Assert.assertEquals(((Obj) (res[0][0])).getName(), "name");
-//        Assert.assertEquals(((Obj) (res[1][0])).getName(), "name");
-//        Assert.assertEquals(((Obj) (res[0][0])).getId().longValue(), 1);
-//        Assert.assertEquals(((Obj) (res[1][0])).getId().longValue(), 1);
-//        Assert.assertEquals(((OM) (res[0][1])).getId().longValue(), 1);
-//        Assert.assertEquals(((OM) (res[1][1])).getId().longValue(), 2);
-//    }
-//
-//    @Test
-//    public void testMultiTarget2() {
-//        Session session = db.openSession();
-//        Obj obj = new Obj();
-//        obj.setName("name");
-//        obj.setPtr(new Ptr());
-//        obj.setOo(new OO());
-//        obj.setOm(new OM[]{new OM(), new OM()});
-//        obj = Orm.convert(obj);
-//        Insert ex = Orm.insert(obj);
-//        ex.insert("ptr");
-//        ex.insert("oo");
-//        ex.insert("om");
-//        session.execute(ex);
-//
-//        Root<Obj> rs = Orm.root(Obj.class);
-//        JoinT<OM> s1 = rs.join("om", OM.class);
-//        Tuple2<Obj, OM>[] res = Selector.query(rs, s1, db.openConnection());
-//        Assert.assertEquals(res.length, 2);
-//        Assert.assertEquals(res[0]._1().getId().longValue(), 1);
-//        Assert.assertEquals(res[1]._1().getId().longValue(), 1);
-//        Assert.assertEquals(res[0]._1().getName(), "name");
-//        Assert.assertEquals(res[1]._1().getName(), "name");
-//        Assert.assertEquals(res[0]._2().getId().longValue(), 1);
-//        Assert.assertEquals(res[1]._2().getId().longValue(), 2);
-//    }
-//
-//    @Test
-//    public void testJoin() {
-//        Session session = db.openSession();
-//        Obj obj = new Obj();
-//        obj.setName("name");
-//        obj.setPtr(new Ptr());
-//        obj.setOo(new OO());
-//        obj.setOm(new OM[]{new OM(), new OM()});
-//        obj.getOm()[0].setMo(new MO());
-//        obj.getOm()[0].getMo().setValue(100);
-//        obj = Orm.convert(obj);
-//        Insert ex = Orm.insert(obj);
-//        ex.insert("ptr");
-//        ex.insert("oo");
-//        ex.insert("om").insert("mo");
-//        int ret = session.execute(ex);
-//        Assert.assertEquals(ret, 6);
-//
-//        Root<Obj> root = Orm.root(Obj.class);
-//        JoinT<MO> mo = root.join("om").join("mo", MO.class);
-//        Tuple2<Obj, MO>[] res = session.query(root, mo);
-//        Assert.assertEquals(res.length, 2);
-//        Assert.assertEquals(res[0]._1().getPtr(), null);
-//        Assert.assertArrayEquals(res[0]._1().getOm(), null);
-//        Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
-//        Assert.assertEquals(res[1]._2(), null);
-//    }
+
+    @Test
+    public void testMultiTarget() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM()});
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om");
+        session.execute(ex);
+
+        SelectRoot<Obj> rs = Orm.root(Obj.class).asSelect();
+        Selectable<OM> s1 = rs.join("om").as(OM.class);
+
+        Query<Tuple2<Obj, OM>> query = Orm.select(rs, s1).from(rs);
+        Tuple2<Obj, OM>[] res = (Tuple2<Obj, OM>[]) session.query(query);
+
+        Assert.assertEquals(res.length, 2);
+        Assert.assertEquals(res[0]._1().getName(), "name");
+        Assert.assertEquals(res[0]._1().getId().longValue(), 1);
+        Assert.assertEquals(res[1]._1().getId().longValue(), 1);
+        Assert.assertEquals(res[0]._2().getId().longValue(), 1);
+        Assert.assertEquals(res[1]._2().getId().longValue(), 2);
+    }
+
+
+    @Test
+    public void testJoin() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM()});
+        obj.getOm()[0].setMo(new MO());
+        obj.getOm()[0].getMo().setValue(100);
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om").insert("mo");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 6);
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        SelectableJoin<MO> mo = root.join("om").join("mo", JoinType.LEFT()).as(MO.class);
+        Query<Tuple2<Obj, MO>> query = Orm.select(root, mo).from(root);
+        Tuple2<Obj, MO>[] res = (Tuple2<Obj, MO>[]) session.query(query);
+        Assert.assertEquals(res.length, 2);
+        Assert.assertEquals(res[0]._1().getPtr(), null);
+        Assert.assertArrayEquals(res[0]._1().getOm(), null);
+        Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
+        Assert.assertEquals(res[1]._2(), null);
+    }
 //
 //    @Test
 //    public void testDistinctCount() {

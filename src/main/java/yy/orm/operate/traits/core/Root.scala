@@ -23,13 +23,17 @@ trait Node {
   }
 }
 
-trait Field extends Node with CondOp with AssignOp with AsSelectable {
+
+trait Field extends Node with CondOp with AssignOp {
   def getColumn: String
 
   def getAlias: String
+
+  def as[T](clazz: Class[T]): SelectableField[T]
 }
 
-trait Join extends Node with AsSelectable with Expr {
+
+trait Join extends Node with Expr {
 
   def getMeta: EntityMeta
 
@@ -44,6 +48,8 @@ trait Join extends Node with AsSelectable with Expr {
   def get(field: String): Field
 
   def on(c: Cond): Join
+
+  def as[T](clazz: Class[T]): SelectableJoin[T]
 
   override def getSql: String = getTableWithJoinCond
 }
