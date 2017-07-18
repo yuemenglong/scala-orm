@@ -142,6 +142,10 @@ class QueryImpl[T](private var st: SelectableTuple[T],
   }
 
   override def getRoot: SelectRoot[_] = root
+
+  override def walk(t: T, fn: (Entity) => Entity): T = st.walk(t, fn)
+
+  override def getType: Class[T] = st.getType
 }
 
 class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {

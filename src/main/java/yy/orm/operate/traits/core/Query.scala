@@ -3,7 +3,6 @@ package yy.orm.operate.traits.core
 import java.sql.{Connection, ResultSet}
 
 import yy.orm.lang.interfaces.Entity
-import yy.orm.operate.traits.core.JoinType.JoinType
 
 import scala.collection.mutable
 
@@ -12,6 +11,10 @@ import scala.collection.mutable
   */
 trait Queryable[T] {
   def query(conn: Connection): Array[T]
+
+  def walk(t: T, fn: (Entity) => Entity): T
+
+  def getType: Class[T]
 }
 
 //trait AsSelectable {

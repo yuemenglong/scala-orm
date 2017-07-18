@@ -7,6 +7,7 @@ import yy.orm.lang.interfaces.Entity
 import yy.orm.operate.traits.core.{Executable, Queryable}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/24.
@@ -17,9 +18,9 @@ class Session(private val conn: Connection) {
   private var closed = false
   private var tx: Transaction = _
 
-  def injectSession(entity: Entity): Unit = {
+  def injectSession(entity: Entity): Entity = {
     if (entity == null) {
-      return
+      return null
     }
     val core = entity.$$core()
     core.setSession(this)
@@ -33,6 +34,7 @@ class Session(private val conn: Connection) {
         injectSession(core.fieldMap(field.name).asInstanceOf[Entity])
       }
     })
+    entity
   }
 
   def inTransaction(): Boolean = {
@@ -84,7 +86,7 @@ class Session(private val conn: Connection) {
   }
 
   def query[T](query: Queryable[T]): Array[T] = {
-    query.query(conn)
+    query.query(conn).map(query.walk(_, injectSession)).toArray(ClassTag(query.getType))
   }
 
   def first[T](q: Queryable[T]): T = {
