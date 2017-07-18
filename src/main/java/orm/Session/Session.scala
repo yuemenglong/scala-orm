@@ -87,12 +87,12 @@ class Session(private val conn: Connection) {
     query.query(conn)
   }
 
-  //  def first[T](query1: Query1[T]): T = {
-  //    query(query1) match {
-  //      case Array() => null.asInstanceOf[T]
-  //      case arr => arr(0)
-  //    }
-  //  }
+  def first[T](q: Queryable[T]): T = {
+    query(q) match {
+      case Array() => null.asInstanceOf[T]
+      case arr => arr(0)
+    }
+  }
 
   //  def query[T](selector: Target[T]): Array[T] = {
   //    val ct: ClassTag[T] = selector match {

@@ -1,10 +1,10 @@
-package orm.operate.impl
+package orm.operate.impl.core
 
 import java.sql.{Connection, Statement}
 
 import orm.entity.{EntityCore, EntityManager}
 import orm.lang.interfaces.Entity
-import orm.meta.{EntityMeta, OrmMeta}
+import orm.meta.EntityMeta
 import orm.operate.traits.core.{ExecuteJoin, ExecuteRoot}
 
 import scala.collection.mutable.ArrayBuffer

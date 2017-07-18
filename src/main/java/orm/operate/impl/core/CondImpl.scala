@@ -1,4 +1,4 @@
-package orm.operate.impl
+package orm.operate.impl.core
 
 import orm.operate.traits.core.{Cond, Field}
 

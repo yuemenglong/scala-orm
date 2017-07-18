@@ -4,6 +4,7 @@ import java.sql.Connection
 
 import orm.kit.Kit
 import orm.lang.interfaces.Entity
+import orm.operate.impl.core.CondRoot
 import orm.operate.traits.{DeleteBuilder, ExecutableDelete}
 import orm.operate.traits.core.{Cond, Root}
 

@@ -4,6 +4,7 @@ import java.sql.{Connection, ResultSet}
 
 import orm.lang.interfaces.Entity
 import orm.meta.OrmMeta
+import orm.operate.impl.core.CondRoot
 import orm.operate.traits.core._
 import orm.operate.traits.{Query, SelectableTuple}
 
@@ -15,13 +16,13 @@ import scala.reflect.ClassTag
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
 
-class QueryImpl[T](clazz: Class[T], var st: SelectableTuple[T], var root: SelectRoot[_])
+class QueryImpl[T](private var st: SelectableTuple[T], private var root: SelectRoot[_])
   extends Query[T] {
 
-  protected var cond: Cond = new CondRoot()
-  protected var limitVar: Long = -1
-  protected var offsetVar: Long = -1
-  protected var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
+  private var cond: Cond = new CondRoot()
+  private var limitVar: Long = -1
+  private var offsetVar: Long = -1
+  private var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
 
   def getParams: Array[Object] = {
     val loParams = (limitVar, offsetVar) match {
@@ -86,7 +87,7 @@ class QueryImpl[T](clazz: Class[T], var st: SelectableTuple[T], var root: Select
     }
     rs.close()
     stmt.close()
-    ab.map(st.walk(_, bufferToArray)).toArray(ClassTag(clazz))
+    ab.map(st.walk(_, bufferToArray)).toArray(ClassTag(st.getType))
     //    ab.foreach(st.bufferToArray(_))
     //    ab.foreach(_.filter(_.isInstanceOf[Entity]).map(_.asInstanceOf[Entity]).foreach(bufferToArray))
     //    ab.toArray
@@ -113,11 +114,11 @@ class QueryImpl[T](clazz: Class[T], var st: SelectableTuple[T], var root: Select
   //////
 
   override def select[T1](t: Selectable[T1]): Query[T1] = {
-    new QueryImpl[T1](null, new SelectableTupleImpl[T1](t.getType, t), root)
+    new QueryImpl[T1](new SelectableTupleImpl[T1](t.getType, t), root)
   }
 
   override def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)] = {
-    new QueryImpl[(T1, T2)](null, new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2), root)
+    new QueryImpl[(T1, T2)](new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2), root)
   }
 
   override def from(selectRoot: SelectRoot[_]): Query[T] = {
@@ -193,7 +194,6 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
     arrayToTuple(arr)
   }
 }
-
 
 class Count_(root: SelectRoot[_]) extends Selectable[java.lang.Long] {
   def getAlias: String = "$count$"

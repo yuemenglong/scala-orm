@@ -1,4 +1,4 @@
-package orm.operate.impl
+package orm.operate.impl.core
 
 import java.sql.ResultSet
 
@@ -6,6 +6,7 @@ import orm.entity.{EntityCore, EntityManager}
 import orm.kit.Kit
 import orm.lang.interfaces.Entity
 import orm.meta.{EntityMeta, FieldMeta}
+import orm.operate.impl._
 import orm.operate.traits.core.JoinType.JoinType
 import orm.operate.traits.core._
 
