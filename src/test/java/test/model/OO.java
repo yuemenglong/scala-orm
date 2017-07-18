@@ -1,7 +1,7 @@
 package test.model;
 
-import orm.lang.anno.Entity;
-import orm.lang.anno.Id;
+import yy.orm.lang.anno.Entity;
+import yy.orm.lang.anno.Id;
 
 /**
  * Created by Administrator on 2017/5/19.

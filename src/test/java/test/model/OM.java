@@ -1,9 +1,9 @@
 package test.model;
 
-import orm.lang.anno.Entity;
-import orm.lang.anno.Id;
-import orm.lang.anno.OneToMany;
-import orm.lang.anno.Pointer;
+import yy.orm.lang.anno.Entity;
+import yy.orm.lang.anno.Id;
+import yy.orm.lang.anno.OneToMany;
+import yy.orm.lang.anno.Pointer;
 
 /**
  * Created by <yuemenglong@126.com> on 2017/5/19.

@@ -3,12 +3,12 @@ package test;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import orm.Orm;
-import orm.Session.Session;
-import orm.db.Db;
-import orm.operate.traits.Query;
-import orm.operate.traits.core.ExecuteRoot;
-import orm.operate.traits.core.SelectRoot;
+import yy.orm.Orm;
+import yy.orm.Session.Session;
+import yy.orm.db.Db;
+import yy.orm.operate.traits.Query;
+import yy.orm.operate.traits.core.ExecuteRoot;
+import yy.orm.operate.traits.core.SelectRoot;
 import test.model.OM;
 import test.model.Obj;
 
