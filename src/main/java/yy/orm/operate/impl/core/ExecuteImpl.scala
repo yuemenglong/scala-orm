@@ -268,7 +268,9 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoinImpl) extends ExecuteRoot {
 
   override def ignore(obj: Object): ExecuteJoin = impl.ignore(obj)
 
-  override def postExecute(fn: (Entity) => Unit): Unit = fn(obj.asInstanceOf[Entity])
+  override def walk(fn: (Entity) => Entity): Unit = {
+    EntityManager.walk(obj.asInstanceOf[Entity], fn)
+  }
 }
 
 object ExecuteRootImpl {

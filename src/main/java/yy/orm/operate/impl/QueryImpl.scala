@@ -2,6 +2,7 @@ package yy.orm.operate.impl
 
 import java.sql.{Connection, ResultSet}
 
+import yy.orm.entity.EntityManager
 import yy.orm.lang.interfaces.Entity
 import yy.orm.meta.OrmMeta
 import yy.orm.operate.impl.core.CondRoot
@@ -185,7 +186,7 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
 
   override def walk(tuple: T, fn: (Entity) => Entity): T = {
     val arr = tupleToArray(tuple).map {
-      case e: Entity => fn(e)
+      case e: Entity => EntityManager.walk(e, fn)
       case obj => obj
     }
     arrayToTuple(arr)

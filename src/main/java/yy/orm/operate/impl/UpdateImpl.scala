@@ -5,7 +5,7 @@ import java.sql.Connection
 import yy.orm.kit.Kit
 import yy.orm.lang.interfaces.Entity
 import yy.orm.operate.impl.core.CondRoot
-import yy.orm.operate.traits.{ExecutableUpdate, UpdateBuilder}
+import yy.orm.operate.traits.ExecutableUpdate
 import yy.orm.operate.traits.core.{Assign, Cond, Executable, Root}
 
 import scala.annotation.varargs
@@ -38,17 +38,12 @@ class UpdateImpl(root: Root[_]) extends ExecutableUpdate {
 
   override def execute(conn: Connection): Int = Kit.execute(conn, getSql, getParams)
 
-  override def postExecute(fn: (Entity) => Unit): Unit = {}
-
   @varargs override def set(as: Assign*): ExecutableUpdate = {
     assigns ++= as
     this
   }
 
-  override def set(a: Assign): ExecutableUpdate = {
-    assigns ++= Array(a)
-    this
-  }
+  override def walk(fn: (Entity) => Entity): Unit = {}
 }
 
 

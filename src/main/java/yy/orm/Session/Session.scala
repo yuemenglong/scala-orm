@@ -24,17 +24,19 @@ class Session(private val conn: Connection) {
     }
     val core = entity.$$core()
     core.setSession(this)
-    core.meta.managedFieldVec().filter(field => {
-      !field.isNormalOrPkey && core.fieldMap.contains(field.name)
-    }).foreach(field => {
-      if (field.isOneMany) {
-        core.fieldMap(field.name).asInstanceOf[Array[Object]]
-          .map(_.asInstanceOf[Entity]).foreach(injectSession)
-      } else {
-        injectSession(core.fieldMap(field.name).asInstanceOf[Entity])
-      }
-    })
     entity
+    // 递归在walk中做了
+    //    core.meta.managedFieldVec().filter(field => {
+    //      !field.isNormalOrPkey && core.fieldMap.contains(field.name)
+    //    }).foreach(field => {
+    //      if (field.isOneMany) {
+    //        core.fieldMap(field.name).asInstanceOf[Array[Object]]
+    //          .map(_.asInstanceOf[Entity]).foreach(injectSession)
+    //      } else {
+    //        injectSession(core.fieldMap(field.name).asInstanceOf[Entity])
+    //      }
+    //    })
+    //    entity
   }
 
   def inTransaction(): Boolean = {
@@ -81,7 +83,7 @@ class Session(private val conn: Connection) {
 
   def execute(executor: Executable): Int = {
     val ret = executor.execute(conn)
-    executor.postExecute(injectSession)
+    executor.walk(injectSession)
     ret
   }
 

@@ -8,7 +8,7 @@ import yy.orm.meta.OrmMeta
 import yy.orm.operate.impl._
 import yy.orm.operate.impl.core.{ExecuteRootImpl, RootImpl}
 import yy.orm.operate.traits.core._
-import yy.orm.operate.traits.{DeleteBuilder, Query, UpdateBuilder}
+import yy.orm.operate.traits.{ExecutableDelete, ExecutableUpdate, Query}
 
 object Orm {
 
@@ -71,7 +71,7 @@ object Orm {
     new QueryImpl[T](st, root)
   }
 
-  def update(root: Root[_]): UpdateBuilder = new UpdateImpl(root)
+  def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
-  def delete(root: Root[_]): DeleteBuilder = new DeleteBuilderImpl(root)
+  def delete(root: Root[_]): ExecutableDelete = new DeleteImpl(root)
 }

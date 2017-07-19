@@ -5,20 +5,20 @@ import java.sql.Connection
 import yy.orm.kit.Kit
 import yy.orm.lang.interfaces.Entity
 import yy.orm.operate.impl.core.CondRoot
-import yy.orm.operate.traits.{DeleteBuilder, ExecutableDelete}
+import yy.orm.operate.traits.ExecutableDelete
 import yy.orm.operate.traits.core.{Cond, Root}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
-class DeleteBuilderImpl(root: Root[_]) extends DeleteBuilder {
 
+class DeleteImpl(root: Root[_]) extends ExecutableDelete {
   var cond: Cond = new CondRoot
 
-  override def where(c: Cond): ExecutableDelete = new DeleteImpl(root, c)
-}
-
-class DeleteImpl(root: Root[_], cond: Cond) extends ExecutableDelete {
+  override def where(c: Cond): ExecutableDelete = {
+    cond = c
+    this
+  }
 
   override def execute(conn: Connection): Int = {
     val condSql = cond.getSql match {
@@ -30,6 +30,5 @@ class DeleteImpl(root: Root[_], cond: Cond) extends ExecutableDelete {
     Kit.execute(conn, sql, params)
   }
 
-
-  override def postExecute(fn: (Entity) => Unit): Unit = {}
+  override def walk(fn: (Entity) => Entity): Unit = {}
 }

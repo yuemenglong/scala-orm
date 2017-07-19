@@ -7,6 +7,8 @@ import yy.orm.kit.Kit
 import yy.orm.lang.interfaces.Entity
 import yy.orm.meta.{FieldMetaTypeKind, OrmMeta}
 
+import scala.reflect.ClassTag
+
 /**
   * Created by Administrator on 2017/5/18.
   */
@@ -86,5 +88,27 @@ object EntityManager {
     })(collection.breakOut)
     val core = new EntityCore(meta, map)
     wrap(core)
+  }
+
+  def walk(entity: Entity, fn: (Entity) => Entity): Entity {} = {
+    val retEntity = fn(entity)
+    val map: Map[String, Object] = retEntity.$$core().fieldMap.map { case (name, value) =>
+      if (value == null) {
+        (name, value)
+      } else {
+        val fieldMeta = entity.$$core().meta.fieldMap(name)
+        val newValue: Object = if (value.getClass.isArray) {
+          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
+          value.asInstanceOf[Array[_]].map(_.asInstanceOf[Entity])
+            .map(walk(_, fn)).toArray(ct)
+        } else value match {
+          case e: Entity => walk(e, fn)
+          case _ => value
+        }
+        (name, newValue)
+      }
+    }
+    val newCore = new EntityCore(entity.$$core().meta, map)
+    EntityManager.wrap(newCore)
   }
 }

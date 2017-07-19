@@ -10,7 +10,7 @@ import yy.orm.lang.interfaces.Entity
 trait Executable {
   def execute(conn: Connection): Int
 
-  def postExecute(fn: (Entity) => Unit): Unit
+  def walk(fn: (Entity) => Entity): Unit
 }
 
 trait ExecuteJoin {
