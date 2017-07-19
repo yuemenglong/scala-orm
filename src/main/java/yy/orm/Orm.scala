@@ -44,7 +44,7 @@ object Orm {
     EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
   }
 
-  @varargs def converts[T](arr: T*): Array[T] = {
+  def converts[T](arr: Array[T]): Array[T] = {
     if (arr.isEmpty) {
       throw new RuntimeException("Converts Nothing")
     }
