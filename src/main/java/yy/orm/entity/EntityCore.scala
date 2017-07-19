@@ -5,7 +5,10 @@ import java.util.regex.Pattern
 
 import net.sf.cglib.proxy.MethodProxy
 import yy.orm.Session.Session
+import yy.orm.lang.interfaces.Entity
 import yy.orm.meta.{EntityMeta, FieldMetaTypeKind}
+
+import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/18.
@@ -15,6 +18,15 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   private val pattern = Pattern.compile("(get|set|clear)(.+)")
   private val coreFn = "$$core"
   private var session: Session = _
+
+  // 保证所有数组被初始化
+  meta.fieldVec.filter(_.isOneMany).foreach(f => {
+    if (!fieldMap.contains(f.name) || fieldMap(f.name) == null) {
+      val ct = ClassTag[Any](f.refer.clazz)
+      val array = Array.newBuilder(ct).result()
+      fieldMap += (f.name -> array)
+    }
+  })
 
   def getPkey: Object = {
     if (!fieldMap.contains(meta.pkey.name)) {

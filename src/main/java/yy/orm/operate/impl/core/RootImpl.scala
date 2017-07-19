@@ -12,6 +12,7 @@ import yy.orm.operate.traits.core._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/15.
@@ -258,21 +259,18 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
       val field = select.impl.field
       val fieldMeta = impl.meta.fieldMap(field)
       val b = select.pickResult(resultSet, filterMap)
-      (b, fieldMeta.isOneMany) match {
-        case (null, false) => aCore.fieldMap += (field -> null)
-        case (null, true) => aCore.fieldMap += (field -> new ArrayBuffer[Entity]())
-        case (_, false) => aCore.fieldMap += (field -> b)
-        case (_, true) =>
-          val key = getOneManyFilterKey(field, b.$$core())
-          if (filterMap.contains(key)) {
-            // 该对象已经被加入过一对多数组了
-          } else if (!aCore.fieldMap.contains(field)) {
-            aCore.fieldMap += (field -> new ArrayBuffer[Entity]())
-            aCore.fieldMap(field).asInstanceOf[ArrayBuffer[Entity]] += b
-          } else {
-            aCore.fieldMap(field).asInstanceOf[ArrayBuffer[Entity]] += b
-          }
-          filterMap += (key -> b)
+      if (!fieldMeta.isOneMany) {
+        aCore.fieldMap += (field -> b)
+      } else {
+        val key = getOneManyFilterKey(field, b.$$core())
+        if (!filterMap.contains(key)) {
+          // 该对象还未被加入过一对多数组
+          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
+          val builder = Array.newBuilder(ct) += b
+          val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
+          aCore.fieldMap += (field -> (arr ++ builder.result()))
+        }
+        filterMap += (key -> b)
       }
     }
   }
