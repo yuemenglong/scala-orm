@@ -79,25 +79,7 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     }
     rs.close()
     stmt.close()
-    ab.map(st.walk(_, bufferToArray)).toArray(ClassTag(st.getType))
-  }
-
-  private def bufferToArray(entity: Entity): Entity = {
-    val core = entity.$$core()
-    core.fieldMap.toArray.map(pair => {
-      val (name, value) = pair
-      value match {
-        case ab: ArrayBuffer[_] =>
-          val entityName = core.meta.fieldMap(name).typeName
-          val entityClass = OrmMeta.entityMap(entityName).clazz
-          val ct = ClassTag(entityClass).asInstanceOf[ClassTag[Object]]
-          val array = ab.map(_.asInstanceOf[Entity]).map(bufferToArray).toArray(ct)
-          (name, array)
-        case _ =>
-          null
-      }
-    }).filter(_ != null).foreach(p => core.fieldMap += p)
-    entity
+    ab.toArray(ClassTag(st.getType))
   }
 
   //////
