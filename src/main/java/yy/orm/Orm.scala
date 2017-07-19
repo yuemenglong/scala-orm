@@ -8,7 +8,10 @@ import yy.orm.meta.OrmMeta
 import yy.orm.operate.impl._
 import yy.orm.operate.impl.core.{ExecuteRootImpl, RootImpl}
 import yy.orm.operate.traits.core._
-import yy.orm.operate.traits.{ExecutableDelete, ExecutableUpdate, Query}
+import yy.orm.operate.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, Query}
+
+import scala.annotation.varargs
+import scala.reflect.ClassTag
 
 object Orm {
 
@@ -41,6 +44,13 @@ object Orm {
     EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
   }
 
+  @varargs def converts[T](arr: T*): Array[T] = {
+    if (arr.isEmpty) {
+      throw new RuntimeException("Converts Nothing")
+    }
+    arr.map(convert).toArray(ClassTag(arr(0).getClass))
+  }
+
   def getEmptyConstructorMap: Map[Class[_], () => Object] = Kit.getEmptyConstructorMap
 
   def insert(obj: Object): ExecuteRoot = ExecuteRootImpl.insert(obj)
@@ -70,6 +80,8 @@ object Orm {
     val st = new SelectableTupleImpl[T](root.getType, root)
     new QueryImpl[T](st, root)
   }
+
+  def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
 
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 

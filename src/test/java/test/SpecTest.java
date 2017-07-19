@@ -6,6 +6,7 @@ import org.junit.Test;
 import yy.orm.Orm;
 import yy.orm.Session.Session;
 import yy.orm.db.Db;
+import yy.orm.operate.traits.ExecutableInsert;
 import yy.orm.operate.traits.core.*;
 import test.model.OM;
 import test.model.Obj;
@@ -97,5 +98,16 @@ public class SpecTest {
         ret = session.execute(Orm.delete(root).where
                 (root.join("obj").get("id").gt(1).or(root.get("id").lt(3))));
         Assert.assertEquals(ret, 8);
+    }
+
+    @Test
+    public void testBatchInsert() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        Obj[] objs = (Obj[]) Orm.converts(obj, obj, obj);
+        ExecutableInsert<Obj> ex = Orm.insert(Obj.class).values(objs);
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 3);
     }
 }
