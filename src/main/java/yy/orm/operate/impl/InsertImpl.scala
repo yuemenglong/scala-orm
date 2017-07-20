@@ -58,8 +58,8 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     ret.sum
   }
 
-  @varargs override def values(arr: T*): ExecutableInsert[T] = {
-    array = arr.toArray(ClassTag(clazz))
+  override def values(arr: Array[T]): ExecutableInsert[T] = {
+    array = arr
     this
   }
 }
