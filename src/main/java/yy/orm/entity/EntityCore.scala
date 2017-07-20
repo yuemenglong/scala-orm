@@ -1,11 +1,9 @@
 package yy.orm.entity
 
 import java.lang.reflect.Method
-import java.util.regex.Pattern
 
 import net.sf.cglib.proxy.MethodProxy
 import yy.orm.Session.Session
-import yy.orm.lang.interfaces.Entity
 import yy.orm.meta.{EntityMeta, FieldMetaTypeKind}
 
 import scala.reflect.ClassTag
@@ -14,8 +12,6 @@ import scala.reflect.ClassTag
   * Created by Administrator on 2017/5/18.
   */
 class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
-
-  private val pattern = Pattern.compile("(get|set|clear)(.+)")
   private val coreFn = "$$core"
   private var session: Session = _
 
@@ -196,23 +192,33 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     if (method.getName == "toString") {
       return this.toString()
     }
-    val matcher = pattern.matcher(method.getName)
-    if (!matcher.matches()) {
-      return proxy.invokeSuper(obj, args)
+    if (meta.getterMap.contains(method)) {
+      val fieldMeta = meta.getterMap(method)
+      this.get(fieldMeta.name)
+    } else if (meta.setterMap.contains(method)) {
+      val fieldMeta = meta.setterMap(method)
+      this.set(fieldMeta.name, args(0))
+    } else {
+      // 交给对象自己处理
+      proxy.invokeSuper(obj, args)
     }
-    val op = matcher.group(1)
-    var field = matcher.group(2)
-    field = field.substring(0, 1).toLowerCase() + field.substring(1)
-    // 没有这个字段
-    if (!this.meta.fieldMap.contains(field)) {
-      return proxy.invokeSuper(obj, args)
-    }
-
-    op match {
-      case "get" => this.get(field)
-      case "set" => this.set(field, args(0))
-      case "clear" => throw new RuntimeException("")
-    }
+    //    val matcher = pattern.matcher(method.getName)
+    //    if (!matcher.matches()) {
+    //      return proxy.invokeSuper(obj, args)
+    //    }
+    //    val op = matcher.group(1)
+    //    var field = matcher.group(2)
+    //    field = field.substring(0, 1).toLowerCase() + field.substring(1)
+    //    // 没有这个字段
+    //    if (!this.meta.fieldMap.contains(field)) {
+    //      return proxy.invokeSuper(obj, args)
+    //    }
+    //
+    //    op match {
+    //      case "get" => this.get(field)
+    //      case "set" => this.set(field, args(0))
+    //      case "clear" => throw new RuntimeException("")
+    //    }
   }
 }
 
