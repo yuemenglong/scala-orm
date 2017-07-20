@@ -1,7 +1,7 @@
 package yy.orm.init
 
 import java.io.File
-import java.lang.reflect.Field
+import java.lang.reflect.{Field, Method}
 import java.nio.file.Paths
 
 import yy.orm.kit.Kit
@@ -68,15 +68,40 @@ object Scanner {
     OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
 
     Kit.getDeclaredFields(clazz).foreach(field => analyzeField(entityMeta, field))
+
+    val methodMap: Map[String, Method] = Kit.getDeclaredMethods(clazz).map(m => (m.getName, m))(collection.breakOut)
+    entityMeta.fieldVec.foreach(fieldMeta => {
+      val getter = s"get${Kit.upperCaseFirst(fieldMeta.name)}"
+
+      val getterMethod = if (methodMap.contains(getter)) methodMap(getter)
+      else if (methodMap.contains(fieldMeta.name)) methodMap(fieldMeta.name)
+      else null
+
+      if (getterMethod != null && getterMethod.getParameterCount == 0
+        && getterMethod.getReturnType == fieldMeta.clazz) {
+        entityMeta.getterMap += (getterMethod -> fieldMeta)
+      }
+
+      val setter = s"set${Kit.upperCaseFirst(fieldMeta.name)}"
+
+      val setterMethod = if (methodMap.contains(setter)) methodMap(setter)
+      else if (methodMap.contains(fieldMeta.name)) methodMap(fieldMeta.name)
+      else null
+
+      if (setterMethod != null && setterMethod.getParameterCount == 1
+        && setterMethod.getParameterTypes()(0) == fieldMeta.clazz) {
+        entityMeta.setterMap += (setterMethod -> fieldMeta)
+      }
+    })
     entityMeta
   }
 
   def analyzeField(entityMeta: EntityMeta, field: Field): Unit = {
     var fieldMeta = FieldMeta.createFieldMeta(entityMeta, field)
 
-    if (fieldMeta.pkey) {
-      entityMeta.pkey = fieldMeta
-    }
+    if (fieldMeta.pkey && entityMeta.pkey != null) throw new RuntimeException("Already Has Pkey")
+    if (fieldMeta.pkey) entityMeta.pkey = fieldMeta
+
     entityMeta.fieldVec += fieldMeta
     entityMeta.fieldMap += (fieldMeta.name -> fieldMeta)
   }

@@ -1,5 +1,7 @@
 package yy.orm.meta
 
+import java.lang.reflect.Method
+
 import yy.orm.kit.Kit
 import yy.orm.lang.anno.Entity
 
@@ -14,6 +16,8 @@ class EntityMeta(val clazz: Class[_], val ignore: Boolean = false) {
   var pkey: FieldMeta = _
   var fieldVec: ArrayBuffer[FieldMeta] = ArrayBuffer()
   var fieldMap: Map[String, FieldMeta] = Map()
+  var getterMap: Map[Method, FieldMeta] = Map()
+  var setterMap: Map[Method, FieldMeta] = Map()
 
   def managedFieldVec(): ArrayBuffer[FieldMeta] = {
     fieldVec.filter(!_.ignore)

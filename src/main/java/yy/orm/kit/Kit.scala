@@ -1,6 +1,6 @@
 package yy.orm.kit
 
-import java.lang.reflect.Field
+import java.lang.reflect.{Field, Method}
 import java.sql.Connection
 
 import yy.orm.Orm
@@ -22,12 +22,27 @@ object Kit {
     str.substring(0, 1).toLowerCase() + str.substring(1)
   }
 
+  def upperCaseFirst(str: String): String = {
+    str.substring(0, 1).toUpperCase() + str.substring(1)
+  }
+
   def getDeclaredFields(clazz: Class[_]): Array[Field] = {
     val ret = new ArrayBuffer[Field]()
     clazz.getDeclaredFields.foreach(ret += _)
     var parent = clazz.getSuperclass
     while (parent != null) {
       parent.getDeclaredFields.foreach(ret += _)
+      parent = parent.getSuperclass
+    }
+    ret.toArray
+  }
+
+  def getDeclaredMethods(clazz: Class[_]): Array[Method] = {
+    val ret = new ArrayBuffer[Method]()
+    clazz.getDeclaredMethods.foreach(ret += _)
+    var parent = clazz.getSuperclass
+    while (parent != null) {
+      parent.getDeclaredMethods.foreach(ret += _)
       parent = parent.getSuperclass
     }
     ret.toArray
@@ -42,7 +57,7 @@ object Kit {
     }.toMap
   }
 
-  def execute(conn:Connection, sql:String, params:Array[Object]):Int={
+  def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>
       stmt.setObject(i + 1, param)
