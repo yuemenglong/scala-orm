@@ -42,6 +42,25 @@ public class SimpleTest {
     }
 
     @Test
+    public void testConvert() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setOm(new OM[]{new OM(), new OM()});
+        obj = Orm.convert(obj);
+        OM[] om = obj.getOm();
+
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("om");
+        session.execute(ex);
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        root.select("om");
+        Obj res = session.first(Orm.select(root).from(root));
+        om = res.getOm();
+    }
+
+    @Test
     public void testCURD() {
         Session session = db.openSession();
 

@@ -82,7 +82,8 @@ object EntityManager {
           if (bs == null) {
             throw new RuntimeException("Array Must Init To Empty Rather Than Null")
           }
-          bs.map(convert)
+          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
+          bs.map(convert).toArray(ct)
       }
       (name, value)
     })(collection.breakOut)
