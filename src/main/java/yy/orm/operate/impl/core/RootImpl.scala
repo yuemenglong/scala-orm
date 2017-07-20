@@ -269,7 +269,8 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
       val b = select.pickResult(resultSet, filterMap)
       if (!fieldMeta.isOneMany) {
         aCore.fieldMap += (field -> b)
-      } else {
+      } else if (b != null) {
+        // b为null相当于初始化空数组，暂时放在empty里实现，需要再考虑 TODO
         val key = getOneManyFilterKey(field, b.$$core())
         if (!filterMap.contains(key)) {
           // 该对象还未被加入过一对多数组

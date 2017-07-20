@@ -10,6 +10,14 @@ import java.util.Date;
  */
 @Entity
 public class Obj {
+
+    public Obj() {
+    }
+
+    public Obj(String name) {
+        this.name = name;
+    }
+
     @Id(auto = true)
     Long id = null;
 

@@ -8,7 +8,6 @@ import test.model.*;
 import yy.orm.Orm;
 import yy.orm.Session.Session;
 import yy.orm.db.Db;
-import yy.orm.operate.impl.core.SelectJoinImpl;
 import yy.orm.operate.traits.Query;
 import yy.orm.operate.traits.core.*;
 
@@ -158,6 +157,22 @@ public class SelectTest {
         }
     }
 
+    @Test
+    public void testSelectOOWithNull() {
+        Session session = db.openSession();
+        session.execute(Orm.insert(Orm.convert(new Obj("name"))));
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        root.select("ptr");
+        root.select("oo");
+        root.select("om");
+        Query<Obj> query = Orm.select(root).from(root);
+        Obj[] res = (Obj[]) session.query(query);
+        Assert.assertEquals(res.length, 1);
+        Assert.assertEquals(res[0].getPtr(), null);
+        Assert.assertEquals(res[0].getOo(), null);
+        Assert.assertEquals(res[0].getOm().length, 0);
+    }
 //
 //    @Test
 //    public void testDistinctCount() {
