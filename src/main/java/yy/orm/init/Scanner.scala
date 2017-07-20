@@ -82,10 +82,11 @@ object Scanner {
         entityMeta.getterMap += (getterMethod -> fieldMeta)
       }
 
-      val setter = s"set${Kit.upperCaseFirst(fieldMeta.name)}"
+      val setterJ = s"set${Kit.upperCaseFirst(fieldMeta.name)}"
+      val setterS = s"${fieldMeta.name}_$$eq"
 
-      val setterMethod = if (methodMap.contains(setter)) methodMap(setter)
-      else if (methodMap.contains(fieldMeta.name)) methodMap(fieldMeta.name)
+      val setterMethod = if (methodMap.contains(setterJ)) methodMap(setterJ)
+      else if (methodMap.contains(setterS)) methodMap(setterS)
       else null
 
       if (setterMethod != null && setterMethod.getParameterCount == 1
