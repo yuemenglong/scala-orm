@@ -55,6 +55,10 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
   override def assign(f: Field): Assign = AssignFF(this, f)
 
   override def assign(v: Object): Assign = AssignFV(this, v)
+
+  override def isNull: Cond = IsNull(this)
+
+  override def notNull(): Cond = NotNull(this)
 }
 
 class SelectableFieldImpl[T](clazz: Class[T], val impl: FieldImpl) extends SelectableField[T] {
@@ -109,6 +113,10 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: FieldImpl) extends Selec
   override def in(a: Array[Object]): Cond = impl.in(a)
 
   override def as[R](clazz: Class[R]): SelectableField[R] = throw new RuntimeException("Already Selectable")
+
+  override def isNull: Cond = impl.isNull
+
+  override def notNull(): Cond = impl.notNull()
 }
 
 class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val joinType: JoinType) extends Join {

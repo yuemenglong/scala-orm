@@ -135,3 +135,15 @@ case class InFA(f: Field, a: Array[Object]) extends CondItem {
 
   override def getParams: Array[Object] = a
 }
+
+case class IsNull(f: Field) extends CondItem {
+  override def getSql: String = s"${f.getColumn} IS NULL"
+
+  override def getParams: Array[Object] = Array()
+}
+
+case class NotNull(f: Field) extends CondItem {
+  override def getSql: String = s"${f.getColumn} IS NOT NULL"
+
+  override def getParams: Array[Object] = Array()
+}

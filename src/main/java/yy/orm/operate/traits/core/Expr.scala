@@ -45,6 +45,10 @@ trait CondOp {
   def lte(f: Field): Cond
 
   def in(a: Array[Object]): Cond
+
+  def isNull: Cond
+
+  def notNull(): Cond
 }
 
 trait AssignOp {

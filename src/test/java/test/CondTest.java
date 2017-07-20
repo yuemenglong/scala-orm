@@ -6,8 +6,10 @@ import org.junit.Test;
 import yy.orm.Orm;
 import yy.orm.Session.Session;
 import yy.orm.db.Db;
+import yy.orm.operate.traits.Query;
 import yy.orm.operate.traits.core.Cond;
 import yy.orm.operate.traits.core.ExecuteRoot;
+import yy.orm.operate.traits.core.Root;
 import yy.orm.operate.traits.core.SelectRoot;
 import test.model.OM;
 import test.model.Obj;
@@ -67,4 +69,31 @@ public class CondTest {
         Assert.assertEquals(objs[1].getOm().length, 3);
     }
 
+    @Test
+    public void testNotNull() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+
+        session.execute(Orm.insert(Orm.convert(obj)));
+
+        obj = new Obj();
+        obj.setName("name2");
+        obj.setAge(10);
+
+        session.execute(Orm.insert(Orm.convert(obj)));
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Query<Obj> query = Orm.select(root).from(root).where(root.get("age").isNull());
+        Obj[] res = (Obj[]) session.query(query);
+        Assert.assertEquals(res.length, 1);
+        Assert.assertEquals(res[0].getId().longValue(), 1);
+        Assert.assertEquals(res[0].getAge(), null);
+
+        query = Orm.select(root).from(root).where(root.get("age").notNull());
+        res = (Obj[]) session.query(query);
+        Assert.assertEquals(res.length, 1);
+        Assert.assertEquals(res[0].getId().longValue(), 2);
+        Assert.assertEquals(res[0].getAge().longValue(), 10);
+    }
 }
