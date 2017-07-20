@@ -105,7 +105,7 @@ public class SpecTest {
         Session session = db.openSession();
         Obj obj = new Obj();
         obj.setName("name");
-        Obj[] objs = (Obj[]) Orm.converts(obj, obj, obj);
+        Obj[] objs = (Obj[]) Orm.converts(new Obj[]{obj, obj, obj});
         ExecutableInsert<Obj> ex = Orm.insert(Obj.class).values(objs);
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 3);
