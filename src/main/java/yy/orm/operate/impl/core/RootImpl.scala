@@ -218,7 +218,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
     selects.find(_.impl.field == field) match {
       case Some(s) => s
       case None =>
-        val j = impl.join(field).asInstanceOf[JoinImpl]
+        val j = impl.join(field, JoinType.LEFT).asInstanceOf[JoinImpl]
         val s = new SelectJoinImpl(j)
         selects += s
         s

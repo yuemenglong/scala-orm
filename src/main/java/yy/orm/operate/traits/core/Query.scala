@@ -33,8 +33,6 @@ trait Selectable[T] extends Node {
 
 trait SelectJoin extends Join {
   def select(field: String): SelectJoin
-
-  override def join(field: String): Join = join(field, JoinType.LEFT)
 }
 
 trait SelectableJoin[T] extends Selectable[T] with SelectJoin

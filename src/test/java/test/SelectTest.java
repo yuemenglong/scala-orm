@@ -8,6 +8,7 @@ import test.model.*;
 import yy.orm.Orm;
 import yy.orm.Session.Session;
 import yy.orm.db.Db;
+import yy.orm.operate.impl.core.SelectJoinImpl;
 import yy.orm.operate.traits.Query;
 import yy.orm.operate.traits.core.*;
 
@@ -111,7 +112,6 @@ public class SelectTest {
         Assert.assertEquals(res[1]._2().getId().longValue(), 2);
     }
 
-
     @Test
     public void testJoin() {
         Session session = db.openSession();
@@ -130,16 +130,34 @@ public class SelectTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 6);
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
-        SelectableJoin<MO> mo = root.join("om").join("mo", JoinType.LEFT()).as(MO.class);
-        Query<Tuple2<Obj, MO>> query = Orm.select(root, mo).from(root);
-        Tuple2<Obj, MO>[] res = (Tuple2<Obj, MO>[]) session.query(query);
-        Assert.assertEquals(res.length, 2);
-        Assert.assertEquals(res[0]._1().getPtr(), null);
-        Assert.assertArrayEquals(res[0]._1().getOm(), new OM[0]);
-        Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
-        Assert.assertEquals(res[1]._2(), null);
+        {
+            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            SelectableJoin<MO> mo = root.join("om").join("mo", JoinType.LEFT()).as(MO.class);
+            Query<Tuple2<Obj, MO>> query = Orm.select(root, mo).from(root);
+            Tuple2<Obj, MO>[] res = (Tuple2<Obj, MO>[]) session.query(query);
+            Assert.assertEquals(res.length, 2);
+            Assert.assertEquals(res[0]._1().getPtr(), null);
+            Assert.assertArrayEquals(res[0]._1().getOm(), new OM[0]);
+            Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
+            Assert.assertEquals(res[1]._2(), null);
+        }
+        {
+            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            root.select("mo").on(root.join("mo").get("value").eql(100));
+            Query<OM> query = Orm.select(root).from(root);
+            OM[] res = (OM[]) session.query(query);
+            Assert.assertEquals(res.length, 2);
+            Assert.assertEquals(res[0].getMo().getValue().longValue(), 100);
+            Assert.assertEquals(res[1].getMo(), null);
+        }
+        {
+            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Join j1 = root.select("om").join("mo");
+            Join j2 = root.join("om").join("mo");
+            Assert.assertEquals(j1, j2);
+        }
     }
+
 //
 //    @Test
 //    public void testDistinctCount() {
