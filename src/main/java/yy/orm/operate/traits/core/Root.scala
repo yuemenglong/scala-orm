@@ -1,6 +1,7 @@
 package yy.orm.operate.traits.core
 
 import yy.orm.meta.EntityMeta
+import yy.orm.operate.impl.core._
 import yy.orm.operate.traits.core.JoinType.JoinType
 
 /**
@@ -23,13 +24,46 @@ trait Node {
   }
 }
 
-
 trait Field extends Node with CondOp with AssignOp {
   def getColumn: String
 
   def getAlias: String
 
   def as[T](clazz: Class[T]): SelectableField[T]
+
+  override def eql(v: Object): Cond = EqFV(this, v)
+
+  override def eql(f: Field): Cond = EqFF(this, f)
+
+  override def neq(v: Object): Cond = NeFV(this, v)
+
+  override def neq(f: Field): Cond = NeFF(this, f)
+
+  override def gt(v: Object): Cond = GtFV(this, v)
+
+  override def gt(f: Field): Cond = GtFF(this, f)
+
+  override def gte(v: Object): Cond = GteFV(this, v)
+
+  override def gte(f: Field): Cond = GteFF(this, f)
+
+  override def lt(v: Object): Cond = LtFV(this, v)
+
+  override def lt(f: Field): Cond = LteFF(this, f)
+
+  override def lte(v: Object): Cond = LteFV(this, v)
+
+  override def lte(f: Field): Cond = LteFF(this, f)
+
+  override def in(a: Array[Object]): Cond = InFA(this, a)
+
+  override def assign(f: Field): Assign = AssignFF(this, f)
+
+  override def assign(v: Object): Assign = AssignFV(this, v)
+
+  override def isNull: Cond = IsNull(this)
+
+  override def notNull(): Cond = NotNull(this)
 }
 
 

@@ -37,10 +37,25 @@ trait SelectJoin extends Join {
 
 trait SelectableJoin[T] extends Selectable[T] with SelectJoin
 
-trait SelectableField[T] extends Field with Selectable[T]
+trait SelectableField[T] extends Field with Selectable[T] {
+
+  override def getColumnWithAs: String = s"$getColumn AS $getAlias"
+
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = resultSet.getObject(getAlias, getType)
+
+  override def getKey(value: Object): String = {
+    if (value == null) {
+      ""
+    } else {
+      value.toString
+    }
+  }
+}
 
 trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {
   def count(): Selectable[java.lang.Long]
+
+  def count(field: Field): SelectableField[java.lang.Long]
 }
 
 

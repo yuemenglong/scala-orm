@@ -1,11 +1,11 @@
 package yy.orm.operate.impl
 
+import java.lang
 import java.sql.{Connection, ResultSet}
 
 import yy.orm.entity.EntityManager
 import yy.orm.lang.interfaces.Entity
-import yy.orm.meta.OrmMeta
-import yy.orm.operate.impl.core.CondRoot
+import yy.orm.operate.impl.core.{CondRoot, FieldImpl, SelectableFieldImpl}
 import yy.orm.operate.traits.core._
 import yy.orm.operate.traits.{Query, SelectableTuple}
 
@@ -187,4 +187,13 @@ class Count_(root: SelectRoot[_]) extends Selectable[java.lang.Long] {
   override def getKey(value: Object): String = value.toString
 
   override def getParent: Node = root.getRoot
+}
+
+class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {
+
+  override def getType: Class[lang.Long] = classOf[java.lang.Long]
+
+  override def getColumn: String = s"COUNT(${impl.getAlias})"
+
+  override def getAlias: String = s"$$count$$${impl.getAlias}"
 }

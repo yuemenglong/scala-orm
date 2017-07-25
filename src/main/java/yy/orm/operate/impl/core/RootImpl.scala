@@ -1,5 +1,6 @@
 package yy.orm.operate.impl.core
 
+import java.lang
 import java.sql.ResultSet
 
 import yy.orm.entity.{EntityCore, EntityManager}
@@ -25,60 +26,14 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
   override def getParent: Node = parent
 
   override def as[T](clazz: Class[T]): SelectableField[T] = new SelectableFieldImpl[T](clazz, this)
-
-  override def eql(v: Object): Cond = EqFV(this, v)
-
-  override def eql(f: Field): Cond = EqFF(this, f)
-
-  override def neq(v: Object): Cond = NeFV(this, v)
-
-  override def neq(f: Field): Cond = NeFF(this, f)
-
-  override def gt(v: Object): Cond = GtFV(this, v)
-
-  override def gt(f: Field): Cond = GtFF(this, f)
-
-  override def gte(v: Object): Cond = GteFV(this, v)
-
-  override def gte(f: Field): Cond = GteFF(this, f)
-
-  override def lt(v: Object): Cond = LtFV(this, v)
-
-  override def lt(f: Field): Cond = LteFF(this, f)
-
-  override def lte(v: Object): Cond = LteFV(this, v)
-
-  override def lte(f: Field): Cond = LteFF(this, f)
-
-  override def in(a: Array[Object]): Cond = InFA(this, a)
-
-  override def assign(f: Field): Assign = AssignFF(this, f)
-
-  override def assign(v: Object): Assign = AssignFV(this, v)
-
-  override def isNull: Cond = IsNull(this)
-
-  override def notNull(): Cond = NotNull(this)
 }
 
-class SelectableFieldImpl[T](clazz: Class[T], val impl: FieldImpl) extends SelectableField[T] {
+class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends SelectableField[T] {
   override def getColumn: String = impl.getColumn
 
   override def getAlias: String = impl.getAlias
 
-  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = resultSet.getObject(getAlias, clazz)
-
-  override def getColumnWithAs: String = s"$getColumn AS $getAlias"
-
   override def getType: Class[T] = clazz
-
-  override def getKey(value: Object): String = {
-    if (value == null) {
-      ""
-    } else {
-      value.toString
-    }
-  }
 
   override def getParent: Node = impl.getParent
 
@@ -364,8 +319,7 @@ class RootImpl[T](clazz: Class[T], meta: EntityMeta) extends Root[T] {
   override def getMeta: EntityMeta = meta
 }
 
-class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta,
-                        rootImpl: RootImpl[T])
+class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta, rootImpl: RootImpl[T])
   extends Root[T] with SelectRoot[T] {
 
   private[impl] val selectImpl = new SelectableJoinImpl[T](clazz, rootImpl.impl)
@@ -407,5 +361,7 @@ class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta,
   override def getMeta: EntityMeta = meta
 
   override def count(): Selectable[java.lang.Long] = new Count_(this)
+
+  override def count(field: Field): SelectableField[lang.Long] = new Count(field)
 }
 
