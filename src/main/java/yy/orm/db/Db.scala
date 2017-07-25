@@ -10,7 +10,7 @@ import yy.orm.meta.OrmMeta
   */
 class Db(val host: String, val port: Int, val username: String, val password: String, val db: String) {
   val driver = "com.mysql.jdbc.Driver"
-  val url = s"jdbc:mysql://$host:$port/$db"
+  val url = s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8"
   Class.forName(driver)
 
   def openConnection(): Connection = {
