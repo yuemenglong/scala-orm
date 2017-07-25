@@ -25,6 +25,12 @@ trait Query[T] extends Queryable[T] {
 
   def where(cond: Cond): Query[T]
 
+  def groupBy(fields: Array[Field]): Query[T]
+
+  def groupBy(field: Field): Query[T]
+
+  def having(cond: Cond): Query[T]
+
   def getRoot: SelectRoot[_]
 }
 

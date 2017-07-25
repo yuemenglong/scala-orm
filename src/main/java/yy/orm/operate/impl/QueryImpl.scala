@@ -21,7 +21,9 @@ class QueryImpl[T](private var st: SelectableTuple[T],
                    private var root: SelectRoot[_] = null,
                    private var cond: Cond = new CondRoot(),
                    private var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)](),
-                   private var limitOffset: (Long, Long) = (-1, -1))
+                   private var limitOffset: (Long, Long) = (-1, -1),
+                   private var groupByVar: Array[Field] = Array[Field](),
+                   private var havingVar: Cond = null)
   extends Query[T] {
 
   def getParams: Array[Object] = {
@@ -31,7 +33,12 @@ class QueryImpl[T](private var st: SelectableTuple[T],
       case (-1, o) => Array[Object](new java.lang.Long(o))
       case (l, o) => Array[Object](new java.lang.Long(l), new java.lang.Long(o))
     }
-    root.getParams ++ cond.getParams ++ loParams
+    val groupByHavingParams = (groupByVar.length, havingVar) match {
+      case (0, _) => Array()
+      case (_, null) => Array()
+      case (_, _) => havingVar.getParams
+    }
+    root.getParams ++ cond.getParams ++ loParams ++ groupByHavingParams
   }
 
   def getSql: String = {
@@ -53,7 +60,12 @@ class QueryImpl[T](private var st: SelectableTuple[T],
       case (-1, _) => "\nOFFSET ?"
       case (_, _) => "\nLIMIT ? OFFSET ?"
     }
-    s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$orderBySql$loSql"
+    val groupByHavingSql = (groupByVar.length, havingVar) match {
+      case (0, _) => ""
+      case (_, null) => s" GROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}"
+      case (_, _) => s" GROUP BY ${groupByVar.map(_.getColumn).mkString(", ")} HAVING ${havingVar.getSql}"
+    }
+    s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$orderBySql$loSql$groupByHavingSql"
   }
 
   override def query(conn: Connection): Array[T] = {
@@ -89,12 +101,12 @@ class QueryImpl[T](private var st: SelectableTuple[T],
 
   override def select[T1](t: Selectable[T1]): Query[T1] = {
     val st = new SelectableTupleImpl[T1](t.getType, t)
-    new QueryImpl[T1](st, root, cond, orders, limitOffset)
+    new QueryImpl[T1](st, root, cond, orders, limitOffset, groupByVar, havingVar)
   }
 
   override def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)] = {
     val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2)
-    new QueryImpl[(T1, T2)](st, root, cond, orders, limitOffset)
+    new QueryImpl[(T1, T2)](st, root, cond, orders, limitOffset, groupByVar, havingVar)
   }
 
   override def from(selectRoot: SelectRoot[_]): Query[T] = {
@@ -127,11 +139,27 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     this
   }
 
+  override def groupBy(fields: Array[Field]): Query[T] = {
+    groupByVar = fields
+    this
+  }
+
+  override def groupBy(field: Field): Query[T] = {
+    groupByVar = Array(field)
+    this
+  }
+
+  override def having(cond: Cond): Query[T] = {
+    havingVar = cond
+    this
+  }
+
   override def getRoot: SelectRoot[_] = root
 
   override def walk(t: T, fn: (Entity) => Entity): T = st.walk(t, fn)
 
   override def getType: Class[T] = st.getType
+
 }
 
 class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {
