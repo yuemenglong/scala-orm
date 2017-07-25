@@ -50,6 +50,8 @@ trait SelectableField[T] extends Field with Selectable[T] {
       value.toString
     }
   }
+
+  def distinct(): SelectableField[T]
 }
 
 trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {

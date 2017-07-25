@@ -29,7 +29,9 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
 }
 
 class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends SelectableField[T] {
-  override def getColumn: String = impl.getColumn
+  private var distinctVar: String = ""
+
+  override def getColumn: String = s"$distinctVar${impl.getColumn}"
 
   override def getAlias: String = impl.getAlias
 
@@ -72,6 +74,11 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends Selectabl
   override def isNull: Cond = impl.isNull
 
   override def notNull(): Cond = impl.notNull()
+
+  override def distinct(): SelectableField[T] = {
+    distinctVar = "DISTINCT "
+    this
+  }
 }
 
 class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val joinType: JoinType) extends Join {
