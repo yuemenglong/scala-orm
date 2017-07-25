@@ -173,36 +173,42 @@ public class SelectTest {
         Assert.assertEquals(res[0].getOo(), null);
         Assert.assertEquals(res[0].getOm().length, 0);
     }
-//
-//    @Test
-//    public void testDistinctCount() {
-//        Session session = db.openSession();
-//        Obj obj = new Obj();
-//        obj.setName("name");
-//        obj.setPtr(new Ptr());
-//        obj.setOo(new OO());
-//        obj.setOm(new OM[]{new OM(), new OM(), new OM()});
-//        obj = Orm.convert(obj);
-//        Insert ex = Orm.insert(obj);
-//        ex.insert("ptr");
-//        ex.insert("oo");
-//        ex.insert("om").insert("mo");
-//        int ret = session.execute(ex);
-//        Assert.assertEquals(ret, 6);
-//
-//        {
-//            Root<OM> root = Orm.root(OM.class);
-//            Count<Long> count = root.count(root.get("objId"), Long.class);
-//            Long res = session.first(count);
-//            Assert.assertEquals(res.longValue(), 1);
-//        }
-//        {
-//            Root<OM> root = Orm.root(OM.class);
-//            Count_<Long> count = root.count(Long.class);
-//            Long res = session.first(count);
-//            Assert.assertEquals(res.longValue(), 3);
-//        }
-//    }
+
+    @Test
+    public void testDistinctCount() {
+        Session session = db.openSession();
+        Obj obj = new Obj();
+        obj.setName("name");
+        obj.setPtr(new Ptr());
+        obj.setOo(new OO());
+        obj.setOm(new OM[]{new OM(), new OM(), new OM()});
+        obj = Orm.convert(obj);
+        ExecuteRoot ex = Orm.insert(obj);
+        ex.insert("ptr");
+        ex.insert("oo");
+        ex.insert("om").insert("mo");
+        int ret = session.execute(ex);
+        Assert.assertEquals(ret, 6);
+
+        {
+            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            Query<Long> query = Orm.select(root.count(root.get("objId"))).from(root);
+            Long res = session.first(query);
+            Assert.assertEquals(res.longValue(), 3);
+        }
+        {
+            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            Query<Long> query = Orm.select(root.count(root.get("objId")).distinct()).from(root);
+            Long res = session.first(query);
+            Assert.assertEquals(res.longValue(), 1);
+        }
+        {
+            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            Query<Long> query = Orm.select(root.count()).from(root);
+            Long res = session.first(query);
+            Assert.assertEquals(res.longValue(), 3);
+        }
+    }
 //
 //    @Test
 //    public void testGetTarget() {

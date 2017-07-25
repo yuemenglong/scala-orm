@@ -5,7 +5,7 @@ import java.sql.{Connection, ResultSet}
 
 import yy.orm.entity.EntityManager
 import yy.orm.lang.interfaces.Entity
-import yy.orm.operate.impl.core.{CondRoot, FieldImpl, SelectableFieldImpl}
+import yy.orm.operate.impl.core.{CondRoot, SelectableFieldImpl}
 import yy.orm.operate.traits.core._
 import yy.orm.operate.traits.{Query, SelectableTuple}
 
@@ -57,6 +57,9 @@ class QueryImpl[T](private var st: SelectableTuple[T],
   }
 
   override def query(conn: Connection): Array[T] = {
+    if (root == null || st == null) {
+      throw new RuntimeException("Must Select <Tuple> From <Root>, Either Is Null")
+    }
     var filterSet = Set[String]()
     val sql = getSql
     println(sql)
@@ -190,10 +193,16 @@ class Count_(root: SelectRoot[_]) extends Selectable[java.lang.Long] {
 }
 
 class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {
+  private var distinctVar = ""
 
   override def getType: Class[lang.Long] = classOf[java.lang.Long]
 
-  override def getColumn: String = s"COUNT(${impl.getAlias})"
+  override def getColumn: String = s"COUNT($distinctVar${impl.getColumn})"
 
   override def getAlias: String = s"$$count$$${impl.getAlias}"
+
+  override def distinct(): SelectableField[lang.Long] = {
+    distinctVar = "DISTINCT "
+    this
+  }
 }
