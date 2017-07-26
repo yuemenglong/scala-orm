@@ -39,41 +39,7 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends Selectabl
 
   override def getParent: Node = impl.getParent
 
-  override def assign(v: Object): Assign = impl.assign(v)
-
-  override def assign(f: Field): Assign = impl.assign(f)
-
-  override def eql(v: Object): Cond = impl.eql(v)
-
-  override def eql(f: Field): Cond = impl.eql(f)
-
-  override def neq(v: Object): Cond = impl.neq(v)
-
-  override def neq(f: Field): Cond = impl.neq(f)
-
-  override def gt(v: Object): Cond = impl.gt(v)
-
-  override def gt(f: Field): Cond = impl.gt(f)
-
-  override def gte(v: Object): Cond = impl.gte(v)
-
-  override def gte(f: Field): Cond = impl.gte(f)
-
-  override def lt(v: Object): Cond = impl.lt(v)
-
-  override def lt(f: Field): Cond = impl.lt(f)
-
-  override def lte(v: Object): Cond = impl.lte(v)
-
-  override def lte(f: Field): Cond = impl.lte(f)
-
-  override def in(a: Array[Object]): Cond = impl.in(a)
-
   override def as[R](clazz: Class[R]): SelectableField[R] = throw new RuntimeException("Already Selectable")
-
-  override def isNull: Cond = impl.isNull
-
-  override def notNull(): Cond = impl.notNull()
 
   override def distinct(): SelectableField[T] = {
     distinctVar = "DISTINCT "
@@ -370,5 +336,7 @@ class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta, rootImpl: RootImpl[T]
   override def count(): Selectable[java.lang.Long] = new Count_(this)
 
   override def count(field: Field): SelectableField[lang.Long] = new Count(field)
+
+  override def sum(field: Field): SelectableField[lang.Long] = new Sum(field)
 }
 

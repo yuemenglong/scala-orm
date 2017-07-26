@@ -62,8 +62,8 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     }
     val groupByHavingSql = (groupByVar.length, havingVar) match {
       case (0, _) => ""
-      case (_, null) => s" GROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}"
-      case (_, _) => s" GROUP BY ${groupByVar.map(_.getColumn).mkString(", ")} HAVING ${havingVar.getSql}"
+      case (_, null) => s"\nGROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}"
+      case (_, _) => s"\nGROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}\nHAVING ${havingVar.getSql}"
     }
     s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$orderBySql$loSql$groupByHavingSql"
   }
@@ -165,6 +165,12 @@ class QueryImpl[T](private var st: SelectableTuple[T],
 class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {
   val selects: Array[Selectable[_]] = ss.toArray
   val tuple2Class: Class[(_, _)] = classOf[(_, _)]
+  val tuple3Class: Class[(_, _, _)] = classOf[(_, _, _)]
+  val tuple4Class: Class[(_, _, _, _)] = classOf[(_, _, _, _)]
+  val tuple5Class: Class[(_, _, _, _, _)] = classOf[(_, _, _, _, _)]
+  val tuple6Class: Class[(_, _, _, _, _, _)] = classOf[(_, _, _, _, _, _)]
+  val tuple7Class: Class[(_, _, _, _, _, _, _)] = classOf[(_, _, _, _, _, _, _)]
+  val tuple8Class: Class[(_, _, _, _, _, _, _, _)] = classOf[(_, _, _, _, _, _, _, _)]
 
   override def pick(rs: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
     val row = selects.map(_.pick(rs, filterMap).asInstanceOf[Object])
@@ -182,6 +188,12 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
 
   def tupleToArray(tuple: T): Array[Object] = {
     val ret: Array[Any] = tuple match {
+      case (t1, t2, t3, t4, t5, t6, t7, t8) => Array(t1, t2, t3, t4, t5, t6, t7, t8)
+      case (t1, t2, t3, t4, t5, t6, t7) => Array(t1, t2, t3, t4, t5, t6, t7)
+      case (t1, t2, t3, t4, t5, t6) => Array(t1, t2, t3, t4, t5, t6)
+      case (t1, t2, t3, t4, t5) => Array(t1, t2, t3, t4, t5)
+      case (t1, t2, t3, t4) => Array(t1, t2, t3, t4)
+      case (t1, t2, t3) => Array(t1, t2, t3)
       case (t1, t2) => Array(t1, t2)
       case t => Array(t)
     }
@@ -191,6 +203,12 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
   def arrayToTuple(arr: Array[Object]): T = {
     clazz match {
       case `tuple2Class` => (arr(0), arr(1)).asInstanceOf[T]
+      case `tuple3Class` => (arr(0), arr(1), arr(2)).asInstanceOf[T]
+      case `tuple4Class` => (arr(0), arr(1), arr(2), arr(3)).asInstanceOf[T]
+      case `tuple5Class` => (arr(0), arr(1), arr(2), arr(3), arr(4)).asInstanceOf[T]
+      case `tuple6Class` => (arr(0), arr(1), arr(2), arr(3), arr(4), arr(5)).asInstanceOf[T]
+      case `tuple7Class` => (arr(0), arr(1), arr(2), arr(3), arr(4), arr(5), arr(6)).asInstanceOf[T]
+      case `tuple8Class` => (arr(0), arr(1), arr(2), arr(3), arr(4), arr(5), arr(6), arr(7)).asInstanceOf[T]
       case _ => arr(0).asInstanceOf[T]
     }
   }
@@ -228,6 +246,21 @@ class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[jav
   override def getColumn: String = s"COUNT($distinctVar${impl.getColumn})"
 
   override def getAlias: String = s"$$count$$${impl.getAlias}"
+
+  override def distinct(): SelectableField[lang.Long] = {
+    distinctVar = "DISTINCT "
+    this
+  }
+}
+
+class Sum(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {
+  private var distinctVar = ""
+
+  override def getType: Class[lang.Long] = classOf[java.lang.Long]
+
+  override def getColumn: String = s"SUM($distinctVar${impl.getColumn})"
+
+  override def getAlias: String = s"$$sum$$${impl.getAlias}"
 
   override def distinct(): SelectableField[lang.Long] = {
     distinctVar = "DISTINCT "

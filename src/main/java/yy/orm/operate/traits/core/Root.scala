@@ -57,13 +57,13 @@ trait Field extends Node with CondOp with AssignOp {
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
-  override def assign(f: Field): Assign = AssignFF(this, f)
-
-  override def assign(v: Object): Assign = AssignFV(this, v)
-
   override def isNull: Cond = IsNull(this)
 
   override def notNull(): Cond = NotNull(this)
+
+  override def assign(f: Field): Assign = AssignFF(this, f)
+
+  override def assign(v: Object): Assign = AssignFV(this, v)
 }
 
 

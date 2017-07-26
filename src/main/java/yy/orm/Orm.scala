@@ -76,6 +76,11 @@ object Orm {
     new QueryImpl[(T1, T2)](st)
   }
 
+  def select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): Query[(T1, T2, T3)] = {
+    val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
+    new QueryImpl[(T1, T2, T3)](st)
+  }
+
   def from[T](root: SelectRoot[T]): Query[T] = {
     val st = new SelectableTupleImpl[T](root.getType, root)
     new QueryImpl[T](st, root)

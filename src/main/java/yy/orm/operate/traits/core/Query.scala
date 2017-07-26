@@ -58,6 +58,8 @@ trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {
   def count(): Selectable[java.lang.Long]
 
   def count(field: Field): SelectableField[java.lang.Long]
+
+  def sum(field: Field): SelectableField[java.lang.Long]
 }
 
 

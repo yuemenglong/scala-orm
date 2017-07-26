@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import scala.Tuple2;
+import scala.Tuple3;
 import test.model.*;
 import yy.orm.Orm;
 import yy.orm.Session.Session;
@@ -37,7 +38,6 @@ public class SelectTest {
     private Db openDb() {
         return Orm.openDb("localhost", 3306, "root", "root", "test");
     }
-
 
     @Test
     public void testCount() {
@@ -209,32 +209,93 @@ public class SelectTest {
             Assert.assertEquals(res.longValue(), 3);
         }
     }
-//
-//    @Test
-//    public void testGetTarget() {
-//        Session session = db.openSession();
-//        for (int i = 0; i < 2; i++) {
-//            Obj obj = new Obj();
-//            obj.setName("name" + i);
-//            obj = Orm.convert(obj);
-//            Insert ex = Orm.insert(obj);
-//            int ret = session.execute(ex);
-//            Assert.assertEquals(ret, 1);
-//        }
-//
-//        Root<Obj> root = Orm.root(Obj.class);
-//        FieldT<Long> id = root.get("id", Long.class);
-//        FieldT<String> name = root.get("name", String.class);
-//
-//        Field a = root.get("id");
-//        FieldT<Long> b = root.get("id", Long.class);
-//        Assert.assertEquals(a, b);
-//
-//        Tuple2<Long, String>[] res = session.query(id, name);
-//        Assert.assertEquals(res.length, 2);
-//        Assert.assertEquals(res[0]._1().longValue(), 1);
-//        Assert.assertEquals(res[1]._1().longValue(), 2);
-//        Assert.assertEquals(res[0]._2(), "name0");
-//        Assert.assertEquals(res[1]._2(), "name1");
-//    }
+
+    @Test
+    public void testGetTarget() {
+        Session session = db.openSession();
+        for (int i = 0; i < 2; i++) {
+            Obj obj = new Obj();
+            obj.setName("name" + i);
+            obj = Orm.convert(obj);
+            ExecuteRoot ex = Orm.insert(obj);
+            int ret = session.execute(ex);
+            Assert.assertEquals(ret, 1);
+        }
+
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        SelectableField<Long> id = root.get("id").as(Long.class);
+        SelectableField<String> name = root.get("name").as(String.class);
+
+        Field a = root.get("id");
+        SelectableField<Long> b = root.get("id").as(Long.class);
+
+        Query<Tuple2<Long, String>> query = Orm.select(id, name).from(root);
+
+        Tuple2<Long, String>[] res = (Tuple2<Long, String>[]) session.query(query);
+        Assert.assertEquals(res.length, 2);
+        Assert.assertEquals(res[0]._1().longValue(), 1);
+        Assert.assertEquals(res[1]._1().longValue(), 2);
+        Assert.assertEquals(res[0]._2(), "name0");
+        Assert.assertEquals(res[1]._2(), "name1");
+    }
+
+    @Test
+    public void testSumGroupBy() {
+        Session session = db.openSession();
+        {
+            Obj obj = new Obj();
+            obj.setName("name" + 0);
+            obj.setOm(new OM[]{new OM()});
+            obj = Orm.convert(obj);
+            ExecuteRoot ex = Orm.insert(obj);
+            ex.insert("om");
+            int ret = session.execute(ex);
+            Assert.assertEquals(ret, 2);
+        }
+        {
+            Obj obj = new Obj();
+            obj.setName("name" + 1);
+            obj.setOm(new OM[]{new OM(), new OM()});
+            obj = Orm.convert(obj);
+            ExecuteRoot ex = Orm.insert(obj);
+            ex.insert("om");
+            int ret = session.execute(ex);
+            Assert.assertEquals(ret, 3);
+        }
+
+        {
+            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Query<Long> query = Orm.select(root.sum(root.join("om").get("id"))).from(root);
+            Long res = session.first(query);
+            Assert.assertEquals(res.longValue(), 6);
+        }
+        {
+            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Join om = root.join("om");
+            Query<Tuple3<Long, Long, Long>> query = Orm.select(root.get("id").as(Long.class),
+                    root.sum(om.get("id")), root.count(om.get("id"))).from(root)
+                    .groupBy(root.get("id"));
+            Tuple3<Long, Long, Long>[] res = (Tuple3<Long, Long, Long>[]) session.query(query);
+            Assert.assertEquals(res.length, 2);
+            Assert.assertEquals(res[0]._1().longValue(), 1);
+            Assert.assertEquals(res[0]._2().longValue(), 1);
+            Assert.assertEquals(res[0]._3().longValue(), 1);
+            Assert.assertEquals(res[1]._1().longValue(), 2);
+            Assert.assertEquals(res[1]._2().longValue(), 5);
+            Assert.assertEquals(res[1]._3().longValue(), 2);
+        }
+        {
+            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Join om = root.join("om");
+            Query<Tuple3<Long, Long, Long>> query = Orm.select(root.get("id").as(Long.class),
+                    root.sum(om.get("id")), root.count(om.get("id"))).from(root)
+                    .groupBy(root.get("id"))
+                    .having(root.count(om.get("id")).gt(1));
+            Tuple3<Long, Long, Long>[] res = (Tuple3<Long, Long, Long>[]) session.query(query);
+            Assert.assertEquals(res.length, 1);
+            Assert.assertEquals(res[0]._1().longValue(), 2);
+            Assert.assertEquals(res[0]._2().longValue(), 5);
+            Assert.assertEquals(res[0]._3().longValue(), 2);
+        }
+    }
 }
