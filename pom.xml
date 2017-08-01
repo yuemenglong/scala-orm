@@ -3,9 +3,9 @@
                       http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <!-- <!– The Basics –> -->
-    <groupId>yy</groupId>
+    <groupId>io.github.yuemenglong</groupId>
     <artifactId>scala-orm</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
     <properties>
         <scala.version>2.12.2</scala.version>
