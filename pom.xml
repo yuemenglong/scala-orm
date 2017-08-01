@@ -7,6 +7,26 @@
     <artifactId>scala-orm</artifactId>
     <version>1.1.0</version>
     <packaging>jar</packaging>
+    <name>scala-orm</name>
+    <description>A light weight ORM framework written by scala</description>
+    <url>https://github.com/yuemenglong/scala-orm</url>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>yuemenglong</name>
+            <email>yuemenglong@126.com</email>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:git@github.com:yuemenglong/scala-orm.git</connection>
+        <developerConnection>scm:git:git@github.com:yuemenglong/scala-orm.git</developerConnection>
+        <url>git@github.com:yuemenglong/scala-orm.git</url>
+    </scm>
     <properties>
         <scala.version>2.12.2</scala.version>
     </properties>
@@ -115,6 +135,34 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>oss</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>oss</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 </project>
