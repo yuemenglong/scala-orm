@@ -1,6 +1,6 @@
 package test.model;
 
-import yy.orm.lang.anno.*;
+import io.github.yuemenglong.orm.lang.anno.*;
 
 import java.math.BigDecimal;
 import java.util.Date;

@@ -3,7 +3,7 @@ package test;
 import org.junit.Assert;
 import org.junit.Test;
 import test.model._ScalaObj;
-import yy.orm.Orm;
+import io.github.yuemenglong.orm.Orm;
 
 /**
  * Created by <yuemenglong@126.com> on 2017/7/20.

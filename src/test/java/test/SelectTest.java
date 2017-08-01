@@ -6,11 +6,11 @@ import org.junit.Test;
 import scala.Tuple2;
 import scala.Tuple3;
 import test.model.*;
-import yy.orm.Orm;
-import yy.orm.Session.Session;
-import yy.orm.db.Db;
-import yy.orm.operate.traits.Query;
-import yy.orm.operate.traits.core.*;
+import io.github.yuemenglong.orm.Orm;
+import io.github.yuemenglong.orm.Session.Session;
+import io.github.yuemenglong.orm.db.Db;
+import io.github.yuemenglong.orm.operate.traits.Query;
+import io.github.yuemenglong.orm.operate.traits.core.*;
 
 import java.util.ArrayList;
 

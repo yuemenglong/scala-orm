@@ -1,7 +1,7 @@
 package test.model;
 
-import yy.orm.lang.anno.Entity;
-import yy.orm.lang.anno.Id;
+import io.github.yuemenglong.orm.lang.anno.Entity;
+import io.github.yuemenglong.orm.lang.anno.Id;
 
 /**
  * Created by Administrator on 2017/7/10.

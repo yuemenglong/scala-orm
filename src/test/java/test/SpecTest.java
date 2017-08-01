@@ -3,11 +3,11 @@ package test;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import yy.orm.Orm;
-import yy.orm.Session.Session;
-import yy.orm.db.Db;
-import yy.orm.operate.traits.ExecutableInsert;
-import yy.orm.operate.traits.core.*;
+import io.github.yuemenglong.orm.Orm;
+import io.github.yuemenglong.orm.Session.Session;
+import io.github.yuemenglong.orm.db.Db;
+import io.github.yuemenglong.orm.operate.traits.ExecutableInsert;
+import io.github.yuemenglong.orm.operate.traits.core.*;
 import test.model.OM;
 import test.model.Obj;
 

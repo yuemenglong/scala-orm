@@ -1,9 +1,9 @@
 package test.model;
 
-import yy.orm.lang.anno.Entity;
-import yy.orm.lang.anno.Id;
-import yy.orm.lang.anno.OneToMany;
-import yy.orm.lang.anno.Pointer;
+import io.github.yuemenglong.orm.lang.anno.Entity;
+import io.github.yuemenglong.orm.lang.anno.Id;
+import io.github.yuemenglong.orm.lang.anno.OneToMany;
+import io.github.yuemenglong.orm.lang.anno.Pointer;
 
 /**
  * Created by <yuemenglong@126.com> on 2017/5/19.

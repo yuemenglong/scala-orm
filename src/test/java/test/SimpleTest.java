@@ -3,12 +3,12 @@ package test;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import yy.orm.Orm;
-import yy.orm.Session.Session;
-import yy.orm.db.Db;
-import yy.orm.operate.traits.Query;
-import yy.orm.operate.traits.core.ExecuteRoot;
-import yy.orm.operate.traits.core.SelectRoot;
+import io.github.yuemenglong.orm.Orm;
+import io.github.yuemenglong.orm.Session.Session;
+import io.github.yuemenglong.orm.db.Db;
+import io.github.yuemenglong.orm.operate.traits.Query;
+import io.github.yuemenglong.orm.operate.traits.core.ExecuteRoot;
+import io.github.yuemenglong.orm.operate.traits.core.SelectRoot;
 import test.model.*;
 
 import java.math.BigDecimal;
