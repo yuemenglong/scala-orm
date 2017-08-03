@@ -1,17 +1,19 @@
 package test;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import io.github.yuemenglong.orm.Orm;
 import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
 import io.github.yuemenglong.orm.operate.traits.ExecutableInsert;
-import io.github.yuemenglong.orm.operate.traits.core.*;
+import io.github.yuemenglong.orm.operate.traits.core.Executable;
+import io.github.yuemenglong.orm.operate.traits.core.ExecuteRoot;
+import io.github.yuemenglong.orm.operate.traits.core.Root;
+import io.github.yuemenglong.orm.operate.traits.core.SelectRoot;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import test.model.OM;
 import test.model.Obj;
-
-import java.util.ArrayList;
 
 /**
  * Created by <yuemenglong@126.com> on 2017/7/11.
@@ -22,16 +24,14 @@ public class SpecTest {
     @SuppressWarnings("Duplicates")
     @Before
     public void before() {
-        ArrayList<String> clazzList = new ArrayList<String>();
-        clazzList.add("test.model.Obj");
-        clazzList.add("test.model.Sub");
-        clazzList.add("test.model.Ptr");
-        clazzList.add("test.model.OO");
-        clazzList.add("test.model.OM");
-        clazzList.add("test.model.MO");
-        Orm.init(clazzList.toArray(new String[0]));
+        Orm.init("test.model");
         db = openDb();
         db.rebuild();
+    }
+
+    @After
+    public void after() {
+        Orm.clear();
     }
 
     private Db openDb() {

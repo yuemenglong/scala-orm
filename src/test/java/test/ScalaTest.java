@@ -1,5 +1,6 @@
 package test;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import test.model._ScalaObj;
@@ -15,5 +16,10 @@ public class ScalaTest {
         _ScalaObj obj = Orm.create(_ScalaObj.class);
         obj.id_$eq(1L);
         Assert.assertEquals(obj.id().longValue(), 1);
+    }
+
+    @After
+    public void after() {
+        Orm.clear();
     }
 }

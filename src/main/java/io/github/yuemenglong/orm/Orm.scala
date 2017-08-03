@@ -26,6 +26,10 @@ object Orm {
     Scanner.scan(clazzs)
   }
 
+  def clear(): Unit ={
+    OrmMeta.clear()
+  }
+
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
     require(OrmMeta.entityVec.nonEmpty)
     val ret = new Db(host, port, user, pwd, db)

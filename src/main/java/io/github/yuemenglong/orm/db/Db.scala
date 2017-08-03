@@ -23,9 +23,7 @@ class Db(val host: String, val port: Int, val username: String, val password: St
 
   def check(): Unit = {
     val conn = openConnection()
-    OrmMeta.entityVec.filter(!_.ignore).foreach(entityMeta => {
-      Checker.checkEntity(conn, entityMeta)
-    })
+    Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray)
     conn.close()
   }
 
