@@ -62,6 +62,7 @@ public class SimpleTest {
 
     @Test
     public void testCURD() {
+        String longText = "looooooooooooooooooooooooooooooooooooooooooooong";
         Session session = db.openSession();
 
         // 初始化数据
@@ -75,7 +76,9 @@ public class SimpleTest {
         person.setName("/TOM");
         person.setBirthday(new Date());
         person.setNowTime(new Date());
+        person.setDoubleValue(1.2);
         person.setPrice(new BigDecimal(123.45));
+        person.setLongText(longText);
 
         ptr.setValue(10);
         oo.setValue(100);
@@ -117,6 +120,8 @@ public class SimpleTest {
         Obj[] res = (Obj[]) session.query(query);
         Assert.assertEquals(res.length, 1);
         Assert.assertEquals(res[0].getId().intValue(), 1);
+        Assert.assertEquals(res[0].getLongText(), longText);
+        Assert.assertEquals(res[0].getDoubleValue(), 1.2, 0.0000000001);
         Assert.assertEquals(res[0].getAge().intValue(), 20);
         Assert.assertEquals(res[0].getPtr().getValue().intValue(), 10);
         Assert.assertEquals(res[0].getOo().getValue().intValue(), 100);

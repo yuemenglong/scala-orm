@@ -10,7 +10,6 @@ import io.github.yuemenglong.orm.operate.impl.core.{ExecuteRootImpl, RootImpl}
 import io.github.yuemenglong.orm.operate.traits.core._
 import io.github.yuemenglong.orm.operate.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, Query}
 
-import scala.annotation.varargs
 import scala.reflect.ClassTag
 
 object Orm {
@@ -29,7 +28,9 @@ object Orm {
 
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
     require(OrmMeta.entityVec.nonEmpty)
-    new Db(host, port, user, pwd, db)
+    val ret = new Db(host, port, user, pwd, db)
+    ret.check()
+    ret
   }
 
   def create[T](clazz: Class[T]): T = {

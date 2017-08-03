@@ -24,6 +24,8 @@ public class Obj {
     @Column(name = "age_")
     Integer age = null;
 
+    Double doubleValue = null;
+
     @Column(precision = 5, scale = 2)
     BigDecimal price = null;
 
@@ -33,6 +35,9 @@ public class Obj {
     Date birthday = null;
 
     Boolean married = false;
+
+    @LongText
+    String longText = null;
 
     @DateTime
     Date nowTime = null;
@@ -157,5 +162,21 @@ public class Obj {
 
     public void setOm(OM[] om) {
         this.om = om;
+    }
+
+    public String getLongText() {
+        return longText;
+    }
+
+    public Double getDoubleValue() {
+        return doubleValue;
+    }
+
+    public void setDoubleValue(Double doubleValue) {
+        this.doubleValue = doubleValue;
+    }
+
+    public void setLongText(String longText) {
+        this.longText = longText;
     }
 }

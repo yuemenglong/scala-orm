@@ -21,6 +21,14 @@ class Db(val host: String, val port: Int, val username: String, val password: St
     }
   }
 
+  def check(): Unit = {
+    val conn = openConnection()
+    OrmMeta.entityVec.filter(!_.ignore).foreach(entityMeta => {
+      Checker.checkEntity(conn, entityMeta)
+    })
+    conn.close()
+  }
+
   def rebuild(): Unit = {
     this.drop()
     this.create()
@@ -55,6 +63,22 @@ class Db(val host: String, val port: Int, val username: String, val password: St
     val ret = stmt.executeUpdate()
     conn.close()
     ret
+  }
+
+  def beginTransaction[T](fn: (Session) => T): T = {
+    val session = openSession()
+    val tx = session.beginTransaction()
+    try {
+      val ret = fn(session)
+      tx.commit()
+      ret
+    } catch {
+      case e: Throwable =>
+        tx.rollback()
+        throw e
+    } finally {
+      session.close()
+    }
   }
 }
 

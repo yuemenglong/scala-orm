@@ -37,6 +37,22 @@ class FieldMeta(val entity: EntityMeta,
   var refer: EntityMeta = _ // 最后统一注入，因为第一遍扫描时可能还没有生成
   Logger.info(s"[Entity: ${entity.entity}, Table: ${entity.table}, Field: $name, Column: $column]")
 
+  def getDbType: String = {
+    this.typeName match {
+      case "Integer" => "INT"
+      case "Long" => "BIGINT"
+      case "Float" => "FLOAT"
+      case "Double" => "DOUBLE"
+      case "Boolean" => "TINYINT"
+      case "BigDecimal" => "DECIMAL"
+      case "Date" => "DATE"
+      case "DateTime" => "DATETIME"
+      case "String" => "VARCHAR"
+      case "LongText" => "LONGTEXT"
+      case _ => throw new RuntimeException()
+    }
+  }
+
   def getDbSql: String = {
     var length = FieldMeta.DEFAULT_LEN
     var notnull = FieldMeta.DEFAULT_NOT_NULL
@@ -44,11 +60,7 @@ class FieldMeta(val entity: EntityMeta,
 
     if (columnAnno != null) {
       length = columnAnno.length()
-      notnull = if (columnAnno.nullable()) {
-        ""
-      } else {
-        " NOT NULL"
-      }
+      notnull = if (columnAnno.nullable()) "" else " NOT NULL"
       bigDecimalDetail = (columnAnno.precision(), columnAnno.scale()) match {
         case (0, 0) => ""
         case (p, s) => s"($p,$s)"
@@ -61,16 +73,16 @@ class FieldMeta(val entity: EntityMeta,
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
     }
     this.typeName match {
-      case "Integer" => s"`${this.column}` INTEGER$notnull$pkey"
-      case "Long" => s"`${this.column}` BIGINT$notnull$pkey"
-      case "Float" => s"`${this.column}` FLOAT$notnull$pkey"
-      case "Double" => s"`${this.column}` DOUBLE$notnull$pkey"
-      case "Boolean" => s"`${this.column}` BOOLEAN$notnull$pkey"
-      case "BigDecimal" => s"`${this.column}` DECIMAL$bigDecimalDetail$notnull$pkey"
-      case "Date" => s"`${this.column}` DATE$notnull$pkey"
-      case "DateTime" => s"`${this.column}` DATETIME$notnull$pkey"
+      case "Integer" |
+           "Long" |
+           "Float" |
+           "Double" |
+           "Boolean" |
+           "Date" |
+           "LongText" |
+           "DateTime" => s"`${this.column}` ${this.getDbType}$notnull$pkey"
       case "String" => s"`${this.column}` VARCHAR($length)$notnull$pkey"
-      case "LongText" => s"`${this.column}` LONGTEXT$notnull$pkey"
+      case "BigDecimal" => s"`${this.column}` DECIMAL$bigDecimalDetail$notnull$pkey"
       case _ => throw new RuntimeException()
     }
   }
