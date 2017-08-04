@@ -29,12 +29,12 @@ class FieldMeta(val entity: EntityMeta,
 
                 val name: String,
                 val column: String,
-                val columnAnno: Column,
+                val annotation: Column,
                 val ignore: Boolean,
 
                 val left: String,
                 val right: String) {
-  var refer: EntityMeta = _ // 最后统一注入，因为第一遍扫描时可能还没有生成
+  var refer: EntityMeta = _ // 最后统一注入，因为第一遍扫描时可能还没有生成 TODO
   Logger.info(s"[Entity: ${entity.entity}, Table: ${entity.table}, Field: $name, Column: $column]")
 
   def getDbType: String = {
@@ -58,10 +58,10 @@ class FieldMeta(val entity: EntityMeta,
     var notnull = FieldMeta.DEFAULT_NOT_NULL
     var bigDecimalDetail = ""
 
-    if (columnAnno != null) {
-      length = columnAnno.length()
-      notnull = if (columnAnno.nullable()) "" else " NOT NULL"
-      bigDecimalDetail = (columnAnno.precision(), columnAnno.scale()) match {
+    if (annotation != null) {
+      length = annotation.length()
+      notnull = if (annotation.nullable()) "" else " NOT NULL"
+      bigDecimalDetail = (annotation.precision(), annotation.scale()) match {
         case (0, 0) => ""
         case (p, s) => s"($p,$s)"
       }
