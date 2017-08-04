@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.db
 
 import java.sql.Connection
 
-import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta}
+import io.github.yuemenglong.orm.meta.EntityMeta
 
 /**
   * Created by <yuemenglong@126.com> on 2017/8/2.
@@ -47,8 +47,8 @@ object Checker {
     columnedField.foreach(field => {
       val column = field.column
       if (!columnMap.contains(column)) {
-        val alterSql = field.getAlterSql
-        throw new RuntimeException(s"${meta.entity}'s Column $column Is Missed, You May Nedd:\n$alterSql")
+        val alterSql = Column.add(field)
+        throw new RuntimeException(s"[${meta.entity}]'s Column [$column] Is Missed, You May Nedd:\n$alterSql")
       }
       val dbType = columnMap(column)
       val eq = (dbType, field.getDbType) match {
@@ -60,8 +60,14 @@ object Checker {
       }
     })
     if (metaData.getColumnCount != columnedField.length) {
-      println(metaData.getColumnCount, columnedField.length)
-      throw new RuntimeException(s"${meta.entity} Entity Field & Table Column Not Match")
+      // Entity里有的字段表里都有，这种情况只能是表里有的字段Entity里没有
+      val entityColumnSet: Set[String] = columnedField.map(_.column)(collection.breakOut)
+      columnMap.foreach(p => {
+        if (!entityColumnSet.contains(p._1)) {
+          val dropSql = s"ALTER TABLE ${meta.table} DROP COLUMN ${p._1}"
+          throw new RuntimeException(s"[${meta.entity}] Not Has Column: [${p._1}], You May Need:\n$dropSql")
+        }
+      })
     }
   }
 }

@@ -87,10 +87,6 @@ class FieldMeta(val entity: EntityMeta,
     }
   }
 
-  def getAlterSql: String = {
-    s"ALTER TABLE ${entity.table} ADD $getDbSql"
-  }
-
   def isNormal: Boolean = {
     if (this.pkey) {
       return false
