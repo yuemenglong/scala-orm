@@ -43,7 +43,7 @@ class FieldMeta(val entity: EntityMeta,
       case "Long" => "BIGINT"
       case "Float" => "FLOAT"
       case "Double" => "DOUBLE"
-      case "Boolean" => "TINYINT"
+      case "Boolean" => "BOOLEAN"
       case "BigDecimal" => "DECIMAL"
       case "Date" => "DATE"
       case "DateTime" => "DATETIME"

@@ -53,6 +53,7 @@ object Checker {
       val dbType = columnMap(column)
       val eq = (dbType, field.getDbType) match {
         case ("VARCHAR", "LONGTEXT") => true
+        case ("TINYINT", "BOOLEAN") => true
         case (a, b) => a == b
       }
       if (!eq) {
