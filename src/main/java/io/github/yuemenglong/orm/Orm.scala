@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.impl._
-import io.github.yuemenglong.orm.operate.impl.core.{ExecuteRootImpl, RootImpl}
+import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, ExecuteRootImpl, RootImpl}
 import io.github.yuemenglong.orm.operate.traits.core._
 import io.github.yuemenglong.orm.operate.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, Query}
 
@@ -68,6 +68,8 @@ object Orm {
     }
     new RootImpl[T](clazz, OrmMeta.entityMap(clazz.getSimpleName))
   }
+
+  def cond(): Cond = new CondHolder
 
   def select[T](s: Selectable[T]): Query[T] = {
     val st = new SelectableTupleImpl[T](s.getType, s)

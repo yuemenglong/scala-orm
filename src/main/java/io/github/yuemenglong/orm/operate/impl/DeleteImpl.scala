@@ -4,7 +4,7 @@ import java.sql.Connection
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.impl.core.CondRoot
+import io.github.yuemenglong.orm.operate.impl.core.CondHolder
 import io.github.yuemenglong.orm.operate.traits.ExecutableDelete
 import io.github.yuemenglong.orm.operate.traits.core.{Cond, Root}
 
@@ -13,7 +13,7 @@ import io.github.yuemenglong.orm.operate.traits.core.{Cond, Root}
   */
 
 class DeleteImpl(root: Root[_]) extends ExecutableDelete {
-  var cond: Cond = new CondRoot
+  var cond: Cond = new CondHolder
 
   override def where(c: Cond): ExecutableDelete = {
     cond = c

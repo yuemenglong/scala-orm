@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by yml on 2017/7/15.
   */
-class CondRoot extends Cond {
+class CondHolder extends Cond {
   override def and(cond: Cond): Cond = And(cond)
 
   override def or(cond: Cond): Cond = Or(cond)

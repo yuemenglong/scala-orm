@@ -4,7 +4,7 @@ import java.sql.Connection
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.impl.core.CondRoot
+import io.github.yuemenglong.orm.operate.impl.core.CondHolder
 import io.github.yuemenglong.orm.operate.traits.ExecutableUpdate
 import io.github.yuemenglong.orm.operate.traits.core.{Assign, Cond, Executable, Root}
 
@@ -15,7 +15,7 @@ import scala.annotation.varargs
   */
 
 class UpdateImpl(root: Root[_]) extends ExecutableUpdate {
-  var cond: Cond = new CondRoot
+  var cond: Cond = new CondHolder
   var assigns: Array[Assign] = Array()
 
   override def where(c: Cond): Executable = {

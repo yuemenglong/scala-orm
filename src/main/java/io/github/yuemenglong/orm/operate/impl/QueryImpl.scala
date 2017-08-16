@@ -5,7 +5,7 @@ import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.impl.core.{CondRoot, SelectableFieldImpl}
+import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, SelectableFieldImpl}
 import io.github.yuemenglong.orm.operate.traits.core._
 import io.github.yuemenglong.orm.operate.traits.{Query, SelectableTuple}
 
@@ -19,7 +19,7 @@ import scala.reflect.ClassTag
 
 class QueryImpl[T](private var st: SelectableTuple[T],
                    private var root: SelectRoot[_] = null,
-                   private var cond: Cond = new CondRoot(),
+                   private var cond: Cond = new CondHolder(),
                    private var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)](),
                    private var limitOffset: (Long, Long) = (-1, -1),
                    private var groupByVar: Array[Field] = Array[Field](),
