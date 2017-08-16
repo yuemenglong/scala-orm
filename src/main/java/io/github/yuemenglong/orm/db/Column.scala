@@ -6,11 +6,15 @@ import io.github.yuemenglong.orm.meta.FieldMeta
   * Created by <yuemenglong@126.com> on 2017/8/4.
   */
 object Column {
-  def add(field: FieldMeta): String = {
+  def getAddSql(field: FieldMeta): String = {
     s"ALTER TABLE ${field.entity.table} ADD ${field.getDbSql}"
   }
 
-  def drop(field: FieldMeta): String = {
+  def getDropSql(field: FieldMeta): String = {
     s"ALTER TABLE ${field.entity.table} DROP ${field.column}"
+  }
+
+  def getDropSql(table: String, column: String): String = {
+    s"ALTER TABLE $table DROP $column"
   }
 }

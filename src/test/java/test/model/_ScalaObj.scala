@@ -1,7 +1,6 @@
 package test.model
 
-import java.lang.Long
-import java.lang.Boolean
+import java.lang.{Boolean, Long}
 
 import io.github.yuemenglong.orm.lang.anno.{Entity, Id}
 
@@ -15,3 +14,4 @@ class _ScalaObj {
   var isTrue: Boolean = _
   var name: String = _
 }
+

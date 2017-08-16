@@ -25,7 +25,11 @@ object Table {
   }
 
   def getDropSql(meta: EntityMeta): String = {
-    val sql = s"DROP TABLE IF EXISTS `${meta.table}`"
+    getDropSql(meta.table)
+ }
+
+  def getDropSql(table: String): String = {
+    val sql = s"DROP TABLE IF EXISTS `$table`"
     sql
   }
 }
