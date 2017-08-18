@@ -159,8 +159,9 @@ object Scanner {
     meta.fieldVec.foreach(field => {
       if (field.isPkey && meta.pkey != null) {
         throw new RuntimeException(s"${meta.entity} Has Multi Pkey")
+      } else if (field.isPkey) {
+        meta.pkey = field
       }
-      meta.pkey = field
     })
     if (meta.pkey == null) {
       throw new RuntimeException(s"${meta.entity} Has No Pkey")
