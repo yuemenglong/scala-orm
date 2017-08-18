@@ -187,14 +187,14 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     println(s"[Params] => [$params]")
 
     val affected = stmt.executeUpdate()
-    if (!core.meta.pkey.auto) {
+    if (!core.meta.pkey2.auto) {
       stmt.close()
       return affected
     }
     val rs = stmt.getGeneratedKeys
     if (rs.next()) {
       val id = rs.getObject(1)
-      core.fieldMap += (core.meta.pkey.name -> id)
+      core.fieldMap += (core.meta.pkey2.name -> id)
     }
     rs.close()
     stmt.close()
@@ -211,7 +211,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
     }).mkString(", ")
-    val idCond = s"${core.meta.pkey.column} = ?"
+    val idCond = s"${core.meta.pkey2.column} = ?"
     val sql = s"UPDATE ${core.meta.table} SET $columns WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     validFields.zipWithIndex.foreach { case (field, i) =>
@@ -220,7 +220,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     stmt.setObject(validFields.length + 1, core.getPkey)
     println(sql)
     // id作为条件出现
-    val params = validFields.++(Array(core.meta.pkey)).map(item => {
+    val params = validFields.++(Array(core.meta.pkey2)).map(item => {
       core.get(item.name) match {
         case null => "null"
         case v => v.toString
@@ -236,7 +236,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
 class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Delete Entity Must Has Pkey")
-    val idCond = s"${core.meta.pkey.name} = ?"
+    val idCond = s"${core.meta.pkey2.name} = ?"
     val sql = s"DELETE FROM ${core.meta.table} WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     stmt.setObject(1, core.getPkey)

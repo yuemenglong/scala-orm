@@ -25,10 +25,10 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   })
 
   def getPkey: Object = {
-    if (!fieldMap.contains(meta.pkey.name)) {
+    if (!fieldMap.contains(meta.pkey2.name)) {
       return null
     }
-    fieldMap(meta.pkey.name)
+    fieldMap(meta.pkey2.name)
   }
 
   def get(field: String): Object = {

@@ -6,7 +6,7 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta}
+import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMetaDeclared}
 import io.github.yuemenglong.orm.operate.impl._
 import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.traits.core._
@@ -18,7 +18,7 @@ import scala.reflect.ClassTag
 /**
   * Created by <yuemenglong@126.com> on 2017/7/15.
   */
-class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) extends Field {
+class FieldImpl(val field: String, val meta: FieldMetaDeclared, val parent: JoinImpl) extends Field {
   override def getColumn: String = s"${parent.getAlias}.${meta.column}"
 
   override def getAlias: String = s"${parent.getAlias}$$${Kit.lodashCase(meta.name)}"

@@ -57,6 +57,13 @@ object Kit {
     }.toMap
   }
 
+  def getGenericType(clazz: Class[_]): Class[_] = {
+    if (!clazz.isArray) {
+      return clazz
+    }
+    clazz
+  }
+
   def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>
