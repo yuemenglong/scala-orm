@@ -62,7 +62,7 @@ object Checker {
       (column, dbType)
     })(collection.breakOut)
     val entityColumnMap: Map[String, String] = meta.managedFieldVec().filter(f => f.isNormalOrPkey)
-      .map(f => (f.column, f.getDbType))(collection.breakOut)
+      .map(f => (f.column, f.dbType))(collection.breakOut)
     val columnMap: Map[String, FieldMeta] = meta.managedFieldVec().filter(_.isNormalOrPkey)
       .map(f => (f.column, f))(collection.breakOut)
     // need drop

@@ -16,11 +16,12 @@ class EntityMeta(val clazz: Class[_], val ignore: Boolean = false) {
   var pkey: FieldMeta = _
   var fieldVec: ArrayBuffer[FieldMeta] = ArrayBuffer()
   var fieldMap: Map[String, FieldMeta] = Map()
+
   var getterMap: Map[Method, FieldMeta] = Map()
   var setterMap: Map[Method, FieldMeta] = Map()
 
   def managedFieldVec(): ArrayBuffer[FieldMeta] = {
-    fieldVec.filter(!_.ignore)
+    fieldVec
   }
 }
 

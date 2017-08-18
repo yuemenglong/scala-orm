@@ -2,10 +2,10 @@ package io.github.yuemenglong.orm.entity
 
 import java.lang.reflect.Method
 
-import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.meta.{FieldMetaTypeKind, OrmMeta}
+import io.github.yuemenglong.orm.meta._
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
 import scala.reflect.ClassTag
 
@@ -67,23 +67,34 @@ object EntityManager {
       field.setAccessible(true)
       val name = field.getName
       val fieldMeta = meta.fieldMap(name)
-      val value = fieldMeta.typeKind match {
-        case FieldMetaTypeKind.BUILT_IN
-             | FieldMetaTypeKind.IGNORE_BUILT_IN
-        => field.get(obj)
-        case FieldMetaTypeKind.REFER
-             | FieldMetaTypeKind.POINTER
-             | FieldMetaTypeKind.ONE_ONE
-             | FieldMetaTypeKind.IGNORE_REFER
-        => convert(field.get(obj))
-        case FieldMetaTypeKind.ONE_MANY
-             | FieldMetaTypeKind.IGNORE_MANY
-        => val bs = field.get(obj).asInstanceOf[Array[Object]]
+      val value = fieldMeta match {
+        case _: FieldMetaBuildIn => field.get(obj)
+        case _: FieldMetaPointer => convert(field.get(obj))
+        case _: FieldMetaOneOne => convert(field.get(obj))
+        case f: FieldMetaOneMany =>
+          val bs = field.get(obj).asInstanceOf[Array[Object]]
           if (bs == null) {
             throw new RuntimeException("Array Must Init To Empty Rather Than Null")
           }
-          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
+          val ct = ClassTag[Entity](f.refer.clazz)
           bs.map(convert).toArray(ct)
+        //        //      val value = fieldMeta.typeKind match {
+        //        case FieldMetaTypeKind.BUILT_IN
+        //             | FieldMetaTypeKind.IGNORE_BUILT_IN
+        //        => field.get(obj)
+        //        case FieldMetaTypeKind.REFER
+        //             | FieldMetaTypeKind.POINTER
+        //             | FieldMetaTypeKind.ONE_ONE
+        //             | FieldMetaTypeKind.IGNORE_REFER
+        //        => convert(field.get(obj))
+        //        case FieldMetaTypeKind.ONE_MANY
+        //             | FieldMetaTypeKind.IGNORE_MANY
+        //        => val bs = field.get(obj).asInstanceOf[Array[Object]]
+        //          if (bs == null) {
+        //            throw new RuntimeException("Array Must Init To Empty Rather Than Null")
+        //          }
+        //          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
+        //          bs.map(convert).toArray(ct)
       }
       (name, value)
     })(collection.breakOut)
@@ -99,7 +110,7 @@ object EntityManager {
       } else {
         val fieldMeta = entity.$$core().meta.fieldMap(name)
         val newValue: Object = if (value.getClass.isArray) {
-          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
+          val ct = ClassTag[Entity](fieldMeta.asInstanceOf[FieldMetaRefer].refer.clazz)
           value.asInstanceOf[Array[_]].map(_.asInstanceOf[Entity])
             .map(walk(_, fn)).toArray(ct)
         } else value match {

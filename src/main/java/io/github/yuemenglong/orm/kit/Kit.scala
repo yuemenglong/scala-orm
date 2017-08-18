@@ -57,6 +57,14 @@ object Kit {
     }.toMap
   }
 
+  def getArrayType(clazz: Class[_]): Class[_] = {
+    if (!clazz.isArray) {
+      return clazz
+    }
+    val name = clazz.getName.replaceAll("(^\\[L)|(;$)", "")
+    Class.forName(name)
+  }
+
   def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>
