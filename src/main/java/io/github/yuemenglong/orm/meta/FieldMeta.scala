@@ -176,6 +176,7 @@ class FieldMetaDateTime(field: Field, entity: EntityMeta) extends FieldMetaDecla
 abstract class FieldMetaRefer(field: Field, entity: EntityMeta, val refer: EntityMeta) extends FieldMetaDeclared(field, entity) {
   protected def getLeftRight: (String, String)
 
+  override val column: String = null
   override val dbType: String = null
 
   val (left, right) = getLeftRight
@@ -188,7 +189,7 @@ class FieldMetaPointer(field: Field, entity: EntityMeta, refer: EntityMeta) exte
   override def getLeftRight: (String, String) = {
     var (left, right) = (annoPointer.left(), annoPointer.right())
     if (left.isEmpty) {
-      left = Kit.lodashCase(name) + "_id"
+      left = Kit.lodashCase(name) + "Id"
     }
     if (right.isEmpty) {
       right = "id"
@@ -207,7 +208,7 @@ class FieldMetaOneOne(field: Field, entity: EntityMeta, refer: EntityMeta) exten
       left = "id"
     }
     if (right.isEmpty) {
-      right = Kit.lodashCase(entity.entity) + "_id"
+      right = Kit.lodashCase(entity.entity) + "Id"
     }
     (left, right)
   }
@@ -223,7 +224,7 @@ class FieldMetaOneMany(field: Field, entity: EntityMeta, refer: EntityMeta) exte
       left = "id"
     }
     if (right.isEmpty) {
-      right = Kit.lodashCase(entity.entity) + "_id"
+      right = Kit.lodashCase(entity.entity) + "Id"
     }
     (left, right)
   }
