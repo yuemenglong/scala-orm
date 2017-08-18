@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.meta.{FieldMeta, FieldMetaDeclared}
   */
 object Column {
   def getAddSql(field: FieldMeta): String = {
-    s"ALTER TABLE ${field.entity.table} ADD ${field.dbSql}"
+    s"ALTER TABLE ${field.entity.table} ADD ${field.getDbSql}"
   }
 
   def getDropSql(field: FieldMeta): String = {

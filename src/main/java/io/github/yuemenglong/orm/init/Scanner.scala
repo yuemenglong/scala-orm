@@ -159,8 +159,11 @@ object Scanner {
     meta.fieldVec.foreach(field => {
       if (field.isPkey && meta.pkey != null) {
         throw new RuntimeException(s"${meta.entity} Has Multi Pkey")
+      } else if (field.isPkey) {
+        meta.pkey = field
       }
-      meta.pkey = field
+      println(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, " +
+        s"Field: ${field.name}, Column: ${field.column}, DbType: ${field.dbType}")
     })
     if (meta.pkey == null) {
       throw new RuntimeException(s"${meta.entity} Has No Pkey")
@@ -290,6 +293,7 @@ object Scanner {
     if (list == null) {
       return Array()
     }
-    list.flatMap(f => scanFile(f.getPath))
+    list
+    .flatMap(f => scanFile(f.getPath))
   }
 }

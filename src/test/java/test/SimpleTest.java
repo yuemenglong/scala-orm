@@ -85,7 +85,8 @@ public class SimpleTest {
 
         // 忽略的数据
         person.setIgnValue(0);
-        person.setIgn(Orm.create(Ign.class));
+//        person.setIgn(Orm.create(Ign.class));
+        person.setIgn(new Ign());
 
         // 初始化关系
         person.setPtr(ptr);

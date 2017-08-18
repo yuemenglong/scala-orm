@@ -26,7 +26,8 @@ trait FieldMeta {
   val isAuto: Boolean
 
   val dbType: String
-  val dbSql: String = {
+
+  def getDbSql: String = {
     val notnull = if (nullable) "" else " NOT NULL"
     val pkey = (isPkey, isAuto) match {
       case (false, _) => ""
@@ -71,21 +72,21 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   val annoOneOne: OneToOne = field.getAnnotation(classOf[OneToOne])
   val annoOneMany: OneToMany = field.getAnnotation(classOf[OneToMany])
 
-  val name: String = field.getName
-  val clazz: Class[_] = field.getType
-  val column: String = annoColumn match {
+  override val name: String = field.getName
+  override val clazz: Class[_] = field.getType
+  override val column: String = annoColumn match {
     case null => Kit.lodashCase(name)
     case _ => annoColumn.name().length match {
       case 0 => Kit.lodashCase(name)
       case _ => annoColumn.name()
     }
   }
-  val nullable: Boolean = annoColumn match {
+  override val nullable: Boolean = annoColumn match {
     case null => true
     case _ => annoColumn.nullable()
   }
-  val isPkey: Boolean = annoId != null
-  val isAuto: Boolean = isPkey && annoId.auto()
+  override val isPkey: Boolean = annoId != null
+  override val isAuto: Boolean = isPkey && annoId.auto()
 }
 
 class FieldMetaInteger(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
@@ -121,7 +122,7 @@ class FieldMetaString(field: Field, entity: EntityMeta) extends FieldMetaDeclare
     255
   }
   override val dbType: String = "VARCHAR"
-  override val dbSql: String = {
+  override val getDbSql: String = {
     val notnull = if (nullable) "" else " NOT NULL"
     val pkey = (isPkey, isAuto) match {
       case (false, _) => ""
@@ -140,7 +141,7 @@ class FieldMetaDecimal(field: Field, entity: EntityMeta) extends FieldMetaDeclar
     (0, 0)
   }
   override val dbType: String = "DECIMAL"
-  override val dbSql: String = {
+  override val getDbSql: String = {
     val notnull = if (nullable) "" else " NOT NULL"
     val pkey = (isPkey, isAuto) match {
       case (false, _) => ""
@@ -175,7 +176,8 @@ class FieldMetaDateTime(field: Field, entity: EntityMeta) extends FieldMetaDecla
 abstract class FieldMetaRefer(field: Field, entity: EntityMeta, val refer: EntityMeta) extends FieldMetaDeclared(field, entity) {
   protected def getLeftRight: (String, String)
 
-  override val dbType: String = throw new RuntimeException("Unreachable Code")
+  override val column: String = null
+  override val dbType: String = null
 
   val (left, right) = getLeftRight
 }
@@ -187,7 +189,7 @@ class FieldMetaPointer(field: Field, entity: EntityMeta, refer: EntityMeta) exte
   override def getLeftRight: (String, String) = {
     var (left, right) = (annoPointer.left(), annoPointer.right())
     if (left.isEmpty) {
-      left = Kit.lodashCase(name) + "_id"
+      left = Kit.lodashCase(name) + "Id"
     }
     if (right.isEmpty) {
       right = "id"
@@ -206,7 +208,7 @@ class FieldMetaOneOne(field: Field, entity: EntityMeta, refer: EntityMeta) exten
       left = "id"
     }
     if (right.isEmpty) {
-      right = Kit.lodashCase(entity.entity) + "_id"
+      right = Kit.lodashCase(entity.entity) + "Id"
     }
     (left, right)
   }
@@ -222,7 +224,7 @@ class FieldMetaOneMany(field: Field, entity: EntityMeta, refer: EntityMeta) exte
       left = "id"
     }
     if (right.isEmpty) {
-      right = Kit.lodashCase(entity.entity) + "_id"
+      right = Kit.lodashCase(entity.entity) + "Id"
     }
     (left, right)
   }
