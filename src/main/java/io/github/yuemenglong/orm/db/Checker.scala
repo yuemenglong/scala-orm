@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.db
 
 import java.sql.Connection
 
-import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMetaDeclared}
+import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/8/2.
@@ -62,8 +62,8 @@ object Checker {
       (column, dbType)
     })(collection.breakOut)
     val entityColumnMap: Map[String, String] = meta.managedFieldVec().filter(f => f.isNormalOrPkey)
-      .map(f => (f.column, f.getDbType))(collection.breakOut)
-    val columnMap: Map[String, FieldMetaDeclared] = meta.managedFieldVec().filter(_.isNormalOrPkey)
+      .map(f => (f.column, f.dbType))(collection.breakOut)
+    val columnMap: Map[String, FieldMeta] = meta.managedFieldVec().filter(_.isNormalOrPkey)
       .map(f => (f.column, f))(collection.breakOut)
     // need drop
     val needDrops = tableColumnMap.map { case (column, _) =>

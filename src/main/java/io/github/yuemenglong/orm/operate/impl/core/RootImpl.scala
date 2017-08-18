@@ -6,7 +6,7 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMetaDeclared}
+import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.impl._
 import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.traits.core._
@@ -18,7 +18,7 @@ import scala.reflect.ClassTag
 /**
   * Created by <yuemenglong@126.com> on 2017/7/15.
   */
-class FieldImpl(val field: String, val meta: FieldMetaDeclared, val parent: JoinImpl) extends Field {
+class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) extends Field {
   override def getColumn: String = s"${parent.getAlias}.${meta.column}"
 
   override def getAlias: String = s"${parent.getAlias}$$${Kit.lodashCase(meta.name)}"
@@ -55,13 +55,13 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
   override def getMeta: EntityMeta = meta
 
   override def join(field: String, joinType: JoinType): Join = {
-    if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isObject) {
+    if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Join Field $field")
     }
     joins.find(_.field == field) match {
       case Some(join) => join
       case None =>
-        val refer = meta.fieldMap(field).refer
+        val refer = meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer
         val join = new JoinImpl(field, refer, this, joinType)
         joins += join
         join
@@ -69,7 +69,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
   }
 
   override def get(field: String): Field = {
-    if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isObject) {
+    if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Join Field $field")
     }
     fields.find(_.field == field) match {
@@ -98,7 +98,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
     if (parent == null) {
       s"${meta.table} AS $getAlias"
     } else {
-      val fieldMeta = parent.getMeta.fieldMap(field)
+      val fieldMeta = parent.getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer]
       val leftColumn = parent.getMeta.fieldMap(fieldMeta.left).column
       val rightColumn = meta.fieldMap(fieldMeta.right).column
       val leftTable = parent.getAlias
@@ -140,7 +140,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   override def as[R](clazz: Class[R]): SelectableJoin[R] = throw new RuntimeException("Already Selectable")
 
   override def select(field: String): SelectJoin = {
-    if (!impl.meta.fieldMap.contains(field) || !impl.meta.fieldMap(field).isObject) {
+    if (!impl.meta.fieldMap.contains(field) || !impl.meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Object Field $field")
     }
     selects.find(_.impl.field == field) match {
@@ -195,20 +195,37 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
       val field = select.impl.field
       val fieldMeta = impl.meta.fieldMap(field)
       val b = select.pickResult(resultSet, filterMap)
-      if (!fieldMeta.isOneMany) {
-        aCore.fieldMap += (field -> b)
-      } else if (b != null) {
-        // b为null相当于初始化空数组，暂时放在empty里实现，需要再考虑 TODO
-        val key = getOneManyFilterKey(field, b.$$core())
-        if (!filterMap.contains(key)) {
-          // 该对象还未被加入过一对多数组
-          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
-          val builder = Array.newBuilder(ct) += b
-          val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
-          aCore.fieldMap += (field -> (arr ++ builder.result()))
-        }
-        filterMap += (key -> b)
+      fieldMeta match {
+        case _: FieldMetaPointer => aCore.fieldMap += (field -> b)
+        case _: FieldMetaOneOne => aCore.fieldMap += (field -> b)
+        case f: FieldMetaOneMany =>
+          // b为null相当于初始化空数组，暂时放在empty里实现，需要再考虑 TODO
+          if (b != null) {
+            val key = getOneManyFilterKey(field, b.$$core())
+            if (!filterMap.contains(key)) {
+              // 该对象还未被加入过一对多数组
+              val ct = ClassTag[Entity](f.refer.clazz)
+              val builder = Array.newBuilder(ct) += b
+              val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
+              aCore.fieldMap += (field -> (arr ++ builder.result()))
+            }
+            filterMap += (key -> b)
+          }
       }
+      //      if (!fieldMeta.isOneMany) {
+      //        aCore.fieldMap += (field -> b)
+      //      } else if (b != null) {
+      //        // b为null相当于初始化空数组，暂时放在empty里实现，需要再考虑 TODO
+      //        val key = getOneManyFilterKey(field, b.$$core())
+      //        if (!filterMap.contains(key)) {
+      //          // 该对象还未被加入过一对多数组
+      //          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
+      //          val builder = Array.newBuilder(ct) += b
+      //          val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
+      //          aCore.fieldMap += (field -> (arr ++ builder.result()))
+      //        }
+      //        filterMap += (key -> b)
+      //      }
     }
   }
 

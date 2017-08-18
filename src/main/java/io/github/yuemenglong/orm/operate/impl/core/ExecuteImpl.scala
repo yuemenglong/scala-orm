@@ -4,7 +4,7 @@ import java.sql.{Connection, Statement}
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.meta.EntityMeta
+import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.traits.core.{ExecuteJoin, ExecuteRoot}
 
 import scala.collection.mutable.ArrayBuffer
@@ -46,7 +46,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
       val bCore = b.$$core()
       ret += ex.execute(b, conn)
       // a.b_id = b.id
-      val fieldMeta = core.meta.fieldMap(field)
+      val fieldMeta = core.meta.fieldMap(field).asInstanceOf[FieldMetaPointer]
       core.fieldMap += (fieldMeta.left -> bCore.fieldMap(fieldMeta.right))
     }
     ret
@@ -60,7 +60,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
         core.fieldMap(field) != null
     }.foreach { case (field, ex) =>
       // b.a_id = a.id
-      val fieldMeta = core.meta.fieldMap(field)
+      val fieldMeta = core.meta.fieldMap(field).asInstanceOf[FieldMetaOneOne]
       val b = core.fieldMap(field).asInstanceOf[Entity]
       val bCore = b.$$core()
       bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
@@ -87,7 +87,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
           }
         } else {
           // b.a_id = a.id
-          val fieldMeta = core.meta.fieldMap(field)
+          val fieldMeta = core.meta.fieldMap(field).asInstanceOf[FieldMetaOneMany]
           val bCore = b.$$core()
           bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
           // insert(b)
@@ -100,26 +100,26 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   private def checkField(field: String): Unit = {
     if (!meta.fieldMap.contains(field)) throw new RuntimeException(s"Unknown Field $field In ${meta.entity}")
-    if (!meta.fieldMap(field).isObject) throw new RuntimeException(s"$field Is Not Object")
+    if (!meta.fieldMap(field).isRefer) throw new RuntimeException(s"$field Is Not Object")
   }
 
   override def insert(field: String): ExecuteJoin = {
     checkField(field)
-    val execute = new InsertJoin(meta.fieldMap(field).refer)
+    val execute = new InsertJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
     withs.+=((field, execute))
     withs.last._2
   }
 
   override def update(field: String): ExecuteJoin = {
     checkField(field)
-    val execute = new UpdateJoin(meta.fieldMap(field).refer)
+    val execute = new UpdateJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
     withs.+=((field, execute))
     withs.last._2
   }
 
   override def delete(field: String): ExecuteJoin = {
     checkField(field)
-    val execute = new DeleteJoin(meta.fieldMap(field).refer)
+    val execute = new DeleteJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
     withs.+=((field, execute))
     withs.last._2
   }
@@ -187,14 +187,14 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     println(s"[Params] => [$params]")
 
     val affected = stmt.executeUpdate()
-    if (!core.meta.pkey2.auto) {
+    if (!core.meta.pkey.isAuto) {
       stmt.close()
       return affected
     }
     val rs = stmt.getGeneratedKeys
     if (rs.next()) {
       val id = rs.getObject(1)
-      core.fieldMap += (core.meta.pkey2.name -> id)
+      core.fieldMap += (core.meta.pkey.name -> id)
     }
     rs.close()
     stmt.close()
@@ -211,7 +211,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
     }).mkString(", ")
-    val idCond = s"${core.meta.pkey2.column} = ?"
+    val idCond = s"${core.meta.pkey.column} = ?"
     val sql = s"UPDATE ${core.meta.table} SET $columns WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     validFields.zipWithIndex.foreach { case (field, i) =>
@@ -220,7 +220,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     stmt.setObject(validFields.length + 1, core.getPkey)
     println(sql)
     // id作为条件出现
-    val params = validFields.++(Array(core.meta.pkey2)).map(item => {
+    val params = validFields.++(Array(core.meta.pkey)).map(item => {
       core.get(item.name) match {
         case null => "null"
         case v => v.toString
@@ -236,7 +236,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
 class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Delete Entity Must Has Pkey")
-    val idCond = s"${core.meta.pkey2.name} = ?"
+    val idCond = s"${core.meta.pkey.name} = ?"
     val sql = s"DELETE FROM ${core.meta.table} WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     stmt.setObject(1, core.getPkey)

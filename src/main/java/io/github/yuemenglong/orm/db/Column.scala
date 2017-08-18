@@ -1,16 +1,16 @@
 package io.github.yuemenglong.orm.db
 
-import io.github.yuemenglong.orm.meta.FieldMetaDeclared
+import io.github.yuemenglong.orm.meta.{FieldMeta, FieldMetaDeclared}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/8/4.
   */
 object Column {
-  def getAddSql(field: FieldMetaDeclared): String = {
-    s"ALTER TABLE ${field.entity.table} ADD ${field.getDbSql}"
+  def getAddSql(field: FieldMeta): String = {
+    s"ALTER TABLE ${field.entity.table} ADD ${field.dbSql}"
   }
 
-  def getDropSql(field: FieldMetaDeclared): String = {
+  def getDropSql(field: FieldMeta): String = {
     s"ALTER TABLE ${field.entity.table} DROP ${field.column}"
   }
 

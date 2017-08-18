@@ -17,7 +17,9 @@ import io.github.yuemenglong.orm.lang.anno._
 //}
 
 trait FieldMeta {
+  val entity: EntityMeta
   val name: String
+  val clazz: Class[_]
   val column: String
   val nullable: Boolean
   val isPkey: Boolean
@@ -33,14 +35,31 @@ trait FieldMeta {
     }
     s"$column $dbType$notnull$pkey"
   }
+
+  def isNormalOrPkey: Boolean = !isRefer
+
+  def isNormal: Boolean = isNormalOrPkey && !isPkey
+
+  def isRefer: Boolean = this.isInstanceOf[FieldMetaRefer]
+
+  def isPointer: Boolean = this.isInstanceOf[FieldMetaPointer]
+
+  def isOneOne: Boolean = this.isInstanceOf[FieldMetaOneOne]
+
+  def isOneMany: Boolean = this.isInstanceOf[FieldMetaOneMany]
 }
 
-class FieldMetaFkey(override val name: String, meta: FieldMetaRefer) extends FieldMeta {
+trait FieldMetaBuildIn extends FieldMeta
+
+class FieldMetaFkey(override val name: String,
+                    override val entity: EntityMeta,
+                    referMeta: FieldMetaRefer) extends FieldMeta with FieldMetaBuildIn {
   override val column: String = Kit.lodashCase(name)
-  override val nullable: Boolean = meta.nullable
-  override val isPkey: Boolean = meta.isPkey
-  override val isAuto: Boolean = meta.isAuto
+  override val nullable: Boolean = referMeta.nullable
+  override val isPkey: Boolean = referMeta.isPkey
+  override val isAuto: Boolean = referMeta.isAuto
   override val dbType: String = "LONG"
+  override val clazz: Class[_] = classOf[java.lang.Long]
 }
 
 abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) extends FieldMeta {
@@ -53,6 +72,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   val annoOneMany: OneToMany = field.getAnnotation(classOf[OneToMany])
 
   val name: String = field.getName
+  val clazz: Class[_] = field.getType
   val column: String = annoColumn match {
     case null => Kit.lodashCase(name)
     case _ => annoColumn.name().length match {
@@ -68,34 +88,32 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   val isAuto: Boolean = isPkey && annoId.auto()
 }
 
-abstract class FieldMetaBuildIn(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity)
-
-class FieldMetaInteger(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaInteger(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.Integer])
   override val dbType: String = "INT"
 }
 
-class FieldMetaLong(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaLong(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.Long])
   override val dbType: String = "BIGINT"
 }
 
-class FieldMetaDouble(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaDouble(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.Double])
   override val dbType: String = "DOUBLE"
 }
 
-class FieldMetaFloat(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaFloat(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.Float])
   override val dbType: String = "FLOAT"
 }
 
-class FieldMetaBoolean(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaBoolean(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.Boolean])
   override val dbType: String = "BOOLEAN"
 }
 
-class FieldMetaString(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaString(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.String])
   val length: Int = if (annoColumn != null) {
     annoColumn.length()
@@ -114,7 +132,7 @@ class FieldMetaString(field: Field, entity: EntityMeta) extends FieldMetaBuildIn
   }
 }
 
-class FieldMetaDecimal(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaDecimal(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.math.BigDecimal])
   val (precision, scale) = if (annoColumn != null) {
     (annoColumn.precision(), annoColumn.scale())
@@ -137,24 +155,24 @@ class FieldMetaDecimal(field: Field, entity: EntityMeta) extends FieldMetaBuildI
   }
 }
 
-class FieldMetaLongText(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaLongText(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.String])
   override val dbType: String = "LONGTEXT"
 }
 
-class FieldMetaDate(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaDate(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.util.Date])
   require(annoDateTime == null)
   override val dbType: String = "DATE"
 }
 
-class FieldMetaDateTime(field: Field, entity: EntityMeta) extends FieldMetaBuildIn(field, entity) {
+class FieldMetaDateTime(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.util.Date])
   require(annoDateTime != null)
   override val dbType: String = "DATETIME"
 }
 
-abstract class FieldMetaRefer(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) {
+abstract class FieldMetaRefer(field: Field, entity: EntityMeta, val refer: EntityMeta) extends FieldMetaDeclared(field, entity) {
   protected def getLeftRight: (String, String)
 
   override val dbType: String = throw new RuntimeException("Unreachable Code")
@@ -162,7 +180,7 @@ abstract class FieldMetaRefer(field: Field, entity: EntityMeta) extends FieldMet
   val (left, right) = getLeftRight
 }
 
-class FieldMetaPointer(field: Field, entity: EntityMeta, val refer: EntityMeta) extends FieldMetaRefer(field, entity) {
+class FieldMetaPointer(field: Field, entity: EntityMeta, refer: EntityMeta) extends FieldMetaRefer(field, entity, refer) {
   require(annoPointer != null)
   require(!field.getType.isArray)
 
@@ -178,7 +196,7 @@ class FieldMetaPointer(field: Field, entity: EntityMeta, val refer: EntityMeta) 
   }
 }
 
-class FieldMetaOneOne(field: Field, entity: EntityMeta, val refer: EntityMeta) extends FieldMetaRefer(field, entity) {
+class FieldMetaOneOne(field: Field, entity: EntityMeta, refer: EntityMeta) extends FieldMetaRefer(field, entity, refer) {
   require(annoOneOne != null)
   require(!field.getType.isArray)
 
@@ -194,7 +212,7 @@ class FieldMetaOneOne(field: Field, entity: EntityMeta, val refer: EntityMeta) e
   }
 }
 
-class FieldMetaOneMany(field: Field, entity: EntityMeta, val refer: EntityMeta) extends FieldMetaRefer(field, entity) {
+class FieldMetaOneMany(field: Field, entity: EntityMeta, refer: EntityMeta) extends FieldMetaRefer(field, entity, refer) {
   require(annoOneMany != null)
   require(field.getType.isArray)
 

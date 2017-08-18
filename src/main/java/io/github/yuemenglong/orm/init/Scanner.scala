@@ -94,7 +94,7 @@ object Scanner {
         case (p, null, null) if p != null =>
           val referMeta = new FieldMetaPointer(field, entityMeta, refer)
           if (!entityMeta.fieldMap.contains(referMeta.left)) {
-            val fkeyMeta = new FieldMetaFkey(referMeta.left, referMeta)
+            val fkeyMeta = new FieldMetaFkey(referMeta.left, entityMeta, referMeta)
             entityMeta.fieldVec += fkeyMeta
             entityMeta.fieldMap += (fkeyMeta.name -> fkeyMeta)
           }
@@ -102,7 +102,7 @@ object Scanner {
         case (null, oo, null) if oo != null =>
           val referMeta = new FieldMetaOneOne(field, entityMeta, refer)
           if (!refer.fieldMap.contains(referMeta.right)) {
-            val fkeyMeta = new FieldMetaFkey(referMeta.right, referMeta)
+            val fkeyMeta = new FieldMetaFkey(referMeta.right, refer, referMeta)
             refer.fieldVec += fkeyMeta
             refer.fieldMap += (fkeyMeta.name -> fkeyMeta)
           }
@@ -110,7 +110,7 @@ object Scanner {
         case (null, null, om) if om != null =>
           val referMeta = new FieldMetaOneMany(field, entityMeta, refer)
           if (!refer.fieldMap.contains(referMeta.right)) {
-            val fkeyMeta = new FieldMetaFkey(referMeta.right, referMeta)
+            val fkeyMeta = new FieldMetaFkey(referMeta.right, refer, referMeta)
             refer.fieldVec += fkeyMeta
             refer.fieldMap += (fkeyMeta.name -> fkeyMeta)
           }
