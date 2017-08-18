@@ -57,11 +57,12 @@ object Kit {
     }.toMap
   }
 
-  def getGenericType(clazz: Class[_]): Class[_] = {
+  def getArrayType(clazz: Class[_]): Class[_] = {
     if (!clazz.isArray) {
       return clazz
     }
-    clazz
+    val name = clazz.getName.replaceAll("(^\\[L)|(;$)", "")
+    Class.forName(name)
   }
 
   def execute(conn: Connection, sql: String, params: Array[Object]): Int = {

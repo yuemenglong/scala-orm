@@ -85,7 +85,7 @@ object Scanner {
         field.getAnnotation(classOf[OneToOne]) != null ||
         field.getAnnotation(classOf[OneToMany]) != null
     }).foreach(field => {
-      val ty = Kit.getGenericType(field.getType)
+      val ty = Kit.getArrayType(field.getType)
       val refer = OrmMeta.entityMap(ty.getSimpleName)
       val annoPointer = field.getAnnotation(classOf[Pointer])
       val annoOneOne = field.getAnnotation(classOf[OneToOne])
