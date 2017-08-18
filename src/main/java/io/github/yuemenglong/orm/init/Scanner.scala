@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm.init
 
 import java.io.File
+import java.lang.reflect.Method
 import java.nio.file.Paths
 
 import io.github.yuemenglong.orm.kit.Kit
@@ -44,7 +45,7 @@ object Scanner {
       OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
       entityMeta
     })
-    metas.map(firstScan).map(secondScan).foreach(check)
+    metas.map(firstScan).map(secondScan).map(genGetterSetter).foreach(check)
     //    fixMeta()
   }
 
@@ -53,7 +54,8 @@ object Scanner {
     Kit.getDeclaredFields(entityMeta.clazz).filter(field => {
       field.getAnnotation(classOf[Pointer]) == null &&
         field.getAnnotation(classOf[OneToOne]) == null &&
-        field.getAnnotation(classOf[OneToMany]) == null
+        field.getAnnotation(classOf[OneToMany]) == null &&
+        field.getAnnotation(classOf[Ignore]) == null
     }).foreach(field => {
       val fieldMeta = field.getType match {
         case Types.IntegerClass => new FieldMetaInteger(field, entityMeta)
@@ -81,9 +83,10 @@ object Scanner {
   def secondScan(entityMeta: EntityMeta): EntityMeta = {
     // 第二轮只遍历引用类型, 并加上相关的外键
     Kit.getDeclaredFields(entityMeta.clazz).filter(field => {
-      field.getAnnotation(classOf[Pointer]) != null ||
+      (field.getAnnotation(classOf[Pointer]) != null ||
         field.getAnnotation(classOf[OneToOne]) != null ||
-        field.getAnnotation(classOf[OneToMany]) != null
+        field.getAnnotation(classOf[OneToMany]) != null) &&
+        field.getAnnotation(classOf[Ignore]) == null
     }).foreach(field => {
       val ty = Kit.getArrayType(field.getType)
       val refer = OrmMeta.entityMap(ty.getSimpleName)
@@ -118,6 +121,36 @@ object Scanner {
       }
       entityMeta.fieldVec += referMeta
       entityMeta.fieldMap += (referMeta.name -> referMeta)
+    })
+    entityMeta
+  }
+
+  def genGetterSetter(entityMeta: EntityMeta): EntityMeta = {
+    val methodMap: Map[String, Method] = Kit.getDeclaredMethods(entityMeta.clazz).map(m => (m.getName, m))(collection.breakOut)
+    entityMeta.fieldVec.foreach(fieldMeta => {
+      val getterJ = s"get${Kit.upperCaseFirst(fieldMeta.name)}"
+      val getterS = fieldMeta.name
+
+      val getterMethod = if (methodMap.contains(getterJ)) methodMap(getterJ)
+      else if (methodMap.contains(getterS)) methodMap(getterS)
+      else null
+
+      if (getterMethod != null && getterMethod.getParameterCount == 0
+        && getterMethod.getReturnType == fieldMeta.clazz) {
+        entityMeta.getterMap += (getterMethod -> fieldMeta)
+      }
+
+      val setterJ = s"set${Kit.upperCaseFirst(fieldMeta.name)}"
+      val setterS = s"${fieldMeta.name}_$$eq"
+
+      val setterMethod = if (methodMap.contains(setterJ)) methodMap(setterJ)
+      else if (methodMap.contains(setterS)) methodMap(setterS)
+      else null
+
+      if (setterMethod != null && setterMethod.getParameterCount == 1
+        && setterMethod.getParameterTypes()(0) == fieldMeta.clazz) {
+        entityMeta.setterMap += (setterMethod -> fieldMeta)
+      }
     })
     entityMeta
   }
