@@ -199,15 +199,19 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
         case _: FieldMetaPointer => aCore.fieldMap += (field -> b)
         case _: FieldMetaOneOne => aCore.fieldMap += (field -> b)
         case f: FieldMetaOneMany =>
-          // b为null相当于初始化空数组，暂时放在empty里实现，需要再考虑 TODO
+          val hasArr = aCore.fieldMap.contains(field)
+          if (!hasArr) {
+            aCore.fieldMap += (field -> Kit.newArray(f.refer.clazz))
+          }
           if (b != null) {
             val key = getOneManyFilterKey(field, b.$$core())
             if (!filterMap.contains(key)) {
               // 该对象还未被加入过一对多数组
-              val ct = ClassTag[Entity](f.refer.clazz)
-              val builder = Array.newBuilder(ct) += b
+              //              val ct = ClassTag[Entity](f.refer.clazz)
+              //              val builder = Array.newBuilder(ct) += b
               val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
-              aCore.fieldMap += (field -> (arr ++ builder.result()))
+              val brr = Kit.newArray(f.refer.clazz, b)
+              aCore.fieldMap += (field -> (arr ++ brr))
             }
             filterMap += (key -> b)
           }

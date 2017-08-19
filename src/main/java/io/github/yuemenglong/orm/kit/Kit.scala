@@ -5,9 +5,11 @@ import java.sql.Connection
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.entity.EntityManager
+import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.meta.OrmMeta
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/24.
@@ -55,6 +57,20 @@ object Kit {
       }
       (meta.clazz, fn)
     }.toMap
+  }
+
+  //
+  //  def newArray(clazz: Class[_]): Array[_] = {
+  //    val ct = ClassTag[Entity](clazz)
+  //    val builder = Array.newBuilder(ct)
+  //    builder.result()
+  //  }
+
+  def newArray(clazz: Class[_], values: Entity*): Array[_] = {
+    val ct = ClassTag[Entity](clazz)
+    var builder = Array.newBuilder(ct)
+    builder ++= values
+    builder.result()
   }
 
   def getArrayType(clazz: Class[_]): Class[_] = {

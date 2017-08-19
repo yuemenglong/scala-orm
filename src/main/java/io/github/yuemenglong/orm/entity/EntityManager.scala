@@ -80,23 +80,6 @@ object EntityManager {
           }
           val ct = ClassTag[Entity](f.refer.clazz)
           bs.map(convert).toArray(ct)
-        //        //      val value = fieldMeta.typeKind match {
-        //        case FieldMetaTypeKind.BUILT_IN
-        //             | FieldMetaTypeKind.IGNORE_BUILT_IN
-        //        => field.get(obj)
-        //        case FieldMetaTypeKind.REFER
-        //             | FieldMetaTypeKind.POINTER
-        //             | FieldMetaTypeKind.ONE_ONE
-        //             | FieldMetaTypeKind.IGNORE_REFER
-        //        => convert(field.get(obj))
-        //        case FieldMetaTypeKind.ONE_MANY
-        //             | FieldMetaTypeKind.IGNORE_MANY
-        //        => val bs = field.get(obj).asInstanceOf[Array[Object]]
-        //          if (bs == null) {
-        //            throw new RuntimeException("Array Must Init To Empty Rather Than Null")
-        //          }
-        //          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
-        //          bs.map(convert).toArray(ct)
       }
       (name, value)
     })(collection.breakOut)

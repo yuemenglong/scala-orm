@@ -133,7 +133,7 @@ public class SelectTest {
             Tuple2<Obj, MO>[] res = (Tuple2<Obj, MO>[]) session.query(query);
             Assert.assertEquals(res.length, 2);
             Assert.assertEquals(res[0]._1().getPtr(), null);
-            Assert.assertArrayEquals(res[0]._1().getOm(), new OM[0]);
+            Assert.assertArrayEquals(res[0]._1().getOm(), null);
             Assert.assertEquals(res[0]._2().getValue().intValue(), 100);
             Assert.assertEquals(res[1]._2(), null);
         }

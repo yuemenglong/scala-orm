@@ -4,6 +4,7 @@ import java.lang.reflect.Method
 
 import net.sf.cglib.proxy.MethodProxy
 import io.github.yuemenglong.orm.Session.Session
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta._
 
 import scala.reflect.ClassTag
@@ -16,13 +17,13 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   private var session: Session = _
 
   // 保证所有数组被初始化
-  meta.fieldVec.filter(_.isOneMany).map(_.asInstanceOf[FieldMetaOneMany]).foreach(f => {
-    if (!fieldMap.contains(f.name) || fieldMap(f.name) == null) {
-      val ct = ClassTag[Any](f.refer.clazz)
-      val array = Array.newBuilder(ct).result()
-      fieldMap += (f.name -> array)
-    }
-  })
+  //  meta.fieldVec.filter(_.isOneMany).map(_.asInstanceOf[FieldMetaOneMany]).foreach(f => {
+  //    if (!fieldMap.contains(f.name) || fieldMap(f.name) == null) {
+  //      val ct = ClassTag[Any](f.refer.clazz)
+  //      val array = Array.newBuilder(ct).result()
+  //      fieldMap += (f.name -> array)
+  //    }
+  //  })
 
   def getPkey: Object = {
     if (!fieldMap.contains(meta.pkey.name)) {
@@ -153,9 +154,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       this.fieldMap.contains(field.name)
     }).map {
       case field: FieldMetaBuildIn =>
-        //      field.typeKind match {
-        //        case FieldMetaTypeKind.BUILT_IN |
-        //             FieldMetaTypeKind.IGNORE_BUILT_IN =>
         val value = this.fieldMap(field.name)
         if (value == null) {
           s"${field.name}: null"
@@ -169,13 +167,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       case field: FieldMetaOneOne =>
         s"""${field.name}: ${this.fieldMap(field.name)}"""
       case field: FieldMetaOneMany =>
-        //        case FieldMetaTypeKind.IGNORE_REFER |
-        //             FieldMetaTypeKind.REFER |
-        //             FieldMetaTypeKind.POINTER |
-        //             FieldMetaTypeKind.ONE_ONE =>
-        //          s"""${field.name}: ${this.fieldMap(field.name)}"""
-        //        case FieldMetaTypeKind.ONE_MANY |
-        //             FieldMetaTypeKind.IGNORE_MANY =>
         val content = this.fieldMap(field.name).asInstanceOf[Array[Object]]
           .map(_.toString).mkString(", ")
         s"${field.name}: [$content]"
@@ -200,30 +191,13 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       // 交给对象自己处理
       proxy.invokeSuper(obj, args)
     }
-    //    val matcher = pattern.matcher(method.getName)
-    //    if (!matcher.matches()) {
-    //      return proxy.invokeSuper(obj, args)
-    //    }
-    //    val op = matcher.group(1)
-    //    var field = matcher.group(2)
-    //    field = field.substring(0, 1).toLowerCase() + field.substring(1)
-    //    // 没有这个字段
-    //    if (!this.meta.fieldMap.contains(field)) {
-    //      return proxy.invokeSuper(obj, args)
-    //    }
-    //
-    //    op match {
-    //      case "get" => this.get(field)
-    //      case "set" => this.set(field, args(0))
-    //      case "clear" => throw new RuntimeException("")
-    //    }
   }
 }
 
 object EntityCore {
   def create(meta: EntityMeta): EntityCore = {
     val map: Map[String, Object] = meta.fieldVec.map {
-      case f: FieldMetaOneMany => (f.name, Array[Object]())
+      case f: FieldMetaOneMany => (f.name, Kit.newArray(f.refer.clazz).asInstanceOf[Object])
       case f => (f.name, null)
     }(collection.breakOut)
     new EntityCore(meta, map)
