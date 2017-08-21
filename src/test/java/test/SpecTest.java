@@ -4,10 +4,7 @@ import io.github.yuemenglong.orm.Orm;
 import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
 import io.github.yuemenglong.orm.operate.traits.ExecutableInsert;
-import io.github.yuemenglong.orm.operate.traits.core.Executable;
-import io.github.yuemenglong.orm.operate.traits.core.ExecuteRoot;
-import io.github.yuemenglong.orm.operate.traits.core.Root;
-import io.github.yuemenglong.orm.operate.traits.core.SelectRoot;
+import io.github.yuemenglong.orm.operate.traits.core.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -109,5 +106,17 @@ public class SpecTest {
         ExecutableInsert<Obj> ex = Orm.insert(Obj.class).values(objs);
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 3);
+    }
+
+    @Test
+    public void testRootEqual() {
+        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Node r1 = root.getRoot();
+        Node r2 = root.get("id").getRoot();
+        Node r3 = root.join("oo").getRoot();
+        Node r4 = root.select("om").getRoot();
+        Assert.assertEquals(r1, r2);
+        Assert.assertEquals(r1, r3);
+        Assert.assertEquals(r1, r4);
     }
 }
