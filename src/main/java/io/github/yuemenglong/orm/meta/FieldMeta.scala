@@ -59,7 +59,7 @@ class FieldMetaFkey(override val name: String,
   override val nullable: Boolean = referMeta.nullable
   override val isPkey: Boolean = referMeta.isPkey
   override val isAuto: Boolean = referMeta.isAuto
-  override val dbType: String = "LONG"
+  override val dbType: String = "BIGINT"
   override val clazz: Class[_] = classOf[java.lang.Long]
 }
 
