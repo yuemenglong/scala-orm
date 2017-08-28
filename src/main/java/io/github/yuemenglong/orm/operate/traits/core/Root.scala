@@ -64,6 +64,8 @@ trait Field extends Node with CondOp with AssignOp {
   override def assign(f: Field): Assign = AssignFF(this, f)
 
   override def assign(v: Object): Assign = AssignFV(this, v)
+
+  override def assignNull():Assign = AssignNull(this)
 }
 
 

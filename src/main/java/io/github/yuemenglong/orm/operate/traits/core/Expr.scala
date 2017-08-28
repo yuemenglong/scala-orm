@@ -55,6 +55,8 @@ trait AssignOp {
   def assign(v: Object): Assign
 
   def assign(f: Field): Assign
+
+  def assignNull(): Assign
 }
 
 trait Assign extends Expr

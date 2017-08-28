@@ -17,3 +17,9 @@ case class AssignFF(f1: Field, f2: Field) extends Assign {
 
   override def getParams: Array[Object] = Array()
 }
+
+case class AssignNull(f1: Field) extends Assign {
+  override def getSql: String = s"${f1.getColumn} = NULL"
+
+  override def getParams: Array[Object] = Array()
+}
