@@ -119,4 +119,26 @@ public class SpecTest {
         Assert.assertEquals(r1, r3);
         Assert.assertEquals(r1, r4);
     }
+
+    @Test
+    public void transactionTest() {
+        try {
+            db.beginTransaction((Session session) -> {
+                Obj obj = new Obj();
+                obj.setName("");
+                session.execute(Orm.insert(Orm.convert(obj)));
+                SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+                Obj[] res = (Obj[]) session.query(Orm.select(root).from(root));
+                Assert.assertEquals(res.length, 1);
+                throw new RuntimeException("ROLL BACK");
+            });
+        } catch (Exception ignored) {
+        }
+        db.beginTransaction(session -> {
+            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Obj[] res = (Obj[]) session.query(Orm.select(root).from(root));
+            Assert.assertEquals(res.length, 0);
+            return res;
+        });
+    }
 }

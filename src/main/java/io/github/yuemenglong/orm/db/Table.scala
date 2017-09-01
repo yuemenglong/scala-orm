@@ -10,7 +10,7 @@ object Table {
     val columns = meta.managedFieldVec().filter(field => field.isNormalOrPkey).map((field) => {
       field.getDbSql
     }).mkString(", ")
-    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns)"
+    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns) ENGINE=InnoDB DEFAULT CHARSET=utf8"
     sql
   }
 
