@@ -25,7 +25,7 @@ class DeleteImpl(root: Root[_]) extends ExecutableDelete {
       case "" => "1 = 1"
       case s => s
     }
-    val sql = s"DELETE ${root.getAlias} FROM\n${root.getTableWithJoinCond}\nWHERE $condSql"
+    val sql = s"DELETE `${root.getAlias}` FROM\n${root.getTableWithJoinCond}\nWHERE $condSql"
     val params = root.getParams ++ cond.getParams
     Kit.execute(conn, sql, params)
   }

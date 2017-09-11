@@ -172,7 +172,7 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val values = validFields.map(_ => {
       "?"
     }).mkString(", ")
-    val sql = s"INSERT INTO ${core.meta.table}($columns) values($values)"
+    val sql = s"INSERT INTO `${core.meta.table}`($columns) values($values)"
     val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     validFields.zipWithIndex.foreach {
       case (field, i) => stmt.setObject(i + 1, core.get(field.name))
@@ -212,7 +212,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
       s"`${field.column}` = ?"
     }).mkString(", ")
     val idCond = s"${core.meta.pkey.column} = ?"
-    val sql = s"UPDATE ${core.meta.table} SET $columns WHERE $idCond"
+    val sql = s"UPDATE `${core.meta.table}` SET $columns WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     validFields.zipWithIndex.foreach { case (field, i) =>
       stmt.setObject(i + 1, core.get(field.name))
@@ -237,7 +237,7 @@ class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Delete Entity Must Has Pkey")
     val idCond = s"${core.meta.pkey.name} = ?"
-    val sql = s"DELETE FROM ${core.meta.table} WHERE $idCond"
+    val sql = s"DELETE FROM `${core.meta.table}` WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     stmt.setObject(1, core.getPkey)
     println(sql)

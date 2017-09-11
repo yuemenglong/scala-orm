@@ -33,7 +33,7 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     val fields = meta.managedFieldVec().filter(_.isNormalOrPkey)
     val columns = fields.map(_.column).mkString(", ")
     val holders = fields.map(_ => "?").mkString(", ")
-    val sql = s"INSERT INTO ${meta.table}($columns) VALUES ($holders)"
+    val sql = s"INSERT INTO `${meta.table}`($columns) VALUES ($holders)"
     val stmt = conn.prepareStatement(sql)
     println(sql)
 

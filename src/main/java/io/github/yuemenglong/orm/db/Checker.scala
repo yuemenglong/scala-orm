@@ -53,7 +53,7 @@ object Checker {
 
   def checkEntity(conn: Connection, meta: EntityMeta): Array[String] = {
     val st = conn.createStatement()
-    val sql = s"SELECT * FROM ${meta.table}"
+    val sql = s"SELECT * FROM `${meta.table}`"
     val rs = st.executeQuery(sql)
     val tableMetaData = rs.getMetaData
     val tableColumnMap: Map[String, String] = 1.to(tableMetaData.getColumnCount).map(idx => {

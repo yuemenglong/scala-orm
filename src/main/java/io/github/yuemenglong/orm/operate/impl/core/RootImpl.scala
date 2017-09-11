@@ -96,7 +96,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
 
   override def getTableWithJoinCond: String = {
     if (parent == null) {
-      s"${meta.table} AS $getAlias"
+      s"`${meta.table}` AS `$getAlias`"
     } else {
       val fieldMeta = parent.getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer]
       val leftColumn = parent.getMeta.fieldMap(fieldMeta.left).column
@@ -107,7 +107,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
         case "" => ""
         case s => s" AND $s"
       }
-      s"${joinType.toString} JOIN ${meta.table} AS $getAlias ON $leftTable.$leftColumn = $rightTable.$rightColumn$joinCondSql"
+      s"${joinType.toString} JOIN `${meta.table}` AS `$getAlias` ON $leftTable.$leftColumn = $rightTable.$rightColumn$joinCondSql"
     }
   }
 
