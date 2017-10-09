@@ -45,7 +45,7 @@ object Scanner {
       OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
       entityMeta
     })
-    metas.map(firstScan).map(secondScan).map(genGetterSetter).foreach(check)
+    metas.map(firstScan).map(checkPkey).map(secondScan).map(genGetterSetter)
     //    fixMeta()
   }
 
@@ -155,7 +155,8 @@ object Scanner {
     entityMeta
   }
 
-  def check(meta: EntityMeta): Unit = {
+  def checkPkey(meta: EntityMeta): EntityMeta = {
+    // 检查pkey是否存在或出现多个
     meta.fieldVec.foreach(field => {
       if (field.isPkey && meta.pkey != null) {
         throw new RuntimeException(s"${meta.entity} Has Multi Pkey")
@@ -168,6 +169,7 @@ object Scanner {
     if (meta.pkey == null) {
       throw new RuntimeException(s"${meta.entity} Has No Pkey")
     }
+    meta
   }
 
   //  def analyzeClass(clazz: Class[_], ignore: Boolean = false): EntityMeta = {
@@ -294,6 +296,6 @@ object Scanner {
       return Array()
     }
     list
-    .flatMap(f => scanFile(f.getPath))
+      .flatMap(f => scanFile(f.getPath))
   }
 }
