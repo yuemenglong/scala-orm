@@ -34,21 +34,6 @@ object Checker {
       val info = s"Table Schema Not Match Entity Meta, You May Need To\n$tips"
       throw new RuntimeException(info)
     }
-
-    //    metas.foreach(meta => {
-    //      val table = meta.table
-    //      if (!dbTableSet.contains(table)) {
-    //        val createTable = Table.getCreateSql(meta)
-    //        dbTableSet.foreach(println)
-    //        throw new RuntimeException(s"${meta.entity} Entity's Table Not Found, Maybe You Need:\n $createTable")
-    //      }
-    //      checkEntity(conn, meta)
-    //    })
-    //    if (dbTableSet.size != metas.length) {
-    //      metas.foreach(m => println(m.entity))
-    //      dbTableSet.foreach(println)
-    //      throw new RuntimeException(s"Entity' Count Not Match With Tables's Count, ${metas.length}:${dbTableSet.size}")
-    //    }
   }
 
   def checkEntity(conn: Connection, meta: EntityMeta): Array[String] = {
@@ -57,14 +42,14 @@ object Checker {
     val rs = st.executeQuery(sql)
     val tableMetaData = rs.getMetaData
     val tableColumnMap: Map[String, String] = 1.to(tableMetaData.getColumnCount).map(idx => {
-      val column = tableMetaData.getColumnName(idx)
+      val column = tableMetaData.getColumnName(idx).toLowerCase()
       val dbType = tableMetaData.getColumnTypeName(idx)
       (column, dbType)
     })(collection.breakOut)
     val entityColumnMap: Map[String, String] = meta.managedFieldVec().filter(f => f.isNormalOrPkey)
-      .map(f => (f.column, f.dbType))(collection.breakOut)
+      .map(f => (f.column.toLowerCase(), f.dbType))(collection.breakOut)
     val columnMap: Map[String, FieldMeta] = meta.managedFieldVec().filter(_.isNormalOrPkey)
-      .map(f => (f.column, f))(collection.breakOut)
+      .map(f => (f.column.toLowerCase(), f))(collection.breakOut)
     // need drop
     val needDrops = tableColumnMap.map { case (column, _) =>
       if (!entityColumnMap.contains(column)) {
