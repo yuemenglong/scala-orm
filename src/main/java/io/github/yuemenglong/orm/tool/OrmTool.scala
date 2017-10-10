@@ -30,26 +30,26 @@ object OrmTool {
       }).map(field => {
         val name = field.name
         val ty = field match {
-          case _: FieldMetaBoolean => "boolean"
+          case _: FieldMetaBoolean => "boolean = null"
 
-          case _: FieldMetaInteger => "number"
-          case _: FieldMetaSmallInt => "number"
-          case _: FieldMetaTinyInt => "number"
-          case _: FieldMetaLong => "number"
-          case _: FieldMetaDouble => "number"
-          case _: FieldMetaFloat => "number"
-          case _: FieldMetaDecimal => "number"
+          case _: FieldMetaInteger => "number = null"
+          case _: FieldMetaSmallInt => "number = null"
+          case _: FieldMetaTinyInt => "number = null"
+          case _: FieldMetaLong => "number = null"
+          case _: FieldMetaDouble => "number = null"
+          case _: FieldMetaFloat => "number = null"
+          case _: FieldMetaDecimal => "number = null"
 
-          case _: FieldMetaString => "string"
-          case _: FieldMetaLongText => "string"
-          case _: FieldMetaDate => "string"
-          case _: FieldMetaDateTime => "string"
+          case _: FieldMetaString => "string = null"
+          case _: FieldMetaLongText => "string = null"
+          case _: FieldMetaDate => "string = null"
+          case _: FieldMetaDateTime => "string = null"
 
-          case field: FieldMetaPointer => field.refer.entity
-          case field: FieldMetaOneOne => field.refer.entity
-          case field: FieldMetaOneMany => s"Array<${field.refer.entity}>"
+          case field: FieldMetaPointer => s"${field.refer.entity} = null"
+          case field: FieldMetaOneOne => s"${field.refer.entity} = null"
+          case field: FieldMetaOneMany => s"Array<${field.refer.entity}> = []"
         }
-        s"\t$name: $ty = null;"
+        s"\t$name: $ty;"
       }).mkString("\n")
       s"export class ${meta.entity} {\n$fields\n}"
     }).mkString("\n\n")
