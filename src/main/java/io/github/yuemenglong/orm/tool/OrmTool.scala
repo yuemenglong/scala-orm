@@ -45,8 +45,8 @@ object OrmTool {
           case _: FieldMetaDate => "string = null"
           case _: FieldMetaDateTime => "string = null"
 
-          case field: FieldMetaPointer => s"${field.refer.entity} = null"
-          case field: FieldMetaOneOne => s"${field.refer.entity} = null"
+          case field: FieldMetaPointer => s"${field.refer.entity} = new ${field.refer.entity}()"
+          case field: FieldMetaOneOne => s"${field.refer.entity} = new ${field.refer.entity}()"
           case field: FieldMetaOneMany => s"Array<${field.refer.entity}> = []"
         }
         s"\t$name: $ty;"
