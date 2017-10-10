@@ -208,6 +208,10 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val validFields = core.meta.managedFieldVec().filter(field => {
       field.isNormal && core.fieldMap.contains(field.name)
     })
+    if (validFields.isEmpty) {
+      println("No Field To Update")
+      return 0
+    }
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
     }).mkString(", ")
