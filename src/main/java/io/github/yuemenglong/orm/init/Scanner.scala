@@ -45,8 +45,16 @@ object Scanner {
       OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
       entityMeta
     })
-    metas.map(firstScan).map(checkPkey).map(secondScan).map(genGetterSetter)
+    metas.map(firstScan).map(checkPkey).map(secondScan)
+      .map(genGetterSetter).foreach(trace)
     //    fixMeta()
+  }
+
+  def trace(meta: EntityMeta): Unit = {
+    meta.fieldVec.foreach(field => {
+      println(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, " +
+        s"Field: ${field.name}, Column: ${field.column}, DbType: ${field.dbType}")
+    })
   }
 
   def firstScan(entityMeta: EntityMeta): EntityMeta = {
@@ -170,8 +178,6 @@ object Scanner {
       } else if (field.isPkey) {
         meta.pkey = field
       }
-      println(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, " +
-        s"Field: ${field.name}, Column: ${field.column}, DbType: ${field.dbType}")
     })
     if (meta.pkey == null) {
       throw new RuntimeException(s"${meta.entity} Has No Pkey")
