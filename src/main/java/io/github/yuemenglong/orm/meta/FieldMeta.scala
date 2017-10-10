@@ -94,6 +94,16 @@ class FieldMetaInteger(field: Field, entity: EntityMeta) extends FieldMetaDeclar
   override val dbType: String = "INT"
 }
 
+class FieldMetaTinyInt(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
+  require(field.getType == classOf[java.lang.Integer])
+  override val dbType: String = "TINYINT"
+}
+
+class FieldMetaSmallInt(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
+  require(field.getType == classOf[java.lang.Integer])
+  override val dbType: String = "SMALLINT"
+}
+
 class FieldMetaLong(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.Long])
   override val dbType: String = "BIGINT"

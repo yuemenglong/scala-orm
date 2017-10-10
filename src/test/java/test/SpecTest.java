@@ -5,6 +5,7 @@ import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
 import io.github.yuemenglong.orm.operate.traits.ExecutableInsert;
 import io.github.yuemenglong.orm.operate.traits.core.*;
+import io.github.yuemenglong.orm.tool.OrmTool;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

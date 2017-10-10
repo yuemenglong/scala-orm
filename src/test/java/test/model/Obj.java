@@ -24,6 +24,9 @@ public class Obj {
     @Column(name = "age_")
     Integer age = null;
 
+    @TinyInt
+    Integer tinyAge = null;
+
     Double doubleValue = null;
 
     @Column(precision = 5, scale = 2)

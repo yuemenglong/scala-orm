@@ -54,7 +54,7 @@ object Orm {
     arr.map(convert).toArray(ClassTag(arr(0).getClass))
   }
 
-  def getEmptyConstructorMap: Map[Class[_], () => Object] = Kit.getEmptyConstructorMap
+
 
   def insert(obj: Object): ExecuteRoot = ExecuteRootImpl.insert(obj)
 

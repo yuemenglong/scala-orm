@@ -195,6 +195,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 }
 
 object EntityCore {
+  // 数组初始化为空数组，其他全部为null
   def create(meta: EntityMeta): EntityCore = {
     val map: Map[String, Object] = meta.fieldVec.map {
       case f: FieldMetaOneMany => (f.name, Kit.newArray(f.refer.clazz).asInstanceOf[Object])
@@ -203,6 +204,7 @@ object EntityCore {
     new EntityCore(meta, map)
   }
 
+  // 纯空对象
   def empty(meta: EntityMeta): EntityCore = {
     new EntityCore(meta, Map())
   }

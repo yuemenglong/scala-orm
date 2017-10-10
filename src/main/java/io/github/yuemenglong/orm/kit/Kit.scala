@@ -50,22 +50,6 @@ object Kit {
     ret.toArray
   }
 
-  def getEmptyConstructorMap: Map[Class[_], () => Object] = {
-    OrmMeta.entityMap.toArray.map { case (name, meta) =>
-      val fn = () => {
-        Orm.empty(meta.clazz).asInstanceOf[Object]
-      }
-      (meta.clazz, fn)
-    }.toMap
-  }
-
-  //
-  //  def newArray(clazz: Class[_]): Array[_] = {
-  //    val ct = ClassTag[Entity](clazz)
-  //    val builder = Array.newBuilder(ct)
-  //    builder.result()
-  //  }
-
   def newArray(clazz: Class[_], values: Entity*): Array[_] = {
     val ct = ClassTag[Entity](clazz)
     var builder = Array.newBuilder(ct)

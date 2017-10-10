@@ -58,12 +58,19 @@ object Scanner {
         field.getAnnotation(classOf[Ignore]) == null
     }).foreach(field => {
       val fieldMeta = field.getType match {
-        case Types.IntegerClass => new FieldMetaInteger(field, entityMeta)
         case Types.LongClass => new FieldMetaLong(field, entityMeta)
         case Types.FloatClass => new FieldMetaFloat(field, entityMeta)
         case Types.DoubleClass => new FieldMetaDouble(field, entityMeta)
         case Types.BooleanClass => new FieldMetaBoolean(field, entityMeta)
         case Types.BigDecimalClass => new FieldMetaDecimal(field, entityMeta)
+        case Types.IntegerClass =>
+          if (field.getAnnotation(classOf[TinyInt]) != null) {
+            new FieldMetaTinyInt(field, entityMeta)
+          } else if (field.getAnnotation(classOf[SmallInt]) != null) {
+            new FieldMetaSmallInt(field, entityMeta)
+          } else {
+            new FieldMetaInteger(field, entityMeta)
+          }
         case Types.StringClass =>
           val annoLongText = field.getAnnotation(classOf[LongText])
           if (annoLongText == null) new FieldMetaString(field, entityMeta)
@@ -81,7 +88,7 @@ object Scanner {
   }
 
   def secondScan(entityMeta: EntityMeta): EntityMeta = {
-    // 第二轮只遍历引用类型, 并加上相关的外键
+    // 第二轮只遍历引用类型, 并加上相关的外键（没有在对象中声明的那种）
     Kit.getDeclaredFields(entityMeta.clazz).filter(field => {
       (field.getAnnotation(classOf[Pointer]) != null ||
         field.getAnnotation(classOf[OneToOne]) != null ||
