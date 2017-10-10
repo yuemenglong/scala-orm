@@ -185,119 +185,6 @@ object Scanner {
     meta
   }
 
-  //  def analyzeClass(clazz: Class[_], ignore: Boolean = false): EntityMeta = {
-  //    val ignoreStr = if (ignore) {
-  //      "Ignore "
-  //    } else {
-  //      ""
-  //    }
-  //    println(s"[Scanner] Find ${ignoreStr}Entity: [${clazz.getName}]")
-  //    var entityMeta = new EntityMeta(clazz, ignore)
-  //    OrmMeta.entityVec += entityMeta
-  //    OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
-  //
-  //    Kit.getDeclaredFields(clazz).foreach(field => analyzeField(entityMeta, field))
-  //
-  //    val methodMap: Map[String, Method] = Kit.getDeclaredMethods(clazz).map(m => (m.getName, m))(collection.breakOut)
-  //    entityMeta.fieldVec.foreach(fieldMeta => {
-  //      val getter = s"get${Kit.upperCaseFirst(fieldMeta.name)}"
-  //
-  //      val getterMethod = if (methodMap.contains(getter)) methodMap(getter)
-  //      else if (methodMap.contains(fieldMeta.name)) methodMap(fieldMeta.name)
-  //      else null
-  //
-  //      if (getterMethod != null && getterMethod.getParameterCount == 0
-  //        && getterMethod.getReturnType == fieldMeta.clazz) {
-  //        entityMeta.getterMap += (getterMethod -> fieldMeta)
-  //      }
-  //
-  //      val setterJ = s"set${Kit.upperCaseFirst(fieldMeta.name)}"
-  //      val setterS = s"${fieldMeta.name}_$$eq"
-  //
-  //      val setterMethod = if (methodMap.contains(setterJ)) methodMap(setterJ)
-  //      else if (methodMap.contains(setterS)) methodMap(setterS)
-  //      else null
-  //
-  //      if (setterMethod != null && setterMethod.getParameterCount == 1
-  //        && setterMethod.getParameterTypes()(0) == fieldMeta.clazz) {
-  //        entityMeta.setterMap += (setterMethod -> fieldMeta)
-  //      }
-  //    })
-  //    entityMeta
-  //  }
-  //
-  //  def analyzeField(entityMeta: EntityMeta, field: Field): Unit = {
-  //    var fieldMeta = FieldMeta.createFieldMeta(entityMeta, field)
-  //
-  //    if (fieldMeta.pkey && entityMeta.pkey2 != null) throw new RuntimeException("Already Has Pkey")
-  //    if (fieldMeta.pkey) entityMeta.pkey2 = fieldMeta
-  //
-  //    entityMeta.fieldVec += fieldMeta
-  //    entityMeta.fieldMap += (fieldMeta.name -> fieldMeta)
-  //  }
-  //
-  //  def fixMeta(): Unit = {
-  //    OrmMeta.entityVec.foreach(entity => {
-  //      // 检查是否配置主键
-  //      if (!entity.ignore && entity.pkey2 == null) {
-  //        throw new RuntimeException(s"[${entity.entity}] Has No Pkey")
-  //      }
-  //      // 未标注ignore的字段对应的对象都必须显式标注为entity,也就是已经在orm中
-  //      entity.managedFieldVec().filter(!_.isNormalOrPkey).foreach(field => {
-  //        if (!OrmMeta.entityMap.contains(field.typeName)) {
-  //          throw new RuntimeException(s"[${field.typeName}] Is Not Entity")
-  //        }
-  //      })
-  //    })
-  //    var entityVec = OrmMeta.entityVec.clone()
-  //    var pos = 0
-  //    while (pos < entityVec.size) {
-  //      // 标注ignore的字段对应的对象如果没有加入entity，都要加进去管理起来, 因为算法都是递归调用的
-  //      val entity = entityVec(pos)
-  //      entity.fieldVec.filter(field => {
-  //        field.ignore && field.isObject
-  //      }).foreach(fieldMeta => {
-  //        // 放在foreach而不是filter里防止一个实体被多次scan
-  //        if (!OrmMeta.entityMap.contains(fieldMeta.typeName)) {
-  //          val clazz = fieldMeta.field.getType
-  //          val entityMeta = analyzeClass(clazz, ignore = true)
-  //          entityVec += entityMeta // 需要加入队尾再次循环
-  //        }
-  //      })
-  //      pos += 1
-  //    }
-  //
-  //    Logger.info("[Scanner] Start To Fix Refer Field / Column")
-  //    OrmMeta.entityVec.foreach(entity => {
-  //      // 补关系字段，ignore的不用补
-  //      entity.managedFieldVec().foreach(field => {
-  //        if (!field.isNormalOrPkey) {
-  //          //补左边
-  //          if (!entity.fieldMap.contains(field.left)) {
-  //            val idx = entity.fieldVec.indexOf(field)
-  //            val refer = FieldMeta.createReferMeta(entity, field.left)
-  //            entity.fieldVec.insert(idx, refer)
-  //            entity.fieldMap += (field.left -> refer)
-  //          }
-  //          //补右边
-  //          val referEntityMeta = OrmMeta.entityMap(field.typeName)
-  //          if (!referEntityMeta.fieldMap.contains(field.right)) {
-  //            val refer = FieldMeta.createReferMeta(referEntityMeta, field.right)
-  //            referEntityMeta.fieldVec += refer
-  //            referEntityMeta.fieldMap += (field.right -> refer)
-  //          }
-  //        }
-  //      })
-  //    })
-  //    // 统一注入refer,这里ignore的也要注入
-  //    OrmMeta.entityVec.foreach(entity => {
-  //      entity.fieldVec.foreach(field => {
-  //        if (field.isObject) {
-  //          field.refer = OrmMeta.entityMap(field.typeName)
-  //        }
-  //      })
-  //    })
-  //  }
 
   def scanFile(path: String): Array[String] = {
     val file = new File(path)
@@ -308,7 +195,6 @@ object Scanner {
     if (list == null) {
       return Array()
     }
-    list
-      .flatMap(f => scanFile(f.getPath))
+    list.flatMap(f => scanFile(f.getPath))
   }
 }

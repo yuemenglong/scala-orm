@@ -199,7 +199,7 @@ class FieldMetaPointer(field: Field, entity: EntityMeta, refer: EntityMeta) exte
   override def getLeftRight: (String, String) = {
     var (left, right) = (annoPointer.left(), annoPointer.right())
     if (left.isEmpty) {
-      left = Kit.lodashCase(name) + "Id"
+      left = name + "Id"
     }
     if (right.isEmpty) {
       right = refer.pkey.name
@@ -218,7 +218,7 @@ class FieldMetaOneOne(field: Field, entity: EntityMeta, refer: EntityMeta) exten
       left = entity.pkey.name
     }
     if (right.isEmpty) {
-      right = Kit.lodashCase(entity.entity) + "Id"
+      right = Kit.lowerCaseFirst(entity.entity) + "Id"
     }
     (left, right)
   }
@@ -234,7 +234,7 @@ class FieldMetaOneMany(field: Field, entity: EntityMeta, refer: EntityMeta) exte
       left = entity.pkey.name
     }
     if (right.isEmpty) {
-      right = Kit.lodashCase(entity.entity) + "Id"
+      right = Kit.lowerCaseFirst(entity.entity) + "Id"
     }
     (left, right)
   }
