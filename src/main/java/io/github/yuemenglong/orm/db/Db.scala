@@ -21,9 +21,9 @@ class Db(val host: String, val port: Int, val username: String, val password: St
     }
   }
 
-  def check(): Unit = {
+  def check(ignoreUnusedTable: Boolean = false): Unit = {
     val conn = openConnection()
-    Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray)
+    Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray, ignoreUnusedTable)
     conn.close()
   }
 

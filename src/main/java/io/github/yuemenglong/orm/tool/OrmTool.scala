@@ -30,20 +30,20 @@ object OrmTool {
       }).map(field => {
         val name = field.name
         val ty = field match {
-          case _: FieldMetaBoolean => "boolean = null"
+          case _: FieldMetaBoolean => "boolean = undefined"
 
-          case _: FieldMetaInteger => "number = null"
-          case _: FieldMetaSmallInt => "number = null"
-          case _: FieldMetaTinyInt => "number = null"
-          case _: FieldMetaLong => "number = null"
-          case _: FieldMetaDouble => "number = null"
-          case _: FieldMetaFloat => "number = null"
-          case _: FieldMetaDecimal => "number = null"
+          case _: FieldMetaInteger => "number = undefined"
+          case _: FieldMetaSmallInt => "number = undefined"
+          case _: FieldMetaTinyInt => "number = undefined"
+          case _: FieldMetaLong => "number = undefined"
+          case _: FieldMetaDouble => "number = undefined"
+          case _: FieldMetaFloat => "number = undefined"
+          case _: FieldMetaDecimal => "number = undefined"
 
-          case _: FieldMetaString => "string = null"
-          case _: FieldMetaLongText => "string = null"
-          case _: FieldMetaDate => "string = null"
-          case _: FieldMetaDateTime => "string = null"
+          case _: FieldMetaString => "string = undefined"
+          case _: FieldMetaLongText => "string = undefined"
+          case _: FieldMetaDate => "string = undefined"
+          case _: FieldMetaDateTime => "string = undefined"
 
           case field: FieldMetaPointer => s"${field.refer.entity} = new ${field.refer.entity}()"
           case field: FieldMetaOneOne => s"${field.refer.entity} = new ${field.refer.entity}()"

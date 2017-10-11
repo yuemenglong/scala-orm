@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta}
   * Created by <yuemenglong@126.com> on 2017/8/2.
   */
 object Checker {
-  def checkEntities(conn: Connection, db: String, metas: Array[EntityMeta]): Unit = {
+  def checkEntities(conn: Connection, db: String, metas: Array[EntityMeta], ignoreUnusedTable: Boolean = false): Unit = {
     //1. 先获取所有表结构
     val sql =
       s"""SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='$db'"""
@@ -19,9 +19,13 @@ object Checker {
     }).takeWhile(_._1).map(_._2)(collection.breakOut)
     val entityTableSet: Set[String] = metas.map(_.table)(collection.breakOut)
     val entityMap: Map[String, EntityMeta] = metas.map(p => (p.table, p))(collection.breakOut)
-    val needDrops = dbTableSet.diff(entityTableSet).map(table => {
-      Table.getDropSql(table)
-    }).toArray
+    val needDrops = if (ignoreUnusedTable) {
+      Array()
+    } else {
+      dbTableSet.diff(entityTableSet).map(table => {
+        Table.getDropSql(table)
+      }).toArray
+    }
     val needCreates = entityTableSet.diff(dbTableSet).map(table => {
       Table.getCreateSql(entityMap(table))
     }).toArray
