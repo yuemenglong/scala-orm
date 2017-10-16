@@ -52,8 +52,11 @@ object Scanner {
 
   def trace(meta: EntityMeta): Unit = {
     meta.fieldVec.foreach(field => {
-      println(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, " +
-        s"Field: ${field.name}, Column: ${field.column}, DbType: ${field.dbType}")
+      val post = field match {
+        case rel: FieldMetaRefer => s"Refer: ${rel.refer.entity}, Left: ${rel.left}, Right: ${rel.right}"
+        case _ => s"Column: ${field.column}, DbType: ${field.dbType}"
+      }
+      println(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, Field: ${field.name}, $post")
     })
   }
 
