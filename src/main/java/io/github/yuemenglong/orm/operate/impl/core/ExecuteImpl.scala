@@ -220,10 +220,6 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val validFields = core.meta.managedFieldVec().filter(field => {
       field.isNormal && core.fieldMap.contains(field.name)
     })
-    if (validFields.isEmpty) {
-      println("No Field To Update")
-      return 0
-    }
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
     }).mkString(", ")
@@ -235,6 +231,10 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     }
     stmt.setObject(validFields.length + 1, core.getPkey)
     println(sql)
+    if (validFields.isEmpty) {
+      println("No Field To Update")
+      return 0
+    }
     // id作为条件出现
     val params = validFields.++(Array(core.meta.pkey)).map(item => {
       core.get(item.name) match {
