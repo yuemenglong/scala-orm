@@ -105,23 +105,35 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   override def insert(field: String): ExecuteJoin = {
     checkField(field)
-    val execute = new InsertJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-    withs.+=((field, execute))
-    withs.last._2
+    withs.find(_._1 == field) match {
+      case None =>
+        val execute = new InsertJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
+        withs.+=((field, execute))
+        execute
+      case Some(pair) => pair._2
+    }
   }
 
   override def update(field: String): ExecuteJoin = {
     checkField(field)
-    val execute = new UpdateJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-    withs.+=((field, execute))
-    withs.last._2
+    withs.find(_._1 == field) match {
+      case None =>
+        val execute = new UpdateJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
+        withs.+=((field, execute))
+        execute
+      case Some(pair) => pair._2
+    }
   }
 
   override def delete(field: String): ExecuteJoin = {
     checkField(field)
-    val execute = new DeleteJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-    withs.+=((field, execute))
-    withs.last._2
+    withs.find(_._1 == field) match {
+      case None =>
+        val execute = new DeleteJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
+        withs.+=((field, execute))
+        execute
+      case Some(pair) => pair._2
+    }
   }
 
   override def ignore(field: String): ExecuteJoin = {

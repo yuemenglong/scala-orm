@@ -13,6 +13,9 @@ import org.junit.Test;
 import test.model.OM;
 import test.model.Obj;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by <yuemenglong@126.com> on 2017/7/11.
  */
@@ -141,5 +144,22 @@ public class SpecTest {
             Assert.assertEquals(res.length, 0);
             return res;
         });
+    }
+
+    @Test
+    public void DateTimeTest() {
+        db.beginTransaction((Session session) -> {
+            Obj obj = new Obj();
+            obj.setName("");
+            obj.setNowTime(new Date());
+            obj = Orm.convert(obj);
+            session.execute(Orm.insert(obj));
+            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            obj = session.first(Orm.select(root).from(root).where(root.get("id").eql(obj.getId())));
+            System.out.println(new SimpleDateFormat("yyyy-MM-dd").format(obj.getNowTime()));
+            System.out.println(obj.getNowTime().getClass().getName());
+            return null;
+        });
+
     }
 }
