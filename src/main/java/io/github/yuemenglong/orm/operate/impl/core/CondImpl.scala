@@ -128,6 +128,10 @@ case class LteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
   override def op(): String = "<="
 }
 
+case class LikeFV(f: Field, v: Object) extends CondFV(f,v){
+  override def op() = "LIKE"
+}
+
 case class InFA(f: Field, a: Array[Object]) extends CondItem {
   override def getSql: String = {
     s"${f.getColumn} IN (${a.map(_ => "?").mkString(", ")})"

@@ -55,6 +55,8 @@ trait Field extends Node with CondOp with AssignOp {
 
   override def lte(f: Field): Cond = LteFF(this, f)
 
+  override def like(v: Object): Cond = LikeFV(this, v)
+
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
   override def isNull: Cond = IsNull(this)
@@ -65,7 +67,7 @@ trait Field extends Node with CondOp with AssignOp {
 
   override def assign(v: Object): Assign = AssignFV(this, v)
 
-  override def assignNull():Assign = AssignNull(this)
+  override def assignNull(): Assign = AssignNull(this)
 }
 
 

@@ -44,6 +44,8 @@ trait CondOp {
 
   def lte(f: Field): Cond
 
+  def like(v: Object): Cond
+
   def in(a: Array[Object]): Cond
 
   def isNull: Cond

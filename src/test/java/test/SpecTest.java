@@ -4,6 +4,7 @@ import io.github.yuemenglong.orm.Orm;
 import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
 import io.github.yuemenglong.orm.operate.traits.ExecutableInsert;
+import io.github.yuemenglong.orm.operate.traits.Query;
 import io.github.yuemenglong.orm.operate.traits.core.*;
 import io.github.yuemenglong.orm.tool.OrmTool;
 import org.junit.After;
@@ -160,6 +161,38 @@ public class SpecTest {
             System.out.println(obj.getNowTime().getClass().getName());
             return null;
         });
+    }
 
+    @Test
+    public void LikeTest() {
+        db.beginTransaction((Session session) -> {
+            {
+                Obj obj = new Obj();
+                obj.setName("like it");
+                obj = Orm.convert(obj);
+                session.execute(Orm.insert(Orm.convert(obj)));
+            }
+            {
+                Obj obj = new Obj();
+                obj.setName("dont like");
+                obj = Orm.convert(obj);
+                session.execute(Orm.insert(Orm.convert(obj)));
+            }
+            {
+                SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+                Query<Obj> query = Orm.select(root).from(root).where(root.get("name").like("like%"));
+                Obj[] res = (Obj[]) session.query(query);
+                Assert.assertEquals(res.length, 1);
+                Assert.assertEquals(res[0].getName(), "like it");
+            }
+            {
+                SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+                Query<Obj> query = Orm.select(root).from(root).where(root.get("name").like("%like"));
+                Obj[] res = (Obj[]) session.query(query);
+                Assert.assertEquals(res.length, 1);
+                Assert.assertEquals(res[0].getName(), "dont like");
+            }
+            return null;
+        });
     }
 }
