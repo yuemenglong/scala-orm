@@ -1,5 +1,6 @@
-package test;
+package io.github.yuemenglong.orm.test;
 
+import io.github.yuemenglong.orm.test.model.OM;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,9 +12,8 @@ import io.github.yuemenglong.orm.operate.traits.Query;
 import io.github.yuemenglong.orm.operate.traits.core.Cond;
 import io.github.yuemenglong.orm.operate.traits.core.ExecuteRoot;
 import io.github.yuemenglong.orm.operate.traits.core.SelectRoot;
-import test.model.OM;
-import test.model.Obj;
-import test.model.Ptr;
+import io.github.yuemenglong.orm.test.model.Obj;
+import io.github.yuemenglong.orm.test.model.Ptr;
 
 /**
  * Created by <yuemenglong@126.com> on 2017/7/11.
@@ -24,7 +24,7 @@ public class CondTest {
     @SuppressWarnings("Duplicates")
     @Before
     public void before() {
-        Orm.init("test.model");
+        Orm.init("io.github.yuemenglong.orm.test.model");
         db = openDb();
         db.rebuild();
     }
@@ -32,6 +32,7 @@ public class CondTest {
     @After
     public void after() {
         Orm.clear();
+        db.shutdown();
     }
 
     private Db openDb() {
@@ -63,6 +64,7 @@ public class CondTest {
         Assert.assertEquals(objs.length, 2);
         Assert.assertEquals(objs[0].getOm().length, 1);
         Assert.assertEquals(objs[1].getOm().length, 3);
+        session.close();
     }
 
     @Test
@@ -91,5 +93,6 @@ public class CondTest {
         Assert.assertEquals(res.length, 1);
         Assert.assertEquals(res[0].getId().longValue(), 2);
         Assert.assertEquals(res[0].getAge().longValue(), 10);
+        session.close();
     }
 }

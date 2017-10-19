@@ -1,4 +1,4 @@
-package test.model;
+package io.github.yuemenglong.orm.test.model;
 
 import io.github.yuemenglong.orm.lang.anno.Entity;
 import io.github.yuemenglong.orm.lang.anno.Id;
@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.lang.anno.Id;
  * Created by Administrator on 2017/5/19.
  */
 @Entity
-public class Ptr {
+public class OO {
     @Id(auto = true)
     private Long id;
 

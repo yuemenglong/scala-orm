@@ -1,18 +1,17 @@
-package test;
+package io.github.yuemenglong.orm.test;
 
+import io.github.yuemenglong.orm.test.model.OM;
 import io.github.yuemenglong.orm.Orm;
 import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
 import io.github.yuemenglong.orm.operate.traits.ExecutableInsert;
 import io.github.yuemenglong.orm.operate.traits.Query;
 import io.github.yuemenglong.orm.operate.traits.core.*;
-import io.github.yuemenglong.orm.tool.OrmTool;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import test.model.OM;
-import test.model.Obj;
+import io.github.yuemenglong.orm.test.model.Obj;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -26,7 +25,7 @@ public class SpecTest {
     @SuppressWarnings("Duplicates")
     @Before
     public void before() {
-        Orm.init("test.model");
+        Orm.init("io.github.yuemenglong.orm.test.model");
         db = openDb();
         db.rebuild();
     }
@@ -34,6 +33,7 @@ public class SpecTest {
     @After
     public void after() {
         Orm.clear();
+        db.shutdown();
     }
 
     private Db openDb() {
@@ -71,6 +71,7 @@ public class SpecTest {
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0].getOm().length, 4);
         Assert.assertEquals(res[1].getOm().length, 2);
+        session.close();
     }
 
     @Test
@@ -100,6 +101,7 @@ public class SpecTest {
         ret = session.execute(Orm.delete(root).where
                 (root.join("obj").get("id").gt(1).or(root.get("id").lt(3))));
         Assert.assertEquals(ret, 8);
+        session.close();
     }
 
     @Test
@@ -111,6 +113,7 @@ public class SpecTest {
         ExecutableInsert<Obj> ex = Orm.insert(Obj.class).values(objs);
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 3);
+        session.close();
     }
 
     @Test

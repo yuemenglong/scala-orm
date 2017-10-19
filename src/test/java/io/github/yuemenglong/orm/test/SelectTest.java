@@ -1,12 +1,12 @@
-package test;
+package io.github.yuemenglong.orm.test;
 
+import io.github.yuemenglong.orm.test.model.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import scala.Tuple2;
 import scala.Tuple3;
-import test.model.*;
 import io.github.yuemenglong.orm.Orm;
 import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
@@ -22,7 +22,7 @@ public class SelectTest {
     @SuppressWarnings("Duplicates")
     @Before
     public void before() {
-        Orm.init("test.model");
+        Orm.init("io.github.yuemenglong.orm.test.model");
         db = openDb();
         db.rebuild();
     }
@@ -30,6 +30,7 @@ public class SelectTest {
     @After
     public void after() {
         Orm.clear();
+        db.shutdown();
     }
 
     private Db openDb() {
@@ -55,6 +56,7 @@ public class SelectTest {
         Query<Long> query = Orm.select(ms.count()).from(ms);
         Long c = session.first(query);
         Assert.assertEquals(c.intValue(), 6);
+        session.close();
     }
 
     @Test
@@ -77,6 +79,7 @@ public class SelectTest {
                 .limit(1).offset(5);
         Long c = session.first(query);
         Assert.assertEquals(c.intValue(), 6);
+        session.close();
     }
 
     @Test
@@ -106,6 +109,7 @@ public class SelectTest {
         Assert.assertEquals(res[1]._1().getId().longValue(), 1);
         Assert.assertEquals(res[0]._2().getId().longValue(), 1);
         Assert.assertEquals(res[1]._2().getId().longValue(), 2);
+        session.close();
     }
 
     @Test
@@ -152,6 +156,7 @@ public class SelectTest {
             Join j2 = root.join("om").join("mo");
             Assert.assertEquals(j1, j2);
         }
+        session.close();
     }
 
     @Test
@@ -169,6 +174,7 @@ public class SelectTest {
         Assert.assertEquals(res[0].getPtr(), null);
         Assert.assertEquals(res[0].getOo(), null);
         Assert.assertEquals(res[0].getOm().length, 0);
+        session.close();
     }
 
     @Test
@@ -205,6 +211,7 @@ public class SelectTest {
             Long res = session.first(query);
             Assert.assertEquals(res.longValue(), 3);
         }
+        session.close();
     }
 
     @Test
@@ -234,6 +241,7 @@ public class SelectTest {
         Assert.assertEquals(res[1]._1().longValue(), 2);
         Assert.assertEquals(res[0]._2(), "name0");
         Assert.assertEquals(res[1]._2(), "name1");
+        session.close();
     }
 
     @Test
@@ -294,5 +302,6 @@ public class SelectTest {
             Assert.assertEquals(res[0]._2().longValue(), 5);
             Assert.assertEquals(res[0]._3().longValue(), 2);
         }
+        session.close();
     }
 }

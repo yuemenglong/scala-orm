@@ -1,5 +1,6 @@
-package test;
+package io.github.yuemenglong.orm.test;
 
+import io.github.yuemenglong.orm.test.model.*;
 import io.github.yuemenglong.orm.Orm;
 import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
@@ -10,7 +11,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import test.model.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -25,7 +25,7 @@ public class SimpleTest {
     @SuppressWarnings("Duplicates")
     @Before
     public void before() {
-        Orm.init("test.model");
+        Orm.init("io.github.yuemenglong.orm.test.model");
         db = openDb();
         db.rebuild();
     }
@@ -33,6 +33,7 @@ public class SimpleTest {
     @After
     public void after() {
         Orm.clear();
+        db.shutdown();
     }
 
     private Db openDb() {
@@ -56,6 +57,7 @@ public class SimpleTest {
         root.select("om");
         Obj res = session.first(Orm.select(root).from(root));
         om = res.getOm();
+        session.close();
     }
 
     @Test
@@ -163,6 +165,7 @@ public class SimpleTest {
         obj = session.first(Orm.select(root).from(root));
         Assert.assertEquals(obj.getName(), "name");
         Assert.assertEquals(obj.getAge().intValue(), 200);
+        session.close();
     }
 
     @Test
@@ -217,6 +220,7 @@ public class SimpleTest {
             OM[] oms = (OM[]) session.query(Orm.from(sr4));
             Assert.assertEquals(oms.length, 0);
         }
+        session.close();
     }
 
     @Test
@@ -242,5 +246,6 @@ public class SimpleTest {
         Assert.assertEquals(oms[0].getId().intValue(), 4);
         Assert.assertEquals(oms[1].getId().intValue(), 3);
         Assert.assertEquals(oms[2].getId().intValue(), 2);
+        session.close();
     }
 }

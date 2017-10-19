@@ -1,4 +1,4 @@
-package test.model
+package io.github.yuemenglong.orm.test.model
 
 import java.lang.{Boolean, Long}
 
