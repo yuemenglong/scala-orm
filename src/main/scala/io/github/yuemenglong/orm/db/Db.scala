@@ -21,10 +21,21 @@ class Db(val host: String, val port: Int, val username: String, val password: St
     }
   }
 
-  def check(ignoreUnusedTable: Boolean = false): Unit = {
+  def openConnection[T](fn: (Connection) => T): T = {
     val conn = openConnection()
-    Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray, ignoreUnusedTable)
-    conn.close()
+    try {
+      fn(conn)
+    } catch {
+      case e: Throwable => throw e
+    } finally {
+      conn.close()
+    }
+  }
+
+  def check(ignoreUnusedTable: Boolean = false): Unit = {
+    openConnection((conn) => {
+      Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray, ignoreUnusedTable)
+    })
   }
 
   def rebuild(): Unit = {
@@ -55,12 +66,11 @@ class Db(val host: String, val port: Int, val username: String, val password: St
   def execute(sql: String): Int = execute(sql, Array())
 
   def execute(sql: String, params: Array[Object]): Int = {
-    val conn = this.openConnection()
-    val stmt = conn.prepareStatement(sql)
-    params.zipWithIndex.foreach { case (p, i) => stmt.setObject(i + 1, p) }
-    val ret = stmt.executeUpdate()
-    conn.close()
-    ret
+    this.openConnection((conn) => {
+      val stmt = conn.prepareStatement(sql)
+      params.zipWithIndex.foreach { case (p, i) => stmt.setObject(i + 1, p) }
+      stmt.executeUpdate()
+    })
   }
 
   def beginTransaction[T](fn: (Session) => T): T = {
