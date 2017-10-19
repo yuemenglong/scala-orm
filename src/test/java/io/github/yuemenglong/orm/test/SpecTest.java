@@ -155,13 +155,13 @@ public class SpecTest {
         db.beginTransaction((Session session) -> {
             Obj obj = new Obj();
             obj.setName("");
-            obj.setNowTime(new Date());
+            obj.setNowTime(new Date(2017 - 1900, 12 - 1, 12));
             obj = Orm.convert(obj);
             session.execute(Orm.insert(obj));
             SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
             obj = session.first(Orm.select(root).from(root).where(root.get("id").eql(obj.getId())));
-            System.out.println(new SimpleDateFormat("yyyy-MM-dd").format(obj.getNowTime()));
-            System.out.println(obj.getNowTime().getClass().getName());
+            Assert.assertEquals(new SimpleDateFormat("yyyy-MM-dd").format(obj.getNowTime()), "2017-12-12");
+            Assert.assertEquals(obj.getNowTime().getClass().getName(), "java.sql.Timestamp");
             return null;
         });
     }

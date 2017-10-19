@@ -4,6 +4,7 @@ import java.sql.{Connection, Statement}
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.traits.core.{ExecuteJoin, ExecuteRoot}
 
@@ -189,14 +190,14 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     validFields.zipWithIndex.foreach {
       case (field, i) => stmt.setObject(i + 1, core.get(field.name))
     }
-    println(sql)
+    Logger.info(sql)
     val params = validFields.map(item => {
       core.get(item.name) match {
         case null => "null"
         case v => v.toString
       }
     }).mkString(", ")
-    println(s"[Params] => [$params]")
+    Logger.info(s"[Params] => [$params]")
 
     val affected = stmt.executeUpdate()
     if (!core.meta.pkey.isAuto) {
@@ -230,9 +231,9 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
       stmt.setObject(i + 1, core.get(field.name))
     }
     stmt.setObject(validFields.length + 1, core.getPkey)
-    println(sql)
+    Logger.info(sql)
     if (validFields.isEmpty) {
-      println("No Field To Update")
+      Logger.warn("No Field To Update")
       return 0
     }
     // id作为条件出现
@@ -242,7 +243,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
         case v => v.toString
       }
     }).mkString(", ")
-    println(s"[Params] => [$params]")
+    Logger.info(s"[Params] => [$params]")
     val ret = stmt.executeUpdate()
     stmt.close()
     ret
@@ -256,8 +257,8 @@ class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val sql = s"DELETE FROM `${core.meta.table}` WHERE $idCond"
     val stmt = conn.prepareStatement(sql)
     stmt.setObject(1, core.getPkey)
-    println(sql)
-    println(s"[Params] => [${core.getPkey}]")
+    Logger.info(sql)
+    Logger.info(s"[Params] => [${core.getPkey}]")
     val ret = stmt.executeUpdate()
     stmt.close()
     ret

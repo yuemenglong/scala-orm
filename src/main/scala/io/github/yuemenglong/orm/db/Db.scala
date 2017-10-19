@@ -6,6 +6,7 @@ import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.meta.OrmMeta
 import com.jolbox.bonecp.BoneCP
 import com.jolbox.bonecp.BoneCPConfig
+import io.github.yuemenglong.orm.logger.Logger
 
 /**
   * Created by Administrator on 2017/5/16.
@@ -64,7 +65,7 @@ class Db(val host: String, val port: Int,
   def drop(): Unit = {
     OrmMeta.entityVec.filter(!_.ignore).foreach(entity => {
       val sql = Table.getDropSql(entity)
-      println(sql)
+      Logger.info(sql)
       this.execute(sql)
     })
   }
@@ -72,7 +73,7 @@ class Db(val host: String, val port: Int,
   def create(): Unit = {
     OrmMeta.entityVec.filter(!_.ignore).foreach(entity => {
       val sql = Table.getCreateSql(entity)
-      println(sql)
+      Logger.info(sql)
       this.execute(sql)
     })
   }

@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
-import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.impl._
 import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, ExecuteRootImpl, RootImpl}
@@ -54,7 +54,9 @@ object Orm {
     arr.map(convert).toArray(ClassTag(arr(0).getClass))
   }
 
-
+  def setLogger(b: Boolean): Unit = {
+    Logger.setEnable(b)
+  }
 
   def insert(obj: Object): ExecuteRoot = ExecuteRootImpl.insert(obj)
 

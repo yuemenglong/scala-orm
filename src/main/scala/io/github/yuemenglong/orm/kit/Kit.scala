@@ -6,6 +6,7 @@ import java.sql.Connection
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.OrmMeta
 
 import scala.collection.mutable.ArrayBuffer
@@ -70,8 +71,8 @@ object Kit {
     params.zipWithIndex.foreach { case (param, i) =>
       stmt.setObject(i + 1, param)
     }
-    println(sql)
-    println(s"[Params] => [${params.map(_.toString).mkString(", ")}]")
+    Logger.info(sql)
+    Logger.info(s"[Params] => [${params.map(_.toString).mkString(", ")}]")
     val ret = stmt.executeUpdate()
     stmt.close()
     ret

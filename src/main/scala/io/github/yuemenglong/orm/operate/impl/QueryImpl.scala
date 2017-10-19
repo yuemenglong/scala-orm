@@ -5,6 +5,7 @@ import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, SelectableFieldImpl}
 import io.github.yuemenglong.orm.operate.traits.core._
 import io.github.yuemenglong.orm.operate.traits.{Query, SelectableTuple}
@@ -74,9 +75,9 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     }
     var filterSet = Set[String]()
     val sql = getSql
-    println(sql)
+    Logger.info(sql)
     val params = getParams
-    println(s"""[Params] => [${params.map(_.toString).mkString(", ")}]""")
+    Logger.info(s"""[Params] => [${params.map(_.toString).mkString(", ")}]""")
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>
       stmt.setObject(i + 1, param)

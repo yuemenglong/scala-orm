@@ -7,6 +7,7 @@ import java.nio.file.Paths
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.anno._
 import io.github.yuemenglong.orm.lang.types.Types
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
 
 /**
@@ -56,7 +57,7 @@ object Scanner {
         case rel: FieldMetaRefer => s"Refer: ${rel.refer.entity}, Left: ${rel.left}, Right: ${rel.right}"
         case _ => s"Column: ${field.column}, DbType: ${field.dbType}"
       }
-      println(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, Field: ${field.name}, $post")
+      Logger.info(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, Field: ${field.name}, $post")
     })
   }
 

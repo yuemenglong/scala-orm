@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.impl
 import java.sql.Connection
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.traits.ExecutableInsert
 
@@ -35,7 +36,7 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     val holders = fields.map(_ => "?").mkString(", ")
     val sql = s"INSERT INTO `${meta.table}`($columns) VALUES ($holders)"
     val stmt = conn.prepareStatement(sql)
-    println(sql)
+    Logger.info(sql)
 
     conn.setAutoCommit(false)
     entities.foreach(entity => {
@@ -49,7 +50,7 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
         stmt.setObject(i + 1, value)
         ab += value
       }
-      println(s"Batch Params => [${ab.map(String.valueOf(_)).mkString(", ")}]")
+      Logger.info(s"Batch Params => [${ab.map(String.valueOf(_)).mkString(", ")}]")
       stmt.addBatch()
     })
 

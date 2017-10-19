@@ -29,7 +29,6 @@ class ConnPoolTest {
   @Test
   def testConnPool(): Unit = {
     for (i <- 0.until(1000)) {
-      println(i)
       db.beginTransaction(session => {
         val root = Orm.root(classOf[Obj]).asSelect()
         session.query(Orm.from(root))
