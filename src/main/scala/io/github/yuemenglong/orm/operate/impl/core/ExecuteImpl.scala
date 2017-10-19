@@ -234,6 +234,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     Logger.info(sql)
     if (validFields.isEmpty) {
       Logger.warn("No Field To Update")
+      stmt.close()
       return 0
     }
     // id作为条件出现

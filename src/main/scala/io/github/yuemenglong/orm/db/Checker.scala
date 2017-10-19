@@ -38,12 +38,14 @@ object Checker {
       val info = s"Table Schema Not Match Entity Meta, You May Need To\n$tips"
       throw new RuntimeException(info)
     }
+    rs.close()
+    stmt.close()
   }
 
   def checkEntity(conn: Connection, meta: EntityMeta): Array[String] = {
-    val st = conn.createStatement()
-    val sql = s"SELECT * FROM `${meta.table}`"
-    val rs = st.executeQuery(sql)
+    val stmt = conn.createStatement()
+    val sql = s"SELECT * FROM `${meta.table} LIMIT 1`"
+    val rs = stmt.executeQuery(sql)
     val tableMetaData = rs.getMetaData
     val tableColumnMap: Map[String, String] = 1.to(tableMetaData.getColumnCount).map(idx => {
       val column = tableMetaData.getColumnName(idx).toLowerCase()
@@ -83,6 +85,8 @@ object Checker {
         throw new RuntimeException(s"${meta.entity}:${field.name} Type Not Match, $tableDbType:$entityDbType")
       }
     }
+    rs.close()
+    stmt.close()
     needDrops ++ needAdds
   }
 
