@@ -13,12 +13,13 @@ import io.github.yuemenglong.orm.operate.traits.core._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/15.
   */
-class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) extends Field {
+class FieldImpl(val meta: FieldMeta, val parent: JoinImpl) extends Field {
+  override def getField: String = meta.name
+
   override def getColumn: String = s"${parent.getAlias}.${meta.column}"
 
   override def getAlias: String = s"${parent.getAlias}$$${Kit.lodashCase(meta.name)}"
@@ -26,12 +27,15 @@ class FieldImpl(val field: String, val meta: FieldMeta, val parent: JoinImpl) ex
   override def getParent: Node = parent
 
   override def as[T](clazz: Class[T]): SelectableField[T] = new SelectableFieldImpl[T](clazz, this)
+
 }
 
 class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends SelectableField[T] {
   private var distinctVar: String = ""
 
   override def getColumn: String = s"$distinctVar${impl.getColumn}"
+
+  override def getField: String = impl.getField
 
   override def getAlias: String = impl.getAlias
 
@@ -45,6 +49,7 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends Selectabl
     distinctVar = "DISTINCT "
     this
   }
+
 }
 
 class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val joinType: JoinType) extends Join {
@@ -72,11 +77,11 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Join Field $field")
     }
-    fields.find(_.field == field) match {
+    fields.find(_.getField == field) match {
       case Some(f) => f
       case None =>
         val fieldMeta = meta.fieldMap(field)
-        val f = new FieldImpl(field, fieldMeta, this)
+        val f = new FieldImpl(fieldMeta, this)
         fields += f
         f
     }
@@ -121,7 +126,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
 
 class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   protected[impl] var selects = new ArrayBuffer[SelectJoinImpl]()
-  protected[impl] var fields: Array[FieldImpl] = impl.meta.fields().filter(_.isNormalOrPkey).map(f => new FieldImpl(f.name, f, impl)).toArray
+  protected[impl] var fields: Array[FieldImpl] = impl.meta.fields().filter(_.isNormalOrPkey).map(f => new FieldImpl(f, impl)).toArray
 
   override def getAlias: String = impl.getAlias
 
@@ -162,8 +167,8 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
         throw new RuntimeException(s"Not Normal Field $f In ${this.getMeta.entity}")
       }
     })
-    val pkey = new FieldImpl(this.getMeta.pkey.name, this.getMeta.pkey, impl)
-    this.fields = Array(pkey) ++ fields.map(this.getMeta.fieldMap(_)).map(f => new FieldImpl(f.name, f, impl))
+    val pkey = new FieldImpl(this.getMeta.pkey, impl)
+    this.fields = Array(pkey) ++ fields.map(this.getMeta.fieldMap(_)).map(f => new FieldImpl(f, impl))
     this
   }
 

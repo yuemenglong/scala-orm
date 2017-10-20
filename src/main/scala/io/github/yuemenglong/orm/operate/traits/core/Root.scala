@@ -25,6 +25,8 @@ trait Node {
 }
 
 trait Field extends Node with CondOp with AssignOp {
+  def getField: String
+
   def getColumn: String
 
   def getAlias: String
