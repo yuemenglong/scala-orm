@@ -57,6 +57,7 @@ trait Field extends Node with CondOp with AssignOp {
 
   override def like(v: Object): Cond = LikeFV(this, v)
 
+  override def in[T](a: Array[T])(implicit ev: T => Object): Cond = InFA(this, a)
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
   override def isNull: Cond = IsNull(this)

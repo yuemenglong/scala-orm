@@ -46,6 +46,8 @@ trait CondOp {
 
   def like(v: Object): Cond
 
+  def in[T](a: Array[T])(implicit ev: T => Object): Cond
+
   def in(a: Array[Object]): Cond
 
   def isNull: Cond

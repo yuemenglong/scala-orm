@@ -36,4 +36,17 @@ class ConnPoolTest {
     }
   }
 
+  @Test
+  def testIn(): Unit = {
+    db.beginTransaction(session => {
+      1.to(3).foreach(i => {
+        val obj = new Obj()
+        obj.setName(i.toString)
+        session.execute(Orm.insert(Orm.convert(obj)))
+      })
+      val root = Orm.root(classOf[Obj]).asSelect()
+      session.query(Orm.select(root).from(root).where(root.get("id").in(Array(1, 2))))
+    })
+  }
+
 }
