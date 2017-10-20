@@ -121,11 +121,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
 
 class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   protected[impl] var selects = new ArrayBuffer[SelectJoinImpl]()
-  protected[impl] var fields: Array[FieldImpl] = impl.meta.managedFieldVec().filter(_.isNormalOrPkey).map(f => new FieldImpl(f.name, f, impl)).toArray
-
-  def setSelectFields(arr: Array[String]): Unit = {
-    fields = arr.map(impl.meta.fieldMap(_)).map(f => new FieldImpl(f.name, f, impl))
-  }
+  protected[impl] var fields: Array[FieldImpl] = impl.meta.fields().filter(_.isNormalOrPkey).map(f => new FieldImpl(f.name, f, impl)).toArray
 
   override def getAlias: String = impl.getAlias
 
@@ -151,6 +147,24 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
         selects += s
         s
     }
+  }
+
+  override def fields(fields: String*): SelectJoin = {
+    this.fields(fields.toArray)
+  }
+
+  override def fields(fields: Array[String]): SelectJoin = {
+    fields.foreach(f => {
+      if (!this.getMeta.fieldMap.contains(f)) {
+        throw new RuntimeException(s"Invalid Field $f In ${this.getMeta.entity}")
+      }
+      if (!this.getMeta.fieldMap(f).isNormal) {
+        throw new RuntimeException(s"Not Normal Field $f In ${this.getMeta.entity}")
+      }
+    })
+    val pkey = new FieldImpl(this.getMeta.pkey.name, this.getMeta.pkey, impl)
+    this.fields = Array(pkey) ++ fields.map(this.getMeta.fieldMap(_)).map(f => new FieldImpl(f.name, f, impl))
+    this
   }
 
   protected def getFilterKey(core: EntityCore): String = {
@@ -238,6 +252,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   override def getParams: Array[Object] = impl.getParams
 
   override def getMeta: EntityMeta = impl.getMeta
+
 }
 
 class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl) extends SelectJoinImpl(impl) with SelectableJoin[T] {
@@ -320,6 +335,10 @@ class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta, rootImpl: RootImpl[T]
 
   override def select(field: String): SelectJoin = selectImpl.select(field)
 
+  override def fields(field: String*): SelectJoin = selectImpl.fields(field.toArray)
+
+  override def fields(fields: Array[String]): SelectJoin = selectImpl.fields(fields)
+
   override def getColumnWithAs: String = selectImpl.getColumnWithAs
 
   override def getType: Class[T] = selectImpl.getType
@@ -359,5 +378,6 @@ class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta, rootImpl: RootImpl[T]
   override def count(field: Field): SelectableField[lang.Long] = new Count(field)
 
   override def sum(field: Field): SelectableField[lang.Long] = new Sum(field)
+
 }
 

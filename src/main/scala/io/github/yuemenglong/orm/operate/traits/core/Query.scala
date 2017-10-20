@@ -33,6 +33,10 @@ trait Selectable[T] extends Node {
 
 trait SelectJoin extends Join {
   def select(field: String): SelectJoin
+
+  def fields(field: String*): SelectJoin
+
+  def fields(fields: Array[String]): SelectJoin
 }
 
 trait SelectableJoin[T] extends Selectable[T] with SelectJoin

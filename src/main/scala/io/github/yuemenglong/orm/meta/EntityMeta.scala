@@ -20,7 +20,7 @@ class EntityMeta(val clazz: Class[_], val ignore: Boolean = false) {
   var getterMap: Map[Method, FieldMeta] = Map()
   var setterMap: Map[Method, FieldMeta] = Map()
 
-  def managedFieldVec(): ArrayBuffer[FieldMeta] = {
+  def fields(): ArrayBuffer[FieldMeta] = {
     fieldVec
   }
 }

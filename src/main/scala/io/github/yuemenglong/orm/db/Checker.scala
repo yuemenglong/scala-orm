@@ -52,9 +52,9 @@ object Checker {
       val dbType = tableMetaData.getColumnTypeName(idx)
       (column, dbType)
     })(collection.breakOut)
-    val entityColumnMap: Map[String, String] = meta.managedFieldVec().filter(f => f.isNormalOrPkey)
+    val entityColumnMap: Map[String, String] = meta.fields().filter(f => f.isNormalOrPkey)
       .map(f => (f.column.toLowerCase(), f.dbType))(collection.breakOut)
-    val columnMap: Map[String, FieldMeta] = meta.managedFieldVec().filter(_.isNormalOrPkey)
+    val columnMap: Map[String, FieldMeta] = meta.fields().filter(_.isNormalOrPkey)
       .map(f => (f.column.toLowerCase(), f))(collection.breakOut)
     // need drop
     val needDrops = tableColumnMap.map { case (column, _) =>

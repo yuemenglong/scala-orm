@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
   */
 object Table {
   def getCreateSql(meta: EntityMeta): String = {
-    val columns = meta.managedFieldVec().filter(field => field.isNormalOrPkey).map((field) => {
+    val columns = meta.fields().filter(field => field.isNormalOrPkey).map((field) => {
       field.getDbSql
     }).mkString(", ")
     val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns) ENGINE=InnoDB DEFAULT CHARSET=utf8"

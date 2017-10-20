@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by yml on 2017/7/15.
   */
 abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
-  private var withs = new ArrayBuffer[(String, ExecuteJoinImpl)]()
+  private var cascades = new ArrayBuffer[(String, ExecuteJoinImpl)]()
   private var spec = Map[Object, ExecuteJoinImpl]()
 
   def execute(entity: Entity, conn: Connection): Int = {
@@ -37,7 +37,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   private def executePointer(core: EntityCore, conn: Connection): Int = {
     var ret = 0
-    withs.filter { case (field, _) =>
+    cascades.filter { case (field, _) =>
       core.meta.fieldMap(field).isPointer &&
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
@@ -55,7 +55,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   private def executeOneOne(core: EntityCore, conn: Connection): Int = {
     var ret = 0
-    withs.filter { case (field, _) =>
+    cascades.filter { case (field, _) =>
       core.meta.fieldMap(field).isOneOne &&
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
@@ -73,7 +73,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   private def executeOneMany(core: EntityCore, conn: Connection): Int = {
     var ret = 0
-    withs.filter { case (field, _) =>
+    cascades.filter { case (field, _) =>
       core.meta.fieldMap(field).isOneMany &&
         core.fieldMap.contains(field) &&
         core.fieldMap(field) != null
@@ -106,10 +106,10 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   override def insert(field: String): ExecuteJoin = {
     checkField(field)
-    withs.find(_._1 == field) match {
+    cascades.find(_._1 == field) match {
       case None =>
         val execute = new InsertJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-        withs.+=((field, execute))
+        cascades.+=((field, execute))
         execute
       case Some(pair) => pair._2
     }
@@ -117,10 +117,10 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   override def update(field: String): ExecuteJoin = {
     checkField(field)
-    withs.find(_._1 == field) match {
+    cascades.find(_._1 == field) match {
       case None =>
         val execute = new UpdateJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-        withs.+=((field, execute))
+        cascades.+=((field, execute))
         execute
       case Some(pair) => pair._2
     }
@@ -128,10 +128,10 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   override def delete(field: String): ExecuteJoin = {
     checkField(field)
-    withs.find(_._1 == field) match {
+    cascades.find(_._1 == field) match {
       case None =>
         val execute = new DeleteJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-        withs.+=((field, execute))
+        cascades.+=((field, execute))
         execute
       case Some(pair) => pair._2
     }
@@ -139,7 +139,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
   override def ignore(field: String): ExecuteJoin = {
     checkField(field)
-    withs.remove(withs.indexWhere(_._1 == field))
+    cascades.remove(cascades.indexWhere(_._1 == field))
     this
   }
 
@@ -176,7 +176,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
 class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
-    val validFields = core.meta.managedFieldVec().filter(field => {
+    val validFields = core.meta.fields().filter(field => {
       field.isNormalOrPkey && core.fieldMap.contains(field.name)
     })
     val columns = validFields.map(field => {
@@ -218,7 +218,7 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
 class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Update Entity Must Has Pkey")
-    val validFields = core.meta.managedFieldVec().filter(field => {
+    val validFields = core.meta.fields().filter(field => {
       field.isNormal && core.fieldMap.contains(field.name)
     })
     val columns = validFields.map(field => {
