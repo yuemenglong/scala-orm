@@ -38,7 +38,7 @@ object Orm {
 
   def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(host, port, user, pwd, db, 5, 50, 3)
+    new Db(host, port, user, pwd, db, 5, 30, 3)
   }
 
   def create[T](clazz: Class[T]): T = {

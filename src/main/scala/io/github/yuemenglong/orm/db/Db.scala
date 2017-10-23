@@ -13,7 +13,7 @@ import io.github.yuemenglong.orm.logger.Logger
   */
 class Db(val host: String, val port: Int,
          val username: String, val password: String, val db: String,
-         val min: Int = 5, val max: Int = 50, val partition: Int = 3) {
+         val min: Int = 5, val max: Int = 30, val partition: Int = 3) {
   val driver = "com.mysql.jdbc.Driver"
   val url = s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8"
   Class.forName(driver)
@@ -51,9 +51,9 @@ class Db(val host: String, val port: Int,
     pool.shutdown()
   }
 
-  def check(ignoreUnusedTable: Boolean = false): Unit = {
+  def check(ignoreUnused: Boolean = false): Unit = {
     openConnection((conn) => {
-      Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray, ignoreUnusedTable)
+      Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray, ignoreUnused)
     })
   }
 

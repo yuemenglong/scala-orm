@@ -68,7 +68,7 @@ object Kit {
       case null => "null"
       case v => v.toString
     }.mkString(", ")
-    Logger.info(s"\n$sql\n[$paramsSql]")
+    Logger.info(s"RUN\n$sql\n[$paramsSql]")
   }
 
   def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
