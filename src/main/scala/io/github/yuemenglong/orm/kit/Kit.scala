@@ -1,13 +1,10 @@
 package io.github.yuemenglong.orm.kit
 
 import java.lang.reflect.{Field, Method}
-import java.sql.Connection
+import java.sql.{Connection, ResultSet}
 
-import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.meta.OrmMeta
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -66,15 +63,41 @@ object Kit {
     Class.forName(name)
   }
 
+  def logSql(sql: String, params: Array[Object]): Unit = {
+    val paramsSql = params.map {
+      case null => "null"
+      case v => v.toString
+    }.mkString(", ")
+    Logger.info(s"\n$sql\n[$paramsSql]")
+  }
+
   def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
+    logSql(sql, params)
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>
       stmt.setObject(i + 1, param)
     }
-    Logger.info(sql)
-    Logger.info(s"[Params] => [${params.map(_.toString).mkString(", ")}]")
     val ret = stmt.executeUpdate()
     stmt.close()
     ret
+  }
+
+  def query[T](conn: Connection, sql: String, params: Array[Object],
+               fn: (ResultSet) => Array[T]): Array[T] = {
+    logSql(sql, params)
+    val stmt = conn.prepareStatement(sql)
+    params.zipWithIndex.foreach { case (param, i) =>
+      stmt.setObject(i + 1, param)
+    }
+    var rs: ResultSet = null
+    try {
+      rs = stmt.executeQuery()
+      fn(rs)
+    } catch {
+      case e: Throwable => throw e
+    } finally {
+      rs.close()
+      stmt.close()
+    }
   }
 }

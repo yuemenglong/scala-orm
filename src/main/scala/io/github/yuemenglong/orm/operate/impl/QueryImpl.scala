@@ -4,6 +4,7 @@ import java.lang
 import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.entity.EntityManager
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, SelectableFieldImpl}
@@ -75,27 +76,38 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     }
     var filterSet = Set[String]()
     val sql = getSql
-    Logger.info(sql)
     val params = getParams
-    Logger.info(s"""[Params] => [${params.map(_.toString).mkString(", ")}]""")
-    val stmt = conn.prepareStatement(sql)
-    params.zipWithIndex.foreach { case (param, i) =>
-      stmt.setObject(i + 1, param)
-    }
-    val rs = stmt.executeQuery()
-    var ab = ArrayBuffer[T]()
-    val filterMap = mutable.Map[String, Entity]()
-    while (rs.next()) {
-      val value = st.pick(rs, filterMap)
-      val key = st.getKey(value.asInstanceOf[Object])
-      if (!filterSet.contains(key)) {
-        ab += value
+    Kit.query(conn, sql, params, rs => {
+      var ab = ArrayBuffer[T]()
+      val filterMap = mutable.Map[String, Entity]()
+      while (rs.next()) {
+        val value = st.pick(rs, filterMap)
+        val key = st.getKey(value.asInstanceOf[Object])
+        if (!filterSet.contains(key)) {
+          ab += value
+        }
+        filterSet += key
       }
-      filterSet += key
-    }
-    rs.close()
-    stmt.close()
-    ab.toArray(ClassTag(st.getType))
+      ab.toArray(ClassTag(st.getType))
+    })
+    //    val stmt = conn.prepareStatement(sql)
+    //    params.zipWithIndex.foreach { case (param, i) =>
+    //      stmt.setObject(i + 1, param)
+    //    }
+    //    val rs = stmt.executeQuery()
+    //    var ab = ArrayBuffer[T]()
+    //    val filterMap = mutable.Map[String, Entity]()
+    //    while (rs.next()) {
+    //      val value = st.pick(rs, filterMap)
+    //      val key = st.getKey(value.asInstanceOf[Object])
+    //      if (!filterSet.contains(key)) {
+    //        ab += value
+    //      }
+    //      filterSet += key
+    //    }
+    //    rs.close()
+    //    stmt.close()
+    //    ab.toArray(ClassTag(st.getType))
   }
 
   //////
