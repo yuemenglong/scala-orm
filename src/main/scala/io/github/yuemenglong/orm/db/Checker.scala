@@ -82,6 +82,7 @@ object Checker {
       val eq = (tableDbType, entityDbType) match {
         case ("VARCHAR", "LONGTEXT") => true
         case ("TINYINT", "BOOLEAN") => true
+        case ("TIMESTAMP", "DATETIME") => true
         case (a, b) => a == b
       }
       if (!eq) {

@@ -1,8 +1,10 @@
 package io.github.yuemenglong.orm.test
 
+import java.util.Date
+
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.test.model.Obj
+import io.github.yuemenglong.orm.test.model.{OO, Obj}
 import org.junit.{After, Assert, Before, Test}
 
 /**
@@ -66,6 +68,47 @@ class ScalaTest2 {
       Assert.assertEquals(res.getAge, null)
       Assert.assertEquals(res.getName, "name")
       Assert.assertEquals(res.getId, 1L)
+    })
+  }
+
+  @Test
+  def testIgnoreField(): Unit = {
+    db.beginTransaction(session => {
+      {
+        val obj = new Obj()
+        obj.setName("name")
+        obj.setAge(10)
+        obj.setBirthday(new Date())
+        obj.setOo(new OO)
+        obj.getOo.setValue(10)
+        val ex = Orm.insert(Orm.convert(obj))
+        ex.insert("oo")
+        ex.ignore("age")
+        session.execute(ex)
+      }
+      {
+        val root = Orm.root(classOf[Obj]).asSelect()
+        root.select("oo")
+        val obj = session.first(Orm.select(root).from(root))
+        Assert.assertEquals(obj.getAge, null)
+        Assert.assertEquals(obj.getName, "name")
+        Assert.assertEquals(obj.getOo.getValue, 10)
+
+        {
+          obj.setName("name1")
+          obj.getOo.setValue(20)
+          val ex = Orm.update(Orm.convert(obj))
+          ex.update("oo").ignore("value")
+          session.execute(ex)
+        }
+        {
+          val root = Orm.root(classOf[Obj]).asSelect()
+          root.select("oo")
+          val obj = session.first(Orm.select(root).from(root))
+          Assert.assertEquals(obj.getName, "name1")
+          Assert.assertEquals(obj.getOo.getValue, 10)
+        }
+      }
     })
   }
 

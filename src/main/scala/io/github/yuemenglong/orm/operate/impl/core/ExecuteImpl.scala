@@ -17,6 +17,7 @@ import scala.collection.mutable.ArrayBuffer
 abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   private var cascades = new ArrayBuffer[(String, ExecuteJoinImpl)]()
   private var spec = Map[Object, ExecuteJoinImpl]()
+  protected var ignoreFields = Set[String]()
 
   def execute(entity: Entity, conn: Connection): Int = {
     if (entity.$$core().meta != meta) {
@@ -139,8 +140,13 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   }
 
   override def ignore(field: String): ExecuteJoin = {
-    checkField(field)
-    cascades.remove(cascades.indexWhere(_._1 == field))
+    if (!meta.fieldMap.contains(field)) {
+      throw new RuntimeException(s"""Invalid Field: $field""")
+    } else if (meta.fieldMap(field).isNormalOrPkey) {
+      ignoreFields += field
+    } else {
+      cascades.remove(cascades.indexWhere(_._1 == field))
+    }
     this
   }
 
@@ -178,7 +184,9 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     val validFields = core.meta.fields().filter(field => {
-      field.isNormalOrPkey && core.fieldMap.contains(field.name)
+      field.isNormalOrPkey &&
+        core.fieldMap.contains(field.name) &&
+        !ignoreFields.contains(field.name)
     })
     val columns = validFields.map(field => {
       s"`${field.column}`"
@@ -217,7 +225,9 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Update Entity Must Has Pkey")
     val validFields = core.meta.fields().filter(field => {
-      field.isNormal && core.fieldMap.contains(field.name)
+      field.isNormal &&
+        core.fieldMap.contains(field.name) &&
+        !ignoreFields.contains(field.name)
     })
     val columns = validFields.map(field => {
       s"`${field.column}` = ?"
