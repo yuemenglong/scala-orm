@@ -384,5 +384,9 @@ class SelectRootImpl[T](clazz: Class[T], meta: EntityMeta, rootImpl: RootImpl[T]
 
   override def sum(field: Field): SelectableField[lang.Long] = new Sum(field)
 
+  override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
+
+  override def min[R](field: Field, clazz:Class[R]): SelectableField[R] = new Min(field, clazz)
+
 }
 

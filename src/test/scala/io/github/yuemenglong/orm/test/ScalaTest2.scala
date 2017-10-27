@@ -112,4 +112,21 @@ class ScalaTest2 {
     })
   }
 
+  @Test
+  def testMinMax(): Unit = {
+    db.beginTransaction(session => {
+      1.to(10).foreach(i => {
+        val obj = new Obj
+        obj.setName(i.toString)
+        session.execute(Orm.insert(Orm.convert(obj)))
+      })
+      val root = Orm.root(classOf[Obj]).asSelect()
+      val query = Orm.select(root.max(root.get("id"), classOf[java.lang.Long]),
+        root.min(root.get("id"), classOf[java.lang.Long])).from(root)
+      val (max, min) = session.first(query)
+      Assert.assertEquals(max.intValue(), 10)
+      Assert.assertEquals(min.intValue(), 1)
+    })
+  }
+
 }

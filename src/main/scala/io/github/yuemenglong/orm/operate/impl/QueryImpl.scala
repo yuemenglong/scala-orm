@@ -280,3 +280,23 @@ class Sum(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.
     this
   }
 }
+
+class Max[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
+  override def getColumn: String = s"MAX(${impl.getColumn})"
+
+  override def getAlias: String = s"$$max$$${impl.getAlias}"
+
+  override def distinct(): SelectableField[T] = {
+    throw new RuntimeException("Max() Not Need Distinct")
+  }
+}
+
+class Min[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
+  override def getColumn: String = s"MIN(${impl.getColumn})"
+
+  override def getAlias: String = s"$$min$$${impl.getAlias}"
+
+  override def distinct(): SelectableField[T] = {
+    throw new RuntimeException("Min() Not Need Distinct")
+  }
+}
