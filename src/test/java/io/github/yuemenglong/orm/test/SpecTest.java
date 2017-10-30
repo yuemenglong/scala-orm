@@ -65,7 +65,7 @@ public class SpecTest {
         obj.setName("name2");
 
         session.execute(Orm.insert(Orm.convert(obj)));
-        SelectRoot<Obj> objRoot = Orm.root(Obj.class).asSelect();
+        Root<Obj> objRoot = Orm.root(Obj.class);
         objRoot.select("om");
         Obj[] res = (Obj[]) session.query(Orm.from(objRoot));
         Assert.assertEquals(res.length, 2);
@@ -118,7 +118,7 @@ public class SpecTest {
 
     @Test
     public void testRootEqual() {
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         Node r1 = root.getRoot();
         Node r2 = root.get("id").getRoot();
         Node r3 = root.join("oo").getRoot();
@@ -135,7 +135,7 @@ public class SpecTest {
                 Obj obj = new Obj();
                 obj.setName("");
                 session.execute(Orm.insert(Orm.convert(obj)));
-                SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+                Root<Obj> root = Orm.root(Obj.class);
                 Obj[] res = (Obj[]) session.query(Orm.select(root).from(root));
                 Assert.assertEquals(res.length, 1);
                 throw new RuntimeException("ROLL BACK");
@@ -143,7 +143,7 @@ public class SpecTest {
         } catch (Exception ignored) {
         }
         db.beginTransaction(session -> {
-            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Root<Obj> root = Orm.root(Obj.class);
             Obj[] res = (Obj[]) session.query(Orm.select(root).from(root));
             Assert.assertEquals(res.length, 0);
             return res;
@@ -158,7 +158,7 @@ public class SpecTest {
             obj.setNowTime(new Date(2017 - 1900, 12 - 1, 12));
             obj = Orm.convert(obj);
             session.execute(Orm.insert(obj));
-            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Root<Obj> root = Orm.root(Obj.class);
             obj = session.first(Orm.select(root).from(root).where(root.get("id").eql(obj.getId())));
             Assert.assertEquals(new SimpleDateFormat("yyyy-MM-dd").format(obj.getNowTime()), "2017-12-12");
             Assert.assertEquals(obj.getNowTime().getClass().getName(), "java.sql.Timestamp");
@@ -182,14 +182,14 @@ public class SpecTest {
                 session.execute(Orm.insert(Orm.convert(obj)));
             }
             {
-                SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+                Root<Obj> root = Orm.root(Obj.class);
                 Query<Obj> query = Orm.select(root).from(root).where(root.get("name").like("like%"));
                 Obj[] res = (Obj[]) session.query(query);
                 Assert.assertEquals(res.length, 1);
                 Assert.assertEquals(res[0].getName(), "like it");
             }
             {
-                SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+                Root<Obj> root = Orm.root(Obj.class);
                 Query<Obj> query = Orm.select(root).from(root).where(root.get("name").like("%like"));
                 Obj[] res = (Obj[]) session.query(query);
                 Assert.assertEquals(res.length, 1);

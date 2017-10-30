@@ -13,15 +13,9 @@ object JoinType extends Enumeration {
 }
 
 trait Node {
-  def getParent: Node
+  //  def getParent: Node
 
-  def getRoot: Node = {
-    if (getParent == null) {
-      this
-    } else {
-      getParent.getRoot
-    }
-  }
+  def getRoot: Node
 }
 
 trait Field extends Node with CondOp with AssignOp {
@@ -74,7 +68,6 @@ trait Field extends Node with CondOp with AssignOp {
   override def assignNull(): Assign = AssignNull(this)
 }
 
-
 trait Join extends Node with Expr {
 
   def getMeta: EntityMeta
@@ -96,9 +89,11 @@ trait Join extends Node with Expr {
   override def getSql: String = getTableWithJoinCond
 }
 
-trait Root[T] extends Join {
-  def getFromExpr: String
+//
+//trait Root[T] extends Join {
+//  def getFromExpr: String
+//
+//  @Deprecated
+//  def asSelect(): SelectRoot[T]
 
-  def asSelect(): SelectRoot[T]
-
-}
+//}

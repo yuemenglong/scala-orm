@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.impl._
-import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, ExecuteRootImpl, RootImpl}
+import io.github.yuemenglong.orm.operate.impl.core._
 import io.github.yuemenglong.orm.operate.traits.core._
 import io.github.yuemenglong.orm.operate.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, Query}
 
@@ -74,7 +74,7 @@ object Orm {
     if (!OrmMeta.entityMap.contains(clazz.getSimpleName)) {
       throw new RuntimeException("Not Entity Class")
     }
-    new RootImpl[T](clazz, OrmMeta.entityMap(clazz.getSimpleName))
+    new RootImpl[T](clazz, new JoinImpl(OrmMeta.entityMap(clazz.getSimpleName)))
   }
 
   def cond(): Cond = new CondHolder
@@ -94,7 +94,7 @@ object Orm {
     new QueryImpl[(T1, T2, T3)](st)
   }
 
-  def from[T](root: SelectRoot[T]): Query[T] = {
+  def from[T](root: Root[T]): Query[T] = {
     val st = new SelectableTupleImpl[T](root.getType, root)
     new QueryImpl[T](st, root)
   }

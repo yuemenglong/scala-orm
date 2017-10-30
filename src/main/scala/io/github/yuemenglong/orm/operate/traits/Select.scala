@@ -13,7 +13,7 @@ trait Query[T] extends Queryable[T] {
 
   def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)]
 
-  def from(selectRoot: SelectRoot[_]): Query[T]
+  def from(selectRoot: Root[_]): Query[T]
 
   def limit(l: Long): Query[T]
 
@@ -31,7 +31,7 @@ trait Query[T] extends Queryable[T] {
 
   def having(cond: Cond): Query[T]
 
-  def getRoot: SelectRoot[_]
+  def getRoot: Root[_]
 }
 
 trait SelectableTuple[T] extends Selectable[T] {

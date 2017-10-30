@@ -11,7 +11,7 @@ import io.github.yuemenglong.orm.db.Db;
 import io.github.yuemenglong.orm.operate.traits.Query;
 import io.github.yuemenglong.orm.operate.traits.core.Cond;
 import io.github.yuemenglong.orm.operate.traits.core.ExecuteRoot;
-import io.github.yuemenglong.orm.operate.traits.core.SelectRoot;
+import io.github.yuemenglong.orm.operate.traits.core.Root;
 import io.github.yuemenglong.orm.test.model.Obj;
 import io.github.yuemenglong.orm.test.model.Ptr;
 
@@ -57,7 +57,7 @@ public class CondTest {
             session.execute(ex);
         }
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         Cond cond = root.get("id").lt(2).or(root.get("id").gt(9))
                 .and(root.select("om").get("id").gt(2));
         Obj[] objs = (Obj[]) session.query(Orm.select(root).from(root).where(cond));
@@ -81,7 +81,7 @@ public class CondTest {
 
         session.execute(Orm.insert(Orm.convert(obj)));
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         Query<Obj> query = Orm.select(root).from(root).where(root.get("age").isNull());
         Obj[] res = (Obj[]) session.query(query);
         Assert.assertEquals(res.length, 1);

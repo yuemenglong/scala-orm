@@ -58,7 +58,7 @@ trait SelectableField[T] extends Field with Selectable[T] {
   def distinct(): SelectableField[T]
 }
 
-trait SelectRoot[T] extends Root[T] with Selectable[T] with SelectJoin {
+trait Root[T] extends SelectableJoin[T] {
   def count(): Selectable[java.lang.Long]
 
   def count(field: Field): SelectableField[java.lang.Long]

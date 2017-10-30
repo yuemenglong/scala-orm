@@ -52,7 +52,7 @@ public class SelectTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        SelectRoot<OM> ms = Orm.root(OM.class).asSelect();
+        Root<OM> ms = Orm.root(OM.class);
         Query<Long> query = Orm.select(ms.count()).from(ms);
         Long c = session.first(query);
         Assert.assertEquals(c.intValue(), 6);
@@ -74,7 +74,7 @@ public class SelectTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         Query<Long> query = Orm.select(root.join("om").get("id").as(Long.class)).from(root)
                 .limit(1).offset(5);
         Long c = session.first(query);
@@ -97,7 +97,7 @@ public class SelectTest {
         ex.insert("om");
         session.execute(ex);
 
-        SelectRoot<Obj> rs = Orm.root(Obj.class).asSelect();
+        Root<Obj> rs = Orm.root(Obj.class);
         Selectable<OM> s1 = rs.join("om").as(OM.class);
 
         Query<Tuple2<Obj, OM>> query = Orm.select(rs, s1).from(rs);
@@ -131,7 +131,7 @@ public class SelectTest {
         Assert.assertEquals(ret, 6);
 
         {
-            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Root<Obj> root = Orm.root(Obj.class);
             SelectableJoin<MO> mo = root.join("om").join("mo", JoinType.LEFT()).as(MO.class);
             Query<Tuple2<Obj, MO>> query = Orm.select(root, mo).from(root);
             Tuple2<Obj, MO>[] res = (Tuple2<Obj, MO>[]) session.query(query);
@@ -142,7 +142,7 @@ public class SelectTest {
             Assert.assertEquals(res[1]._2(), null);
         }
         {
-            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            Root<OM> root = Orm.root(OM.class);
             root.select("mo").on(root.join("mo").get("value").eql(100));
             Query<OM> query = Orm.select(root).from(root);
             OM[] res = (OM[]) session.query(query);
@@ -151,7 +151,7 @@ public class SelectTest {
             Assert.assertEquals(res[1].getMo(), null);
         }
         {
-            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Root<Obj> root = Orm.root(Obj.class);
             Join j1 = root.select("om").join("mo");
             Join j2 = root.join("om").join("mo");
             Assert.assertEquals(j1, j2);
@@ -164,7 +164,7 @@ public class SelectTest {
         Session session = db.openSession();
         session.execute(Orm.insert(Orm.convert(new Obj("name"))));
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         root.select("ptr");
         root.select("oo");
         root.select("om");
@@ -194,19 +194,19 @@ public class SelectTest {
         Assert.assertEquals(ret, 6);
 
         {
-            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            Root<OM> root = Orm.root(OM.class);
             Query<Long> query = Orm.select(root.count(root.get("objId"))).from(root);
             Long res = session.first(query);
             Assert.assertEquals(res.longValue(), 3);
         }
         {
-            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            Root<OM> root = Orm.root(OM.class);
             Query<Long> query = Orm.select(root.count(root.get("objId")).distinct()).from(root);
             Long res = session.first(query);
             Assert.assertEquals(res.longValue(), 1);
         }
         {
-            SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+            Root<OM> root = Orm.root(OM.class);
             Query<Long> query = Orm.select(root.count()).from(root);
             Long res = session.first(query);
             Assert.assertEquals(res.longValue(), 3);
@@ -226,7 +226,7 @@ public class SelectTest {
             Assert.assertEquals(ret, 1);
         }
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         SelectableField<Long> id = root.get("id").as(Long.class);
         SelectableField<String> name = root.get("name").as(String.class);
 
@@ -269,13 +269,13 @@ public class SelectTest {
         }
 
         {
-            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Root<Obj> root = Orm.root(Obj.class);
             Query<Long> query = Orm.select(root.sum(root.join("om").get("id"))).from(root);
             Long res = session.first(query);
             Assert.assertEquals(res.longValue(), 6);
         }
         {
-            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Root<Obj> root = Orm.root(Obj.class);
             Join om = root.join("om");
             Query<Tuple3<Long, Long, Long>> query = Orm.select(root.get("id").as(Long.class),
                     root.sum(om.get("id")), root.count(om.get("id"))).from(root)
@@ -290,7 +290,7 @@ public class SelectTest {
             Assert.assertEquals(res[1]._3().longValue(), 2);
         }
         {
-            SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+            Root<Obj> root = Orm.root(Obj.class);
             Join om = root.join("om");
             Query<Tuple3<Long, Long, Long>> query = Orm.select(root.get("id").as(Long.class),
                     root.sum(om.get("id")), root.count(om.get("id"))).from(root)

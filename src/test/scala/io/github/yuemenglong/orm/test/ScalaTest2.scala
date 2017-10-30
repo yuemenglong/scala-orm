@@ -32,7 +32,7 @@ class ScalaTest2 {
   def testConnPool(): Unit = {
     for (i <- 0.until(1000)) {
       db.beginTransaction(session => {
-        val root = Orm.root(classOf[Obj]).asSelect()
+        val root = Orm.root(classOf[Obj])
         session.query(Orm.from(root))
       })
     }
@@ -46,11 +46,11 @@ class ScalaTest2 {
         obj.setName(i.toString)
         session.execute(Orm.insert(Orm.convert(obj)))
       })
-      val root = Orm.root(classOf[Obj]).asSelect()
+      val root = Orm.root(classOf[Obj])
       val res = session.query(Orm.select(root).from(root).where(root.get("id").in(Array(1, 2))))
       Assert.assertEquals(res.length, 2)
-      Assert.assertEquals(res(0).getId, 1)
-      Assert.assertEquals(res(1).getId, 2)
+      Assert.assertEquals(res(0).getId.intValue(), 1)
+      Assert.assertEquals(res(1).getId.intValue(), 2)
     })
   }
 
@@ -62,7 +62,7 @@ class ScalaTest2 {
       obj.setAge(10)
       session.execute(Orm.insert(Orm.convert(obj)))
 
-      val root = Orm.root(classOf[Obj]).asSelect()
+      val root = Orm.root(classOf[Obj])
       root.fields("name")
       val res = session.first(Orm.select(root).from(root))
       Assert.assertEquals(res.getAge, null)
@@ -87,7 +87,7 @@ class ScalaTest2 {
         session.execute(ex)
       }
       {
-        val root = Orm.root(classOf[Obj]).asSelect()
+        val root = Orm.root(classOf[Obj])
         root.select("oo")
         val obj = session.first(Orm.select(root).from(root))
         Assert.assertEquals(obj.getAge, null)
@@ -102,7 +102,7 @@ class ScalaTest2 {
           session.execute(ex)
         }
         {
-          val root = Orm.root(classOf[Obj]).asSelect()
+          val root = Orm.root(classOf[Obj])
           root.select("oo")
           val obj = session.first(Orm.select(root).from(root))
           Assert.assertEquals(obj.getName, "name1")
@@ -120,7 +120,7 @@ class ScalaTest2 {
         obj.setName(i.toString)
         session.execute(Orm.insert(Orm.convert(obj)))
       })
-      val root = Orm.root(classOf[Obj]).asSelect()
+      val root = Orm.root(classOf[Obj])
       val query = Orm.select(root.max(root.get("id"), classOf[java.lang.Long]),
         root.min(root.get("id"), classOf[java.lang.Long])).from(root)
       val (max, min) = session.first(query)

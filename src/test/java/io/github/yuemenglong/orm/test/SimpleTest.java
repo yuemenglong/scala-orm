@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.Session.Session;
 import io.github.yuemenglong.orm.db.Db;
 import io.github.yuemenglong.orm.operate.traits.Query;
 import io.github.yuemenglong.orm.operate.traits.core.ExecuteRoot;
-import io.github.yuemenglong.orm.operate.traits.core.SelectRoot;
+import io.github.yuemenglong.orm.operate.traits.core.Root;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,7 +53,7 @@ public class SimpleTest {
         ex.insert("om");
         session.execute(ex);
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         root.select("om");
         Obj res = session.first(Orm.select(root).from(root));
         om = res.getOm();
@@ -112,7 +112,7 @@ public class SimpleTest {
         Assert.assertEquals(ret, 1);
 
         // select
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         root.select("ptr");
         root.select("oo");
         root.select("om");
@@ -161,7 +161,7 @@ public class SimpleTest {
         ex = Orm.update(obj);
         session.execute(ex);
 
-        SelectRoot<Obj> root = Orm.root(Obj.class).asSelect();
+        Root<Obj> root = Orm.root(Obj.class);
         obj = session.first(Orm.select(root).from(root));
         Assert.assertEquals(obj.getName(), "name");
         Assert.assertEquals(obj.getAge().intValue(), 200);
@@ -186,16 +186,16 @@ public class SimpleTest {
         Assert.assertEquals(ret, 5);
 
         {
-            SelectRoot<Obj> sr = Orm.root(Obj.class).asSelect();
+            Root<Obj> sr = Orm.root(Obj.class);
             Obj[] objs = (Obj[]) session.query(Orm.select(sr).from(sr));
             Assert.assertEquals(objs.length, 1);
-            SelectRoot<Ptr> sr2 = Orm.root(Ptr.class).asSelect();
+            Root<Ptr> sr2 = Orm.root(Ptr.class);
             Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
             Assert.assertEquals(ptrs.length, 1);
-            SelectRoot<OO> sr3 = Orm.root(OO.class).asSelect();
+            Root<OO> sr3 = Orm.root(OO.class);
             OO[] oos = (OO[]) session.query(Orm.from(sr3));
             Assert.assertEquals(oos.length, 1);
-            SelectRoot<OM> sr4 = Orm.root(OM.class).asSelect();
+            Root<OM> sr4 = Orm.root(OM.class);
             OM[] oms = (OM[]) session.query(Orm.from(sr4));
             Assert.assertEquals(oms.length, 2);
         }
@@ -207,16 +207,16 @@ public class SimpleTest {
         session.execute(delete);
 
         {
-            SelectRoot<Obj> sr = Orm.root(Obj.class).asSelect();
+            Root<Obj> sr = Orm.root(Obj.class);
             Obj[] objs = (Obj[]) session.query(Orm.select(sr).from(sr));
             Assert.assertEquals(objs.length, 0);
-            SelectRoot<Ptr> sr2 = Orm.root(Ptr.class).asSelect();
+            Root<Ptr> sr2 = Orm.root(Ptr.class);
             Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
             Assert.assertEquals(ptrs.length, 0);
-            SelectRoot<OO> sr3 = Orm.root(OO.class).asSelect();
+            Root<OO> sr3 = Orm.root(OO.class);
             OO[] oos = (OO[]) session.query(Orm.from(sr3));
             Assert.assertEquals(oos.length, 0);
-            SelectRoot<OM> sr4 = Orm.root(OM.class).asSelect();
+            Root<OM> sr4 = Orm.root(OM.class);
             OM[] oms = (OM[]) session.query(Orm.from(sr4));
             Assert.assertEquals(oms.length, 0);
         }
@@ -238,7 +238,7 @@ public class SimpleTest {
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 7);
 
-        SelectRoot<OM> root = Orm.root(OM.class).asSelect();
+        Root<OM> root = Orm.root(OM.class);
         Query<OM> query = Orm.select(root).from(root).desc(root.get("id")).limit(3).offset(2);
 
         OM[] oms = (OM[]) session.query(query);

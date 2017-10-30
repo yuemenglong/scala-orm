@@ -20,7 +20,7 @@ import scala.reflect.ClassTag
   */
 
 class QueryImpl[T](private var st: SelectableTuple[T],
-                   private var root: SelectRoot[_] = null,
+                   private var root: Root[_] = null,
                    private var cond: Cond = new CondHolder(),
                    private var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)](),
                    private var limitOffset: (Long, Long) = (-1, -1),
@@ -122,7 +122,7 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     new QueryImpl[(T1, T2)](st, root, cond, orders, limitOffset, groupByVar, havingVar)
   }
 
-  override def from(selectRoot: SelectRoot[_]): Query[T] = {
+  override def from(selectRoot: Root[_]): Query[T] = {
     root = selectRoot
     this
   }
@@ -167,7 +167,7 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     this
   }
 
-  override def getRoot: SelectRoot[_] = root
+  override def getRoot: Root[_] = root
 
   override def walk(t: T, fn: (Entity) => Entity): T = st.walk(t, fn)
 
@@ -226,7 +226,7 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
     }
   }
 
-  override def getParent: Node = selects(0).getParent
+  override def getRoot: Node = selects(0).getRoot
 
   override def walk(tuple: T, fn: (Entity) => Entity): T = {
     val arr = tupleToArray(tuple).map {
@@ -237,7 +237,7 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
   }
 }
 
-class Count_(root: SelectRoot[_]) extends Selectable[java.lang.Long] {
+class Count_(root: Root[_]) extends Selectable[java.lang.Long] {
   def getAlias: String = "$count$"
 
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): java.lang.Long = resultSet.getObject(getAlias, classOf[java.lang.Long])
@@ -248,7 +248,7 @@ class Count_(root: SelectRoot[_]) extends Selectable[java.lang.Long] {
 
   override def getKey(value: Object): String = value.toString
 
-  override def getParent: Node = root.getRoot
+  override def getRoot: Node = root.getRoot
 }
 
 class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {
