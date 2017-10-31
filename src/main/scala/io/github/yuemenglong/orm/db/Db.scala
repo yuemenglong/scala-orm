@@ -53,7 +53,7 @@ class Db(val host: String, val port: Int,
 
   def check(ignoreUnused: Boolean = false): Unit = {
     openConnection((conn) => {
-      Checker.checkEntities(conn, db, OrmMeta.entityVec.filter(!_.ignore).toArray, ignoreUnused)
+      Checker.checkEntities(conn, db, OrmMeta.entityVec.toArray, ignoreUnused)
     })
   }
 
@@ -63,7 +63,7 @@ class Db(val host: String, val port: Int,
   }
 
   def drop(): Unit = {
-    OrmMeta.entityVec.filter(!_.ignore).foreach(entity => {
+    OrmMeta.entityVec.foreach(entity => {
       val sql = Table.getDropSql(entity)
       Logger.info(sql)
       this.execute(sql)
@@ -71,7 +71,7 @@ class Db(val host: String, val port: Int,
   }
 
   def create(): Unit = {
-    OrmMeta.entityVec.filter(!_.ignore).foreach(entity => {
+    OrmMeta.entityVec.foreach(entity => {
       val sql = Table.getCreateSql(entity)
       Logger.info(sql)
       this.execute(sql)

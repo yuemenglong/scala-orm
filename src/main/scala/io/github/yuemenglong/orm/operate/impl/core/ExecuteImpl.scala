@@ -17,7 +17,7 @@ import scala.collection.mutable.ArrayBuffer
 abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   private var cascades = new ArrayBuffer[(String, ExecuteJoinImpl)]()
   private var spec = Map[Object, ExecuteJoinImpl]()
-  protected var ignoreFields = Set[String]()
+  protected var ignoreFields: Set[String] = Set[String]()
 
   def execute(entity: Entity, conn: Connection): Int = {
     if (entity.$$core().meta != meta) {

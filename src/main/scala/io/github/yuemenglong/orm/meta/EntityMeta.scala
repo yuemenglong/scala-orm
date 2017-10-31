@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by Administrator on 2017/5/16.
   */
-class EntityMeta(val clazz: Class[_], val ignore: Boolean = false) {
+class EntityMeta(val clazz: Class[_]) {
   val entity: String = clazz.getSimpleName
   val table: String = EntityMeta.pickTable(clazz)
   var pkey: FieldMeta = _
