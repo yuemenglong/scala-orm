@@ -39,6 +39,12 @@ object Logger {
     }
   }
 
+  def error(msg: String, e: Throwable): Unit = {
+    if (enable) {
+      logger.error(msg, e)
+    }
+  }
+
   def setEnable(b: Boolean): Unit = {
     enable = b
   }

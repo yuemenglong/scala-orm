@@ -3,9 +3,12 @@ package io.github.yuemenglong.orm.tool
 import java.io.FileOutputStream
 
 import io.github.yuemenglong.orm.Orm
+import io.github.yuemenglong.orm.Session.Session
+import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.meta._
-
-import scala.collection.mutable.ArrayBuffer
+import io.github.yuemenglong.orm.operate.impl.core.SelectJoinImpl
+import io.github.yuemenglong.orm.operate.traits.Query
+import io.github.yuemenglong.orm.operate.traits.core.SelectJoin
 
 /**
   * Created by <yuemenglong@126.com> on 2017/10/10.
@@ -56,5 +59,36 @@ object OrmTool {
     val fs = new FileOutputStream(path)
     fs.write(classes.getBytes())
     fs.close()
+  }
+
+  def attach[T](obj: T, field: String, session: Session,
+                buildJoin: SelectJoin => Unit = _ => {},
+                buildQuery: Query[T] => Unit = (_: Query[T]) => {},
+               ): T = {
+    if (!obj.isInstanceOf[Entity]) {
+      throw new RuntimeException("Not Entity")
+    }
+    val entity = obj.asInstanceOf[Entity]
+    if (entity.$$core().getPkey == null) {
+      throw new RuntimeException("Not Has Pkey")
+    }
+    val meta = entity.$$core().meta
+    if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isNormalOrPkey) {
+      throw new RuntimeException(s"Not Refer Feild, $field")
+    }
+    val root = Orm.root(entity.$$core().meta.clazz.asInstanceOf[Class[T]])
+    root.fields(Array[String]())
+    val pkeyName = entity.$$core().meta.pkey.name
+    val pkeyValue = entity.$$core().getPkey
+    val join = root.select(field).asInstanceOf[SelectJoinImpl]
+    buildJoin(join)
+    val cond = join.impl.cond.and(root.get(pkeyName).eql(pkeyValue))
+    join.on(cond)
+
+    val query = Orm.selectFrom(root)
+    buildQuery(query)
+    val res = session.first(query).asInstanceOf[Entity].$$core().get(field)
+    entity.$$core().set(field, res)
+    obj
   }
 }

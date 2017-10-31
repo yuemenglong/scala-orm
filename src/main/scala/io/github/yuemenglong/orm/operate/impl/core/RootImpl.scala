@@ -52,8 +52,8 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends Selectabl
 }
 
 class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val joinType: JoinType) extends Join {
-  private var cond: Cond = new CondHolder
-  private[impl] val joins = new ArrayBuffer[JoinImpl]()
+  private[orm] var cond: Cond = new CondHolder
+  private[orm] val joins = new ArrayBuffer[JoinImpl]()
   private val fields = new ArrayBuffer[FieldImpl]()
 
   def this(meta: EntityMeta) {

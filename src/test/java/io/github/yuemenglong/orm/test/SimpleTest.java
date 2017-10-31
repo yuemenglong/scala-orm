@@ -193,10 +193,10 @@ public class SimpleTest {
             Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
             Assert.assertEquals(ptrs.length, 1);
             Root<OO> sr3 = Orm.root(OO.class);
-            OO[] oos = (OO[]) session.query(Orm.from(sr3));
+            OO[] oos = (OO[]) session.query(Orm.selectFrom(sr3));
             Assert.assertEquals(oos.length, 1);
             Root<OM> sr4 = Orm.root(OM.class);
-            OM[] oms = (OM[]) session.query(Orm.from(sr4));
+            OM[] oms = (OM[]) session.query(Orm.selectFrom(sr4));
             Assert.assertEquals(oms.length, 2);
         }
 
@@ -214,10 +214,10 @@ public class SimpleTest {
             Ptr[] ptrs = (Ptr[]) session.query(Orm.select(sr2).from(sr2));
             Assert.assertEquals(ptrs.length, 0);
             Root<OO> sr3 = Orm.root(OO.class);
-            OO[] oos = (OO[]) session.query(Orm.from(sr3));
+            OO[] oos = (OO[]) session.query(Orm.selectFrom(sr3));
             Assert.assertEquals(oos.length, 0);
             Root<OM> sr4 = Orm.root(OM.class);
-            OM[] oms = (OM[]) session.query(Orm.from(sr4));
+            OM[] oms = (OM[]) session.query(Orm.selectFrom(sr4));
             Assert.assertEquals(oms.length, 0);
         }
         session.close();

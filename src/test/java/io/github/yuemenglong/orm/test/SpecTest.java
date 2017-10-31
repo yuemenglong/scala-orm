@@ -67,7 +67,7 @@ public class SpecTest {
         session.execute(Orm.insert(Orm.convert(obj)));
         Root<Obj> objRoot = Orm.root(Obj.class);
         objRoot.select("om");
-        Obj[] res = (Obj[]) session.query(Orm.from(objRoot));
+        Obj[] res = (Obj[]) session.query(Orm.selectFrom(objRoot));
         Assert.assertEquals(res.length, 2);
         Assert.assertEquals(res[0].getOm().length, 4);
         Assert.assertEquals(res[1].getOm().length, 2);

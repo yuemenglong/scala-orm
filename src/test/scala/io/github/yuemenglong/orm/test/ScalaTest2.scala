@@ -4,7 +4,9 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.test.model.{OO, Obj}
+import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.test.model.{MO, OM, OO, Obj}
+import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
 
 /**
@@ -33,7 +35,7 @@ class ScalaTest2 {
     for (i <- 0.until(1000)) {
       db.beginTransaction(session => {
         val root = Orm.root(classOf[Obj])
-        session.query(Orm.from(root))
+        session.query(Orm.selectFrom(root))
       })
     }
   }
@@ -126,6 +128,27 @@ class ScalaTest2 {
       val (max, min) = session.first(query)
       Assert.assertEquals(max.intValue(), 10)
       Assert.assertEquals(min.intValue(), 1)
+    })
+  }
+
+  @Test
+  def testAttach(): Unit = {
+    db.beginTransaction(session => {
+      var obj = new Obj
+      obj.setName("")
+      obj.setOm(1.to(5).map(i => {
+        val om = new OM()
+        om.setMo(new MO)
+        om
+      }).toArray)
+      obj = Orm.convert(obj)
+      val ex = Orm.insert(obj)
+      ex.insert("om").insert("mo")
+      session.execute(ex)
+      obj.setOm(Array())
+      obj = OrmTool.attach[Obj](obj, "om", session, join => join.select("mo"))
+      Assert.assertEquals(obj.getOm.length, 5)
+      Assert.assertEquals(obj.getOm()(0).getMo.getId.intValue(), 1)
     })
   }
 
