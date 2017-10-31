@@ -20,13 +20,12 @@ import scala.reflect.ClassTag
   */
 
 class QueryImpl[T](private var st: SelectableTuple[T],
-                   private var root: Root[_] = null,
-                   private var cond: Cond = new CondHolder(),
-                   private var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)](),
-                   private var limitOffset: (Long, Long) = (-1, -1),
-                   private var groupByVar: Array[Field] = Array[Field](),
-                   private var havingVar: Cond = null)
-  extends Query[T] {
+                   private var root: Root[_] = null) extends Query[T] {
+  private[orm] var cond: Cond = new CondHolder()
+  private[orm] var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
+  private[orm] var limitOffset: (Long, Long) = (-1, -1)
+  private[orm] var groupByVar: Array[Field] = Array[Field]()
+  private[orm] var havingVar: Cond = _
 
   def getParams: Array[Object] = {
     val loParams = limitOffset match {
@@ -90,37 +89,19 @@ class QueryImpl[T](private var st: SelectableTuple[T],
       }
       ab.toArray(ClassTag(st.getType))
     })
-    //    val stmt = conn.prepareStatement(sql)
-    //    params.zipWithIndex.foreach { case (param, i) =>
-    //      stmt.setObject(i + 1, param)
-    //    }
-    //    val rs = stmt.executeQuery()
-    //    var ab = ArrayBuffer[T]()
-    //    val filterMap = mutable.Map[String, Entity]()
-    //    while (rs.next()) {
-    //      val value = st.pick(rs, filterMap)
-    //      val key = st.getKey(value.asInstanceOf[Object])
-    //      if (!filterSet.contains(key)) {
-    //        ab += value
-    //      }
-    //      filterSet += key
-    //    }
-    //    rs.close()
-    //    stmt.close()
-    //    ab.toArray(ClassTag(st.getType))
   }
 
   //////
 
-  override def select[T1](t: Selectable[T1]): Query[T1] = {
-    val st = new SelectableTupleImpl[T1](t.getType, t)
-    new QueryImpl[T1](st, root, cond, orders, limitOffset, groupByVar, havingVar)
-  }
-
-  override def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)] = {
-    val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2)
-    new QueryImpl[(T1, T2)](st, root, cond, orders, limitOffset, groupByVar, havingVar)
-  }
+  //  override def select[T1](t: Selectable[T1]): Query[T1] = {
+  //    val st = new SelectableTupleImpl[T1](t.getType, t)
+  //    new QueryImpl[T1](st, root)
+  //  }
+  //
+  //  override def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)] = {
+  //    val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2)
+  //    new QueryImpl[(T1, T2)](st, root)
+  //  }
 
   override def from(selectRoot: Root[_]): Query[T] = {
     root = selectRoot

@@ -6,6 +6,7 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.meta._
+import io.github.yuemenglong.orm.operate.impl.QueryImpl
 import io.github.yuemenglong.orm.operate.impl.core.SelectJoinImpl
 import io.github.yuemenglong.orm.operate.traits.Query
 import io.github.yuemenglong.orm.operate.traits.core.SelectJoin
@@ -80,13 +81,14 @@ object OrmTool {
     root.fields(Array[String]())
     val pkeyName = entity.$$core().meta.pkey.name
     val pkeyValue = entity.$$core().getPkey
+
     val join = root.select(field).asInstanceOf[SelectJoinImpl]
     buildJoin(join)
-    val cond = join.impl.cond.and(root.get(pkeyName).eql(pkeyValue))
-    join.on(cond)
 
-    val query = Orm.selectFrom(root)
+    val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[T]]
     buildQuery(query)
+    query.where(query.cond.and(root.get(pkeyName).eql(pkeyValue)))
+
     val res = session.first(query).asInstanceOf[Entity].$$core().get(field)
     entity.$$core().set(field, res)
     obj

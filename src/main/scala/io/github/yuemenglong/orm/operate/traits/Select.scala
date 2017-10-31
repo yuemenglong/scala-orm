@@ -9,9 +9,9 @@ import io.github.yuemenglong.orm.operate.traits.core._
 
 trait Query[T] extends Queryable[T] {
 
-  def select[T1](t: Selectable[T1]): Query[T1]
-
-  def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)]
+  //  def select[T1](t: Selectable[T1]): Query[T1]
+  //
+  //  def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)]
 
   def from(selectRoot: Root[_]): Query[T]
 
