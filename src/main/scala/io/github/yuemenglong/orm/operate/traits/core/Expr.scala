@@ -20,31 +20,31 @@ trait Cond extends Expr {
 }
 
 trait CondOp {
-  def eql(v: Object): Cond
+  def eql[T](v: T): Cond
 
   def eql(f: Field): Cond
 
-  def neq(v: Object): Cond
+  def neq[T](v: T): Cond
 
   def neq(f: Field): Cond
 
-  def gt(v: Object): Cond
+  def gt[T](v: T): Cond
 
   def gt(f: Field): Cond
 
-  def gte(v: Object): Cond
+  def gte[T](v: T): Cond
 
   def gte(f: Field): Cond
 
-  def lt(v: Object): Cond
+  def lt[T](v: T): Cond
 
   def lt(f: Field): Cond
 
-  def lte(v: Object): Cond
+  def lte[T](v: T): Cond
 
   def lte(f: Field): Cond
 
-  def like(v: Object): Cond
+  def like(v: String): Cond
 
   def in[T](a: Array[T])(implicit ev: T => Object): Cond
 
@@ -56,7 +56,7 @@ trait CondOp {
 }
 
 trait AssignOp {
-  def assign(v: Object): Assign
+  def assign[T](v: T): Assign
 
   def assign(f: Field): Assign
 

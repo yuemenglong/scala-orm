@@ -152,4 +152,14 @@ class ScalaTest2 {
     })
   }
 
+  @Test
+  def testConvert(): Unit = db.beginTransaction(session => {
+        val obj = Orm.convert(new Obj)
+        obj.setName("Age10")
+        obj.setAge(10)
+        session.execute(Orm.insert(obj))
+        val root = Orm.root(classOf[Obj])
+        val res = session.first(Orm.selectFrom(root).where(root.get("age").eql(10)))
+        Assert.assertEquals(res.getName, "Age10")
+  })
 }

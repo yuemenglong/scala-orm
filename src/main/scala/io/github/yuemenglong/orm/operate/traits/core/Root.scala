@@ -19,6 +19,7 @@ trait Node {
 }
 
 trait Field extends Node with CondOp with AssignOp {
+
   def getField: String
 
   def getColumn: String
@@ -27,31 +28,31 @@ trait Field extends Node with CondOp with AssignOp {
 
   def as[T](clazz: Class[T]): SelectableField[T]
 
-  override def eql(v: Object): Cond = EqFV(this, v)
+  override def eql[T](v: T): Cond = EqFV(this, v.asInstanceOf[Object])
 
   override def eql(f: Field): Cond = EqFF(this, f)
 
-  override def neq(v: Object): Cond = NeFV(this, v)
+  override def neq[T](v: T): Cond = NeFV(this, v.asInstanceOf[Object])
 
   override def neq(f: Field): Cond = NeFF(this, f)
 
-  override def gt(v: Object): Cond = GtFV(this, v)
+  override def gt[T](v: T): Cond = GtFV(this, v.asInstanceOf[Object])
 
   override def gt(f: Field): Cond = GtFF(this, f)
 
-  override def gte(v: Object): Cond = GteFV(this, v)
+  override def gte[T](v: T): Cond = GteFV(this, v.asInstanceOf[Object])
 
   override def gte(f: Field): Cond = GteFF(this, f)
 
-  override def lt(v: Object): Cond = LtFV(this, v)
+  override def lt[T](v: T): Cond = LtFV(this, v.asInstanceOf[Object])
 
   override def lt(f: Field): Cond = LteFF(this, f)
 
-  override def lte(v: Object): Cond = LteFV(this, v)
+  override def lte[T](v: T): Cond = LteFV(this, v.asInstanceOf[Object])
 
   override def lte(f: Field): Cond = LteFF(this, f)
 
-  override def like(v: Object): Cond = LikeFV(this, v)
+  override def like(v: String): Cond = LikeFV(this, v)
 
   override def in[T](a: Array[T])(implicit ev: T => Object): Cond = InFA(this, a)
 
@@ -63,7 +64,7 @@ trait Field extends Node with CondOp with AssignOp {
 
   override def assign(f: Field): Assign = AssignFF(this, f)
 
-  override def assign(v: Object): Assign = AssignFV(this, v)
+  override def assign[T](v: T): Assign = AssignFV(this, v.asInstanceOf[Object])
 
   override def assignNull(): Assign = AssignNull(this)
 }
