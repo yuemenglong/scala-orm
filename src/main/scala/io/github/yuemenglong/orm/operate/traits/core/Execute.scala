@@ -20,7 +20,7 @@ trait ExecuteJoin {
 
   def delete(field: String): ExecuteJoin
 
-  def ignore(field: String): ExecuteJoin
+  def ignore(fields: String*): ExecuteJoin
 
   def insert(obj: Object): ExecuteJoin
 
@@ -31,7 +31,11 @@ trait ExecuteJoin {
   def ignore(obj: Object): ExecuteJoin
 }
 
-trait ExecuteRoot extends ExecuteJoin with Executable
+trait ExecuteRoot extends ExecuteJoin with Executable {
+  override def ignore(fields: String*): ExecuteRoot
+
+  override def ignore(obj: Object): ExecuteRoot
+}
 
 
 

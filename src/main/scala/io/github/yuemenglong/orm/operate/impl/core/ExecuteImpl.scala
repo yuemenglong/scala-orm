@@ -139,14 +139,16 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     }
   }
 
-  override def ignore(field: String): ExecuteJoin = {
-    if (!meta.fieldMap.contains(field)) {
-      throw new RuntimeException(s"""Invalid Field: $field""")
-    } else if (meta.fieldMap(field).isNormalOrPkey) {
-      ignoreFields += field
-    } else {
-      cascades.remove(cascades.indexWhere(_._1 == field))
-    }
+  override def ignore(fields: String*): ExecuteJoin = {
+    fields.toArray.foreach(field => {
+      if (!meta.fieldMap.contains(field)) {
+        throw new RuntimeException(s"""Invalid Field: $field""")
+      } else if (meta.fieldMap(field).isNormalOrPkey) {
+        ignoreFields += field
+      } else {
+        cascades.remove(cascades.indexWhere(_._1 == field))
+      }
+    })
     this
   }
 
@@ -285,7 +287,10 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoinImpl) extends ExecuteRoot {
 
   override def delete(field: String): ExecuteJoin = impl.delete(field)
 
-  override def ignore(field: String): ExecuteJoin = impl.ignore(field)
+  override def ignore(fields: String*): ExecuteRoot = {
+    impl.ignore(fields: _*)
+    this
+  }
 
   override def insert(obj: Object): ExecuteJoin = impl.insert(obj)
 
@@ -293,7 +298,10 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoinImpl) extends ExecuteRoot {
 
   override def delete(obj: Object): ExecuteJoin = impl.delete(obj)
 
-  override def ignore(obj: Object): ExecuteJoin = impl.ignore(obj)
+  override def ignore(obj: Object): ExecuteRoot = {
+    impl.ignore(obj)
+    this
+  }
 
   override def walk(fn: (Entity) => Entity): Unit = {
     EntityManager.walk(obj.asInstanceOf[Entity], fn)

@@ -154,12 +154,39 @@ class ScalaTest2 {
 
   @Test
   def testConvert(): Unit = db.beginTransaction(session => {
-        val obj = Orm.convert(new Obj)
-        obj.setName("Age10")
-        obj.setAge(10)
-        session.execute(Orm.insert(obj))
-        val root = Orm.root(classOf[Obj])
-        val res = session.first(Orm.selectFrom(root).where(root.get("age").eql(10)))
-        Assert.assertEquals(res.getName, "Age10")
+    val obj = Orm.convert(new Obj)
+    obj.setName("Age10")
+    obj.setAge(10)
+    session.execute(Orm.insert(obj))
+    val root = Orm.root(classOf[Obj])
+    val res = session.first(Orm.selectFrom(root).where(root.get("age").eql(10)))
+    Assert.assertEquals(res.getName, "Age10")
+  })
+
+  @Test
+  def testIgnore(): Unit = db.beginTransaction(session => {
+    val obj = Orm.convert(new Obj)
+    obj.setName("Tom")
+    obj.setAge(100)
+    obj.setDoubleValue(10.0)
+    session.execute(Orm.insert(obj))
+
+    {
+      val root = Orm.root(classOf[Obj])
+      val res = session.first(Orm.selectFrom(root))
+      res.setName("Jack")
+      res.setAge(0)
+      res.setDoubleValue(20.0)
+      session.execute(Orm.update(res).ignore("name", "age"))
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val res = session.first(Orm.selectFrom(root))
+      Assert.assertEquals(res.getAge.intValue(), 100)
+      Assert.assertEquals(res.getName, "Tom")
+      Assert.assertEquals(res.getDoubleValue.doubleValue(), 20.0, 0.00001)
+    }
+
+
   })
 }
