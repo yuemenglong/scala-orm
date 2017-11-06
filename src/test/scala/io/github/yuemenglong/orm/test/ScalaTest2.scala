@@ -224,6 +224,40 @@ class ScalaTest2 {
   }
 
   @Test
+  def testDeleteCascadeCond(): Unit = {
+    db.beginTransaction(session => {
+      var obj = new Obj
+
+      {
+        obj.setName("")
+        obj.setOo(new OO)
+        obj.setOm(Array(new OM, new OM))
+        obj.getOm()(0).setMo(new MO)
+        obj = Orm.convert(obj)
+        val ex = Orm.insert(obj)
+        ex.insert("oo")
+        ex.insert("om").insert("mo")
+        session.execute(ex)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        val ex = Orm.delete(
+          root.leftJoin("oo"),
+        ).from(root).where(root.get("id").eql(1))
+        session.execute(ex)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        root.select("oo")
+        val query = Orm.selectFrom(root)
+        val obj = session.first(query)
+        Assert.assertNotNull(obj)
+        Assert.assertEquals(obj.getOo, null)
+      }
+    })
+  }
+
+  @Test
   def testCascadeUpdate(): Unit = {
     db.beginTransaction(session => {
       var obj = new Obj
