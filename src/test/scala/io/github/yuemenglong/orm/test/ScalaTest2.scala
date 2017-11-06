@@ -4,7 +4,6 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.test.model.{MO, OM, OO, Obj}
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
@@ -14,7 +13,6 @@ import org.junit.{After, Assert, Before, Test}
   */
 class ScalaTest2 {
   private var db: Db = _
-
 
   @SuppressWarnings(Array("Duplicates"))
   @Before def before(): Unit = {
@@ -197,17 +195,70 @@ class ScalaTest2 {
         obj.setName("")
         obj.setOo(new OO)
         obj.setOm(Array(new OM, new OM))
+        obj.getOm()(0).setMo(new MO)
         obj = Orm.convert(obj)
         val ex = Orm.insert(obj)
         ex.insert("oo")
-        ex.insert("om")
+        ex.insert("om").insert("mo")
         session.execute(ex)
       }
       {
         val root = Orm.root(classOf[Obj])
-        val ex = Orm.delete(root, root.join("oo"), root.join("om")).from(root).where(root.get("id").eql(1))
+        val ex = Orm.delete(
+          root,
+          root.leftJoin("oo"),
+          root.leftJoin("om"),
+          root.leftJoin("om").leftJoin("mo")
+        ).from(root).where(root.get("id").eql(1))
         val ret = session.execute(ex)
-        Assert.assertEquals(ret, 4)
+        Assert.assertEquals(ret, 5)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        root.select("oo")
+        root.select("om").select("mo")
+        val query = Orm.select(root.count()).from(root)
+        val ret = session.first(query)
+      }
+    })
+  }
+
+  @Test
+  def testCascadeUpdate(): Unit = {
+    db.beginTransaction(session => {
+      var obj = new Obj
+
+      {
+        obj.setName("")
+        obj.setOo(new OO)
+        obj.setOm(Array(new OM, new OM))
+        obj.getOm()(0).setMo(new MO)
+        obj = Orm.convert(obj)
+        val ex = Orm.insert(obj)
+        ex.insert("oo")
+        ex.insert("om").insert("mo")
+        session.execute(ex)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        val ex = Orm.update(root).set(
+          root.get("name").assign("Tom"),
+          root.leftJoin("oo").get("value").assign(100),
+          root.leftJoin("om").get("value").assign(200)
+        ).where(root.get("id").eql(obj.getId).and(
+          root.leftJoin("om").get("id").eql(1)))
+        session.execute(ex)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        root.select("oo")
+        root.select("om")
+        val query = Orm.selectFrom(root).where(root.get("id").eql(1))
+        val obj = session.first(query)
+        Assert.assertEquals(obj.getName, "Tom")
+        Assert.assertEquals(obj.getOo.getValue.intValue(), 100)
+        Assert.assertEquals(obj.getOm()(0).getValue.intValue(), 200)
+        Assert.assertEquals(obj.getOm()(1).getValue, null)
       }
     })
   }

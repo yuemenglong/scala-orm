@@ -81,6 +81,8 @@ trait Join extends Node with Expr {
 
   def join(field: String, joinType: JoinType): Join
 
+  def leftJoin(field: String): Join = join(field, JoinType.LEFT)
+
   def get(field: String): Field
 
   def on(c: Cond): Join
