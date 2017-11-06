@@ -103,5 +103,7 @@ object Orm {
 
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
-  def delete(root: Root[_]): ExecutableDelete = new DeleteImpl(root)
+  def delete(joins: Join*): ExecutableDelete = new DeleteImpl(joins: _*)
+
+  def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
 }

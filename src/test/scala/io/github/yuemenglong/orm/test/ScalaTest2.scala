@@ -204,10 +204,10 @@ class ScalaTest2 {
         session.execute(ex)
       }
       {
-        val ex = Orm.delete(obj)
-        ex.delete("oo")
-        ex.delete("om")
-        session.execute(ex)
+        val root = Orm.root(classOf[Obj])
+        val ex = Orm.delete(root, root.join("oo"), root.join("om")).from(root).where(root.get("id").eql(1))
+        val ret = session.execute(ex)
+        Assert.assertEquals(ret, 4)
       }
     })
   }

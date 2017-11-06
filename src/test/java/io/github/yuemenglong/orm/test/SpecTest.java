@@ -98,7 +98,7 @@ public class SpecTest {
         Assert.assertEquals(ret, 7);
 
         Root<OM> root = Orm.root(OM.class);
-        ret = session.execute(Orm.delete(root).where
+        ret = session.execute(Orm.deleteFrom(root).where
                 (root.join("obj").get("id").gt(1).or(root.get("id").lt(3))));
         Assert.assertEquals(ret, 8);
         session.close();
