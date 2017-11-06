@@ -237,36 +237,20 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val idCond = s"${core.meta.pkey.column} = ?"
     val sql = s"UPDATE `${core.meta.table}` SET $columns WHERE $idCond"
     val params = validFields.map(f => core.get(f.name)).toArray ++ Array(core.getPkey)
-    //    val stmt = conn.prepareStatement(sql)
-    //    validFields.zipWithIndex.foreach { case (field, i) =>
-    //      stmt.setObject(i + 1, core.get(field.name))
-    //    }
-    //    stmt.setObject(validFields.length + 1, core.getPkey)
-    //
-    //    // id作为条件出现
-    //    val params = validFields.++(Array(core.meta.pkey)).map(item => {
-    //      core.get(item.name) match {
-    //        case null => "null"
-    //        case v => v.toString
-    //      }
-    //    }).mkString(", ")
+
     if (validFields.isEmpty) {
       Kit.logSql(sql, params)
       Logger.warn("No Field To Update")
-      //      stmt.close()
       return 0
     }
     Kit.execute(conn, sql, params)
-    //    val ret = stmt.executeUpdate()
-    //    stmt.close()
-    //    ret
   }
 }
 
 class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Delete Entity Must Has Pkey")
-    val idCond = s"${core.meta.pkey.name} = ?"
+    val idCond = s"${core.meta.pkey.column} = ?"
     val sql = s"DELETE FROM `${core.meta.table}` WHERE $idCond"
     Kit.execute(conn, sql, Array(core.getPkey))
     //    val stmt = conn.prepareStatement(sql)

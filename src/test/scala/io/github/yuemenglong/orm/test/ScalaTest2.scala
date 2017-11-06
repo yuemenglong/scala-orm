@@ -186,7 +186,29 @@ class ScalaTest2 {
       Assert.assertEquals(res.getName, "Tom")
       Assert.assertEquals(res.getDoubleValue.doubleValue(), 20.0, 0.00001)
     }
-
-
   })
+
+  @Test
+  def testDeleteCascade(): Unit = {
+    db.beginTransaction(session => {
+      var obj = new Obj
+
+      {
+        obj.setName("")
+        obj.setOo(new OO)
+        obj.setOm(Array(new OM, new OM))
+        obj = Orm.convert(obj)
+        val ex = Orm.insert(obj)
+        ex.insert("oo")
+        ex.insert("om")
+        session.execute(ex)
+      }
+      {
+        val ex = Orm.delete(obj)
+        ex.delete("oo")
+        ex.delete("om")
+        session.execute(ex)
+      }
+    })
+  }
 }
