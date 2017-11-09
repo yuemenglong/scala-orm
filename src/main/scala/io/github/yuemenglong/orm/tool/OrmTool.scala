@@ -25,7 +25,43 @@ object OrmTool {
   }
 
   def exportTsClass(path: String): Unit = {
+    var referMap: Map[String, Set[String]] = Map()
+    val checkWithMap = (meta: EntityMeta) => {
+      require(!referMap.contains(meta.entity))
+      val entity = meta.entity
+      val refers = meta.fieldMap.values.filter(f => f.isPointer || f.isOneOne)
+        .map(_.asInstanceOf[FieldMetaRefer].refer.entity)
+      // 1. 获取不能new的字段
+      val invalids = refers.filter(r => referMap.get(r) match {
+        case Some(s) => s.contains(entity)
+        case None => false
+      }).toArray
+      // 2. 所有能new的字段，打平set
+      val set: Set[String] = refers.filter(!invalids.contains(_))
+        .flatMap(e => referMap.get(e) match {
+          case Some(s) => s ++ Set(e)
+          case None => Set(e)
+        }).toSet
+      // 3. 所有已经存在的实体，将当前entity加入
+      referMap.mapValues(s => {
+        if (s.contains(entity)) {
+          s ++ set
+        } else {
+          s
+        }
+      })
+      referMap += (entity -> set)
+      invalids
+    }
+    val checkInvalid = (invalids: Array[String], field: FieldMetaRefer) => {
+      if (invalids.contains(field.refer.entity)) {
+        s"${field.refer.entity} = undefined"
+      } else {
+        s"${field.refer.entity} = new ${field.refer.entity}()"
+      }
+    }
     val classes = OrmMeta.entityVec.map(meta => {
+      val invalids = checkWithMap(meta)
       val fields = meta.fieldVec.filter(field => {
         field match {
           case _: FieldMetaFkey => false
@@ -35,7 +71,6 @@ object OrmTool {
         val name = field.name
         val ty = field match {
           case _: FieldMetaBoolean => "boolean = undefined"
-
           case _: FieldMetaInteger => "number = undefined"
           case _: FieldMetaSmallInt => "number = undefined"
           case _: FieldMetaTinyInt => "number = undefined"
@@ -49,8 +84,10 @@ object OrmTool {
           case _: FieldMetaDate => "string = undefined"
           case _: FieldMetaDateTime => "string = undefined"
 
-          case field: FieldMetaPointer => s"${field.refer.entity} = new ${field.refer.entity}()"
-          case field: FieldMetaOneOne => s"${field.refer.entity} = new ${field.refer.entity}()"
+          //          case field: FieldMetaPointer => s"${field.refer.entity} = new ${field.refer.entity}()"
+          //          case field: FieldMetaOneOne => s"${field.refer.entity} = new ${field.refer.entity}()"
+          case field: FieldMetaPointer => checkInvalid(invalids, field)
+          case field: FieldMetaOneOne => checkInvalid(invalids, field)
           case field: FieldMetaOneMany => s"Array<${field.refer.entity}> = []"
         }
         s"\t$name: $ty;"

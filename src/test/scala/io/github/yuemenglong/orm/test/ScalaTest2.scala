@@ -296,4 +296,9 @@ class ScalaTest2 {
       }
     })
   }
+
+  @Test
+  def testExport(): Unit = {
+    OrmTool.exportTsClass("export.ts")
+  }
 }
