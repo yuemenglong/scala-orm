@@ -315,6 +315,16 @@ class ScalaTest2 {
       val obj2 = session.first(Orm.selectFrom(Orm.root(classOf[Obj])))
       Assert.assertEquals(obj2.getName, "name")
       Assert.assertEquals(obj2.getAge, null)
+
+      obj2.setName("name2")
+      obj2.setAge(20)
+      val ex2 = Orm.update(obj2)
+      ex2.fields("age")
+      session.execute(ex2)
+
+      val obj3 = session.first(Orm.selectFrom(Orm.root(classOf[Obj])))
+      Assert.assertEquals(obj3.getName, "name")
+      Assert.assertEquals(obj3.getAge.intValue(), 20)
     })
   }
 }
