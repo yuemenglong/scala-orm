@@ -301,4 +301,20 @@ class ScalaTest2 {
   def testExport(): Unit = {
     OrmTool.exportTsClass("export.ts")
   }
+
+  @Test
+  def testFields(): Unit = {
+    db.beginTransaction(session => {
+      val obj = new Obj
+      obj.setName("name")
+      obj.setAge(10)
+      val ex = Orm.insert(Orm.convert(obj))
+      ex.fields("name")
+      session.execute(ex)
+
+      val obj2 = session.first(Orm.selectFrom(Orm.root(classOf[Obj])))
+      Assert.assertEquals(obj2.getName, "name")
+      Assert.assertEquals(obj2.getAge, null)
+    })
+  }
 }

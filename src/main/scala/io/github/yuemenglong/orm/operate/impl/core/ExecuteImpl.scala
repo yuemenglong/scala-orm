@@ -15,9 +15,19 @@ import scala.collection.mutable.ArrayBuffer
   * Created by yml on 2017/7/15.
   */
 abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
+  protected var fields: Array[FieldMeta] = meta.fields().filter(_.isNormalOrPkey).toArray
   private var cascades = new ArrayBuffer[(String, ExecuteJoinImpl)]()
   private var spec = Map[Object, ExecuteJoinImpl]()
   protected var ignoreFields: Set[String] = Set[String]()
+
+  override def fields(fields: String*): ExecuteJoin = {
+    fields.foreach(field => {
+      if (!meta.fieldMap.contains(field)) throw new RuntimeException(s"Unknown Field $field In ${meta.entity}")
+      if (!meta.fieldMap(field).isNormalOrPkey) throw new RuntimeException(s"$field Is Not Normal Field")
+    })
+    this.fields = fields.map(meta.fieldMap(_)).toArray
+    this
+  }
 
   def execute(entity: Entity, conn: Connection): Int = {
     if (entity.$$core().meta != meta) {
@@ -185,7 +195,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 
 class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
-    val validFields = core.meta.fields().filter(field => {
+    val validFields = this.fields.filter(field => {
       field.isNormalOrPkey &&
         core.fieldMap.contains(field.name) &&
         !ignoreFields.contains(field.name)
@@ -226,7 +236,7 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
 class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
     if (core.getPkey == null) throw new RuntimeException("Update Entity Must Has Pkey")
-    val validFields = core.meta.fields().filter(field => {
+    val validFields = this.fields.filter(field => {
       field.isNormal &&
         core.fieldMap.contains(field.name) &&
         !ignoreFields.contains(field.name)
@@ -289,6 +299,11 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoinImpl) extends ExecuteRoot {
 
   override def walk(fn: (Entity) => Entity): Unit = {
     EntityManager.walk(obj.asInstanceOf[Entity], fn)
+  }
+
+  override def fields(fields: String*) = {
+    impl.fields(fields: _*)
+    this
   }
 }
 

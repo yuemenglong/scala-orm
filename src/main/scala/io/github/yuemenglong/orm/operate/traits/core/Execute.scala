@@ -14,6 +14,8 @@ trait Executable {
 }
 
 trait ExecuteJoin {
+  def fields(fields: String*): ExecuteJoin
+
   def insert(field: String): ExecuteJoin
 
   def update(field: String): ExecuteJoin
