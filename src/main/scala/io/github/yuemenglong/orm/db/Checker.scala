@@ -83,6 +83,7 @@ object Checker {
         case ("VARCHAR", "LONGTEXT") => true
         case ("TINYINT", "BOOLEAN") => true
         case ("TIMESTAMP", "DATETIME") => true
+        case ("CHAR", "VARCHAR") => true
         case (a, b) => a == b
       }
       if (!eq) {
