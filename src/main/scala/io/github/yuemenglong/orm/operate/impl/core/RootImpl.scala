@@ -51,13 +51,16 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends Selectabl
 
 }
 
-class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val joinType: JoinType) extends Join {
+class JoinImpl(val meta: EntityMeta, val parent: Join,
+               val joinName: String, val left: String, val right: String,
+               val joinType: JoinType) extends Join {
   private[orm] var cond: Cond = new CondHolder
-  private[orm] val joins = new ArrayBuffer[JoinImpl]()
+  private[orm] val joins = new ArrayBuffer[(String, JoinImpl)]()
   private val fields = new ArrayBuffer[FieldImpl]()
 
   def this(meta: EntityMeta) {
-    this(null, meta, null, null)
+    // for create root
+    this(meta, null, null, null, null, null)
   }
 
   override def getMeta: EntityMeta = meta
@@ -66,12 +69,12 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Join Field $field")
     }
-    joins.find(_.field == field) match {
-      case Some(join) => join
+    joins.find(_._1 == field) match {
+      case Some(p) => p._2
       case None =>
-        val refer = meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer
-        val join = new JoinImpl(field, refer, this, joinType)
-        joins += join
+        val referField = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
+        val join = new JoinImpl(referField.refer, this, field, referField.left, referField.right, joinType)
+        joins += ((field, join))
         join
     }
   }
@@ -104,7 +107,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
     if (parent == null) {
       Kit.lowerCaseFirst(meta.entity)
     } else {
-      s"${parent.getAlias}_${Kit.lowerCaseFirst(field)}"
+      s"${parent.getAlias}_${Kit.lowerCaseFirst(joinName)}"
     }
   }
 
@@ -112,9 +115,8 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
     if (parent == null) {
       s"`${meta.table}` AS `$getAlias`"
     } else {
-      val fieldMeta = parent.getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer]
-      val leftColumn = parent.getMeta.fieldMap(fieldMeta.left).column
-      val rightColumn = meta.fieldMap(fieldMeta.right).column
+      val leftColumn = parent.getMeta.fieldMap(left).column
+      val rightColumn = meta.fieldMap(right).column
       val leftTable = parent.getAlias
       val rightTable = getAlias
       val joinCondSql = cond.getSql match {
@@ -125,7 +127,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
     }
   }
 
-  override def getParams: Array[Object] = cond.getParams ++ joins.flatMap(_.getParams).toArray[Object]
+  override def getParams: Array[Object] = cond.getParams ++ joins.map(_._2).flatMap(_.getParams).toArray[Object]
 
   override def on(c: Cond): Join = {
     cond = c
@@ -135,7 +137,7 @@ class JoinImpl(val field: String, val meta: EntityMeta, val parent: Join, val jo
 }
 
 class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
-  protected[impl] var selects = new ArrayBuffer[SelectJoinImpl]()
+  protected[impl] var selects = new ArrayBuffer[(String, SelectJoinImpl)]()
   protected[impl] var fields: Array[FieldImpl] = impl.meta.fields().filter(_.isNormalOrPkey).map(f => new FieldImpl(f, impl)).toArray
 
   override def getAlias: String = impl.getAlias
@@ -156,12 +158,12 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
     if (!impl.meta.fieldMap.contains(field) || !impl.meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Object Field $field")
     }
-    selects.find(_.impl.field == field) match {
-      case Some(s) => s
+    selects.find(_._1 == field) match {
+      case Some(p) => p._2
       case None =>
         val j = impl.leftJoin(field).asInstanceOf[JoinImpl]
         val s = new SelectJoinImpl(j)
-        selects += s
+        selects += ((field, s))
         s
     }
   }
@@ -222,8 +224,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
 
   protected def pickRefer(a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
     val aCore = EntityManager.core(a)
-    selects.foreach { select =>
-      val field = select.impl.field
+    selects.foreach { case (field, select) =>
       val fieldMeta = impl.meta.fieldMap(field)
       val b = select.pickResult(resultSet, filterMap)
       fieldMeta match {
@@ -238,8 +239,6 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
             val key = getOneManyFilterKey(field, b.$$core())
             if (!filterMap.contains(key)) {
               // 该对象还未被加入过一对多数组
-              //              val ct = ClassTag[Entity](f.refer.clazz)
-              //              val builder = Array.newBuilder(ct) += b
               val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
               val brr = Kit.newArray(f.refer.clazz, b)
               aCore.fieldMap += (field -> (arr ++ brr))
@@ -247,20 +246,6 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
             filterMap += (key -> b)
           }
       }
-      //      if (!fieldMeta.isOneMany) {
-      //        aCore.fieldMap += (field -> b)
-      //      } else if (b != null) {
-      //        // b为null相当于初始化空数组，暂时放在empty里实现，需要再考虑 TODO
-      //        val key = getOneManyFilterKey(field, b.$$core())
-      //        if (!filterMap.contains(key)) {
-      //          // 该对象还未被加入过一对多数组
-      //          val ct = ClassTag[Entity](fieldMeta.refer.clazz)
-      //          val builder = Array.newBuilder(ct) += b
-      //          val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
-      //          aCore.fieldMap += (field -> (arr ++ builder.result()))
-      //        }
-      //        filterMap += (key -> b)
-      //      }
     }
   }
 
@@ -281,7 +266,7 @@ class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl)
     def go(select: SelectJoinImpl): Array[String] = {
       val selfColumn = select.fields.map(field => s"${field.getColumn} AS ${field.getAlias}")
       // 1. 属于自己的字段 2. 级联的部分
-      selfColumn ++ select.selects.flatMap(go)
+      selfColumn ++ select.selects.map(_._2).flatMap(go)
     }
 
     go(this).mkString(",\n")
@@ -306,7 +291,7 @@ class RootImpl[T](clazz: Class[T], impl: JoinImpl)
 
   override def getTableWithJoinCond: String = {
     def go(join: JoinImpl): Array[String] = {
-      Array(join.getTableWithJoinCond) ++ join.joins.flatMap(go)
+      Array(join.getTableWithJoinCond) ++ join.joins.map(_._2).flatMap(go)
     }
 
     go(impl).mkString("\n")
@@ -322,5 +307,3 @@ class RootImpl[T](clazz: Class[T], impl: JoinImpl)
 
   override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
 }
-
-
