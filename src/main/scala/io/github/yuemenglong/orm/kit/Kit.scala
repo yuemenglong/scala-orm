@@ -100,7 +100,9 @@ object Kit {
     } catch {
       case e: Throwable => throw e
     } finally {
-      rs.close()
+      if (rs != null) {
+        rs.close()
+      }
       stmt.close()
     }
   }

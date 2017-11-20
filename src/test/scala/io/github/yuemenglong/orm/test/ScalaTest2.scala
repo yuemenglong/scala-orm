@@ -4,7 +4,7 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.test.model.{MO, OM, OO, Obj}
+import io.github.yuemenglong.orm.test.model._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
 
@@ -325,6 +325,45 @@ class ScalaTest2 {
       val obj3 = session.first(Orm.selectFrom(Orm.root(classOf[Obj])))
       Assert.assertEquals(obj3.getName, "name")
       Assert.assertEquals(obj3.getAge.intValue(), 20)
+    })
+  }
+
+  @Test
+  def testJoinAs(): Unit = {
+    db.beginTransaction(session => {
+      {
+        val obj = new Obj()
+        obj.setName("")
+        obj.setPtr(new Ptr)
+        obj.setOo(new OO)
+        obj.setOm(Array(new OM, new OM))
+        val ex = Orm.insert(Orm.convert(obj))
+        ex.insert("ptr")
+        ex.insert("oo")
+        ex.insert("om")
+        session.execute(ex)
+      }
+
+      {
+        val root = Orm.root(classOf[Obj])
+        val p = root.leftJoinAs("ptrId", "id", classOf[Ptr])
+        val query = Orm.select(root, p).from(root)
+        val res = session.query(query)
+        Assert.assertEquals(res.length, 1)
+        val (obj, ptr) = res(0)
+        Assert.assertEquals(obj.getId, 1L)
+        Assert.assertEquals(ptr.getId, 1L)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        val o = root.leftJoinAs("id", "objId", classOf[OM])
+        val query = Orm.select(root, o).from(root)
+        val res = session.query(query)
+        Assert.assertEquals(res.length, 2)
+        Assert.assertEquals(res(0)._1.toString, res(1)._1.toString)
+        Assert.assertEquals(res(0)._2.getId, 1L)
+        Assert.assertEquals(res(1)._2.getId, 2L)
+      }
     })
   }
 }

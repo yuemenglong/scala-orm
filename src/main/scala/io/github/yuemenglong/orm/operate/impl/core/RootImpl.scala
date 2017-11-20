@@ -55,7 +55,7 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
                val joinName: String, val left: String, val right: String,
                val joinType: JoinType) extends Join {
   private[orm] var cond: Cond = new CondHolder
-  private[orm] val joins = new ArrayBuffer[(String, JoinImpl)]()
+  private[orm] val joins = new ArrayBuffer[JoinImpl]()
   private val fields = new ArrayBuffer[FieldImpl]()
 
   def this(meta: EntityMeta) {
@@ -69,21 +69,43 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Join Field $field")
     }
-    joins.find(_._1 == field) match {
-      case Some(p) => p._2
+    joins.find(_.joinName == field) match {
+      case Some(p) => p
       case None =>
         val referField = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
         val join = new JoinImpl(referField.refer, this, field, referField.left, referField.right, joinType)
-        joins += ((field, join))
+        joins += join
         join
     }
+  }
+
+  override def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T] = {
+    if (!OrmMeta.entityMap.contains(clazz.getSimpleName)) {
+      throw new RuntimeException(s"${clazz.getSimpleName} Is Not Entity")
+    }
+    val referMeta = OrmMeta.entityMap(clazz.getSimpleName)
+    if (!meta.fieldMap.contains(left)) {
+      throw new RuntimeException(s"Unknown Join Field $left On ${meta.entity}")
+    }
+    if (!referMeta.fieldMap.contains(right)) {
+      throw new RuntimeException(s"Unknown Join Field $right On ${referMeta.entity}")
+    }
+    val join = joins.find(_.joinName == referMeta.entity) match {
+      case Some(p) => p
+      case None =>
+        val join = new JoinImpl(referMeta, this, referMeta.entity, left, right, joinType)
+        joins += join
+        join
+    }
+    new SelectableJoinImpl[T](clazz, join)
   }
 
   override def get(field: String): Field = {
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Join Field $field")
     }
-    fields.find(_.getField == field) match {
+    fields
+      .find(_.getField == field) match {
       case Some(f) => f
       case None =>
         val fieldMeta = meta.fieldMap(field)
@@ -96,7 +118,8 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
   override def getRoot: Node = {
     if (parent != null) {
       parent.getRoot
-    } else {
+    }
+    else {
       this
     }
   }
@@ -107,13 +130,19 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     if (parent == null) {
       Kit.lowerCaseFirst(meta.entity)
     } else {
-      s"${parent.getAlias}_${Kit.lowerCaseFirst(joinName)}"
+      s"${
+        parent.getAlias
+      }_${
+        Kit.lowerCaseFirst(joinName)
+      }"
     }
   }
 
   override def getTableWithJoinCond: String = {
     if (parent == null) {
-      s"`${meta.table}` AS `$getAlias`"
+      s"`${
+        meta.table
+      }` AS `$getAlias`"
     } else {
       val leftColumn = parent.getMeta.fieldMap(left).column
       val rightColumn = meta.fieldMap(right).column
@@ -123,11 +152,15 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
         case "" => ""
         case s => s" AND $s"
       }
-      s"${joinType.toString} JOIN `${meta.table}` AS `$getAlias` ON $leftTable.$leftColumn = $rightTable.$rightColumn$joinCondSql"
+      s"${
+        joinType.toString
+      } JOIN `${
+        meta.table
+      }` AS `$getAlias` ON $leftTable.$leftColumn = $rightTable.$rightColumn$joinCondSql"
     }
   }
 
-  override def getParams: Array[Object] = cond.getParams ++ joins.map(_._2).flatMap(_.getParams).toArray[Object]
+  override def getParams: Array[Object] = cond.getParams ++ joins.flatMap(_.getParams).toArray[Object]
 
   override def on(c: Cond): Join = {
     cond = c
@@ -145,6 +178,8 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   override def getTableWithJoinCond: String = impl.getTableWithJoinCond
 
   override def join(field: String, joinType: JoinType): Join = impl.join(field, joinType)
+
+  override def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T] = impl.joinAs(left, right, clazz, joinType)
 
   override def get(field: String): Field = impl.get(field)
 
@@ -254,6 +289,7 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   override def getParams: Array[Object] = impl.getParams
 
   override def getMeta: EntityMeta = impl.getMeta
+
 }
 
 class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl)
@@ -291,7 +327,7 @@ class RootImpl[T](clazz: Class[T], impl: JoinImpl)
 
   override def getTableWithJoinCond: String = {
     def go(join: JoinImpl): Array[String] = {
-      Array(join.getTableWithJoinCond) ++ join.joins.map(_._2).flatMap(go)
+      Array(join.getTableWithJoinCond) ++ join.joins.flatMap(go)
     }
 
     go(impl).mkString("\n")
