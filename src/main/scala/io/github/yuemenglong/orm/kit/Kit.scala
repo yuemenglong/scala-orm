@@ -31,25 +31,21 @@ object Kit {
   }
 
   def getDeclaredFields(clazz: Class[_]): Array[Field] = {
-    val ret = new ArrayBuffer[Field]()
-    clazz.getDeclaredFields.foreach(ret += _)
-    var parent = clazz.getSuperclass
-    while (parent != null) {
-      parent.getDeclaredFields.foreach(ret += _)
-      parent = parent.getSuperclass
+    val parent = clazz.getSuperclass
+    if (parent != null) {
+      getDeclaredFields(parent) ++ clazz.getDeclaredFields
+    } else {
+      clazz.getDeclaredFields
     }
-    ret.toArray
   }
 
   def getDeclaredMethods(clazz: Class[_]): Array[Method] = {
-    val ret = new ArrayBuffer[Method]()
-    clazz.getDeclaredMethods.foreach(ret += _)
-    var parent = clazz.getSuperclass
-    while (parent != null) {
-      parent.getDeclaredMethods.foreach(ret += _)
-      parent = parent.getSuperclass
+    val parent = clazz.getSuperclass
+    if (parent != null) {
+      getDeclaredMethods(parent) ++ clazz.getDeclaredMethods
+    } else {
+      clazz.getDeclaredMethods
     }
-    ret.toArray
   }
 
   def newArray(clazz: Class[_], values: Entity*): Array[_] = {
