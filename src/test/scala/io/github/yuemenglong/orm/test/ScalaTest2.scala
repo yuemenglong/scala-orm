@@ -366,4 +366,18 @@ class ScalaTest2 {
       }
     })
   }
+
+  @Test
+  def testSelectIgnore(): Unit = {
+    db.beginTransaction(session => {
+      val obj = new Obj()
+      obj.setName("name")
+      session.execute(Orm.insert(Orm.convert(obj)))
+
+      val root = Orm.root(classOf[Obj]).ignore("name")
+      val o = session.first(Orm.selectFrom(root))
+      Assert.assertEquals(o.getId.longValue(), 1)
+      Assert.assertNull(o.getName)
+    })
+  }
 }

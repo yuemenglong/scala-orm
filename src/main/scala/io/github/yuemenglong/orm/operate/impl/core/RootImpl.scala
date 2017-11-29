@@ -285,6 +285,20 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   override def getParams: Array[Object] = impl.getParams
 
   override def getMeta: EntityMeta = impl.getMeta
+
+  override def ignore(fields: Array[String]): SelectJoin = {
+    fields.foreach(f => {
+      if (!getMeta.fieldMap.contains(f)) {
+        throw new RuntimeException(s"Not Exists Field, $f")
+      }
+      val fieldMeta = getMeta.fieldMap(f)
+      if (!fieldMeta.isNormal) {
+        throw new RuntimeException(s"Only Normal Field Can Ignore, $f")
+      }
+      this.fields = this.fields.filter(_.meta.name != f)
+    })
+    this
+  }
 }
 
 class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl)
@@ -316,6 +330,8 @@ class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl)
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = pickResult(resultSet, filterMap).asInstanceOf[T]
 
   override def fields(fields: Array[String]): SelectableJoin[T] = super.fields(fields).asInstanceOf[SelectableJoin[T]]
+
+  override def ignore(fields: Array[String]): SelectableJoin[T] = super.ignore(fields).asInstanceOf[SelectableJoin[T]]
 }
 
 class RootImpl[T](clazz: Class[T], impl: JoinImpl)
@@ -341,4 +357,6 @@ class RootImpl[T](clazz: Class[T], impl: JoinImpl)
   override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
 
   override def fields(fields: Array[String]): Root[T] = super.fields(fields).asInstanceOf[Root[T]]
+
+  override def ignore(fields: Array[String]): Root[T] = super.ignore(fields).asInstanceOf[Root[T]]
 }

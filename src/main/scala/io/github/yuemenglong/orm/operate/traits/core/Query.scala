@@ -37,6 +37,10 @@ trait SelectJoin extends Join {
   def fields(fields: String*): SelectJoin = this.fields(fields.toArray)
 
   def fields(fields: Array[String]): SelectJoin
+
+  def ignore(fields: String*): SelectJoin = this.ignore(fields.toArray)
+
+  def ignore(fields: Array[String]): SelectJoin
 }
 
 trait SelectableJoin[T] extends Selectable[T] with SelectJoin {
@@ -44,6 +48,10 @@ trait SelectableJoin[T] extends Selectable[T] with SelectJoin {
   override def fields(fields: String*): SelectableJoin[T] = this.fields(fields.toArray)
 
   def fields(fields: Array[String]): SelectableJoin[T]
+
+  override def ignore(fields: String*): SelectableJoin[T] = this.ignore(fields.toArray)
+
+  def ignore(fields: Array[String]): SelectableJoin[T]
 }
 
 trait SelectableField[T] extends Field with Selectable[T] {
@@ -77,6 +85,10 @@ trait Root[T] extends SelectableJoin[T] {
   override def fields(fields: String*): Root[T] = this.fields(fields.toArray)
 
   def fields(fields: Array[String]): Root[T]
+
+  override def ignore(fields: String*): Root[T] = this.ignore(fields.toArray)
+
+  def ignore(fields: Array[String]): Root[T]
 }
 
 
