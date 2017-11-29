@@ -203,10 +203,6 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
     }
   }
 
-  override def fields(fields: String*): SelectJoin = {
-    this.fields(fields.toArray)
-  }
-
   override def fields(fields: Array[String]): SelectJoin = {
     fields.foreach(f => {
       if (!this.getMeta.fieldMap.contains(f)) {
@@ -289,7 +285,6 @@ class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
   override def getParams: Array[Object] = impl.getParams
 
   override def getMeta: EntityMeta = impl.getMeta
-
 }
 
 class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl)
@@ -319,6 +314,8 @@ class SelectableJoinImpl[T](val clazz: Class[T], impl: JoinImpl)
   }
 
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = pickResult(resultSet, filterMap).asInstanceOf[T]
+
+  override def fields(fields: Array[String]): SelectableJoin[T] = super.fields(fields).asInstanceOf[SelectableJoin[T]]
 }
 
 class RootImpl[T](clazz: Class[T], impl: JoinImpl)
@@ -342,4 +339,6 @@ class RootImpl[T](clazz: Class[T], impl: JoinImpl)
   override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
 
   override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
+
+  override def fields(fields: Array[String]): Root[T] = super.fields(fields).asInstanceOf[Root[T]]
 }

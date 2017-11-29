@@ -34,12 +34,17 @@ trait Selectable[T] extends Node {
 trait SelectJoin extends Join {
   def select(field: String): SelectJoin
 
-  def fields(field: String*): SelectJoin
+  def fields(fields: String*): SelectJoin = this.fields(fields.toArray)
 
   def fields(fields: Array[String]): SelectJoin
 }
 
-trait SelectableJoin[T] extends Selectable[T] with SelectJoin
+trait SelectableJoin[T] extends Selectable[T] with SelectJoin {
+
+  override def fields(fields: String*): SelectableJoin[T] = this.fields(fields.toArray)
+
+  def fields(fields: Array[String]): SelectableJoin[T]
+}
 
 trait SelectableField[T] extends Field with Selectable[T] {
 
@@ -68,6 +73,10 @@ trait Root[T] extends SelectableJoin[T] {
   def max[R](field: Field, clazz: Class[R]): SelectableField[R]
 
   def min[R](field: Field, clazz: Class[R]): SelectableField[R]
+
+  override def fields(fields: String*): Root[T] = this.fields(fields.toArray)
+
+  def fields(fields: Array[String]): Root[T]
 }
 
 
