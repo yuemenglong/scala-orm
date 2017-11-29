@@ -380,4 +380,23 @@ class ScalaTest2 {
       Assert.assertNull(o.getName)
     })
   }
+
+  @Test
+  def testSelectDeleteById(): Unit = {
+    db.beginTransaction(session => {
+      val obj = new Obj()
+      obj.setName("name")
+      session.execute(Orm.insert(Orm.convert(obj)))
+
+      {
+        val o = OrmTool.selectById(classOf[Obj], 1, session)
+        Assert.assertEquals(o.getName, "name")
+      }
+      {
+        OrmTool.deleteById(classOf[Obj], 1, session)
+        val o = OrmTool.selectById(classOf[Obj], 1, session)
+        Assert.assertNull(o)
+      }
+    })
+  }
 }

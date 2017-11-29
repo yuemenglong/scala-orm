@@ -130,4 +130,17 @@ object OrmTool {
     entity.$$core().set(field, res)
     obj
   }
+
+  def selectById[T, V](clazz: Class[T], id: V, session: Session): T = {
+    val root = Orm.root(clazz)
+    val pkey = root.getMeta.pkey.name
+    session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
+  }
+
+  def deleteById[T, V](clazz: Class[T], id: V, session: Session): Int = {
+    val obj = Orm.empty(clazz).asInstanceOf[Object]
+    val pkey = OrmMeta.entityMap(clazz.getSimpleName).pkey.name
+    obj.asInstanceOf[Entity].$$core().fieldMap += (pkey -> id.asInstanceOf[Object])
+    session.execute(Orm.delete(obj))
+  }
 }
