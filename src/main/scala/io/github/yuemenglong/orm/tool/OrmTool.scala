@@ -143,4 +143,11 @@ object OrmTool {
     obj.asInstanceOf[Entity].$$core().fieldMap += (pkey -> id.asInstanceOf[Object])
     session.execute(Orm.delete(obj))
   }
+
+  def clearField(obj: Object, field: String): Unit = {
+    if (!obj.isInstanceOf[Entity]) {
+      throw new RuntimeException("Not Entity")
+    }
+    obj.asInstanceOf[Entity].$$core().fieldMap -= field
+  }
 }

@@ -398,8 +398,6 @@ class ScalaTest2 {
         Assert.assertNull(o)
       }
     })
-
-
   }
 
   @Test
@@ -436,5 +434,15 @@ class ScalaTest2 {
         Assert assertEquals(o.getDoubleValue.doubleValue(), 8.5, 0.00001)
       }
     })
+  }
+
+  @Test
+  def testClearField(): Unit = {
+    val obj = Orm.empty(classOf[Obj])
+    Assert.assertEquals(obj.toString, "{}")
+    obj.setId(1L)
+    Assert.assertEquals(obj.toString, """{id: 1}""")
+    OrmTool.clearField(obj, "id")
+    Assert.assertEquals(obj.toString, "{}")
   }
 }
