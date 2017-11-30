@@ -148,6 +148,9 @@ object OrmTool {
     if (!obj.isInstanceOf[Entity]) {
       throw new RuntimeException("Not Entity")
     }
+    if (!obj.asInstanceOf[Entity].$$core().meta.fieldMap.contains(field)) {
+      throw new RuntimeException(s"Not A Valid Field, ${field}")
+    }
     obj.asInstanceOf[Entity].$$core().fieldMap -= field
   }
 }
