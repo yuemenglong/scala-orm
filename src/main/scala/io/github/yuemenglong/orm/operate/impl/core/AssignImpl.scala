@@ -23,3 +23,15 @@ case class AssignNull(f1: Field) extends Assign {
 
   override def getParams: Array[Object] = Array()
 }
+
+case class AssignAdd(f1: Field, f2: Field, v: Object) extends Assign {
+  override def getParams: Array[Object] = Array(v)
+
+  override def getSql = s"${f1.getColumn} = ${f2.getColumn} + ?"
+}
+
+case class AssignSub(f1: Field, f2: Field, v: Object) extends Assign {
+  override def getParams: Array[Object] = Array(v)
+
+  override def getSql = s"${f1.getColumn} = ${f2.getColumn} - ?"
+}

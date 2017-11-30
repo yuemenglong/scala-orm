@@ -398,5 +398,43 @@ class ScalaTest2 {
         Assert.assertNull(o)
       }
     })
+
+
+  }
+
+  @Test
+  def testAssignAddSub(): Unit = {
+    db.beginTransaction(session => {
+      val obj = new Obj()
+      obj.setName("name")
+      obj.setDoubleValue(1.5)
+      obj.setAge(10)
+      session.execute(Orm.insert(Orm.convert(obj)))
+
+      {
+        val root = Orm.root(classOf[Obj])
+        session.execute(Orm.update(root).set(root.get("doubleValue").assignAdd(1.2)))
+        val o = OrmTool.selectById(classOf[Obj], 1, session)
+        Assert assertEquals(o.getDoubleValue.doubleValue(), 2.7, 0.00001)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        session.execute(Orm.update(root).set(root.get("doubleValue").assignSub(1.5)))
+        val o = OrmTool.selectById(classOf[Obj], 1, session)
+        Assert assertEquals(o.getDoubleValue.doubleValue(), 1.2, 0.00001)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        session.execute(Orm.update(root).set(root.get("doubleValue").assignAdd(root.get("age"), 1.2)))
+        val o = OrmTool.selectById(classOf[Obj], 1, session)
+        Assert assertEquals(o.getDoubleValue.doubleValue(), 11.2, 0.00001)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        session.execute(Orm.update(root).set(root.get("doubleValue").assignSub(root.get("age"), 1.5)))
+        val o = OrmTool.selectById(classOf[Obj], 1, session)
+        Assert assertEquals(o.getDoubleValue.doubleValue(), 8.5, 0.00001)
+      }
+    })
   }
 }

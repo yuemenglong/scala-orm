@@ -60,6 +60,14 @@ trait AssignOp {
 
   def assign(f: Field): Assign
 
+  def assignAdd[T](f: Field, value: T): Assign
+
+  def assignAdd[T](value: T): Assign
+
+  def assignSub[T](f: Field, value: T): Assign
+
+  def assignSub[T](value: T): Assign
+
   def assignNull(): Assign
 }
 
