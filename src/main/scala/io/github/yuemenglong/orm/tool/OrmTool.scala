@@ -29,20 +29,21 @@ object OrmTool {
     val checkWithMap = (meta: EntityMeta) => {
       require(!referMap.contains(meta.entity))
       val entity = meta.entity
+      // 所有一对一的类型
       val refers = meta.fieldMap.values.filter(f => f.isPointer || f.isOneOne)
         .map(_.asInstanceOf[FieldMetaRefer].refer.entity)
-      // 1. 获取不能new的字段
+      // 1. 获取不能new的字段(对方的展开结合里包含该类型,说明对方能new出该类型)
       val invalids = refers.filter(r => referMap.get(r) match {
         case Some(s) => s.contains(entity)
         case None => false
-      }).toArray
-      // 2. 所有能new的字段，打平set
+      }).toArray ++ Array(entity)
+      // 2. 所有能new的字段(即一对一的)，打平set
       val set: Set[String] = refers.filter(!invalids.contains(_))
         .flatMap(e => referMap.get(e) match {
           case Some(s) => s ++ Set(e)
           case None => Set(e)
         }).toSet
-      // 3. 所有已经存在的实体，将当前entity加入
+      // 3. 所有已经存在的实体，且能new出当前类型的，将当前的集合并入
       referMap.mapValues(s => {
         if (s.contains(entity)) {
           s ++ set
