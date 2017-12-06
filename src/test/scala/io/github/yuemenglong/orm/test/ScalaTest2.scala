@@ -471,4 +471,23 @@ class ScalaTest2 {
         })
     }
   }
+
+  @Test
+  def testTransaction2(): Unit = {
+    try {
+      db.beginTransaction(fn = session => {
+        val obj = Orm.create(classOf[Obj])
+        obj.setName("")
+        session.execute(Orm.insert(classOf[Obj]).values(Array(obj)))
+        throw new RuntimeException("Test")
+      })
+      Assert.assertFalse(true)
+    } catch {
+      case _: Throwable =>
+        db.beginTransaction(session => {
+          val obj = OrmTool.selectById(classOf[Obj], 1, session)
+          Assert.assertNull(obj)
+        })
+    }
+  }
 }

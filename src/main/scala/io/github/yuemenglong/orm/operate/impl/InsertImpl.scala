@@ -7,9 +7,7 @@ import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.traits.ExecutableInsert
 
-import scala.annotation.varargs
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.
@@ -38,7 +36,10 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     Logger.info(sql)
 
-    conn.setAutoCommit(false)
+    val inTransaction = !conn.getAutoCommit
+    if (!inTransaction) {
+      conn.setAutoCommit(false)
+    }
     entities.foreach(entity => {
       val ab = ArrayBuffer[Object]()
       fields.zipWithIndex.foreach { case (field, i) =>
@@ -67,11 +68,9 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
       val core = o.asInstanceOf[Entity].$$core()
       core.setPkey(ids(i))
     }
-    //    while (rs.next()) {
-    //      val id = rs.getObject(1)
-    //      //      core.fieldMap += (core.meta.pkey.name -> id)
-    //    }
-    conn.commit()
+    if (!inTransaction) {
+      conn.commit()
+    }
     ret.sum
   }
 
