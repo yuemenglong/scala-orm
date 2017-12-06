@@ -32,6 +32,10 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     fieldMap(meta.pkey.name)
   }
 
+  def setPkey(id: Object) = {
+    fieldMap += (meta.pkey.name -> id)
+  }
+
   def get(field: String): Object = {
     this.getValue(field)
   }

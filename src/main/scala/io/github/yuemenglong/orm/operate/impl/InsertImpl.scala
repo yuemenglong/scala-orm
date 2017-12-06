@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.impl
 
-import java.sql.Connection
+import java.sql.{Connection, Statement}
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
@@ -20,7 +20,7 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     throw new RuntimeException(s"Not Entity: ${clazz.getSimpleName}")
   }
   val meta: EntityMeta = OrmMeta.entityMap(clazz.getSimpleName)
-  var array: Array[T] = Array.newBuilder[T](ClassTag(clazz)).result()
+  var array: Array[T] = Array().asInstanceOf[Array[T]] //Array.newBuilder[T](ClassTag(clazz)).result()
 
   override def walk(fn: (Entity) => Entity): Unit = {}
 
@@ -35,7 +35,7 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     val columns = fields.map(_.column).mkString(", ")
     val holders = fields.map(_ => "?").mkString(", ")
     val sql = s"INSERT INTO `${meta.table}`($columns) VALUES ($holders)"
-    val stmt = conn.prepareStatement(sql)
+    val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     Logger.info(sql)
 
     conn.setAutoCommit(false)
@@ -55,6 +55,22 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     })
 
     val ret = stmt.executeBatch()
+    val rs = stmt.getGeneratedKeys
+    val ids = Stream.continually({
+      if (rs.next()) {
+        rs.getObject(1)
+      } else {
+        null
+      }
+    }).takeWhile(_ != null).toArray
+    array.zipWithIndex.foreach { case (o, i) =>
+      val core = o.asInstanceOf[Entity].$$core()
+      core.setPkey(ids(i))
+    }
+    //    while (rs.next()) {
+    //      val id = rs.getObject(1)
+    //      //      core.fieldMap += (core.meta.pkey.name -> id)
+    //    }
     conn.commit()
     ret.sum
   }

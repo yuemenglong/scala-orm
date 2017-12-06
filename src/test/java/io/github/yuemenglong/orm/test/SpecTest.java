@@ -113,6 +113,9 @@ public class SpecTest {
         ExecutableInsert<Obj> ex = Orm.insert(Obj.class).values(objs);
         int ret = session.execute(ex);
         Assert.assertEquals(ret, 3);
+        Assert.assertEquals(objs[0].getId().intValue(), 1);
+        Assert.assertEquals(objs[1].getId().intValue(), 2);
+        Assert.assertEquals(objs[2].getId().intValue(), 3);
         session.close();
     }
 
