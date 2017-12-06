@@ -7,14 +7,14 @@ import io.github.yuemenglong.orm.meta.{FieldMeta, FieldMetaDeclared}
   */
 object Column {
   def getAddSql(field: FieldMeta): String = {
-    s"ALTER TABLE `${field.entity.table}` ADD ${field.getDbSql}"
+    s"ALTER TABLE `${field.entity.table}` ADD ${field.getDbSql};"
   }
 
   def getDropSql(field: FieldMeta): String = {
-    s"ALTER TABLE `${field.entity.table}` DROP ${field.column}"
+    s"ALTER TABLE `${field.entity.table}` DROP ${field.column};"
   }
 
   def getDropSql(table: String, column: String): String = {
-    s"ALTER TABLE `$table` DROP $column"
+    s"ALTER TABLE `$table` DROP $column;"
   }
 }

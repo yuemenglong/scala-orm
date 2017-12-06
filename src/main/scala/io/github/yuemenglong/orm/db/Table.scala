@@ -10,7 +10,7 @@ object Table {
     val columns = meta.fields().filter(field => field.isNormalOrPkey).map((field) => {
       field.getDbSql
     }).mkString(", ")
-    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns) ENGINE=InnoDB DEFAULT CHARSET=utf8"
+    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
     sql
   }
 
@@ -26,10 +26,10 @@ object Table {
 
   def getDropSql(meta: EntityMeta): String = {
     getDropSql(meta.table)
- }
+  }
 
   def getDropSql(table: String): String = {
-    val sql = s"DROP TABLE IF EXISTS `$table`"
+    val sql = s"DROP TABLE IF EXISTS `$table`;"
     sql
   }
 }
