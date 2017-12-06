@@ -4,6 +4,7 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.operate.traits.core.Root
 import io.github.yuemenglong.orm.test.model._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
@@ -386,11 +387,17 @@ class ScalaTest2 {
     db.beginTransaction(session => {
       val obj = new Obj()
       obj.setName("name")
-      session.execute(Orm.insert(Orm.convert(obj)))
+      obj.setOo(new OO)
+      val ex = Orm.insert(Orm.convert(obj))
+      ex.insert("oo")
+      session.execute(ex)
 
       {
-        val o = OrmTool.selectById(classOf[Obj], 1, session)
+        val o = OrmTool.selectById(classOf[Obj], 1, session, (root: Root[Obj]) => {
+          root.select("oo")
+        })
         Assert.assertEquals(o.getName, "name")
+        Assert.assertEquals(o.getOo.getId.longValue(), 1)
       }
       {
         OrmTool.deleteById(classOf[Obj], 1, session)

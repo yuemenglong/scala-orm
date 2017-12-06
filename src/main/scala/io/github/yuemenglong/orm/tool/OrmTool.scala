@@ -9,7 +9,7 @@ import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.impl.QueryImpl
 import io.github.yuemenglong.orm.operate.impl.core.SelectJoinImpl
 import io.github.yuemenglong.orm.operate.traits.Query
-import io.github.yuemenglong.orm.operate.traits.core.SelectJoin
+import io.github.yuemenglong.orm.operate.traits.core.{Root, SelectJoin}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/10/10.
@@ -132,8 +132,10 @@ object OrmTool {
     obj
   }
 
-  def selectById[T, V](clazz: Class[T], id: V, session: Session): T = {
+  def selectById[T, V](clazz: Class[T], id: V, session: Session,
+                       selectFn: (Root[T]) => Unit = (_: Root[T]) => {}): T = {
     val root = Orm.root(clazz)
+    selectFn(root)
     val pkey = root.getMeta.pkey.name
     session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
   }
