@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm.test.model;
 
 import io.github.yuemenglong.orm.lang.anno.*;
+import io.github.yuemenglong.orm.lang.anno.Enum;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -44,6 +45,9 @@ public class Obj {
 
     @DateTime
     Date nowTime = null;
+
+    @Enum({"succ", "fail"})
+    String status = null;
 
     @Ignore
     Integer ignValue = null;
@@ -181,5 +185,13 @@ public class Obj {
 
     public void setLongText(String longText) {
         this.longText = longText;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

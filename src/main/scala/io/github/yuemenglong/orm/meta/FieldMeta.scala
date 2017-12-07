@@ -68,6 +68,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   val annoId: Id = field.getAnnotation(classOf[Id])
   val annoDateTime: DateTime = field.getAnnotation(classOf[DateTime])
   val annoLongText: LongText = field.getAnnotation(classOf[LongText])
+  val annoEnum: Enum = field.getAnnotation(classOf[Enum])
   val annoPointer: Pointer = field.getAnnotation(classOf[Pointer])
   val annoOneOne: OneToOne = field.getAnnotation(classOf[OneToOne])
   val annoOneMany: OneToMany = field.getAnnotation(classOf[OneToMany])
@@ -140,6 +141,21 @@ class FieldMetaString(field: Field, entity: EntityMeta) extends FieldMetaDeclare
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
     }
     s"$column $dbType($length)$notnull$pkey"
+  }
+}
+
+class FieldMetaEnum(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
+  require(field.getType == classOf[java.lang.String])
+  val values: String = annoEnum.value().map(s => '"' + s + '"').mkString(",")
+  override val dbType: String = "ENUM"
+  override val getDbSql: String = {
+    val notnull = if (nullable) "" else " NOT NULL"
+    val pkey = (isPkey, isAuto) match {
+      case (false, _) => ""
+      case (true, false) => " PRIMARY KEY"
+      case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
+    }
+    s"$column $dbType($values)$notnull$pkey"
   }
 }
 

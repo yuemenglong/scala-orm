@@ -81,6 +81,7 @@ object OrmTool {
           case _: FieldMetaDecimal => "number = undefined"
 
           case _: FieldMetaString => "string = undefined"
+          case _: FieldMetaEnum => "string = undefined"
           case _: FieldMetaLongText => "string = undefined"
           case _: FieldMetaDate => "string = undefined"
           case _: FieldMetaDateTime => "string = undefined"

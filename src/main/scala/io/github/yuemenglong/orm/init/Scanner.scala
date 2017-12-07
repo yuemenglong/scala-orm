@@ -85,8 +85,14 @@ object Scanner {
           }
         case Types.StringClass =>
           val annoLongText = field.getAnnotation(classOf[LongText])
-          if (annoLongText == null) new FieldMetaString(field, entityMeta)
-          else new FieldMetaLongText(field, entityMeta)
+          val annoEnum = field.getAnnotation(classOf[Enum])
+          if (annoEnum != null) {
+            new FieldMetaEnum(field, entityMeta)
+          } else if (annoLongText != null) {
+            new FieldMetaLongText(field, entityMeta)
+          } else {
+            new FieldMetaString(field, entityMeta)
+          }
         case Types.DateClass =>
           val annoDateTime = field.getAnnotation(classOf[DateTime])
           if (annoDateTime == null) new FieldMetaDate(field, entityMeta)
