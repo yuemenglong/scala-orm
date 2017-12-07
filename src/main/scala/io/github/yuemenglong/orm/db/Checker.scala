@@ -84,6 +84,7 @@ object Checker {
         case ("TINYINT", "BOOLEAN") => true
         case ("TIMESTAMP", "DATETIME") => true
         case ("CHAR", "VARCHAR") => true
+        case ("CHAR", "ENUM") => true
         case (a, b) => a == b
       }
       if (!eq) {

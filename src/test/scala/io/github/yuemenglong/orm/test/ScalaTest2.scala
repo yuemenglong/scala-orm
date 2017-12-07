@@ -501,6 +501,7 @@ class ScalaTest2 {
       val root = Orm.root(classOf[Obj])
       val res = session.first(Orm.selectFrom(root).where(root.get("status").eql("succ")))
       Assert.assertEquals(res.getId.longValue(), 1)
+      Assert.assertEquals(res.getStatus, "succ")
     })
   }
 }
