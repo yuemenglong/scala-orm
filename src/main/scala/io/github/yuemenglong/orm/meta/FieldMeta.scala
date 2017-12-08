@@ -22,10 +22,13 @@ trait FieldMeta {
   val clazz: Class[_]
   val column: String
   val nullable: Boolean
+  //  val defaultValue: String
   val isPkey: Boolean
   val isAuto: Boolean
 
   val dbType: String
+
+  def getDbTypeSql: String = dbType
 
   def getDbSql: String = {
     val notnull = if (nullable) "" else " NOT NULL"
@@ -34,7 +37,7 @@ trait FieldMeta {
       case (true, false) => " PRIMARY KEY"
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
     }
-    s"$column $dbType$notnull$pkey"
+    s"$column $getDbTypeSql$notnull$pkey"
   }
 
   def isNormalOrPkey: Boolean = !isRefer
@@ -133,14 +136,8 @@ class FieldMetaString(field: Field, entity: EntityMeta) extends FieldMetaDeclare
     255
   }
   override val dbType: String = "VARCHAR"
-  override val getDbSql: String = {
-    val notnull = if (nullable) "" else " NOT NULL"
-    val pkey = (isPkey, isAuto) match {
-      case (false, _) => ""
-      case (true, false) => " PRIMARY KEY"
-      case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
-    }
-    s"$column $dbType($length)$notnull$pkey"
+  override val getDbTypeSql: String = {
+    s"$dbType($length)"
   }
 }
 
@@ -149,14 +146,8 @@ class FieldMetaEnum(field: Field, entity: EntityMeta) extends FieldMetaDeclared(
   val values: Array[String] = annoEnum.value()
   val valuesSql: String = annoEnum.value().map(s => '"' + s + '"').mkString(",")
   override val dbType: String = "ENUM"
-  override val getDbSql: String = {
-    val notnull = if (nullable) "" else " NOT NULL"
-    val pkey = (isPkey, isAuto) match {
-      case (false, _) => ""
-      case (true, false) => " PRIMARY KEY"
-      case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
-    }
-    s"$column $dbType($valuesSql)$notnull$pkey"
+  override val getDbTypeSql: String = {
+    s"$dbType($valuesSql)"
   }
 }
 
@@ -168,18 +159,12 @@ class FieldMetaDecimal(field: Field, entity: EntityMeta) extends FieldMetaDeclar
     (0, 0)
   }
   override val dbType: String = "DECIMAL"
-  override val getDbSql: String = {
-    val notnull = if (nullable) "" else " NOT NULL"
-    val pkey = (isPkey, isAuto) match {
-      case (false, _) => ""
-      case (true, false) => " PRIMARY KEY"
-      case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
-    }
+  override val getDbTypeSql: String = {
     val ps = (precision, scale) match {
       case (0, 0) => ""
       case (p, s) => s"($p,$s)"
     }
-    s"$column $dbType$ps$notnull$pkey"
+    s"$dbType$ps"
   }
 }
 
