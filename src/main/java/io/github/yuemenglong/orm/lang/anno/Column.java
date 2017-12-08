@@ -1,5 +1,8 @@
 package io.github.yuemenglong.orm.lang.anno;
 
+import io.github.yuemenglong.orm.kit.Kit;
+import io.github.yuemenglong.orm.lang.Def;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -18,5 +21,6 @@ public @interface Column {
 
     int scale() default 0;
 
+    String defaultValue() default Def.NONE_DEFAULT_VALUE;
 }
 //(precision, scale)

@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.meta
 import java.lang.reflect.Field
 
 import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.lang.anno._
 
 //object FieldMetaTypeKind {
@@ -22,7 +23,7 @@ trait FieldMeta {
   val clazz: Class[_]
   val column: String
   val nullable: Boolean
-  //  val defaultValue: String
+  val defaultValue: String
   val isPkey: Boolean
   val isAuto: Boolean
 
@@ -37,7 +38,11 @@ trait FieldMeta {
       case (true, false) => " PRIMARY KEY"
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
     }
-    s"$column $getDbTypeSql$notnull$pkey"
+    val dft = defaultValue match {
+      case null => ""
+      case _ => s" DEFAULT '$defaultValue'"
+    }
+    s"$column $getDbTypeSql$notnull$dft$pkey"
   }
 
   def isNormalOrPkey: Boolean = !isRefer
@@ -64,6 +69,7 @@ class FieldMetaFkey(override val name: String,
   override val isAuto: Boolean = referMeta.isAuto
   override val dbType: String = "BIGINT"
   override val clazz: Class[_] = classOf[java.lang.Long]
+  override val defaultValue: String = null
 }
 
 abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) extends FieldMeta {
@@ -88,6 +94,13 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   override val nullable: Boolean = annoColumn match {
     case null => true
     case _ => annoColumn.nullable()
+  }
+  override val defaultValue: String = annoColumn match {
+    case null => null
+    case _ => annoColumn.defaultValue() match {
+      case Def.NONE_DEFAULT_VALUE => null
+      case s: String => s
+    }
   }
   override val isPkey: Boolean = annoId != null
   override val isAuto: Boolean = isPkey && annoId.auto()

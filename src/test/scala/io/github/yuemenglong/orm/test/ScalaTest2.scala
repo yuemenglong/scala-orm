@@ -505,4 +505,15 @@ class ScalaTest2 {
       Assert.assertEquals(res.getStatus, "succ")
     })
   }
+
+  @Test
+  def testDefaultValue(): Unit = {
+    db.beginTransaction(session => {
+      val obj = Orm.empty(classOf[Obj])
+      obj.setName("dft")
+      session.execute(Orm.insert(obj))
+      val res = OrmTool.selectById(classOf[Obj], 1, session)
+      Assert.assertEquals(res.getDftValue.intValue(), 10)
+    })
+  }
 }

@@ -49,6 +49,9 @@ public class Obj {
     @Enum({"succ", "fail"})
     String status = null;
 
+    @Column(defaultValue = "10")
+    Integer dftValue = null;
+
     @Ignore
     Integer ignValue = null;
 
@@ -193,5 +196,13 @@ public class Obj {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Integer getDftValue() {
+        return dftValue;
+    }
+
+    public void setDftValue(Integer dftValue) {
+        this.dftValue = dftValue;
     }
 }
