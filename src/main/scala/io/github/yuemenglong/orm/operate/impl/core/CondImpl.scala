@@ -14,7 +14,7 @@ class CondHolder extends Cond {
 
   override def getParams: Array[Object] = Array()
 
-  override def getSql: String = ""
+  override def getSql: String = "1=1"
 }
 
 abstract class JointCond(cs: Cond*) extends Cond {
