@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.db
 
 import java.sql.Connection
 
-import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta}
+import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta, FieldMetaEnum}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/8/2.
@@ -77,7 +77,7 @@ object Checker {
       }
     }.filter(_ != null).toArray
     // type mismatch
-    tableColumnMap.filter(p => entityColumnMap.contains(p._1)).foreach { case (column, tableDbType) =>
+    val needReAdd: Array[String] = tableColumnMap.filter(p => entityColumnMap.contains(p._1)).flatMap { case (column, tableDbType) =>
       val entityDbType = entityColumnMap(column)
       val eq = (tableDbType, entityDbType) match {
         case ("VARCHAR", "LONGTEXT") => true
@@ -89,12 +89,42 @@ object Checker {
       }
       if (!eq) {
         val field = columnMap(column)
-        throw new RuntimeException(s"${meta.entity}:${field.name} Type Not Match, $tableDbType:$entityDbType")
+        //        throw new RuntimeException(s"${meta.entity}:${field.name} Type Not Match, $tableDbType:$entityDbType")
+        Array(Column.getDropSql(field), Column.getAddSql(field))
+      } else {
+        Array[String]()
+      }
+    }.toArray
+    // enum test
+    val needChange: Array[String] = {
+      val enumFields: Map[String, FieldMetaEnum] = meta.fieldVec.filter(_.isInstanceOf[FieldMetaEnum]).map(_.asInstanceOf[FieldMetaEnum])
+        .map(f => (f.name, f))(collection.breakOut)
+      if (enumFields.isEmpty) {
+        Array[String]()
+      } else {
+        val sql = s"SHOW COLUMNS FROM ${meta.table}"
+        val resultSet = conn.prepareStatement(sql).executeQuery()
+        val dbEnums = Stream.continually({
+          if (resultSet.next()) {
+            (resultSet.getString("Field"), resultSet.getString("Type"))
+          } else {
+            null
+          }
+        }).takeWhile(_ != null).filter(p => enumFields.contains(p._1))
+        dbEnums.map { case (name, ty) =>
+          val dbSet = "'(.*?)'".r.findAllMatchIn(ty).map(_.group(1)).toSet
+          val entitySet = enumFields(name).values.toSet
+          if (dbSet != entitySet) {
+            Column.getChangeSql(enumFields(name))
+          } else {
+            null
+          }
+        }.filter(_ != null).toArray
       }
     }
     rs.close()
     stmt.close()
-    needDrops ++ needAdds
+    needDrops ++ needAdds ++ needReAdd ++ needChange
   }
 
 }

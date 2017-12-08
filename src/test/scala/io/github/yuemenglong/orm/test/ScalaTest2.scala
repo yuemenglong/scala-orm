@@ -494,6 +494,7 @@ class ScalaTest2 {
   @Test
   def testEnum(): Unit = {
     db.beginTransaction(session => {
+      db.check()
       val obj = new Obj
       obj.setName("enum")
       obj.setStatus("succ")

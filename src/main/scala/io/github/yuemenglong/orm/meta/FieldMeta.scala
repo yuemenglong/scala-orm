@@ -146,7 +146,8 @@ class FieldMetaString(field: Field, entity: EntityMeta) extends FieldMetaDeclare
 
 class FieldMetaEnum(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.String])
-  val values: String = annoEnum.value().map(s => '"' + s + '"').mkString(",")
+  val values: Array[String] = annoEnum.value()
+  val valuesSql: String = annoEnum.value().map(s => '"' + s + '"').mkString(",")
   override val dbType: String = "ENUM"
   override val getDbSql: String = {
     val notnull = if (nullable) "" else " NOT NULL"
@@ -155,7 +156,7 @@ class FieldMetaEnum(field: Field, entity: EntityMeta) extends FieldMetaDeclared(
       case (true, false) => " PRIMARY KEY"
       case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
     }
-    s"$column $dbType($values)$notnull$pkey"
+    s"$column $dbType($valuesSql)$notnull$pkey"
   }
 }
 
