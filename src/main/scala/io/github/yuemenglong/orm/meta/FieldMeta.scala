@@ -42,7 +42,7 @@ trait FieldMeta {
       case null => ""
       case _ => s" DEFAULT '$defaultValue'"
     }
-    s"$column $getDbTypeSql$notnull$dft$pkey"
+    s"`$column` $getDbTypeSql$notnull$dft$pkey"
   }
 
   def isNormalOrPkey: Boolean = !isRefer
@@ -91,9 +91,10 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
       case _ => annoColumn.name()
     }
   }
-  override val nullable: Boolean = annoColumn match {
-    case null => true
-    case _ => annoColumn.nullable()
+  override val nullable: Boolean = (annoId, annoColumn) match {
+    case (null, null) => true
+    case (null, _) => annoColumn.nullable()
+    case (_, _) => false
   }
   override val defaultValue: String = annoColumn match {
     case null => null

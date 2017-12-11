@@ -18,6 +18,10 @@ object Column {
     s"ALTER TABLE `${field.entity.table}` CHANGE `${field.column}` ${field.getDbSql};"
   }
 
+  def getModifySql(field: FieldMeta): String = {
+    s"ALTER TABLE `${field.entity.table}` MODIFY ${field.getDbSql};"
+  }
+
   def getDropSql(table: String, column: String): String = {
     s"ALTER TABLE `$table` DROP $column;"
   }

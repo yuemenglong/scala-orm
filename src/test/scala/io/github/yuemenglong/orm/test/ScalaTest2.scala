@@ -3,7 +3,8 @@ package io.github.yuemenglong.orm.test
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.db.{Checker, Db}
+import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.traits.core.Root
 import io.github.yuemenglong.orm.test.model._
 import io.github.yuemenglong.orm.tool.OrmTool
