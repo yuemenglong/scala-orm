@@ -517,4 +517,17 @@ class ScalaTest2 {
       Assert.assertEquals(res.getDftValue.intValue(), 10)
     })
   }
+
+  @Test
+  def testOrmToolUpdate(): Unit = {
+    db.beginTransaction(session => {
+      val obj = Orm.empty(classOf[Obj])
+      obj.setName("update")
+      session.execute(Orm.insert(obj))
+      OrmTool.updateById(classOf[Obj], 1, session, ("name", "update2"), ("age", 10))
+      val res = OrmTool.selectById(classOf[Obj], 1, session)
+      Assert.assertEquals(res.getAge.intValue(), 10)
+      Assert.assertEquals(res.getName, "update2")
+    })
+  }
 }

@@ -133,6 +133,14 @@ object OrmTool {
     obj
   }
 
+  def updateById[T, V](clazz: Class[T], id: V, session: Session,
+                       pairs: (String, Any)*): Unit = {
+    val root = Orm.root(clazz)
+    val assigns = pairs.map { case (f, v) => root.get(f).assign(v.asInstanceOf[Object]) }
+    val pkey = root.getMeta.pkey.name
+    session.execute(Orm.update(root).set(assigns: _*).where(root.get(pkey).eql(id)))
+  }
+
   def selectById[T, V](clazz: Class[T], id: V, session: Session,
                        rootFn: (Root[T]) => Unit = (_: Root[T]) => {}): T = {
     val root = Orm.root(clazz)
