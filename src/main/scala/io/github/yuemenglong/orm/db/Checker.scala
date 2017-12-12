@@ -81,91 +81,6 @@ object Checker {
     stmt.close()
   }
 
-  def checkEntity3(conn: Connection, meta: EntityMeta, ignoreUnused: Boolean = false): Array[String] = {
-    val stmt = conn.createStatement()
-    val sql = s"SELECT * FROM `${meta.table}` LIMIT 1"
-    val rs = stmt.executeQuery(sql)
-    val tableMetaData = rs.getMetaData
-    val tableColumnMap: Map[String, String] = 1.to(tableMetaData.getColumnCount).map(idx => {
-      val column = tableMetaData.getColumnName(idx).toLowerCase()
-      val dbType = tableMetaData.getColumnTypeName(idx)
-      (column, dbType)
-    })(collection.breakOut)
-    val entityColumnMap: Map[String, String] = meta.fields().filter(f => f.isNormalOrPkey)
-      .map(f => (f.column.toLowerCase(), f.dbType))(collection.breakOut)
-    val columnMap: Map[String, FieldMeta] = meta.fields().filter(_.isNormalOrPkey)
-      .map(f => (f.column.toLowerCase(), f))(collection.breakOut)
-    // need drop
-    val needDrops: Array[String] = if (ignoreUnused) {
-      Array()
-    } else {
-      tableColumnMap.map { case (column, _) =>
-        if (!entityColumnMap.contains(column)) {
-          Column.getDropSql(meta.table, column)
-        } else {
-          null
-        }
-      }.filter(_ != null).toArray
-    }
-    // need add
-    val needAdds = entityColumnMap.map { case (column, _) =>
-      if (!tableColumnMap.contains(column)) {
-        Column.getAddSql(columnMap(column))
-      } else {
-        null
-      }
-    }.filter(_ != null).toArray
-    // type mismatch
-    val needReAdd: Array[String] = tableColumnMap.filter(p => entityColumnMap.contains(p._1)).flatMap { case (column, tableDbType) =>
-      val entityDbType = entityColumnMap(column)
-      val eq = (tableDbType, entityDbType) match {
-        case ("VARCHAR", "LONGTEXT") => true
-        case ("TINYINT", "BOOLEAN") => true
-        case ("TIMESTAMP", "DATETIME") => true
-        case ("CHAR", "VARCHAR") => true
-        case ("CHAR", "ENUM") => true
-        case (a, b) => a == b
-      }
-      if (!eq) {
-        val field = columnMap(column)
-        //        throw new RuntimeException(s"${meta.entity}:${field.name} Type Not Match, $tableDbType:$entityDbType")
-        Array(Column.getDropSql(field), Column.getAddSql(field))
-      } else {
-        Array[String]()
-      }
-    }.toArray
-    // enum test
-    val needChange: Array[String] = {
-      val enumFields: Map[String, FieldMetaEnum] = meta.fieldVec.filter(_.isInstanceOf[FieldMetaEnum]).map(_.asInstanceOf[FieldMetaEnum])
-        .map(f => (f.name, f))(collection.breakOut)
-      if (enumFields.isEmpty) {
-        Array[String]()
-      } else {
-        val sql = s"SHOW COLUMNS FROM ${meta.table}"
-        val resultSet = conn.prepareStatement(sql).executeQuery()
-        val dbEnums = Stream.continually({
-          if (resultSet.next()) {
-            (resultSet.getString("Field"), resultSet.getString("Type"))
-          } else {
-            null
-          }
-        }).takeWhile(_ != null).filter(p => enumFields.contains(p._1))
-        dbEnums.map { case (name, ty) =>
-          val dbSet = "'(.*?)'".r.findAllMatchIn(ty).map(_.group(1)).toSet
-          val entitySet = enumFields(name).values.toSet
-          if (dbSet != entitySet) {
-            Column.getChangeSql(enumFields(name))
-          } else {
-            null
-          }
-        }.filter(_ != null).toArray
-      }
-    }
-    rs.close()
-    stmt.close()
-    needDrops ++ needAdds ++ needReAdd ++ needChange
-  }
-
   def parseColumnInfo(rs: ResultSet): ColumnInfo = {
     val re = """^(.+?)(\((.+)\))?$""".r
     val decimalRe = """^(\d+),(\d+)$""".r
@@ -225,9 +140,10 @@ object Checker {
       Column.getAddSql(fieldMap(c))
     })
     //3. 都有的字段，但是类型不一致，需要alter
-    val needAlter = columns.map(c => {
-      val fieldMeta = fieldMap(c.column)
-      if (c.matchs(fieldMeta)) {
+    val needAlter = columnMap.keySet.intersect(fieldMap.keySet).map(c => {
+      val fieldMeta = fieldMap(c)
+      val columnInfo = columnMap(c)
+      if (columnInfo.matchs(fieldMeta)) {
         null
       } else {
         Column.getModifySql(fieldMeta)

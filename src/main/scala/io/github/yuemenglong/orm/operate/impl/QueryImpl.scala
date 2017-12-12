@@ -66,7 +66,7 @@ class QueryImpl[T](private var st: SelectableTuple[T],
       case (_, null) => s"\nGROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}"
       case (_, _) => s"\nGROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}\nHAVING ${havingVar.getSql}"
     }
-    s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$orderBySql$loSql$groupByHavingSql"
+    s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$groupByHavingSql$orderBySql$loSql"
   }
 
   override def query(conn: Connection): Array[T] = {
