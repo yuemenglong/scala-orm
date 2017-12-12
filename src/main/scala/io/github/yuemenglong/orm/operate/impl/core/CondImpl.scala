@@ -20,13 +20,21 @@ class CondHolder extends Cond {
 abstract class JointCond(cs: Cond*) extends Cond {
   var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]
 
+  def validConds: ArrayBuffer[Cond] = {
+    val ret = conds.filter(!_.isInstanceOf[CondHolder])
+    ret.length match {
+      case 0 => ArrayBuffer(new CondHolder())
+      case _ => ret
+    }
+  }
+
   override def getParams: Array[Object] = {
     conds.flatMap(_.getParams).toArray
   }
 }
 
 case class And(cs: Cond*) extends JointCond(cs: _*) {
-  override def getSql: String = conds.map(_.getSql).mkString(" AND ")
+  override def getSql: String = validConds.map(_.getSql).mkString(" AND ")
 
   override def and(cond: Cond): Cond = {
     conds += cond
@@ -37,7 +45,7 @@ case class And(cs: Cond*) extends JointCond(cs: _*) {
 }
 
 case class Or(cs: Cond*) extends JointCond(cs: _*) {
-  override def getSql: String = conds.size match {
+  override def getSql: String = validConds.size match {
     case 1 => conds(0).getSql
     case n if n > 1 => s"""(${conds.map(_.getSql).mkString(" OR ")})"""
   }
