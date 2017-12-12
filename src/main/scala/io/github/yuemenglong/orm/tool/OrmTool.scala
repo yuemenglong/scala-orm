@@ -134,18 +134,19 @@ object OrmTool {
   }
 
   def selectById[T, V](clazz: Class[T], id: V, session: Session,
-                       selectFn: (Root[T]) => Unit = (_: Root[T]) => {}): T = {
+                       rootFn: (Root[T]) => Unit = (_: Root[T]) => {}): T = {
     val root = Orm.root(clazz)
-    selectFn(root)
+    rootFn(root)
     val pkey = root.getMeta.pkey.name
     session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
   }
 
-  def deleteById[T, V](clazz: Class[T], id: V, session: Session): Int = {
-    val obj = Orm.empty(clazz).asInstanceOf[Object]
-    val pkey = OrmMeta.entityMap(clazz.getSimpleName).pkey.name
-    obj.asInstanceOf[Entity].$$core().fieldMap += (pkey -> id.asInstanceOf[Object])
-    session.execute(Orm.delete(obj))
+  def deleteById[T, V](clazz: Class[T], id: V, session: Session,
+                       rootFn: (Root[T]) => Unit = (_: Root[T]) => {}): Int = {
+    val root = Orm.root(clazz)
+    rootFn(root)
+    val pkey = root.getMeta.pkey.name
+    session.execute(Orm.deleteFrom(root).where(root.get(pkey).eql(id)))
   }
 
   def clearField(obj: Object, field: String): Unit = {
@@ -153,7 +154,7 @@ object OrmTool {
       throw new RuntimeException("Not Entity")
     }
     if (!obj.asInstanceOf[Entity].$$core().meta.fieldMap.contains(field)) {
-      throw new RuntimeException(s"Not A Valid Field, ${field}")
+      throw new RuntimeException(s"Not A Valid Field, $field")
     }
     obj.asInstanceOf[Entity].$$core().fieldMap -= field
   }
