@@ -7,15 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by yml on 2017/7/15.
   */
-class CondHolder extends Cond {
-  override def and(cond: Cond): Cond = And(cond)
 
-  override def or(cond: Cond): Cond = Or(cond)
-
-  override def getParams: Array[Object] = Array()
-
-  override def getSql: String = "1=1"
-}
 
 abstract class JointCond(cs: Cond*) extends Cond {
   var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]
@@ -62,6 +54,18 @@ abstract class CondItem extends Cond {
   def and(cond: Cond): Cond = And(this, cond)
 
   def or(cond: Cond): Cond = Or(this, cond)
+}
+
+class CondHolder extends CondItem {
+  override def getParams: Array[Object] = Array()
+
+  override def getSql: String = "1=1"
+}
+
+class JoinCond(leftTable: String, leftColumn: String, rightTable: String, rightColumn: String) extends CondItem {
+  override def getParams = Array()
+
+  override def getSql = s"$leftTable.$leftColumn = $rightTable.$rightColumn"
 }
 
 abstract class CondFV(f: Field, v: Object) extends CondItem {

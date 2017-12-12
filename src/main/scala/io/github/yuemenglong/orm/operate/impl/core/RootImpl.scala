@@ -67,7 +67,7 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
 
   override def join(field: String, joinType: JoinType): Join = {
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
-      throw new RuntimeException(s"Unknown Join Field $field")
+      throw new RuntimeException(s"Unknown Field $field On ${meta.entity}")
     }
     joins.find(_.joinName == field) match {
       case Some(p) => p
@@ -85,10 +85,10 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     }
     val referMeta = OrmMeta.entityMap(clazz.getSimpleName)
     if (!meta.fieldMap.contains(left)) {
-      throw new RuntimeException(s"Unknown Join Field $left On ${meta.entity}")
+      throw new RuntimeException(s"Unknown Field $left On ${meta.entity}")
     }
     if (!referMeta.fieldMap.contains(right)) {
-      throw new RuntimeException(s"Unknown Join Field $right On ${referMeta.entity}")
+      throw new RuntimeException(s"Unknown Field $right On ${referMeta.entity}")
     }
     val join = joins.find(_.joinName == referMeta.entity) match {
       case Some(p) => p
@@ -102,7 +102,7 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
 
   override def get(field: String): Field = {
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isRefer) {
-      throw new RuntimeException(s"Unknown Join Field $field")
+      throw new RuntimeException(s"Unknown Field $field On ${meta.entity}")
     }
     fields
       .find(_.getField == field) match {
@@ -148,15 +148,12 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
       val rightColumn = meta.fieldMap(right).column
       val leftTable = parent.getAlias
       val rightTable = getAlias
-      val joinCondSql = cond.getSql match {
-        case "" => ""
-        case s => s" AND $s"
-      }
+      val condSql = new JoinCond(leftTable, leftColumn, rightTable, rightColumn).and(cond).getSql
       s"${
         joinType.toString
       } JOIN `${
         meta.table
-      }` AS `$getAlias` ON $leftTable.$leftColumn = $rightTable.$rightColumn$joinCondSql"
+      }` AS `$getAlias` ON $condSql"
     }
   }
 
