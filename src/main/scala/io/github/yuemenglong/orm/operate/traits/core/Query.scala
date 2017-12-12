@@ -74,6 +74,8 @@ trait SelectableField[T] extends Field with Selectable[T] {
 trait Root[T] extends SelectableJoin[T] {
   def count(): Selectable[java.lang.Long]
 
+  def count(field: String): SelectableField[java.lang.Long] = this.count(this.get(field))
+
   def count(field: Field): SelectableField[java.lang.Long]
 
   def sum(field: Field): SelectableField[java.lang.Long]
