@@ -5,7 +5,7 @@
     <!-- <!– The Basics –> -->
     <groupId>io.github.yuemenglong</groupId>
     <artifactId>scala-orm</artifactId>
-    <version>1.1.8-SNAPSHOT</version>
+    <version>1.1.8</version>
     <packaging>jar</packaging>
     <name>scala-orm</name>
     <description>A light weight ORM framework written by scala</description>
