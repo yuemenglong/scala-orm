@@ -1,15 +1,21 @@
 package io.github.yuemenglong.orm.tool
 
 import java.io.FileOutputStream
+import java.lang.reflect.Field
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.impl.QueryImpl
 import io.github.yuemenglong.orm.operate.impl.core.SelectJoinImpl
 import io.github.yuemenglong.orm.operate.traits.Query
 import io.github.yuemenglong.orm.operate.traits.core.{Root, SelectJoin}
+
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by <yuemenglong@126.com> on 2017/10/10.
@@ -24,7 +30,7 @@ object OrmTool {
     }).toMap
   }
 
-  def exportTsClass(path: String): Unit = {
+  def exportTsClass3(path: String): Unit = {
     var referMap: Map[String, Set[String]] = Map()
     val checkWithMap = (meta: EntityMeta) => {
       require(!referMap.contains(meta.entity))
@@ -86,8 +92,6 @@ object OrmTool {
           case _: FieldMetaDate => "string = undefined"
           case _: FieldMetaDateTime => "string = undefined"
 
-          //          case field: FieldMetaPointer => s"${field.refer.entity} = new ${field.refer.entity}()"
-          //          case field: FieldMetaOneOne => s"${field.refer.entity} = new ${field.refer.entity}()"
           case field: FieldMetaPointer => checkInvalid(invalids, field)
           case field: FieldMetaOneOne => checkInvalid(invalids, field)
           case field: FieldMetaOneMany => s"Array<${field.refer.entity}> = []"
@@ -99,6 +103,65 @@ object OrmTool {
     val fs = new FileOutputStream(path)
     fs.write(classes.getBytes())
     fs.close()
+  }
+
+  def exportTsClass(path: String): Unit = {
+    val relateMap = mutable.Map[String, Set[String]]()
+    val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, relateMap)).mkString("\n\n")
+    val fs = new FileOutputStream(path)
+    fs.write(classes.getBytes())
+    fs.close()
+  }
+
+  // relateMap保存所有与之相关的类型
+  def stringifyTsClass(clazz: Class[_], relateMap: mutable.Map[String, Set[String]]): String = {
+    val className = clazz.getSimpleName
+    val newFields = new ArrayBuffer[Field]()
+    val content = Kit.getDeclaredFields(clazz).map(f => {
+      val name = f.getName
+      val typeName = f.getType.getSimpleName
+      val ty = f.getType match {
+        case Types.IntegerClass => "number = undefined"
+        case Types.LongClass => "number = undefined"
+        case Types.FloatClass => "number = undefined"
+        case Types.DoubleClass => "number = undefined"
+        case Types.BooleanClass => "boolean = undefined"
+        case Types.StringClass => "string = undefined"
+        case Types.DateClass => "string = undefined"
+        case Types.BigDecimalClass => "number = undefined"
+        case `clazz` => s"$typeName = undefined" // 自己引用自己
+        case _ => f.getType.isArray match {
+          case true => s"$typeName = []" // 数组
+          case false => // 非数组
+            relateMap.contains(typeName) match {
+              case false => // 该类型还没有导出过，安全的
+                newFields += f
+                s"$typeName = new $typeName()"
+              case true => relateMap(typeName).contains(className) match { // 导出过
+                case false => // 该类型与自己没有关系，安全的
+                  newFields += f
+                  s"$typeName = new $typeName()"
+                case true => s"$typeName = undefined" // 自己已经被该类型导出过，避免循环引用
+              }
+            }
+        }
+      }
+      s"\t$name: $ty;"
+    }).mkString("\n")
+    // 与自己有关系的类型
+    val relateSet = newFields.flatMap(f => {
+      val name = f.getType.getSimpleName
+      relateMap.get(name).orElse(Some(Set[String]())).get ++ Set(name)
+    }).toSet ++ Set(className)
+    relateMap += (className -> relateSet)
+    // 包含自己的类型把这部分并进去
+    relateMap.foreach { case (n, s) =>
+      if (s.contains(className)) {
+        relateMap += (n -> (s ++ relateSet))
+      }
+    }
+    val ret = s"export class $className {\n$content\n}"
+    ret
   }
 
   def attach[T](obj: T, field: String, session: Session,

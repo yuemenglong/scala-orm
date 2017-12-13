@@ -1,5 +1,6 @@
 package io.github.yuemenglong.orm.test
 
+import java.io.File
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
@@ -301,7 +302,8 @@ class ScalaTest2 {
 
   @Test
   def testExport(): Unit = {
-    OrmTool.exportTsClass("export.ts")
+    OrmTool.exportTsClass("export2.ts")
+    new File("eport2.ts").deleteOnExit()
   }
 
   @Test

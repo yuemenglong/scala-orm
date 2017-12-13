@@ -1,6 +1,5 @@
 package io.github.yuemenglong.orm.lang.anno;
 
-import io.github.yuemenglong.orm.kit.Kit;
 import io.github.yuemenglong.orm.lang.Def;
 
 import java.lang.annotation.ElementType;
