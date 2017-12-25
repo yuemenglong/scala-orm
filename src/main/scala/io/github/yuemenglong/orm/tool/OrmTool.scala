@@ -12,7 +12,7 @@ import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.impl.QueryImpl
 import io.github.yuemenglong.orm.operate.impl.core.SelectJoinImpl
 import io.github.yuemenglong.orm.operate.traits.Query
-import io.github.yuemenglong.orm.operate.traits.core.{Root, SelectJoin}
+import io.github.yuemenglong.orm.operate.traits.core.{Join, Root, SelectJoin}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -213,11 +213,13 @@ object OrmTool {
   }
 
   def deleteById[T, V](clazz: Class[T], id: V, session: Session,
-                       rootFn: (Root[T]) => Unit = (_: Root[T]) => {}): Int = {
+                       rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]()): Int = {
     val root = Orm.root(clazz)
-    rootFn(root)
+    val cascade = rootFn(root)
+    val all: Array[Join] = Array(root) ++ cascade
     val pkey = root.getMeta.pkey.name
-    session.execute(Orm.deleteFrom(root).where(root.get(pkey).eql(id)))
+    val ex = Orm.delete(all: _*).from(root).where(root.get(pkey).eql(id))
+    session.execute(ex)
   }
 
   def clearField(obj: Object, field: String): Unit = {
