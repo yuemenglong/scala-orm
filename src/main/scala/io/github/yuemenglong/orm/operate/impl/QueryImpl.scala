@@ -247,16 +247,16 @@ class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[jav
   }
 }
 
-class Sum(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {
+class Sum(impl: Field) extends SelectableFieldImpl[java.lang.Double](classOf[java.lang.Double], impl) {
   private var distinctVar = ""
 
-  override def getType: Class[lang.Long] = classOf[java.lang.Long]
+  override def getType: Class[lang.Double] = classOf[java.lang.Double]
 
   override def getColumn: String = s"SUM($distinctVar${impl.getColumn})"
 
   override def getAlias: String = s"$$sum$$${impl.getAlias}"
 
-  override def distinct(): SelectableField[lang.Long] = {
+  override def distinct(): SelectableField[lang.Double] = {
     distinctVar = "DISTINCT "
     this
   }

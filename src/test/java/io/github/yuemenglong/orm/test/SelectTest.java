@@ -270,17 +270,17 @@ public class SelectTest {
 
         {
             Root<Obj> root = Orm.root(Obj.class);
-            Query<Long> query = Orm.select(root.sum(root.join("om").get("id"))).from(root);
-            Long res = session.first(query);
+            Query<Double> query = Orm.select(root.sum(root.join("om").get("id"))).from(root);
+            Double res = session.first(query);
             Assert.assertEquals(res.longValue(), 6);
         }
         {
             Root<Obj> root = Orm.root(Obj.class);
             Join om = root.join("om");
-            Query<Tuple3<Long, Long, Long>> query = Orm.select(root.get("id").as(Long.class),
+            Query<Tuple3<Long, Double, Long>> query = Orm.select(root.get("id").as(Long.class),
                     root.sum(om.get("id")), root.count(om.get("id"))).from(root)
                     .groupBy(root.get("id"));
-            Tuple3<Long, Long, Long>[] res = (Tuple3<Long, Long, Long>[]) session.query(query);
+            Tuple3<Long, Double, Long>[] res = (Tuple3<Long, Double, Long>[]) session.query(query);
             Assert.assertEquals(res.length, 2);
             Assert.assertEquals(res[0]._1().longValue(), 1);
             Assert.assertEquals(res[0]._2().longValue(), 1);
@@ -292,11 +292,11 @@ public class SelectTest {
         {
             Root<Obj> root = Orm.root(Obj.class);
             Join om = root.join("om");
-            Query<Tuple3<Long, Long, Long>> query = Orm.select(root.get("id").as(Long.class),
+            Query<Tuple3<Long, Double, Long>> query = Orm.select(root.get("id").as(Long.class),
                     root.sum(om.get("id")), root.count(om.get("id"))).from(root)
                     .groupBy(root.get("id"))
                     .having(root.count(om.get("id")).gt(1));
-            Tuple3<Long, Long, Long>[] res = (Tuple3<Long, Long, Long>[]) session.query(query);
+            Tuple3<Long, Double, Long>[] res = (Tuple3<Long, Double, Long>[]) session.query(query);
             Assert.assertEquals(res.length, 1);
             Assert.assertEquals(res[0]._1().longValue(), 2);
             Assert.assertEquals(res[0]._2().longValue(), 5);

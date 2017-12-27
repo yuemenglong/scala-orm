@@ -74,15 +74,21 @@ trait SelectableField[T] extends Field with Selectable[T] {
 trait Root[T] extends SelectableJoin[T] {
   def count(): Selectable[java.lang.Long]
 
-  def count(field: String): SelectableField[java.lang.Long] = this.count(this.get(field))
-
   def count(field: Field): SelectableField[java.lang.Long]
 
-  def sum(field: Field): SelectableField[java.lang.Long]
+  def count(field: String): SelectableField[java.lang.Long] = this.count(this.get(field))
+
+  def sum(field: Field): SelectableField[java.lang.Double]
+
+  def sum(field: String): SelectableField[java.lang.Double] = sum(this.get(field))
 
   def max[R](field: Field, clazz: Class[R]): SelectableField[R]
 
+  def max[R](field: String, clazz: Class[R]): SelectableField[R] = max(this.get(field), clazz)
+
   def min[R](field: Field, clazz: Class[R]): SelectableField[R]
+
+  def min[R](field: String, clazz: Class[R]): SelectableField[R] = min(this.get(field), clazz)
 
   override def fields(fields: String*): Root[T] = this.fields(fields.toArray)
 

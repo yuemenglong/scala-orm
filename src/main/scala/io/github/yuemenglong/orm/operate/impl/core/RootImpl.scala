@@ -347,7 +347,7 @@ class RootImpl[T](clazz: Class[T], impl: JoinImpl)
 
   override def count(field: Field): SelectableField[lang.Long] = new Count(field)
 
-  override def sum(field: Field): SelectableField[lang.Long] = new Sum(field)
+  override def sum(field: Field): SelectableField[lang.Double] = new Sum(field)
 
   override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
 
