@@ -9,7 +9,7 @@ import io.github.yuemenglong.orm.meta._
   * Created by <yuemenglong@126.com> on 2017/8/2.
   */
 case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean,
-                      defaultValue: String, pkey: Boolean, auto: Boolean,
+                      defaultValue: String, key: String, auto: Boolean,
                       set: Set[String], precision: Int, scale: Int) {
 
   def matchs(field: FieldMeta): Boolean = {
@@ -29,7 +29,7 @@ case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean
     }
     val columnEq = field.column == column
     val nullableEq = field.nullable == nullable
-    val pkeyEq = field.isPkey == pkey
+    val pkeyEq = field.isPkey == (key == "PRI")
     val autoEql = field.isAuto == auto
 
     if (!tyEq ||
@@ -109,12 +109,11 @@ object Checker {
       case "NO" => false
     }
     val key = rs.getString("Key")
-    val pkey = key == "PRI"
     val defaultValue = rs.getString("Default")
     val extra = rs.getString("Extra")
     val auto = extra.contains("auto_increment")
 
-    ColumnInfo(field, ty, length, nullable, defaultValue, pkey, auto, set, precision, scale)
+    ColumnInfo(field, ty, length, nullable, defaultValue, key, auto, set, precision, scale)
   }
 
   def checkEntity(conn: Connection, meta: EntityMeta, ignoreUnused: Boolean = false): Array[String] = {
@@ -149,6 +148,14 @@ object Checker {
         Column.getModifySql(fieldMeta)
       }
     }).filter(_ != null)
-    needDrop ++ needAdd ++ needAlter
+    //4. 没有加的索引
+    val needCreateIndex = {
+      val alreadyIndex = columnMap.filter(p => p._2.key == "MUL")
+      val needIndex = meta.indexVec.map(p => (p._1.column, p._1)).toMap
+      needIndex.keySet.diff(alreadyIndex.keySet).map(c => {
+        Column.getCreateIndex(meta.table, c)
+      })
+    }
+    needDrop ++ needAdd ++ needAlter ++ needCreateIndex
   }
 }

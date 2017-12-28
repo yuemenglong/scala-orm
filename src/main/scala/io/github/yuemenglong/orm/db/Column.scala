@@ -25,4 +25,8 @@ object Column {
   def getDropSql(table: String, column: String): String = {
     s"ALTER TABLE `$table` DROP $column;"
   }
+
+  def getCreateIndex(table: String, column: String): String = {
+    s"CREATE INDEX idx_$column ON $table($column);"
+  }
 }

@@ -167,7 +167,7 @@ object Scanner {
       if (map.contains(meta.entity)) {
         val set = map(meta.entity)
         meta.indexVec = set.map(f => (meta.fieldMap(f), false)).toArray
-        meta.indexVec.foreach(p => println("Index", meta.entity, p._1.name))
+        meta.indexVec.foreach(p => Logger.info(s"Entity: ${meta.entity}, Index: ${p._1.column}"))
       }
     })
   }
