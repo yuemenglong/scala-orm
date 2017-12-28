@@ -10,7 +10,11 @@ object Table {
     val columns = meta.fields().filter(field => field.isNormalOrPkey).map((field) => {
       field.getDbSql
     }).mkString(", ")
-    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+    val indexes = meta.indexVec.map(i => s"INDEX(${i._1.column})").mkString(", ") match {
+      case "" => ""
+      case s => s", $s"
+    }
+    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns$indexes) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
     sql
   }
 

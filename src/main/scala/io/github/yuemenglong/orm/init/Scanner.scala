@@ -48,6 +48,7 @@ object Scanner {
     })
     metas.map(firstScan).map(checkPkey).map(secondScan)
       .map(genGetterSetter).foreach(trace)
+    indexScan(metas)
     //    fixMeta()
   }
 
@@ -148,6 +149,27 @@ object Scanner {
       entityMeta.fieldMap += (referMeta.name -> referMeta)
     })
     entityMeta
+  }
+
+  def indexScan(metas: Array[EntityMeta]): Unit = {
+    // 收集索引信息
+    val map = metas.flatMap(meta => {
+      meta.fieldVec.flatMap(f => {
+        f match {
+          case r: FieldMetaRefer => Array((meta, r.left), (r.refer, r.right))
+          case _ => Array[(EntityMeta, String)]()
+        }
+      }).toArray[(EntityMeta, String)].filter(p => !p._1.fieldMap(p._2).isPkey)
+    }).groupBy(_._1.entity).mapValues { arr =>
+      arr.map(_._2).toSet
+    }
+    metas.foreach(meta => {
+      if (map.contains(meta.entity)) {
+        val set = map(meta.entity)
+        meta.indexVec = set.map(f => (meta.fieldMap(f), false)).toArray
+        meta.indexVec.foreach(p => println("Index", meta.entity, p._1.name))
+      }
+    })
   }
 
   def genGetterSetter(entityMeta: EntityMeta): EntityMeta = {

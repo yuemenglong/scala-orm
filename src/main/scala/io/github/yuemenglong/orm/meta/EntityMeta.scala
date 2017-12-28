@@ -17,6 +17,9 @@ class EntityMeta(val clazz: Class[_]) {
   var fieldVec: ArrayBuffer[FieldMeta] = ArrayBuffer()
   var fieldMap: Map[String, FieldMeta] = Map()
 
+  // <组合索引,是否唯一>
+  var indexVec: Array[(FieldMeta, Boolean)] = Array()
+
   var getterMap: Map[Method, FieldMeta] = Map()
   var setterMap: Map[Method, FieldMeta] = Map()
 
