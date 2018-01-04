@@ -150,11 +150,17 @@ object Checker {
     }).filter(_ != null)
     //4. 没有加的索引
     val needCreateIndex = {
-      val alreadyIndex = columnMap.filter(p => p._2.key == "MUL")
-      val needIndex = meta.indexVec.map(p => (p._1.column, p._1)).toMap
-      needIndex.keySet.diff(alreadyIndex.keySet).map(c => {
+      val alreadyUniIndex = columnMap.filter(p => p._2.key == "UNI")
+      val needUniIndex = meta.indexVec.filter(_._2).map(p => (p._1.column, p._1)).toMap
+      val uni = needUniIndex.keySet.diff(alreadyUniIndex.keySet).map(c => {
+        Column.getCreateUnique(meta.table, c)
+      })
+      val alreadyMulIndex = columnMap.filter(p => p._2.key == "MUL")
+      val needMulIndex = meta.indexVec.filter(!_._2).map(p => (p._1.column, p._1)).toMap
+      val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).map(c => {
         Column.getCreateIndex(meta.table, c)
       })
+      uni ++ idx
     }
     needDrop ++ needAdd ++ needAlter ++ needCreateIndex
   }

@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.db
 
-import io.github.yuemenglong.orm.meta.{FieldMeta, FieldMetaDeclared}
+import io.github.yuemenglong.orm.meta.FieldMeta
 
 /**
   * Created by <yuemenglong@126.com> on 2017/8/4.
@@ -11,7 +11,7 @@ object Column {
   }
 
   def getDropSql(field: FieldMeta): String = {
-    s"ALTER TABLE `${field.entity.table}` DROP ${field.column};"
+    s"ALTER TABLE `${field.entity.table}` DROP `${field.column}`;"
   }
 
   def getChangeSql(field: FieldMeta): String = {
@@ -23,10 +23,14 @@ object Column {
   }
 
   def getDropSql(table: String, column: String): String = {
-    s"ALTER TABLE `$table` DROP $column;"
+    s"ALTER TABLE `$table` DROP `$column`;"
   }
 
   def getCreateIndex(table: String, column: String): String = {
-    s"CREATE INDEX idx_$column ON $table($column);"
+    s"ALTER TABLE `$table` ADD INDEX(`$column`);"
+  }
+
+  def getCreateUnique(table: String, column: String): String = {
+    s"ALTER TABLE `$table` ADD UNIQUE(`$column`);"
   }
 }

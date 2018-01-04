@@ -81,6 +81,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   val annoPointer: Pointer = field.getAnnotation(classOf[Pointer])
   val annoOneOne: OneToOne = field.getAnnotation(classOf[OneToOne])
   val annoOneMany: OneToMany = field.getAnnotation(classOf[OneToMany])
+  val annoIndex: Index = field.getAnnotation(classOf[Index])
 
   override val name: String = field.getName
   override val clazz: Class[_] = field.getType

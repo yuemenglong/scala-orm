@@ -34,8 +34,10 @@ public class Obj {
     BigDecimal price = null;
 
     @Column(length = 128, nullable = false)
+    @Index
     String name = null;
 
+    @Index(unique = true)
     Date birthday = null;
 
     Boolean married = false;
