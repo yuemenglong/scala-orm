@@ -49,6 +49,7 @@ object Scanner {
     metas.map(firstScan).map(checkPkey).map(secondScan)
       .map(genGetterSetter).foreach(trace)
     indexScan(metas)
+    OrmMeta.dbVec = metas.map(_.db).filter(_ != null)
     //    fixMeta()
   }
 

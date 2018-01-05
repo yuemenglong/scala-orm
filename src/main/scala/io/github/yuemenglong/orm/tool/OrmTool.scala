@@ -98,8 +98,8 @@ object OrmTool {
   }
 
   def attach[T](obj: T, field: String, session: Session,
-                buildJoin: SelectJoin => Unit = _ => {},
-                buildQuery: Query[T] => Unit = (_: Query[T]) => {},
+                joinFn: SelectJoin => Unit = _ => {},
+                queryFn: Query[T] => Unit = (_: Query[T]) => {},
                ): T = {
     if (!obj.isInstanceOf[Entity]) {
       throw new RuntimeException("Not Entity")
@@ -117,11 +117,11 @@ object OrmTool {
     val pkeyName = entity.$$core().meta.pkey.name
     val pkeyValue = entity.$$core().getPkey
 
-    val join = root.select(field).asInstanceOf[SelectJoinImpl]
-    buildJoin(join)
+    val join = root.select(field)
+    joinFn(join)
 
     val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[T]]
-    buildQuery(query)
+    queryFn(query)
     query.where(query.cond.and(root.get(pkeyName).eql(pkeyValue)))
 
     val res = session.first(query).asInstanceOf[Entity].$$core().get(field)

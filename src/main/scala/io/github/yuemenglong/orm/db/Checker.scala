@@ -74,7 +74,8 @@ object Checker {
     }).toArray
     val tips = (needDrops ++ needCreates ++ needUpdates).mkString("\n")
     if (tips.nonEmpty) {
-      val info = s"Table Schema Not Match Entity Meta, You May Need To\n$tips"
+      val useDb = s"USE $db;\n"
+      val info = s"Table Schema Not Match Entity Meta, You May Need To\n$useDb$tips"
       throw new RuntimeException(info)
     }
     rs.close()

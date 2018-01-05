@@ -9,6 +9,7 @@ object OrmMeta {
 
   var entityVec: ArrayBuffer[EntityMeta] = ArrayBuffer()
   var entityMap: Map[String, EntityMeta] = Map()
+  var dbVec: Array[String] = Array()
 
   def check(): Unit = {
     require(entityVec.nonEmpty)

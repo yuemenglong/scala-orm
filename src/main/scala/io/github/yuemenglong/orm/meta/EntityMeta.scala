@@ -11,6 +11,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by Administrator on 2017/5/16.
   */
 class EntityMeta(val clazz: Class[_]) {
+  val db: String = EntityMeta.pickDb(clazz)
   val entity: String = clazz.getSimpleName
   val table: String = EntityMeta.pickTable(clazz)
   var pkey: FieldMeta = _
@@ -37,6 +38,17 @@ object EntityMeta {
     anno.table() match {
       case "" => Kit.lodashCase(clazz.getSimpleName)
       case _ => anno.table()
+    }
+  }
+
+  def pickDb(clazz: Class[_]): String = {
+    val anno = clazz.getDeclaredAnnotation(classOf[Entity])
+    if (anno == null) {
+      return null
+    }
+    anno.table() match {
+      case "" => null
+      case _ => anno.db()
     }
   }
 }

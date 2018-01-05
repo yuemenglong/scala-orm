@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.db
 import java.sql.{Connection, DriverManager}
 
 import io.github.yuemenglong.orm.Session.Session
-import io.github.yuemenglong.orm.meta.OrmMeta
+import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import com.jolbox.bonecp.BoneCP
 import com.jolbox.bonecp.BoneCPConfig
 import io.github.yuemenglong.orm.logger.Logger
@@ -51,9 +51,16 @@ class Db(val host: String, val port: Int,
     pool.shutdown()
   }
 
+  def entities(): Array[EntityMeta] = {
+    OrmMeta.dbVec.length match {
+      case 0 => OrmMeta.entityVec.toArray
+      case _ => OrmMeta.entityVec.filter(_.db == db).toArray
+    }
+  }
+
   def check(ignoreUnused: Boolean = false): Unit = {
     openConnection((conn) => {
-      Checker.checkEntities(conn, db, OrmMeta.entityVec.toArray, ignoreUnused)
+      Checker.checkEntities(conn, db, entities(), ignoreUnused)
     })
   }
 
@@ -63,7 +70,7 @@ class Db(val host: String, val port: Int,
   }
 
   def drop(): Unit = {
-    OrmMeta.entityVec.foreach(entity => {
+    entities().foreach(entity => {
       val sql = Table.getDropSql(entity)
       Logger.info(sql)
       this.execute(sql)
@@ -71,7 +78,7 @@ class Db(val host: String, val port: Int,
   }
 
   def create(): Unit = {
-    OrmMeta.entityVec.foreach(entity => {
+    entities().foreach(entity => {
       val sql = Table.getCreateSql(entity)
       Logger.info(sql)
       this.execute(sql)
