@@ -547,6 +547,26 @@ class ScalaTest2 {
 
   @Test
   def testCrossDb(): Unit = {
-
+    db.beginTransaction(session => {
+      val mos = Orm.convert(1.to(5).map(i => {
+        val mo = new MO()
+        mo
+      }).toArray)
+      session.execute(Orm.insert(mos))
+      val oms = mos.map(mo => {
+        val om = Orm.empty(classOf[OM])
+        om.setSubId(1L)
+        om.setMo(mo)
+        om
+      })
+      session.execute(Orm.insert(oms))
+    })
+    db.beginTransaction(session => {
+      var sub = Orm.empty(classOf[Sub])
+      sub.setId(1L)
+      sub = OrmTool.attach(sub, "om", session, join => join.select("mo"))
+      Assert.assertEquals(sub.getOm.length, 5)
+      Assert.assertEquals(sub.getOm()(0).getMo.getId.intValue(), 1)
+    })
   }
 }

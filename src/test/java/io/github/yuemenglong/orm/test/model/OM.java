@@ -20,6 +20,8 @@ public class OM {
     @Pointer
     private Obj obj;
 
+    private Long subId;
+
     public Long getId() {
         return id;
     }
@@ -44,4 +46,11 @@ public class OM {
         this.mo = mo;
     }
 
+    public Long getSubId() {
+        return subId;
+    }
+
+    public void setSubId(Long subId) {
+        this.subId = subId;
+    }
 }

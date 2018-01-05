@@ -29,6 +29,9 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
       }
       obj.asInstanceOf[Entity]
     })
+
+    if (entities.length == 0) return 0
+
     val fields = meta.fields().filter(_.isNormalOrPkey)
     val columns = fields.map(_.column).mkString(", ")
     val holders = fields.map(_ => "?").mkString(", ")

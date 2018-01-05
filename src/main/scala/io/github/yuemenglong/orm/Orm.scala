@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
+import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.impl._
@@ -50,9 +51,19 @@ object Orm {
   }
 
   def convert[T](obj: T): T = {
-    EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
+    if (obj.getClass.isArray) {
+      val arr = obj.asInstanceOf[Array[_]]
+      if (arr.isEmpty) {
+        obj
+      } else {
+        arr.map(convert).toArray(ClassTag(arr(0).getClass)).asInstanceOf[T]
+      }
+    } else {
+      EntityManager.convert(obj.asInstanceOf[Object]).asInstanceOf[T]
+    }
   }
 
+  @Deprecated
   def converts[T](arr: Array[T]): Array[T] = {
     if (arr.isEmpty) {
       throw new RuntimeException("Converts Nothing")
@@ -99,7 +110,16 @@ object Orm {
     new QueryImpl[T](st, root)
   }
 
+  @Deprecated
   def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
+
+  def insert[T](arr: Array[T]): ExecutableInsert[T] = {
+    arr.isEmpty match {
+      case true => throw new RuntimeException("Batch Insert But Array Is Empty")
+      case false => new InsertImpl[T](arr(0).asInstanceOf[Entity].$$core()
+        .meta.clazz.asInstanceOf[Class[T]]).values(arr)
+    }
+  }
 
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
