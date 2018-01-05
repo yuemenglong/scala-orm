@@ -105,26 +105,36 @@ object OrmTool {
       throw new RuntimeException("Not Entity")
     }
     val entity = obj.asInstanceOf[Entity]
-    if (entity.$$core().getPkey == null) {
-      throw new RuntimeException("Not Has Pkey")
-    }
-    val meta = entity.$$core().meta
+    //    if (entity.$$core().getPkey == null) {
+    //      throw new RuntimeException("Not Has Pkey")
+    //    }
+    val core = entity.$$core()
+    val meta = core.meta
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isNormalOrPkey) {
       throw new RuntimeException(s"Not Refer Feild, $field")
     }
-    val root = Orm.root(entity.$$core().meta.clazz.asInstanceOf[Class[T]])
-    root.fields(Array[String]())
-    val pkeyName = entity.$$core().meta.pkey.name
-    val pkeyValue = entity.$$core().getPkey
+    val refer = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
+    //    val root = Orm.root(entity.$$core().meta.clazz.asInstanceOf[Class[T]])
+    val root = Orm.root(refer.refer.clazz)
+    //    root.fields(Array[String]())
+    val leftValue = core.get(refer.left)
+    val rightField = refer.right
+    //    val pkeyName = entity.$$core().meta.pkey.name
+    //    val pkeyValue = entity.$$core().getPkey
 
-    val join = root.select(field)
-    joinFn(join)
+    //    val join = root.select(field)
+    joinFn(root)
 
     val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[T]]
     queryFn(query)
-    query.where(query.cond.and(root.get(pkeyName).eql(pkeyValue)))
+    query.where(query.cond.and(root.get(rightField).eql(leftValue)))
 
-    val res = session.first(query).asInstanceOf[Entity].$$core().get(field)
+    val res = refer.isOneMany match {
+      case true => session.query(query).asInstanceOf[Object]
+      case false => session.first(query).asInstanceOf[Object]
+    }
+
+    //    val res = session.first(query).asInstanceOf[Entity].$$core().get(field)
     entity.$$core().set(field, res)
     obj
   }

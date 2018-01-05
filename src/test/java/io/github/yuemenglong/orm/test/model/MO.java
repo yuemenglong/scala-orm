@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.lang.anno.Id;
 /**
  * Created by Administrator on 2017/7/10.
  */
-@Entity
+@Entity(db = "test")
 public class MO {
     @Id(auto = true)
     private Long id;

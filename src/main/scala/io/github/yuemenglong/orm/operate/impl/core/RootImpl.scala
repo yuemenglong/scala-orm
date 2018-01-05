@@ -69,6 +69,9 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${meta.entity}")
     }
+    if (meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != meta.db) {
+      throw new RuntimeException(s"Field $field Not the Same DB")
+    }
     joins.find(_.joinName == field) match {
       case Some(p) => p
       case None =>
@@ -90,6 +93,9 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     if (!referMeta.fieldMap.contains(right)) {
       throw new RuntimeException(s"Unknown Field $right On ${referMeta.entity}")
     }
+    if (meta.db != referMeta.db) {
+      throw new RuntimeException(s"$left And $right Not The Same DB")
+    }
     val join = joins.find(_.joinName == referMeta.entity) match {
       case Some(p) => p
       case None =>
@@ -104,8 +110,7 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${meta.entity}")
     }
-    fields
-      .find(_.getField == field) match {
+    fields.find(_.getField == field) match {
       case Some(f) => f
       case None =>
         val fieldMeta = meta.fieldMap(field)
@@ -130,30 +135,20 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     if (parent == null) {
       Kit.lowerCaseFirst(meta.entity)
     } else {
-      s"${
-        parent.getAlias
-      }_${
-        Kit.lowerCaseFirst(joinName)
-      }"
+      s"${parent.getAlias}_${Kit.lowerCaseFirst(joinName)}"
     }
   }
 
   override def getTableWithJoinCond: String = {
     if (parent == null) {
-      s"`${
-        meta.table
-      }` AS `$getAlias`"
+      s"`${meta.table}` AS `$getAlias`"
     } else {
       val leftColumn = parent.getMeta.fieldMap(left).column
       val rightColumn = meta.fieldMap(right).column
       val leftTable = parent.getAlias
       val rightTable = getAlias
       val condSql = new JoinCond(leftTable, leftColumn, rightTable, rightColumn).and(cond).getSql
-      s"${
-        joinType.toString
-      } JOIN `${
-        meta.table
-      }` AS `$getAlias` ON $condSql"
+      s"${joinType.toString} JOIN `${meta.table}` AS `$getAlias` ON $condSql"
     }
   }
 

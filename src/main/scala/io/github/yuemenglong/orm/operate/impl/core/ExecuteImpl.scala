@@ -114,6 +114,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   private def checkField(field: String): Unit = {
     if (!meta.fieldMap.contains(field)) throw new RuntimeException(s"Unknown Field $field In ${meta.entity}")
     if (!meta.fieldMap(field).isRefer) throw new RuntimeException(s"$field Is Not Object")
+    if (meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != meta.db) throw new RuntimeException(s"$field Is Not The Same DB")
   }
 
   override def insert(field: String): ExecuteJoin = {

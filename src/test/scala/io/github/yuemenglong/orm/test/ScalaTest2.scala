@@ -16,12 +16,18 @@ import org.junit.{After, Assert, Before, Test}
   */
 class ScalaTest2 {
   private var db: Db = _
+  private var db2: Db = _
 
   @SuppressWarnings(Array("Duplicates"))
   @Before def before(): Unit = {
     Orm.init("io.github.yuemenglong.orm.test.model")
     db = openDb()
     db.rebuild()
+    db.check()
+
+    db2 = openDb2()
+    db2.rebuild()
+    db2.check()
   }
 
   @After def after(): Unit = {
@@ -30,6 +36,8 @@ class ScalaTest2 {
   }
 
   def openDb(): Db = Orm.openDb("localhost", 3306, "root", "root", "test")
+
+  def openDb2(): Db = Orm.openDb("localhost", 3306, "root", "root", "test2")
 
   @Test
   def testConnPool(): Unit = {
@@ -142,14 +150,18 @@ class ScalaTest2 {
         om.setMo(new MO)
         om
       }).toArray)
+      obj.setOo(new OO)
       obj = Orm.convert(obj)
       val ex = Orm.insert(obj)
       ex.insert("om").insert("mo")
+      ex.insert("oo")
       session.execute(ex)
       obj.setOm(Array())
       obj = OrmTool.attach[Obj](obj, "om", session, join => join.select("mo"))
       Assert.assertEquals(obj.getOm.length, 5)
       Assert.assertEquals(obj.getOm()(0).getMo.getId.intValue(), 1)
+      obj = OrmTool.attach[Obj](obj, "oo", session)
+      Assert.assertEquals(obj.getOo.getId.longValue(), 1)
     })
   }
 
@@ -531,5 +543,10 @@ class ScalaTest2 {
       Assert.assertEquals(res.getAge.intValue(), 10)
       Assert.assertEquals(res.getName, "update2")
     })
+  }
+
+  @Test
+  def testCrossDb(): Unit = {
+
   }
 }

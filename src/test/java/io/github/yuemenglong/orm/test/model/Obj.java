@@ -9,7 +9,7 @@ import java.util.Date;
 /**
  * Created by <yuemenglong@126.com> on 2017/5/17.
  */
-@Entity
+@Entity(db = "test")
 public class Obj {
 
     public Obj() {

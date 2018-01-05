@@ -46,7 +46,7 @@ object EntityMeta {
     if (anno == null) {
       return null
     }
-    anno.table() match {
+    anno.db() match {
       case "" => null
       case _ => anno.db()
     }

@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.lang.anno.{Entity, Id}
 /**
   * Created by <yuemenglong@126.com> on 2017/7/20.
   */
-@Entity
+@Entity(db = "test")
 class _ScalaObj {
   @Id
   var id: Long = _

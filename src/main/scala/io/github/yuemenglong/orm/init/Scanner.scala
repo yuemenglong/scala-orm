@@ -50,6 +50,9 @@ object Scanner {
       .map(genGetterSetter).foreach(trace)
     indexScan(metas)
     OrmMeta.dbVec = metas.map(_.db).filter(_ != null)
+    if (OrmMeta.dbVec.length > 0 && metas.exists(_.db == null)) {
+      throw new RuntimeException(s"Must Spec Db: ${metas.filter(_.db == null).map(_.entity).mkString(", ")}")
+    }
     //    fixMeta()
   }
 

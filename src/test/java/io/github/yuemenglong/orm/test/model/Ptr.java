@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.lang.anno.Pointer;
 /**
  * Created by Administrator on 2017/5/19.
  */
-@Entity
+@Entity(db = "test")
 public class Ptr {
     @Id(auto = true)
     private Long id;
