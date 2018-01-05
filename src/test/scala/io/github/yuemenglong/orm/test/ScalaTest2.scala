@@ -5,7 +5,8 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.{Checker, Db}
-import io.github.yuemenglong.orm.meta.OrmMeta
+import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.traits.core.Root
 import io.github.yuemenglong.orm.test.model._
 import io.github.yuemenglong.orm.tool.OrmTool
@@ -33,6 +34,7 @@ class ScalaTest2 {
   @After def after(): Unit = {
     Orm.clear()
     db.shutdown()
+    db2.shutdown()
   }
 
   def openDb(): Db = Orm.openDb("localhost", 3306, "root", "root", "test")
@@ -162,6 +164,13 @@ class ScalaTest2 {
       Assert.assertEquals(obj.getOm()(0).getMo.getId.intValue(), 1)
       obj = OrmTool.attach[Obj](obj, "oo", session)
       Assert.assertEquals(obj.getOo.getId.longValue(), 1)
+
+      obj.getOm.foreach(om => {
+        om.asInstanceOf[Entity].$$core().fieldMap += ("mo" -> null)
+      })
+      OrmTool.attach(obj.getOm, "mo", session).zipWithIndex.foreach { case (om, idx) =>
+        Assert.assertEquals(om.getId.longValue(), idx + 1)
+      }
     })
   }
 

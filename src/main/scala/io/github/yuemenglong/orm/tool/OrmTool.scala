@@ -99,8 +99,12 @@ object OrmTool {
 
   def attach[T](obj: T, field: String, session: Session,
                 joinFn: SelectJoin => Unit = _ => {},
-                queryFn: Query[T] => Unit = (_: Query[T]) => {},
+                queryFn: Query[_] => Unit = (_: Query[_]) => {},
                ): T = {
+    if (obj.getClass.isArray) {
+      return attachArray(obj.asInstanceOf[Array[_]], field, session, joinFn, queryFn)
+        .asInstanceOf[T]
+    }
     if (!obj.isInstanceOf[Entity]) {
       throw new RuntimeException("Not Entity")
     }
@@ -125,7 +129,7 @@ object OrmTool {
     //    val join = root.select(field)
     joinFn(root)
 
-    val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[T]]
+    val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[_]]
     queryFn(query)
     query.where(query.cond.and(root.get(rightField).eql(leftValue)))
 
@@ -139,16 +143,61 @@ object OrmTool {
     obj
   }
 
+  def attachArray(arr: Array[_], field: String, session: Session,
+                  joinFn: SelectJoin => Unit = _ => {},
+                  queryFn: Query[_] => Unit = (_: Query[_]) => {},
+                 ): Array[_] = {
+    if (arr.exists(!_.isInstanceOf[Entity])) {
+      throw new RuntimeException("Array Has Item Not Entity")
+    }
+    if (arr.isEmpty) {
+      return arr
+    }
+
+    val entities = arr.map(_.asInstanceOf[Entity])
+    val meta = entities(0).$$core().meta
+    if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isNormalOrPkey) {
+      throw new RuntimeException(s"Not Refer Feild, $field")
+    }
+    val refer = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
+    val root = Orm.root(refer.refer.clazz)
+    val leftValues = entities.map(_.$$core().get(refer.left))
+    val rightField = refer.right
+
+    joinFn(root)
+
+    val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[_]]
+    queryFn(query)
+    query.where(query.cond.and(root.get(rightField).in(leftValues)))
+
+    val res: Map[Object, Object] = refer.isOneMany match {
+      case true => session.query(query).map(_.asInstanceOf[Entity])
+        .groupBy(_.$$core().get(rightField))
+      case false => session.query(query).map(_.asInstanceOf[Entity])
+        .map(e => (e.$$core().get(rightField), e)).toMap
+    }
+    entities.foreach(e => {
+      val leftValue = e.$$core().get(refer.left)
+      if (res.contains(leftValue)) {
+        e.$$core().set(field, res(leftValue))
+      }
+    })
+    arr
+  }
+
   def updateById[T, V](clazz: Class[T], id: V, session: Session,
                        pairs: (String, Any)*): Unit = {
     val root = Orm.root(clazz)
-    val assigns = pairs.map { case (f, v) => root.get(f).assign(v.asInstanceOf[Object]) }
+    val assigns = pairs.map {
+      case (f, v) => root.get(f).assign(v.asInstanceOf[Object])
+    }
     val pkey = root.getMeta.pkey.name
     session.execute(Orm.update(root).set(assigns: _*).where(root.get(pkey).eql(id)))
   }
 
   def selectById[T, V](clazz: Class[T], id: V, session: Session,
-                       rootFn: (Root[T]) => Unit = (_: Root[T]) => {}): T = {
+                       rootFn: (Root[T]) => Unit = (_: Root[T]) => {
+                       }): T = {
     val root = Orm.root(clazz)
     rootFn(root)
     val pkey = root.getMeta.pkey.name
