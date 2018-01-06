@@ -59,17 +59,19 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     })
 
     val ret = stmt.executeBatch()
-    val rs = stmt.getGeneratedKeys
-    val ids = Stream.continually({
-      if (rs.next()) {
-        rs.getObject(1)
-      } else {
-        null
+    if (meta.pkey.isAuto) {
+      val rs = stmt.getGeneratedKeys
+      val ids = Stream.continually({
+        if (rs.next()) {
+          rs.getObject(1)
+        } else {
+          null
+        }
+      }).takeWhile(_ != null).toArray
+      array.zipWithIndex.foreach { case (o, i) =>
+        val core = o.asInstanceOf[Entity].$$core()
+        core.setPkey(ids(i))
       }
-    }).takeWhile(_ != null).toArray
-    array.zipWithIndex.foreach { case (o, i) =>
-      val core = o.asInstanceOf[Entity].$$core()
-      core.setPkey(ids(i))
     }
     if (!inTransaction) {
       conn.commit()
