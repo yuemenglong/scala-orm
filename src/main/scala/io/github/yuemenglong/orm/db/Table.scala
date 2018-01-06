@@ -23,12 +23,12 @@ object Table {
   }
 
   def getCreateSql(clazz: Class[_]): String = {
-    val entityMeta = OrmMeta.entityMap(clazz.getSimpleName)
+    val entityMeta = OrmMeta.entityMap(clazz)
     getCreateSql(entityMeta)
   }
 
   def getDropSql(clazz: Class[_]): String = {
-    val entityMeta = OrmMeta.entityMap(clazz.getSimpleName)
+    val entityMeta = OrmMeta.entityMap(clazz)
     getDropSql(entityMeta)
   }
 

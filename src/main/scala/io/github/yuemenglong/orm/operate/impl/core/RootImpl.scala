@@ -83,10 +83,10 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
   }
 
   override def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T] = {
-    if (!OrmMeta.entityMap.contains(clazz.getSimpleName)) {
-      throw new RuntimeException(s"${clazz.getSimpleName} Is Not Entity")
+    if (!OrmMeta.entityMap.contains(clazz)) {
+      throw new RuntimeException(s"$clazz Is Not Entity")
     }
-    val referMeta = OrmMeta.entityMap(clazz.getSimpleName)
+    val referMeta = OrmMeta.entityMap(clazz)
     if (!meta.fieldMap.contains(left)) {
       throw new RuntimeException(s"Unknown Field $left On ${meta.entity}")
     }

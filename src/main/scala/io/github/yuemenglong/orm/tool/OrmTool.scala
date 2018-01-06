@@ -143,10 +143,11 @@ object OrmTool {
     obj
   }
 
-  def attachArray(arr: Array[_], field: String, session: Session,
-                  joinFn: SelectJoin => Unit = _ => {},
-                  queryFn: Query[_] => Unit = (_: Query[_]) => {},
-                 ): Array[_] = {
+
+  private def attachArray(arr: Array[_], field: String, session: Session,
+                          joinFn: SelectJoin => Unit = _ => {},
+                          queryFn: Query[_] => Unit = (_: Query[_]) => {},
+                         ): Array[_] = {
     if (arr.exists(!_.isInstanceOf[Entity])) {
       throw new RuntimeException("Array Has Item Not Entity")
     }

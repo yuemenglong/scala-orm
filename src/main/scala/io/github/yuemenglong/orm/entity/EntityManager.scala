@@ -15,14 +15,14 @@ import scala.reflect.ClassTag
 object EntityManager {
   def empty[T](clazz: Class[T]): T = {
     require(OrmMeta.entityMap.nonEmpty)
-    val meta = OrmMeta.entityMap(clazz.getSimpleName)
+    val meta = OrmMeta.entityMap(clazz)
     val core = EntityCore.empty(meta)
     wrap(core).asInstanceOf[T]
   }
 
   def create[T](clazz: Class[T]): T = {
     require(OrmMeta.entityMap.nonEmpty)
-    val meta = OrmMeta.entityMap(clazz.getSimpleName)
+    val meta = OrmMeta.entityMap(clazz)
     val core = EntityCore.create(meta)
     wrap(core).asInstanceOf[T]
   }
@@ -59,10 +59,10 @@ object EntityManager {
     if (isEntity(obj)) {
       return obj.asInstanceOf[Entity]
     }
-    if (!OrmMeta.entityMap.contains(obj.getClass.getSimpleName)) {
+    if (!OrmMeta.entityMap.contains(obj.getClass)) {
       throw new RuntimeException(s"[${obj.getClass.getSimpleName}] Is Not Entity")
     }
-    val meta = OrmMeta.entityMap(obj.getClass.getSimpleName)
+    val meta = OrmMeta.entityMap(obj.getClass)
     val map: Map[String, Object] = Kit.getDeclaredFields(obj.getClass)
       .filter(field => meta.fieldMap.contains(field.getName)) //不做ignore的
       .map(field => {

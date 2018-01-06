@@ -43,7 +43,7 @@ object Scanner {
     }).map(clazz => {
       val entityMeta = new EntityMeta(clazz)
       OrmMeta.entityVec += entityMeta
-      OrmMeta.entityMap += (entityMeta.entity -> entityMeta)
+      OrmMeta.entityMap += (entityMeta.clazz -> entityMeta)
       entityMeta
     })
     metas.map(firstScan).map(checkPkey).map(secondScan)
@@ -119,7 +119,7 @@ object Scanner {
         field.getAnnotation(classOf[Ignore]) == null
     }).foreach(field => {
       val ty = Kit.getArrayType(field.getType)
-      val refer = OrmMeta.entityMap(ty.getSimpleName)
+      val refer = OrmMeta.entityMap(ty)
       val annoPointer = field.getAnnotation(classOf[Pointer])
       val annoOneOne = field.getAnnotation(classOf[OneToOne])
       val annoOneMany = field.getAnnotation(classOf[OneToMany])

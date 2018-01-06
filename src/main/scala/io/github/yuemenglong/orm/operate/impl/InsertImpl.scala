@@ -14,10 +14,10 @@ import scala.collection.mutable.ArrayBuffer
   */
 
 class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
-  if (!OrmMeta.entityMap.contains(clazz.getSimpleName)) {
+  if (!OrmMeta.entityMap.contains(clazz)) {
     throw new RuntimeException(s"Not Entity: ${clazz.getSimpleName}")
   }
-  val meta: EntityMeta = OrmMeta.entityMap(clazz.getSimpleName)
+  val meta: EntityMeta = OrmMeta.entityMap(clazz)
   var array: Array[T] = Array().asInstanceOf[Array[T]] //Array.newBuilder[T](ClassTag(clazz)).result()
 
   override def walk(fn: (Entity) => Entity): Unit = {}

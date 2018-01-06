@@ -82,10 +82,10 @@ object Orm {
   def delete(obj: Object): ExecuteRoot = ExecuteRootImpl.delete(obj)
 
   def root[T](clazz: Class[T]): Root[T] = {
-    if (!OrmMeta.entityMap.contains(clazz.getSimpleName)) {
+    if (!OrmMeta.entityMap.contains(clazz)) {
       throw new RuntimeException("Not Entity Class")
     }
-    new RootImpl[T](clazz, new JoinImpl(OrmMeta.entityMap(clazz.getSimpleName)))
+    new RootImpl[T](clazz, new JoinImpl(OrmMeta.entityMap(clazz)))
   }
 
   def cond(): Cond = new CondHolder

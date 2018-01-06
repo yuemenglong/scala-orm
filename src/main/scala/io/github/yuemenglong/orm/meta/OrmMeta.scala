@@ -8,7 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 object OrmMeta {
 
   var entityVec: ArrayBuffer[EntityMeta] = ArrayBuffer()
-  var entityMap: Map[String, EntityMeta] = Map()
+  var entityMap: Map[Class[_], EntityMeta] = Map()
   var dbVec: Array[String] = Array()
 
   def check(): Unit = {
