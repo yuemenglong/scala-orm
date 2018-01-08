@@ -31,13 +31,18 @@ case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean
     val nullableEq = field.nullable == nullable
     val pkeyEq = field.isPkey == (key == "PRI")
     val autoEql = field.isAuto == auto
+    val decimalEq = field match {
+      case f: FieldMetaDecimal => f.precision == precision && f.scale == scale
+      case _ => true
+    }
 
     if (!tyEq ||
       !defaultValueEq ||
       !columnEq ||
       !nullableEq ||
       !pkeyEq ||
-      !autoEql
+      !autoEql ||
+      !decimalEq
     ) {
       false
     } else {
