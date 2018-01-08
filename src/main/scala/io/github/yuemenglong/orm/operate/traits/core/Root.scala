@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.traits.core
 import io.github.yuemenglong.orm.meta.EntityMeta
 import io.github.yuemenglong.orm.operate.impl.core._
 import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
+import io.github.yuemenglong.orm.lang.types.Types._
 
 /**
   * Created by yml on 2017/7/15.
@@ -27,6 +28,16 @@ trait Field extends Node with CondOp with AssignOp {
   def getAlias: String
 
   def as[T](clazz: Class[T]): SelectableField[T]
+
+  def asLong(): SelectableField[Long] = as(classOf[Long])
+
+  def asInt(): SelectableField[Integer] = as(classOf[Integer])
+
+  def asDouble(): SelectableField[Double] = as(classOf[Double])
+
+  def asStr(): SelectableField[String] = as(classOf[String])
+
+  def asBool(): SelectableField[Boolean] = as(classOf[Boolean])
 
   override def eql[T](v: T): Cond = EqFV(this, v.asInstanceOf[Object])
 
