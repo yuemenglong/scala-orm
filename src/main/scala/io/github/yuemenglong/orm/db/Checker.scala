@@ -135,7 +135,7 @@ object Checker {
     val fieldMap = meta.fieldVec.filter(_.isNormalOrPkey).map(f => (f.column, f)).toMap
     //1. 表里有实体没有
     val needDrop = ignoreUnused match {
-      case true => Array()
+      case true => Array[String]()
       case false => columnMap.keySet.diff(fieldMap.keySet).map(c => {
         Column.getDropSql(meta.table, c)
       }).toArray
