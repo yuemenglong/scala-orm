@@ -42,6 +42,9 @@ public class Obj {
 
     Boolean married = false;
 
+    @Text
+    String text = null;
+
     @LongText
     String longText = null;
 
@@ -206,5 +209,21 @@ public class Obj {
 
     public void setDftValue(Integer dftValue) {
         this.dftValue = dftValue;
+    }
+
+    public Integer getTinyAge() {
+        return tinyAge;
+    }
+
+    public void setTinyAge(Integer tinyAge) {
+        this.tinyAge = tinyAge;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 }

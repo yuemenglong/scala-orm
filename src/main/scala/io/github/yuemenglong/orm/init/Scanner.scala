@@ -89,10 +89,13 @@ object Scanner {
             new FieldMetaInteger(field, entityMeta)
           }
         case Types.StringClass =>
+          val annoText = field.getAnnotation(classOf[Text])
           val annoLongText = field.getAnnotation(classOf[LongText])
           val annoEnum = field.getAnnotation(classOf[Enum])
           if (annoEnum != null) {
             new FieldMetaEnum(field, entityMeta)
+          } else if (annoText != null) {
+            new FieldMetaText(field, entityMeta)
           } else if (annoLongText != null) {
             new FieldMetaLongText(field, entityMeta)
           } else {

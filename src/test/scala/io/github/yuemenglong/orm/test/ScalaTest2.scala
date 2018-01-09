@@ -578,4 +578,19 @@ class ScalaTest2 {
       Assert.assertEquals(sub.getOm()(0).getMo.getId.intValue(), 1)
     })
   }
+
+  @Test
+  def testText(): Unit = {
+    db.beginTransaction(session => {
+      val s = 1.to(10000).map(_.toString).mkString("")
+      val obj = new Obj
+      obj.setName("")
+      obj.setText(s)
+      session.execute(Orm.insert(Orm.convert(obj)))
+
+      val root = Orm.root(classOf[Obj])
+      val o2 = session.first(Orm.selectFrom(root).where(root.get("id").eql(1)))
+      Assert.assertEquals(o2.getText, s)
+    })
+  }
 }

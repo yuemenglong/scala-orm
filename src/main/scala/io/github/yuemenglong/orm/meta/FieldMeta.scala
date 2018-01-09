@@ -183,6 +183,11 @@ class FieldMetaDecimal(field: Field, entity: EntityMeta) extends FieldMetaDeclar
   }
 }
 
+class FieldMetaText(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
+  require(field.getType == classOf[java.lang.String])
+  override val dbType: String = "TEXT"
+}
+
 class FieldMetaLongText(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.String])
   override val dbType: String = "LONGTEXT"

@@ -17,6 +17,7 @@ case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean
       case (_: FieldMetaBoolean, "TINYINT") => length == 1
       case (_: FieldMetaString, "CHAR") => true
       case (f: FieldMetaString, "VARCHAR") => f.length == length
+      case (_: FieldMetaText, "VARCHAR") => true
       case (_: FieldMetaLongText, "VARCHAR") => true
       case (f: FieldMetaEnum, "ENUM") => f.values.toSet == set
       case (_, _) => field.dbType == ty
