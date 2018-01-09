@@ -78,7 +78,7 @@ object Checker {
       val meta = entityMap(table)
       checkEntity(conn, meta, ignoreUnused)
     }).toArray
-    val tips = (needDrops ++ needCreates ++ needUpdates).mkString("\n")
+    val tips = (needDrops ++ needCreates ++ needUpdates).sorted.mkString("\n")
     if (tips.nonEmpty) {
       val useDb = s"USE $db;\n"
       val info = s"Table Schema Not Match Entity Meta, You May Need To\n$useDb$tips"
