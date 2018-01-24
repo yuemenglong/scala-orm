@@ -50,6 +50,10 @@ trait CondOp {
 
   def in(a: Array[Object]): Cond
 
+  def nin[T](a: Array[T])(implicit ev: T => Object): Cond
+
+  def nin(a: Array[Object]): Cond
+
   def isNull: Cond
 
   def notNull(): Cond

@@ -152,6 +152,14 @@ case class InFA[T](f: Field, a: Array[T])(implicit ev: T => Object) extends Cond
   override def getParams: Array[Object] = a.map(_.asInstanceOf[Object])
 }
 
+case class NinFA[T](f: Field, a: Array[T])(implicit ev: T => Object) extends CondItem {
+  override def getSql: String = {
+    s"${f.getColumn} NOT IN (${a.map(_ => "?").mkString(", ")})"
+  }
+
+  override def getParams: Array[Object] = a.map(_.asInstanceOf[Object])
+}
+
 case class IsNull(f: Field) extends CondItem {
   override def getSql: String = s"${f.getColumn} IS NULL"
 

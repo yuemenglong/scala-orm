@@ -54,16 +54,26 @@ class ScalaTest2 {
   @Test
   def testIn(): Unit = {
     db.beginTransaction(session => {
-      1.to(3).foreach(i => {
+      1.to(4).foreach(i => {
         val obj = new Obj()
         obj.setName(i.toString)
         session.execute(Orm.insert(Orm.convert(obj)))
       })
-      val root = Orm.root(classOf[Obj])
-      val res = session.query(Orm.select(root).from(root).where(root.get("id").in(Array(1, 2))))
-      Assert.assertEquals(res.length, 2)
-      Assert.assertEquals(res(0).getId.intValue(), 1)
-      Assert.assertEquals(res(1).getId.intValue(), 2)
+
+      {
+        val root = Orm.root(classOf[Obj])
+        val res = session.query(Orm.select(root).from(root).where(root.get("id").in(Array(1, 2))))
+        Assert.assertEquals(res.length, 2)
+        Assert.assertEquals(res(0).getId.intValue(), 1)
+        Assert.assertEquals(res(1).getId.intValue(), 2)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        val res = session.query(Orm.select(root).from(root).where(root.get("id").nin(Array(3, 4))))
+        Assert.assertEquals(res.length, 2)
+        Assert.assertEquals(res(0).getId.intValue(), 1)
+        Assert.assertEquals(res(1).getId.intValue(), 2)
+      }
     })
   }
 

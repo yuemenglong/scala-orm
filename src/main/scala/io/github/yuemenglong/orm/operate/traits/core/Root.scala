@@ -69,6 +69,10 @@ trait Field extends Node with CondOp with AssignOp {
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
+  override def nin[T](a: Array[T])(implicit ev: T => Object): Cond = NinFA(this, a)
+
+  override def nin(a: Array[Object]): Cond = NinFA(this, a)
+
   override def isNull: Cond = IsNull(this)
 
   override def notNull(): Cond = NotNull(this)
