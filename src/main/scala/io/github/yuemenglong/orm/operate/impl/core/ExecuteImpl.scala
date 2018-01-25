@@ -1,5 +1,6 @@
 package io.github.yuemenglong.orm.operate.impl.core
 
+import java.lang.reflect.Method
 import java.sql.{Connection, Statement}
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
@@ -7,7 +8,8 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.traits.core.{ExecuteJoin, ExecuteRoot}
+import io.github.yuemenglong.orm.operate.traits.core.{ExecuteJoin, ExecuteRoot, TypedExecuteJoin, TypedExecuteRoot}
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -16,8 +18,8 @@ import scala.collection.mutable.ArrayBuffer
   */
 abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   protected var fields: Array[FieldMeta] = meta.fields().filter(_.isNormalOrPkey).toArray
-  private var cascades = new ArrayBuffer[(String, ExecuteJoinImpl)]()
-  private var spec = Map[Object, ExecuteJoinImpl]()
+  protected var cascades = new ArrayBuffer[(String, ExecuteJoin)]()
+  protected var spec: Map[Object, ExecuteJoinImpl] = Map[Object, ExecuteJoinImpl]()
   protected var ignoreFields: Set[String] = Set[String]()
 
   override def fields(fields: String*): ExecuteJoin = {
@@ -29,7 +31,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     this
   }
 
-  def execute(entity: Entity, conn: Connection): Int = {
+  override def execute(entity: Entity, conn: Connection): Int = {
     if (entity.$$core().meta != meta) {
       throw new RuntimeException(s"Meta Info Not Match, ${entity.$$core().meta.entity}:${meta.entity}")
     }
@@ -191,8 +193,8 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     spec += ((obj, null))
     this
   }
-
 }
+
 
 class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
@@ -209,7 +211,7 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     }).mkString(", ")
 
     val sql = s"INSERT INTO `${core.meta.table}`($columns) values($values)"
-    val params = validFields.map(f => core.get(f.name)).toArray
+    val params = validFields.map(f => core.get(f.name))
 
     Kit.logSql(sql, params)
 
@@ -247,7 +249,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     }).mkString(", ")
     val idCond = s"${core.meta.pkey.column} = ?"
     val sql = s"UPDATE `${core.meta.table}` SET $columns WHERE $idCond"
-    val params = validFields.map(f => core.get(f.name)).toArray ++ Array(core.getPkey)
+    val params = validFields.map(f => core.get(f.name)) ++ Array(core.getPkey)
 
     if (validFields.isEmpty) {
       Kit.logSql(sql, params)
@@ -272,7 +274,7 @@ class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   }
 }
 
-class ExecuteRootImpl(obj: Object, impl: ExecuteJoinImpl) extends ExecuteRoot {
+class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
 
   override def execute(conn: Connection): Int = impl.execute(obj.asInstanceOf[Entity], conn)
 
@@ -302,10 +304,93 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoinImpl) extends ExecuteRoot {
     EntityManager.walk(obj.asInstanceOf[Entity], fn)
   }
 
-  override def fields(fields: String*) = {
+  override def fields(fields: String*): ExecuteRootImpl = {
     impl.fields(fields: _*)
     this
   }
+
+  override def execute(entity: Entity, conn: Connection): Int = impl.execute(entity, conn)
+}
+
+trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
+  val marker: T = createMarker()
+
+  def getMeta: EntityMeta
+
+  def getCascades: ArrayBuffer[(String, ExecuteJoin)]
+
+  def createMarker(): T = {
+    val enhancer: Enhancer = new Enhancer
+    enhancer.setSuperclass(getMeta.clazz)
+
+    enhancer.setCallback(new MethodInterceptor() {
+      @throws[Throwable]
+      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
+        if (getMeta.getterMap.contains(method)) {
+          val fieldMeta = getMeta.getterMap(method)
+          fieldMeta.name
+        } else {
+          throw new RuntimeException(s"Invalid Method: ${method.getName}")
+        }
+      }
+    })
+    enhancer.create().asInstanceOf[T]
+  }
+
+  private def cascade[R](fn: (T) => R, creator: (EntityMeta) => TypedExecuteJoin[R]): TypedExecuteJoin[R] = {
+    val field = fn(marker).asInstanceOf[String]
+    getCascades.find(_._1 == field) match {
+      case None =>
+        val execute: TypedExecuteJoin[R] = creator(getMeta.fieldMap(field)
+          .asInstanceOf[FieldMetaRefer].refer)
+        getCascades += ((field, execute))
+        execute
+      case Some(pair) => pair._2.asInstanceOf[TypedExecuteJoin[R]]
+    }
+  }
+
+
+  def insert[R](fn: (T) => R): TypedExecuteJoin[R] = {
+    cascade(fn, (meta) => new TypedInsertJoin[R](meta))
+  }
+
+  def update[R](fn: (T) => R): TypedExecuteJoin[R] = {
+    cascade(fn, (meta) => new TypedUpdateJoin[R](meta))
+  }
+
+  def delete[R](fn: (T) => R): TypedExecuteJoin[R] = {
+    cascade(fn, (meta) => new TypedDeleteJoin[R](meta))
+  }
+}
+
+class TypedInsertJoin[T](meta: EntityMeta) extends InsertJoin(meta)
+  with TypedExecuteJoinImpl[T] {
+  override def getMeta: EntityMeta = meta
+
+  override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
+}
+
+class TypedUpdateJoin[T](meta: EntityMeta) extends InsertJoin(meta)
+  with TypedExecuteJoinImpl[T] {
+  override def getMeta: EntityMeta = meta
+
+  override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
+}
+
+class TypedDeleteJoin[T](meta: EntityMeta) extends InsertJoin(meta)
+  with TypedExecuteJoinImpl[T] {
+  override def getMeta: EntityMeta = meta
+
+  override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
+}
+
+class TypedExecuteRootImpl[T <: Object](obj: T, impl: TypedExecuteJoinImpl[T]) extends ExecuteRootImpl(obj, impl)
+  with TypedExecuteRoot[T] {
+  override def insert[R](fn: (T) => R): TypedExecuteJoin[R] = impl.insert(fn)
+
+  override def update[R](fn: (T) => R): TypedExecuteJoin[R] = impl.update(fn)
+
+  override def delete[R](fn: (T) => R): TypedExecuteJoin[R] = impl.delete(fn)
 }
 
 object ExecuteRootImpl {
