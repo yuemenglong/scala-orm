@@ -1,6 +1,5 @@
 package io.github.yuemenglong.orm.operate.impl.core
 
-import java.lang.reflect.Method
 import java.sql.{Connection, Statement}
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
@@ -9,7 +8,6 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.traits.core.{ExecuteJoin, ExecuteRoot, TypedExecuteJoin, TypedExecuteRoot}
-import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -179,7 +177,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     this
   }
 
-  override def insert(obj: Object): ExecuteJoin = {
+  override def insertFor(obj: Object): ExecuteJoin = {
     val core = EntityManager.core(obj)
     val referMeta = core.meta
     val executor = new InsertJoin(referMeta)
@@ -187,7 +185,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     executor
   }
 
-  override def update(obj: Object): ExecuteJoin = {
+  override def updateFor(obj: Object): ExecuteJoin = {
     val core = EntityManager.core(obj)
     val referMeta = core.meta
     val executor = new UpdateJoin(referMeta)
@@ -195,7 +193,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     executor
   }
 
-  override def delete(obj: Object): ExecuteJoin = {
+  override def deleteFor(obj: Object): ExecuteJoin = {
     val core = EntityManager.core(obj)
     val referMeta = core.meta
     val executor = new DeleteJoin(referMeta)
@@ -203,7 +201,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     executor
   }
 
-  override def ignore(obj: Object): ExecuteJoin = {
+  override def ignoreFor(obj: Object): ExecuteJoin = {
     spec += ((obj, null))
     this
   }
@@ -302,14 +300,14 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
     this
   }
 
-  override def insert(obj: Object): ExecuteJoin = impl.insert(obj)
+  override def insertFor(obj: Object): ExecuteJoin = impl.insertFor(obj)
 
-  override def update(obj: Object): ExecuteJoin = impl.update(obj)
+  override def updateFor(obj: Object): ExecuteJoin = impl.updateFor(obj)
 
-  override def delete(obj: Object): ExecuteJoin = impl.delete(obj)
+  override def deleteFor(obj: Object): ExecuteJoin = impl.deleteFor(obj)
 
-  override def ignore(obj: Object): ExecuteRoot = {
-    impl.ignore(obj)
+  override def ignoreFor(obj: Object): ExecuteRoot = {
+    impl.ignoreFor(obj)
     this
   }
 
@@ -326,32 +324,13 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
 }
 
 trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
-  val marker: T = createMarker()
-
   def getMeta: EntityMeta
 
   def getCascades: ArrayBuffer[(String, ExecuteJoin)]
 
-  def createMarker(): T = {
-    val enhancer: Enhancer = new Enhancer
-    enhancer.setSuperclass(getMeta.clazz)
-
-    enhancer.setCallback(new MethodInterceptor() {
-      @throws[Throwable]
-      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-        if (getMeta.getterMap.contains(method)) {
-          val fieldMeta = getMeta.getterMap(method)
-          fieldMeta.name
-        } else {
-          throw new RuntimeException(s"Invalid Method: ${method.getName}")
-        }
-      }
-    })
-    enhancer.create().asInstanceOf[T]
-  }
-
   private def cascade[R](fn: (T) => R, creator: (EntityMeta) => TypedExecuteJoin[R]): TypedExecuteJoin[R] = {
-    val field = fn(marker).asInstanceOf[String]
+    val marker = EntityManager.createMarker[T](getMeta)
+    val field = fn(marker).toString
     if (!getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Refer")
     }

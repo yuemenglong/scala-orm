@@ -9,6 +9,7 @@ import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.impl.core.{JoinImpl, SelectJoinImpl}
 import io.github.yuemenglong.orm.operate.traits.Query
 import io.github.yuemenglong.orm.operate.traits.core.{Cond, Root, SelectJoin}
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -102,4 +103,6 @@ object Kit {
       stmt.close()
     }
   }
+
+
 }

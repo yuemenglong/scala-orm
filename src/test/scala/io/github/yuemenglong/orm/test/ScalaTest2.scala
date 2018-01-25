@@ -4,9 +4,8 @@ import java.io.File
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.db.{Checker, Db}
+import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.traits.core.Root
 import io.github.yuemenglong.orm.test.model._
 import io.github.yuemenglong.orm.tool.OrmTool
@@ -571,14 +570,14 @@ class ScalaTest2 {
         val mo = new MO()
         mo
       }).toArray)
-      session.execute(Orm.insert(mos))
+      session.execute(Orm.inserts(mos))
       val oms = mos.map(mo => {
         val om = Orm.empty(classOf[OM])
         om.setSubId(1L)
         om.setMo(mo)
         om
       })
-      session.execute(Orm.insert(oms))
+      session.execute(Orm.inserts(oms))
     })
     db.beginTransaction(session => {
       var sub = Orm.empty(classOf[Sub])
@@ -601,6 +600,24 @@ class ScalaTest2 {
       val root = Orm.root(classOf[Obj])
       val o2 = session.first(Orm.selectFrom(root).where(root.get("id").eql(1)))
       Assert.assertEquals(o2.getText, s)
+    })
+  }
+
+  @Test
+  def testTyped(): Unit = {
+    db.beginTransaction(session => {
+      val obj = new Obj
+      obj.setName("")
+      obj.setOo(new OO)
+      val ex = Orm.insert(Orm.convert(obj))
+      ex.insert(_.getOo)
+      session.execute(ex)
+
+      val root = Orm.root(classOf[Obj])
+      root.select("oo")
+      val res = session.first(Orm.selectFrom(root))
+      Assert.assertEquals(res.getId.intValue(), 1)
+      Assert.assertEquals(res.getOo.getId.intValue(), 1)
     })
   }
 }

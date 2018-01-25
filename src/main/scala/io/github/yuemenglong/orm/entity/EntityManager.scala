@@ -108,4 +108,39 @@ object EntityManager {
     val newCore = new EntityCore(entity.$$core().meta, map)
     EntityManager.wrap(newCore)
   }
+
+  def createMarker[T](meta: EntityMeta): T = {
+    val enhancer: Enhancer = new Enhancer
+    enhancer.setSuperclass(meta.clazz)
+
+    enhancer.setCallback(new MethodInterceptor() {
+      @throws[Throwable]
+      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
+        if (!meta.getterMap.contains(method)) {
+          throw new RuntimeException(s"Invalid Method Name: ${method.getName}")
+        } else {
+          val fieldMeta = meta.getterMap(method)
+          val name = fieldMeta.name
+          createMarkerRet(fieldMeta.clazz, name)
+        }
+      }
+    })
+    enhancer.create().asInstanceOf[T]
+  }
+
+  def createMarkerRet(clazz: Class[_], value: String): Object = {
+    val enhancer: Enhancer = new Enhancer
+    enhancer.setSuperclass(clazz)
+
+    enhancer.setCallback(new MethodInterceptor() {
+      @throws[Throwable]
+      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
+        method.getName match {
+          case "toString" => value
+          case _ => throw new RuntimeException("Marker Only Can Call ToString")
+        }
+      }
+    })
+    enhancer.create()
+  }
 }

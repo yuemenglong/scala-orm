@@ -24,13 +24,13 @@ trait ExecuteJoin {
 
   def ignore(fields: String*): ExecuteJoin
 
-  def insert(obj: Object): ExecuteJoin
+  def insertFor(obj: Object): ExecuteJoin
 
-  def update(obj: Object): ExecuteJoin
+  def updateFor(obj: Object): ExecuteJoin
 
-  def delete(obj: Object): ExecuteJoin
+  def deleteFor(obj: Object): ExecuteJoin
 
-  def ignore(obj: Object): ExecuteJoin
+  def ignoreFor(obj: Object): ExecuteJoin
 
   def execute(entity: Entity, conn: Connection): Int
 }
@@ -46,7 +46,7 @@ trait TypedExecuteJoin[T] extends ExecuteJoin {
 trait ExecuteRoot extends ExecuteJoin with Executable {
   override def ignore(fields: String*): ExecuteRoot
 
-  override def ignore(obj: Object): ExecuteRoot
+  override def ignoreFor(obj: Object): ExecuteRoot
 }
 
 trait TypedExecuteRoot[T] extends ExecuteRoot with TypedExecuteJoin[T] {

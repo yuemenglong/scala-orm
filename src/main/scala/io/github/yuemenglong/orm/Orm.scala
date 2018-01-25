@@ -75,11 +75,11 @@ object Orm {
     Logger.setEnable(b)
   }
 
-  def insert(obj: Object): ExecuteRoot = ExecuteRootImpl.insert(obj)
+  def insert[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.insert(obj)
 
-  def update(obj: Object): ExecuteRoot = ExecuteRootImpl.update(obj)
+  def update[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.update(obj)
 
-  def delete(obj: Object): ExecuteRoot = ExecuteRootImpl.delete(obj)
+  def delete[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.delete(obj)
 
   def root[T](clazz: Class[T]): Root[T] = {
     if (!OrmMeta.entityMap.contains(clazz)) {
@@ -113,7 +113,7 @@ object Orm {
   @Deprecated
   def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
 
-  def insert[T](arr: Array[T]): ExecutableInsert[T] = {
+  def inserts[T](arr: Array[T]): ExecutableInsert[T] = {
     arr.isEmpty match {
       case true => throw new RuntimeException("Batch Insert But Array Is Empty")
       case false => new InsertImpl[T](arr(0).asInstanceOf[Entity].$$core()
