@@ -113,43 +113,57 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     ret
   }
 
-  private def checkField(field: String): Unit = {
+  protected def checkField(field: String): Unit = {
     if (!meta.fieldMap.contains(field)) throw new RuntimeException(s"Unknown Field $field In ${meta.entity}")
     if (!meta.fieldMap(field).isRefer) throw new RuntimeException(s"$field Is Not Object")
     if (meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != meta.db) throw new RuntimeException(s"$field Is Not The Same DB")
   }
 
-  override def insert(field: String): ExecuteJoin = {
+  private def cascade(field: String, creator: (EntityMeta) => ExecuteJoin): ExecuteJoin = {
     checkField(field)
     cascades.find(_._1 == field) match {
       case None =>
-        val execute = new InsertJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
+        val execute = creator(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
         cascades.+=((field, execute))
         execute
       case Some(pair) => pair._2
     }
+  }
+
+  override def insert(field: String): ExecuteJoin = {
+    cascade(field, (meta) => new InsertJoin(meta))
+    //    checkField(field)
+    //    cascades.find(_._1 == field) match {
+    //      case None =>
+    //        val execute = new InsertJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
+    //        cascades.+=((field, execute))
+    //        execute
+    //      case Some(pair) => pair._2
+    //    }
   }
 
   override def update(field: String): ExecuteJoin = {
-    checkField(field)
-    cascades.find(_._1 == field) match {
-      case None =>
-        val execute = new UpdateJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-        cascades.+=((field, execute))
-        execute
-      case Some(pair) => pair._2
-    }
+    cascade(field, (meta) => new UpdateJoin(meta))
+    //    checkField(field)
+    //    cascades.find(_._1 == field) match {
+    //      case None =>
+    //        val execute = new UpdateJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
+    //        cascades.+=((field, execute))
+    //        execute
+    //      case Some(pair) => pair._2
+    //    }
   }
 
   override def delete(field: String): ExecuteJoin = {
-    checkField(field)
-    cascades.find(_._1 == field) match {
-      case None =>
-        val execute = new DeleteJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-        cascades.+=((field, execute))
-        execute
-      case Some(pair) => pair._2
-    }
+    cascade(field, (meta) => new DeleteJoin(meta))
+    //    checkField(field)
+    //    cascades.find(_._1 == field) match {
+    //      case None =>
+    //        val execute = new DeleteJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
+    //        cascades.+=((field, execute))
+    //        execute
+    //      case Some(pair) => pair._2
+    //    }
   }
 
   override def ignore(fields: String*): ExecuteJoin = {
@@ -194,7 +208,6 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     this
   }
 }
-
 
 class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   override def executeSelf(core: EntityCore, conn: Connection): Int = {
@@ -339,6 +352,10 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
 
   private def cascade[R](fn: (T) => R, creator: (EntityMeta) => TypedExecuteJoin[R]): TypedExecuteJoin[R] = {
     val field = fn(marker).asInstanceOf[String]
+    if (!getMeta.fieldMap(field).isRefer) {
+      throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Refer")
+    }
+
     getCascades.find(_._1 == field) match {
       case None =>
         val execute: TypedExecuteJoin[R] = creator(getMeta.fieldMap(field)
@@ -348,7 +365,6 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
       case Some(pair) => pair._2.asInstanceOf[TypedExecuteJoin[R]]
     }
   }
-
 
   def insert[R](fn: (T) => R): TypedExecuteJoin[R] = {
     cascade(fn, (meta) => new TypedInsertJoin[R](meta))
@@ -370,14 +386,14 @@ class TypedInsertJoin[T](meta: EntityMeta) extends InsertJoin(meta)
   override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
 }
 
-class TypedUpdateJoin[T](meta: EntityMeta) extends InsertJoin(meta)
+class TypedUpdateJoin[T](meta: EntityMeta) extends UpdateJoin(meta)
   with TypedExecuteJoinImpl[T] {
   override def getMeta: EntityMeta = meta
 
   override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
 }
 
-class TypedDeleteJoin[T](meta: EntityMeta) extends InsertJoin(meta)
+class TypedDeleteJoin[T](meta: EntityMeta) extends DeleteJoin(meta)
   with TypedExecuteJoinImpl[T] {
   override def getMeta: EntityMeta = meta
 
@@ -400,24 +416,45 @@ object ExecuteRootImpl {
     }
   }
 
-  def insert(obj: Object): ExecuteRoot = {
+  //  def insert(obj: Object): ExecuteRoot = {
+  //    check(obj)
+  //    val meta = obj.asInstanceOf[Entity].$$core().meta
+  //    val ex = new InsertJoin(meta)
+  //    new ExecuteRootImpl(obj, ex)
+  //  }
+  //
+  //  def update(obj: Object): ExecuteRoot = {
+  //    check(obj)
+  //    val meta = obj.asInstanceOf[Entity].$$core().meta
+  //    val ex = new UpdateJoin(meta)
+  //    new ExecuteRootImpl(obj, ex)
+  //  }
+  //
+  //  def delete(obj: Object): ExecuteRoot = {
+  //    check(obj)
+  //    val meta = obj.asInstanceOf[Entity].$$core().meta
+  //    val ex = new DeleteJoin(meta)
+  //    new ExecuteRootImpl(obj, ex)
+  //  }
+
+  def insert[T <: Object](obj: T): TypedExecuteRoot[T] = {
     check(obj)
     val meta = obj.asInstanceOf[Entity].$$core().meta
-    val ex = new InsertJoin(meta)
-    new ExecuteRootImpl(obj, ex)
+    val ex = new TypedInsertJoin[T](meta)
+    new TypedExecuteRootImpl(obj, ex)
   }
 
-  def update(obj: Object): ExecuteRoot = {
+  def update[T <: Object](obj: T): TypedExecuteRoot[T] = {
     check(obj)
     val meta = obj.asInstanceOf[Entity].$$core().meta
-    val ex = new UpdateJoin(meta)
-    new ExecuteRootImpl(obj, ex)
+    val ex = new TypedUpdateJoin[T](meta)
+    new TypedExecuteRootImpl(obj, ex)
   }
 
-  def delete(obj: Object): ExecuteRoot = {
+  def delete[T <: Object](obj: T): TypedExecuteRoot[T] = {
     check(obj)
     val meta = obj.asInstanceOf[Entity].$$core().meta
-    val ex = new DeleteJoin(meta)
-    new ExecuteRootImpl(obj, ex)
+    val ex = new TypedDeleteJoin[T](meta)
+    new TypedExecuteRootImpl(obj, ex)
   }
 }

@@ -36,42 +36,11 @@ trait ExecuteJoin {
 }
 
 trait TypedExecuteJoin[T] extends ExecuteJoin {
-
   def insert[R](fn: (T) => R): TypedExecuteJoin[R]
 
   def update[R](fn: (T) => R): TypedExecuteJoin[R]
 
   def delete[R](fn: (T) => R): TypedExecuteJoin[R]
-
-  def fields(fields: String*): TypedExecuteJoin[T] = {
-    super.fields(fields: _*)
-    this
-  }
-
-  def ignore(fields: String*): TypedExecuteJoin[T] = {
-    super.ignore(fields: _*)
-    this
-  }
-
-  def insert(obj: Object): TypedExecuteJoin[T] = {
-    super.insert(obj)
-    this
-  }
-
-  def update(obj: Object): TypedExecuteJoin[T] = {
-    super.update(obj)
-    this
-  }
-
-  def delete(obj: Object): TypedExecuteJoin[T] = {
-    super.delete(obj)
-    this
-  }
-
-  def ignore(obj: Object): TypedExecuteJoin[T] = {
-    super.ignore(obj)
-    this
-  }
 }
 
 trait ExecuteRoot extends ExecuteJoin with Executable {
@@ -81,15 +50,6 @@ trait ExecuteRoot extends ExecuteJoin with Executable {
 }
 
 trait TypedExecuteRoot[T] extends ExecuteRoot with TypedExecuteJoin[T] {
-  override def ignore(fields: String*): TypedExecuteRoot[T] = {
-    super.ignore(fields)
-    this
-  }
-
-  override def ignore(obj: Object): TypedExecuteRoot[T] = {
-    super.ignore(obj)
-    this
-  }
 }
 
 
