@@ -109,38 +109,49 @@ object EntityManager {
     EntityManager.wrap(newCore)
   }
 
-  def createMarker[T](meta: EntityMeta): T = {
+  def createMarker[T](meta: EntityMeta, value: String = null): T = {
     val enhancer: Enhancer = new Enhancer
     enhancer.setSuperclass(meta.clazz)
 
     enhancer.setCallback(new MethodInterceptor() {
       @throws[Throwable]
       def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-        if (!meta.getterMap.contains(method)) {
-          throw new RuntimeException(s"Invalid Method Name: ${method.getName}")
-        } else {
-          val fieldMeta = meta.getterMap(method)
-          val name = fieldMeta.name
-          createMarkerRet(fieldMeta.clazz, name)
+        (method.getName, meta) match {
+          case ("toString", _) => value
+          case (_, null) => throw new RuntimeException(s"Not Refer Field [$value]")
+          case (_, _) => meta.getterMap.get(method) match {
+            case None => throw new RuntimeException(s"Invalid Method Name: ${method.getName}")
+            case Some(fieldMeta) =>
+              val name = value match {
+                case null => fieldMeta.name
+                case _ => s"$value.${fieldMeta.name}"
+              }
+              fieldMeta match {
+                // 返回一个有效的marker，可以继续迭代
+                case referMeta: FieldMetaRefer => createMarker[Object](referMeta.refer, name)
+                // 返回一个只表示field的marker
+                case _ => createMarker[Object](null, name)
+              }
+          }
         }
       }
     })
     enhancer.create().asInstanceOf[T]
   }
 
-  def createMarkerRet(clazz: Class[_], value: String): Object = {
-    val enhancer: Enhancer = new Enhancer
-    enhancer.setSuperclass(clazz)
-
-    enhancer.setCallback(new MethodInterceptor() {
-      @throws[Throwable]
-      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-        method.getName match {
-          case "toString" => value
-          case _ => throw new RuntimeException("Marker Only Can Call ToString")
-        }
-      }
-    })
-    enhancer.create()
-  }
+  //  def createMarkerRet(clazz: Class[_], value: String): Object = {
+  //    val enhancer: Enhancer = new Enhancer
+  //    enhancer.setSuperclass(clazz)
+  //
+  //    enhancer.setCallback(new MethodInterceptor() {
+  //      @throws[Throwable]
+  //      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
+  //        method.getName match {
+  //          case "toString" => value
+  //          case _ => throw new RuntimeException("Marker Only Can Call ToString")
+  //        }
+  //      }
+  //    })
+  //    enhancer.create()
+  //  }
 }
