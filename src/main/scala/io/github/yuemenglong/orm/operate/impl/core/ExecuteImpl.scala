@@ -20,14 +20,6 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   protected var spec: Map[Object, ExecuteJoinImpl] = Map[Object, ExecuteJoinImpl]()
   protected var ignoreFields: Set[String] = Set[String]()
 
-  override def fields(fields: String*): ExecuteJoin = {
-    fields.foreach(field => {
-      if (!meta.fieldMap.contains(field)) throw new RuntimeException(s"Unknown Field $field In ${meta.entity}")
-      if (!meta.fieldMap(field).isNormalOrPkey) throw new RuntimeException(s"$field Is Not Normal Field")
-    })
-    this.fields = fields.map(meta.fieldMap(_)).toArray
-    this
-  }
 
   override def execute(entity: Entity, conn: Connection): Int = {
     if (entity.$$core().meta != meta) {
@@ -124,44 +116,29 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
         val execute = creator(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
         cascades.+=((field, execute))
         execute
-      case Some(pair) => pair._2
+      case Some((_, e)) => e
     }
   }
 
   override def insert(field: String): ExecuteJoin = {
     cascade(field, (meta) => new InsertJoin(meta))
-    //    checkField(field)
-    //    cascades.find(_._1 == field) match {
-    //      case None =>
-    //        val execute = new InsertJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-    //        cascades.+=((field, execute))
-    //        execute
-    //      case Some(pair) => pair._2
-    //    }
   }
 
   override def update(field: String): ExecuteJoin = {
     cascade(field, (meta) => new UpdateJoin(meta))
-    //    checkField(field)
-    //    cascades.find(_._1 == field) match {
-    //      case None =>
-    //        val execute = new UpdateJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-    //        cascades.+=((field, execute))
-    //        execute
-    //      case Some(pair) => pair._2
-    //    }
   }
 
   override def delete(field: String): ExecuteJoin = {
     cascade(field, (meta) => new DeleteJoin(meta))
-    //    checkField(field)
-    //    cascades.find(_._1 == field) match {
-    //      case None =>
-    //        val execute = new DeleteJoin(meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer)
-    //        cascades.+=((field, execute))
-    //        execute
-    //      case Some(pair) => pair._2
-    //    }
+  }
+
+  override def fields(fields: String*): ExecuteJoin = {
+    fields.foreach(field => {
+      if (!meta.fieldMap.contains(field)) throw new RuntimeException(s"Unknown Field $field In ${meta.entity}")
+      if (!meta.fieldMap(field).isNormalOrPkey) throw new RuntimeException(s"$field Is Not Normal Field")
+    })
+    this.fields = fields.map(meta.fieldMap(_)).toArray
+    this
   }
 
   override def ignore(fields: String*): ExecuteJoin = {
@@ -171,7 +148,8 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
       } else if (meta.fieldMap(field).isNormalOrPkey) {
         ignoreFields += field
       } else {
-        cascades.remove(cascades.indexWhere(_._1 == field))
+        //        cascades.remove(cascades.indexWhere(_._1 == field))
+        throw new RuntimeException(s"""Not Normal Field: $field""")
       }
     })
     this
@@ -328,9 +306,12 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
 
   def getCascades: ArrayBuffer[(String, ExecuteJoin)]
 
+  private def marker(): T = {
+    EntityManager.createMarker[T](getMeta)
+  }
+
   private def cascade[R](fn: (T) => R, creator: (EntityMeta) => TypedExecuteJoin[R]): TypedExecuteJoin[R] = {
-    val marker = EntityManager.createMarker[T](getMeta)
-    val field = fn(marker).toString
+    val field = fn(this.marker()).toString
     if (!getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Refer")
     }
@@ -345,16 +326,38 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
     }
   }
 
-  def insert[R](fn: (T) => R): TypedExecuteJoin[R] = {
+  override def insert[R](fn: (T) => R): TypedExecuteJoin[R] = {
     cascade(fn, (meta) => new TypedInsertJoin[R](meta))
   }
 
-  def update[R](fn: (T) => R): TypedExecuteJoin[R] = {
+  override def update[R](fn: (T) => R): TypedExecuteJoin[R] = {
     cascade(fn, (meta) => new TypedUpdateJoin[R](meta))
   }
 
-  def delete[R](fn: (T) => R): TypedExecuteJoin[R] = {
+  override def delete[R](fn: (T) => R): TypedExecuteJoin[R] = {
     cascade(fn, (meta) => new TypedDeleteJoin[R](meta))
+  }
+
+  override def fields(fns: (T => Object)*): TypedExecuteJoinImpl[T] = {
+    val marker = this.marker()
+    val fields = fns.map(_ (marker).toString)
+    val invalid = fields.map(getMeta.fieldMap(_)).filter(!_.isNormalOrPkey).map(_.name).mkString(",")
+    if (invalid.nonEmpty) {
+      throw new RuntimeException(s"Not Normal Fields: [$invalid]")
+    }
+    this.fields(fields: _*)
+    this
+  }
+
+  override def ignore(fns: (T => Object)*): TypedExecuteJoinImpl[T] = {
+    val marker = this.marker()
+    val fields = fns.map(_ (marker).toString)
+    val invalid = fields.map(getMeta.fieldMap(_)).filter(_.isNormalOrPkey).map(_.name).mkString(",")
+    if (invalid.nonEmpty) {
+      throw new RuntimeException(s"Not Normal Fields: [$invalid]")
+    }
+    this.ignore(fields: _*)
+    this
   }
 }
 
@@ -363,6 +366,7 @@ class TypedInsertJoin[T](meta: EntityMeta) extends InsertJoin(meta)
   override def getMeta: EntityMeta = meta
 
   override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
+
 }
 
 class TypedUpdateJoin[T](meta: EntityMeta) extends UpdateJoin(meta)
@@ -386,6 +390,10 @@ class TypedExecuteRootImpl[T <: Object](obj: T, impl: TypedExecuteJoinImpl[T]) e
   override def update[R](fn: (T) => R): TypedExecuteJoin[R] = impl.update(fn)
 
   override def delete[R](fn: (T) => R): TypedExecuteJoin[R] = impl.delete(fn)
+
+  override def fields(fns: (T => Object)*): TypedExecuteJoin[T] = impl.fields(fns: _*)
+
+  override def ignore(fns: (T => Object)*): TypedExecuteJoin[T] = impl.ignore(fns: _*)
 }
 
 object ExecuteRootImpl {

@@ -604,19 +604,22 @@ class ScalaTest2 {
   }
 
   @Test
-  def testTyped(): Unit = {
+  def testTypedInsert(): Unit = {
     db.beginTransaction(session => {
       val obj = new Obj
       obj.setName("")
+      obj.setAge(10)
       obj.setOo(new OO)
       val ex = Orm.insert(Orm.convert(obj))
       ex.insert(_.getOo)
+      ex.fields(_.getName)
       session.execute(ex)
 
       val root = Orm.root(classOf[Obj])
       root.select("oo")
       val res = session.first(Orm.selectFrom(root))
       Assert.assertEquals(res.getId.intValue(), 1)
+      Assert.assertEquals(res.getAge, null)
       Assert.assertEquals(res.getOo.getId.intValue(), 1)
     })
   }

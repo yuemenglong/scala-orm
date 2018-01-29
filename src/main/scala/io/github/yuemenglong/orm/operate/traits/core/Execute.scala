@@ -36,11 +36,16 @@ trait ExecuteJoin {
 }
 
 trait TypedExecuteJoin[T] extends ExecuteJoin {
-  def insert[R](fn: (T) => R): TypedExecuteJoin[R]
 
-  def update[R](fn: (T) => R): TypedExecuteJoin[R]
+  def insert[R](fn: T => R): TypedExecuteJoin[R]
 
-  def delete[R](fn: (T) => R): TypedExecuteJoin[R]
+  def update[R](fn: T => R): TypedExecuteJoin[R]
+
+  def delete[R](fn: T => R): TypedExecuteJoin[R]
+
+  def fields(fns: (T => Object)*): TypedExecuteJoin[T]
+
+  def ignore(fns: (T => Object)*): TypedExecuteJoin[T]
 }
 
 trait ExecuteRoot extends ExecuteJoin with Executable {

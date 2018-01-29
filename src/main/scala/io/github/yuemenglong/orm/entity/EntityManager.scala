@@ -129,8 +129,8 @@ object EntityManager {
               fieldMeta match {
                 // 返回一个有效的marker，可以继续迭代
                 case referMeta: FieldMetaRefer => createMarker[Object](referMeta.refer, name)
-                // 返回一个只表示field的marker
-                case _ => createMarker[Object](null, name)
+                // 返回一个只表示field的String
+                case _ => name
               }
           }
         }
