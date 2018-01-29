@@ -101,6 +101,8 @@ trait TypedJoin[T] extends Join {
   def join[R](fn: (T => R), joinType: JoinType): TypedJoin[R]
 
   def leftJoin[R](fn: (T => R)): TypedJoin[R] = join(fn, JoinType.LEFT)
+
+  def get(fn: (T => Object)): Field
 }
 
 trait TypedSelectableJoin[T] extends SelectableJoin[T] with TypedJoin[T] {

@@ -365,10 +365,10 @@ class TypedJoinImpl[T](meta: EntityMeta, parent: Join,
     this(meta, null, null, null, null, null)
   }
 
-  private def marker(): T = EntityManager.createMarker[T](meta)
-
   override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = {
-    val field = fn(this.marker()).toString
+    val marker = EntityManager.createMarker[T](meta)
+    fn(marker)
+    val field = marker.toString
     if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${meta.entity}")
     }
@@ -387,6 +387,18 @@ class TypedJoinImpl[T](meta: EntityMeta, parent: Join,
         join
     }
   }
+
+  override def get(fn: (T) => Object): Field = {
+    val marker = EntityManager.createMarker[T](meta)
+    fn(marker)
+    val field = marker.toString
+    require(field.nonEmpty)
+    val fields = field.split("\\.")
+    val join: Join = fields.take(fields.length - 1).foldLeft(this.asInstanceOf[Join]) { case (j, f) =>
+      j.leftJoin(f)
+    }
+    join.get(fields.last)
+  }
 }
 
 class TypedSelectableJoinImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
@@ -402,6 +414,8 @@ class TypedSelectableJoinImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
     super.ignore(fields)
     this
   }
+
+  override def get(fn: (T) => Object): Field = impl.get(fn)
 }
 
 class TypedRootImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
@@ -417,4 +431,6 @@ class TypedRootImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
     super.ignore(fields)
     this
   }
+
+  override def get(fn: (T) => Object): Field = impl.get(fn)
 }

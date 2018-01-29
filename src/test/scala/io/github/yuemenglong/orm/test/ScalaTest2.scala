@@ -634,9 +634,16 @@ class ScalaTest2 {
       ex.insert(_.getOo)
       session.execute(ex)
 
-      val root = Orm.root(classOf[Obj])
-      val res = session.first(Orm.selectFrom(root).where(root.join(_.getOo).get("id").eql(1)))
-      Assert.assertEquals(res.getId.intValue(), 1)
+      {
+        val root = Orm.root(classOf[Obj])
+        val res = session.first(Orm.selectFrom(root).where(root.join(_.getOo).get("id").eql(1)))
+        Assert.assertEquals(res.getId.intValue(), 1)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        val res = session.first(Orm.selectFrom(root).where(root.get(_.getOo.getId).eql(1)))
+        Assert.assertEquals(res.getId.intValue(), 1)
+      }
     })
   }
 }

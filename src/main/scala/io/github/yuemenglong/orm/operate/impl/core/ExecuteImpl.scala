@@ -306,12 +306,10 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
 
   def getCascades: ArrayBuffer[(String, ExecuteJoin)]
 
-  private def marker(): T = {
-    EntityManager.createMarker[T](getMeta)
-  }
-
   private def cascade[R](fn: (T) => R, creator: (EntityMeta) => TypedExecuteJoin[R]): TypedExecuteJoin[R] = {
-    val field = fn(this.marker()).toString
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
     if (!getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Refer")
     }
@@ -339,8 +337,11 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
   }
 
   override def fields(fns: (T => Object)*): TypedExecuteJoinImpl[T] = {
-    val marker = this.marker()
-    val fields = fns.map(_ (marker).toString)
+    val fields = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](getMeta)
+      fn(marker)
+      marker.toString
+    })
     val invalid = fields.map(getMeta.fieldMap(_)).filter(!_.isNormalOrPkey).map(_.name).mkString(",")
     if (invalid.nonEmpty) {
       throw new RuntimeException(s"Not Normal Fields: [$invalid]")
@@ -350,8 +351,11 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
   }
 
   override def ignore(fns: (T => Object)*): TypedExecuteJoinImpl[T] = {
-    val marker = this.marker()
-    val fields = fns.map(_ (marker).toString)
+    val fields = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](getMeta)
+      fn(marker)
+      marker.toString
+    })
     val invalid = fields.map(getMeta.fieldMap(_)).filter(_.isNormalOrPkey).map(_.name).mkString(",")
     if (invalid.nonEmpty) {
       throw new RuntimeException(s"Not Normal Fields: [$invalid]")
