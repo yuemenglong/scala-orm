@@ -14,8 +14,6 @@ object JoinType extends Enumeration {
 }
 
 trait Node {
-  //  def getParent: Node
-
   def getRoot: Node
 }
 

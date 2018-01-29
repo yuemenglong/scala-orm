@@ -73,7 +73,10 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
       throw new RuntimeException(s"Field $field Not the Same DB")
     }
     joins.find(_.joinName == field) match {
-      case Some(p) => p
+      case Some(p) => p.joinType == joinType match {
+        case true => p
+        case false => throw new RuntimeException(s"JoinType Not Match, ${p.joinType} Exists")
+      }
       case None =>
         val referField = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
         val join = new JoinImpl(referField.refer, this, field, referField.left, referField.right, joinType)

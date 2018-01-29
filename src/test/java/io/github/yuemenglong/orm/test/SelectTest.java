@@ -143,18 +143,12 @@ public class SelectTest {
         }
         {
             Root<OM> root = Orm.root(OM.class);
-            root.select("mo").on(root.join("mo").get("value").eql(100));
+            root.select("mo").on(root.leftJoin("mo").get("value").eql(100));
             Query<OM> query = Orm.select(root).from(root);
             OM[] res = (OM[]) session.query(query);
             Assert.assertEquals(res.length, 2);
             Assert.assertEquals(res[0].getMo().getValue().longValue(), 100);
             Assert.assertEquals(res[1].getMo(), null);
-        }
-        {
-            Root<Obj> root = Orm.root(Obj.class);
-            Join j1 = root.select("om").join("mo");
-            Join j2 = root.join("om").join("mo");
-            Assert.assertEquals(j1, j2);
         }
         session.close();
     }
