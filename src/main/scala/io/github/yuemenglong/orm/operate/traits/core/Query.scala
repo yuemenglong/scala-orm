@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.traits.core
 import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
 
 import scala.collection.mutable
@@ -103,6 +104,19 @@ trait TypedJoin[T] extends Join {
   def leftJoin[R](fn: (T => R)): TypedJoin[R] = join(fn, JoinType.LEFT)
 
   def get(fn: (T => Object)): Field
+
+  def joinAs[R](fn: (T => R), clazz: Class[R], joinType: JoinType): SelectableJoin[R] = this.join(fn, joinType).as(clazz)
+
+  def joinAs[R](fn: (T => R), clazz: Class[R]): SelectableJoin[R] = this.joinAs(fn, clazz, JoinType.INNER)
+
+  def leftJoinAs[R](fn: (T => R), clazz: Class[R]): SelectableJoin[R] = this.joinAs(fn, clazz, JoinType.LEFT)
+
+  def joinAs[R](clazz: Class[R], joinType: JoinType)(leftFn: T => Object)(rightFn: R => Object): SelectableJoin[R]
+
+  def joinAs[R](clazz: Class[R])(leftFn: T => Object)(rightFn: R => Object): SelectableJoin[R] = this.joinAs(clazz, JoinType.INNER)(leftFn)(rightFn)
+
+  def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object)(rightFn: R => Object): SelectableJoin[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn)(rightFn)
+
 }
 
 trait TypedSelectableJoin[T] extends SelectableJoin[T] with TypedJoin[T] {

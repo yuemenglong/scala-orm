@@ -399,6 +399,40 @@ class TypedJoinImpl[T](meta: EntityMeta, parent: Join,
     }
     join.get(fields.last)
   }
+
+  override def joinAs[R](clazz: Class[R], joinType: JoinType)
+                        (leftFn: T => Object)
+                        (rightFn: R => Object)
+
+  : SelectableJoinImpl[R] = {
+    if (!OrmMeta.entityMap.contains(clazz)) {
+      throw new RuntimeException(s"$clazz Is Not Entity")
+    }
+    val referMeta = OrmMeta.entityMap(clazz)
+    val lm = EntityManager.createMarker[T](meta)
+    val rm = EntityManager.createMarker[R](referMeta)
+    leftFn(lm)
+    rightFn(rm)
+    val left = lm.toString
+    val right = rm.toString
+    if (!meta.fieldMap.contains(left)) {
+      throw new RuntimeException(s"Unknown Field $left On ${meta.entity}")
+    }
+    if (!referMeta.fieldMap.contains(right)) {
+      throw new RuntimeException(s"Unknown Field $right On ${referMeta.entity}")
+    }
+    if (meta.db != referMeta.db) {
+      throw new RuntimeException(s"$left And $right Not The Same DB")
+    }
+    val join = joins.find(_.joinName == referMeta.entity) match {
+      case Some(p) => p
+      case None =>
+        val join = new TypedJoinImpl[R](referMeta, this, referMeta.entity, left, right, joinType)
+        joins += join
+        join
+    }
+    new SelectableJoinImpl[R](clazz, join)
+  }
 }
 
 class TypedSelectableJoinImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
@@ -416,6 +450,11 @@ class TypedSelectableJoinImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
   }
 
   override def get(fn: (T) => Object): Field = impl.get(fn)
+
+  override def joinAs[R](clazz: Class[R], joinType: JoinType)
+                        (leftFn: (T) => Object)
+                        (rightFn: (R) => Object): SelectableJoinImpl[R]
+  = impl.joinAs(clazz, joinType)(leftFn)(rightFn)
 }
 
 class TypedRootImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
@@ -433,4 +472,9 @@ class TypedRootImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
   }
 
   override def get(fn: (T) => Object): Field = impl.get(fn)
+
+  override def joinAs[R](clazz: Class[R], joinType: JoinType)
+                        (leftFn: (T) => Object)
+                        (rightFn: (R) => Object): SelectableJoinImpl[R]
+  = impl.joinAs(clazz, joinType)(leftFn)(rightFn)
 }

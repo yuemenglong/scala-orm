@@ -644,6 +644,12 @@ class ScalaTest2 {
         val res = session.first(Orm.selectFrom(root).where(root.get(_.getOo.getId).eql(1)))
         Assert.assertEquals(res.getId.intValue(), 1)
       }
+      {
+        val root = Orm.root(classOf[Obj])
+        val oo = root.leftJoinAs(classOf[OO])(_.getId)(_.getObjId)
+        val res = session.first(Orm.select(oo).from(root))
+        Assert.assertEquals(res.getId.intValue(), 1)
+      }
     })
   }
 }

@@ -13,6 +13,8 @@ public class OO {
 
     private Integer value;
 
+    private Long objId;
+
     public Long getId() {
         return id;
     }
@@ -27,5 +29,13 @@ public class OO {
 
     public void setValue(Integer value) {
         this.value = value;
+    }
+
+    public Long getObjId() {
+        return objId;
+    }
+
+    public void setObjId(Long objId) {
+        this.objId = objId;
     }
 }
