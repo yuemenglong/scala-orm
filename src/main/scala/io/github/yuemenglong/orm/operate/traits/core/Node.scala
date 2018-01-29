@@ -125,11 +125,5 @@ trait Join extends Node with Expr {
   override def getSql: String = getTableWithJoinCond
 }
 
-//
-//trait Root[T] extends Join {
-//  def getFromExpr: String
-//
-//  @Deprecated
-//  def asSelect(): SelectRoot[T]
 
-//}
+

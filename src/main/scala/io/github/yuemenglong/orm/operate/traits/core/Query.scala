@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.traits.core
 import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
 
 import scala.collection.mutable
 
@@ -16,10 +17,6 @@ trait Queryable[T] {
 
   def getType: Class[T]
 }
-
-//trait AsSelectable {
-//  def as[T](clazz: Class[T]): Selectable[T]
-//}
 
 trait Selectable[T] extends Node {
   def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T
@@ -44,7 +41,6 @@ trait SelectJoin extends Join {
 }
 
 trait SelectableJoin[T] extends Selectable[T] with SelectJoin {
-
   override def fields(fields: String*): SelectableJoin[T] = this.fields(fields.toArray)
 
   def fields(fields: Array[String]): SelectableJoin[T]
@@ -54,8 +50,8 @@ trait SelectableJoin[T] extends Selectable[T] with SelectJoin {
   def ignore(fields: Array[String]): SelectableJoin[T]
 }
 
-trait SelectableField[T] extends Field with Selectable[T] {
 
+trait SelectableField[T] extends Field with Selectable[T] {
   override def getColumnWithAs: String = s"$getColumn AS $getAlias"
 
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = resultSet.getObject(getAlias, getType)
@@ -99,4 +95,30 @@ trait Root[T] extends SelectableJoin[T] {
   def ignore(fields: Array[String]): Root[T]
 }
 
+trait TypedJoin[T] extends Join {
+  def join[R](fn: (T => R)): TypedJoin[R] = join(fn, JoinType.INNER)
 
+  def join[R](fn: (T => R), joinType: JoinType): TypedJoin[R]
+
+  def leftJoin[R](fn: (T => R)): TypedJoin[R] = join(fn, JoinType.LEFT)
+}
+
+trait TypedSelectableJoin[T] extends SelectableJoin[T] with TypedJoin[T] {
+  override def fields(fields: String*): TypedSelectableJoin[T] = this.fields(fields.toArray)
+
+  def fields(fields: Array[String]): TypedSelectableJoin[T]
+
+  override def ignore(fields: String*): TypedSelectableJoin[T] = this.ignore(fields.toArray)
+
+  def ignore(fields: Array[String]): TypedSelectableJoin[T]
+}
+
+trait TypedRoot[T] extends Root[T] with TypedJoin[T] {
+  override def fields(fields: String*): TypedRoot[T] = this.fields(fields.toArray)
+
+  def fields(fields: Array[String]): TypedRoot[T]
+
+  override def ignore(fields: String*): TypedRoot[T] = this.ignore(fields.toArray)
+
+  def ignore(fields: Array[String]): TypedRoot[T]
+}

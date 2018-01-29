@@ -623,4 +623,20 @@ class ScalaTest2 {
       Assert.assertEquals(res.getOo.getId.intValue(), 1)
     })
   }
+
+  @Test
+  def testTypedJoin(): Unit = {
+    db.beginTransaction(session => {
+      val obj = new Obj
+      obj.setName("")
+      obj.setOo(new OO)
+      val ex = Orm.insert(Orm.convert(obj))
+      ex.insert(_.getOo)
+      session.execute(ex)
+
+      val root = Orm.root(classOf[Obj])
+      val res = session.first(Orm.selectFrom(root).where(root.join(_.getOo).get("id").eql(1)))
+      Assert.assertEquals(res.getId.intValue(), 1)
+    })
+  }
 }

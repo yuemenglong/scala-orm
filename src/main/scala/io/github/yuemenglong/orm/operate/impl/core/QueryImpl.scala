@@ -161,7 +161,6 @@ class JoinImpl(val meta: EntityMeta, val parent: Join,
     cond = c
     this
   }
-
 }
 
 class SelectJoinImpl(val impl: JoinImpl) extends SelectJoin {
@@ -354,4 +353,68 @@ class RootImpl[T](clazz: Class[T], impl: JoinImpl)
   override def fields(fields: Array[String]): Root[T] = super.fields(fields).asInstanceOf[Root[T]]
 
   override def ignore(fields: Array[String]): Root[T] = super.ignore(fields).asInstanceOf[Root[T]]
+}
+
+class TypedJoinImpl[T](meta: EntityMeta, parent: Join,
+                       joinName: String, left: String, right: String,
+                       joinType: JoinType)
+  extends JoinImpl(meta, parent, joinName, left, right, joinType) with TypedJoin[T] {
+
+  def this(meta: EntityMeta) {
+    // for create root
+    this(meta, null, null, null, null, null)
+  }
+
+  private def marker(): T = EntityManager.createMarker[T](meta)
+
+  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = {
+    val field = fn(this.marker()).toString
+    if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
+      throw new RuntimeException(s"Unknown Field $field On ${meta.entity}")
+    }
+    if (meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != meta.db) {
+      throw new RuntimeException(s"Field $field Not the Same DB")
+    }
+    joins.find(_.joinName == field) match {
+      case Some(p) => p.joinType == joinType match {
+        case true => p.asInstanceOf[TypedJoin[R]]
+        case false => throw new RuntimeException(s"JoinType Not Match, ${p.joinType} Exists")
+      }
+      case None =>
+        val referField = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
+        val join = new TypedJoinImpl[R](referField.refer, this, field, referField.left, referField.right, joinType)
+        joins += join
+        join
+    }
+  }
+}
+
+class TypedSelectableJoinImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
+  extends SelectableJoinImpl[T](clazz, impl) with TypedSelectableJoin[T] {
+  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = impl.join(fn, joinType)
+
+  override def fields(fields: Array[String]): TypedSelectableJoin[T] = {
+    super.fields(fields)
+    this
+  }
+
+  override def ignore(fields: Array[String]): TypedSelectableJoin[T] = {
+    super.ignore(fields)
+    this
+  }
+}
+
+class TypedRootImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
+  extends RootImpl[T](clazz, impl) with TypedRoot[T] {
+  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = impl.join(fn, joinType)
+
+  override def fields(fields: Array[String]): TypedRoot[T] = {
+    super.fields(fields)
+    this
+  }
+
+  override def ignore(fields: Array[String]): TypedRoot[T] = {
+    super.ignore(fields)
+    this
+  }
 }
