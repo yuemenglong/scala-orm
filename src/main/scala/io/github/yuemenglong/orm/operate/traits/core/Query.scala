@@ -120,21 +120,13 @@ trait TypedJoin[T] extends Join {
 }
 
 trait TypedSelectableJoin[T] extends SelectableJoin[T] with TypedJoin[T] {
-  override def fields(fields: String*): TypedSelectableJoin[T] = this.fields(fields.toArray)
+  def fields(fns: (T => Object)*): TypedSelectableJoin[T]
 
-  def fields(fields: Array[String]): TypedSelectableJoin[T]
-
-  override def ignore(fields: String*): TypedSelectableJoin[T] = this.ignore(fields.toArray)
-
-  def ignore(fields: Array[String]): TypedSelectableJoin[T]
+  def ignore(fns: (T => Object)*): TypedSelectableJoin[T]
 }
 
 trait TypedRoot[T] extends Root[T] with TypedJoin[T] {
-  override def fields(fields: String*): TypedRoot[T] = this.fields(fields.toArray)
+  def fields(fns: (T => Object)*): TypedRoot[T]
 
-  def fields(fields: Array[String]): TypedRoot[T]
-
-  override def ignore(fields: String*): TypedRoot[T] = this.ignore(fields.toArray)
-
-  def ignore(fields: Array[String]): TypedRoot[T]
+  def ignore(fns: (T => Object)*): TypedRoot[T]
 }

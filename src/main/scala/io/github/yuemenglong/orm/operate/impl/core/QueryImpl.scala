@@ -455,10 +455,30 @@ class TypedSelectableJoinImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
                         (leftFn: (T) => Object)
                         (rightFn: (R) => Object): SelectableJoinImpl[R]
   = impl.joinAs(clazz, joinType)(leftFn)(rightFn)
+
+  override def fields(fns: (T => Object)*): TypedSelectableJoin[T] = {
+    val fields = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](impl.meta)
+      fn(marker)
+      marker.toString
+    })
+    super.fields(fields: _*)
+    this
+  }
+
+  override def ignore(fns: (T => Object)*): TypedSelectableJoin[T] = {
+    val fields = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](impl.meta)
+      fn(marker)
+      marker.toString
+    })
+    super.ignore(fields: _*)
+    this
+  }
 }
 
-class TypedRootImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
-  extends RootImpl[T](clazz, impl) with TypedRoot[T] {
+class TypedRootImpl[T](clazz: Class[T], impl: TypedSelectableJoinImpl[T])
+  extends RootImpl[T](clazz, impl.impl) with TypedRoot[T] {
   override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = impl.join(fn, joinType)
 
   override def fields(fields: Array[String]): TypedRoot[T] = {
@@ -477,4 +497,14 @@ class TypedRootImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
                         (leftFn: (T) => Object)
                         (rightFn: (R) => Object): SelectableJoinImpl[R]
   = impl.joinAs(clazz, joinType)(leftFn)(rightFn)
+
+  override def fields(fns: (T => Object)*): TypedRoot[T] = {
+    impl.fields(fns: _*)
+    this
+  }
+
+  override def ignore(fns: (T => Object)*): TypedRoot[T] = {
+    impl.ignore(fns: _*)
+    this
+  }
 }

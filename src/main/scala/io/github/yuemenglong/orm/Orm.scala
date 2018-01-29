@@ -82,10 +82,13 @@ object Orm {
   def delete[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.delete(obj)
 
   def root[T](clazz: Class[T]): TypedRoot[T] = {
-    if (!OrmMeta.entityMap.contains(clazz)) {
-      throw new RuntimeException("Not Entity Class")
+    OrmMeta.entityMap.get(clazz) match {
+      case None => throw new RuntimeException("Not Entity Class")
+      case Some(meta) =>
+        val join = new TypedJoinImpl[T](meta)
+        val selectable = new TypedSelectableJoinImpl[T](clazz, join)
+        new TypedRootImpl[T](clazz, selectable)
     }
-    new TypedRootImpl[T](clazz, new TypedJoinImpl[T](OrmMeta.entityMap(clazz)))
   }
 
   def cond(): Cond = new CondHolder

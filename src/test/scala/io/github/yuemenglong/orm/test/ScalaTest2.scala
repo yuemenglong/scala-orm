@@ -629,6 +629,7 @@ class ScalaTest2 {
     db.beginTransaction(session => {
       val obj = new Obj
       obj.setName("")
+      obj.setAge(10)
       obj.setOo(new OO)
       val ex = Orm.insert(Orm.convert(obj))
       ex.insert(_.getOo)
@@ -649,6 +650,14 @@ class ScalaTest2 {
         val oo = root.leftJoinAs(classOf[OO])(_.getId)(_.getObjId)
         val res = session.first(Orm.select(oo).from(root))
         Assert.assertEquals(res.getId.intValue(), 1)
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        root.fields(_.getAge)
+        val res = session.first(Orm.selectFrom(root))
+        Assert.assertEquals(res.getId.intValue(), 1)
+        Assert.assertEquals(res.getName, null)
+        Assert.assertEquals(res.getAge.intValue(), 10)
       }
     })
   }
