@@ -39,33 +39,33 @@ public class CondTest {
         return Orm.openDb("localhost", 3306, "root", "root", "test");
     }
 
-    @Test
-    public void testOr() {
-        Session session = db.openSession();
-        for (int i = 0; i < 10; i++) {
-            Obj obj = new Obj();
-            obj.setName("name" + i);
-            obj.setPtr(new Ptr());
-            obj.getPtr().setValue(i);
-            obj.setOm(new OM[]{new OM(), new OM(), new OM()});
-            for (OM om : obj.getOm()) {
-                om.setValue(i * i);
-            }
-            obj = Orm.convert(obj);
-            ExecuteRoot ex = Orm.insert(obj);
-            ex.insert("om");
-            session.execute(ex);
-        }
-
-        Root<Obj> root = Orm.root(Obj.class);
-        Cond cond = root.get("id").lt(2).or(root.get("id").gt(9))
-                .and(root.select("om").get("id").gt(2));
-        Obj[] objs = (Obj[]) session.query(Orm.select(root).from(root).where(cond));
-        Assert.assertEquals(objs.length, 2);
-        Assert.assertEquals(objs[0].getOm().length, 1);
-        Assert.assertEquals(objs[1].getOm().length, 3);
-        session.close();
-    }
+//    @Test
+//    public void testOr() {
+//        Session session = db.openSession();
+//        for (int i = 0; i < 10; i++) {
+//            Obj obj = new Obj();
+//            obj.setName("name" + i);
+//            obj.setPtr(new Ptr());
+//            obj.getPtr().setValue(i);
+//            obj.setOm(new OM[]{new OM(), new OM(), new OM()});
+//            for (OM om : obj.getOm()) {
+//                om.setValue(i * i);
+//            }
+//            obj = Orm.convert(obj);
+//            ExecuteRoot ex = Orm.insert(obj);
+//            ex.insert("om");
+//            session.execute(ex);
+//        }
+//
+//        Root<Obj> root = Orm.root(Obj.class);
+//        Cond cond = root.get("id").lt(2).or(root.get("id").gt(9))
+//                .and(root.select("om").get("id").gt(2));
+//        Obj[] objs = (Obj[]) session.query(Orm.select(root).from(root).where(cond));
+//        Assert.assertEquals(objs.length, 2);
+//        Assert.assertEquals(objs[0].getOm().length, 1);
+//        Assert.assertEquals(objs[1].getOm().length, 3);
+//        session.close();
+//    }
 
     @Test
     public void testNotNull() {

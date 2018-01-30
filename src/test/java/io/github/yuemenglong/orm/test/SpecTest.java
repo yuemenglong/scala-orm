@@ -119,17 +119,17 @@ public class SpecTest {
         session.close();
     }
 
-    @Test
-    public void testRootEqual() {
-        Root<Obj> root = Orm.root(Obj.class);
-        Node r1 = root.getRoot();
-        Node r2 = root.get("id").getRoot();
-        Node r3 = root.join("oo").getRoot();
-        Node r4 = root.select("om").getRoot();
-        Assert.assertEquals(r1, r2);
-        Assert.assertEquals(r1, r3);
-        Assert.assertEquals(r1, r4);
-    }
+//    @Test
+//    public void testRootEqual() {
+//        Root<Obj> root = Orm.root(Obj.class);
+//        Node r1 = root.getRoot();
+//        Node r2 = root.get("id").getRoot();
+//        Node r3 = root.join("oo").getRoot();
+//        Node r4 = root.select("om").getRoot();
+//        Assert.assertEquals(r1, r2);
+//        Assert.assertEquals(r1, r3);
+//        Assert.assertEquals(r1, r4);
+//    }
 
     @Test
     public void transactionTest() {

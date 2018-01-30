@@ -91,6 +91,7 @@ trait Field extends Node with CondOp with AssignOp {
 }
 
 trait Join extends Node with Expr {
+  type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
 
   def getMeta: EntityMeta
 

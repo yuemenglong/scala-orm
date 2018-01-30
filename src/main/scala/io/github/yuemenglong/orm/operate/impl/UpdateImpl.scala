@@ -29,7 +29,7 @@ class UpdateImpl(root: Root[_]) extends ExecutableUpdate {
       case "" => "1 = 1"
       case s => s
     }
-    s"UPDATE ${root.getTableWithJoinCond} SET $setSql\nWHERE $condSql"
+    s"UPDATE ${root.getTable} SET $setSql\nWHERE $condSql"
   }
 
   def getParams: Array[Object] = {

@@ -44,7 +44,7 @@ class QueryImpl[T](private var st: SelectableTuple[T],
 
   def getSql: String = {
     val columnsSql = st.getColumnWithAs
-    val tableSql = root.getTableWithJoinCond
+    val tableSql = root.getTable
     val condSql = cond.getSql match {
       case "" => "1 = 1"
       case s => s
@@ -207,8 +207,6 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
     }
   }
 
-  override def getRoot: Node = selects(0).getRoot
-
   override def walk(tuple: T, fn: (Entity) => Entity): T = {
     val arr = tupleToArray(tuple).map {
       case e: Entity => EntityManager.walk(e, fn)
@@ -228,8 +226,6 @@ class Count_(root: Root[_]) extends Selectable[java.lang.Long] {
   override def getType: Class[java.lang.Long] = classOf[java.lang.Long]
 
   override def getKey(value: Object): String = value.toString
-
-  override def getRoot: Node = root.getRoot
 }
 
 class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {

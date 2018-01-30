@@ -5,9 +5,10 @@ import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.meta.OrmMeta
+import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.impl._
 import io.github.yuemenglong.orm.operate.impl.core._
+import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.traits.core._
 import io.github.yuemenglong.orm.operate.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, Query}
 
@@ -81,13 +82,27 @@ object Orm {
 
   def delete[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.delete(obj)
 
-  def root[T](clazz: Class[T]): TypedRoot[T] = {
+  def root[T](clazz: Class[T]): Root[T] = {
     OrmMeta.entityMap.get(clazz) match {
       case None => throw new RuntimeException("Not Entity Class")
-      case Some(meta) =>
-        val join = new TypedJoinImpl[T](meta)
-        val selectable = new TypedSelectableJoinImpl[T](clazz, join)
-        new TypedRootImpl[T](clazz, selectable)
+      case Some(m) =>
+        val rootClazz = clazz
+        val rootInner = new JoinInner {
+          override val meta: EntityMeta = m
+          override val parent: Join = null
+          override val joinName: String = null
+          override val right: String = null
+          override val left: String = null
+          override val joinType: JoinType = null
+        }
+        val root = new RootImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
+          override val clazz: Class[T] = rootClazz
+          override val inner: JoinInner = rootInner
+        }
+        root
+      //        val join = new TypedJoinImpl[T](meta)
+      //        val selectable = new TypedSelectableJoinImpl[T](clazz, join)
+      //        new TypedRootImpl[T](clazz, selectable)
     }
   }
 

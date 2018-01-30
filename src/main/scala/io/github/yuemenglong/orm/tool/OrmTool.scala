@@ -10,9 +10,9 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.impl.QueryImpl
-import io.github.yuemenglong.orm.operate.impl.core.SelectJoinImpl
+import io.github.yuemenglong.orm.operate.impl.core.SelectFieldJoinImpl
 import io.github.yuemenglong.orm.operate.traits.Query
-import io.github.yuemenglong.orm.operate.traits.core.{Join, Root, SelectJoin}
+import io.github.yuemenglong.orm.operate.traits.core.{Join, Root, SelectFieldJoin}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -98,7 +98,7 @@ object OrmTool {
   }
 
   def attach[T](obj: T, field: String, session: Session,
-                joinFn: SelectJoin => Unit = _ => {},
+                joinFn: SelectFieldJoin => Unit = _ => {},
                 queryFn: Query[_] => Unit = (_: Query[_]) => {},
                ): T = {
     if (obj.getClass.isArray) {
@@ -145,7 +145,7 @@ object OrmTool {
 
 
   private def attachArray(arr: Array[_], field: String, session: Session,
-                          joinFn: SelectJoin => Unit = _ => {},
+                          joinFn: SelectFieldJoin => Unit = _ => {},
                           queryFn: Query[_] => Unit = (_: Query[_]) => {},
                          ): Array[_] = {
     if (arr.exists(!_.isInstanceOf[Entity])) {
