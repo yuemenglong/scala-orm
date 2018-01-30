@@ -297,13 +297,13 @@ trait SelectableImpl[T] extends Selectable[T] {
     if (a == null) {
       return null
     }
-    pickRefer(a, resultSet, filterMap)
+    pickRefer(select, a, resultSet, filterMap)
     a
   }
 
-  protected def pickRefer(a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
+  protected def pickRefer(selfSelect: SelectFieldJoinImpl, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
     val aCore = EntityManager.core(a)
-    selects.foreach { case (field, select) =>
+    selfSelect.selects.foreach { case (field, select) =>
       val fieldMeta = getMeta.fieldMap(field)
       val b = pickSelfAndRefer(select.asInstanceOf[SelectFieldJoinImpl], resultSet, filterMap)
       fieldMeta match {
