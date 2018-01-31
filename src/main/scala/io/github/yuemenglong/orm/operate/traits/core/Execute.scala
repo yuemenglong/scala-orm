@@ -39,6 +39,10 @@ trait TypedExecuteJoin[T] extends ExecuteJoin {
 
   def insert[R](fn: T => R): TypedExecuteJoin[R]
 
+  def insert[R](): (T => Array[R]) => TypedExecuteJoin[R] = (fn) => inserts(fn)
+
+  def inserts[R](fn: T => Array[R]): TypedExecuteJoin[R]
+
   def update[R](fn: T => R): TypedExecuteJoin[R]
 
   def delete[R](fn: T => R): TypedExecuteJoin[R]

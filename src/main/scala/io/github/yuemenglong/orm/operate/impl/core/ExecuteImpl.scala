@@ -310,8 +310,28 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = marker.toString
-    if (!getMeta.fieldMap(field).isRefer) {
-      throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Refer")
+    val fieldMeta = getMeta.fieldMap(field)
+    if (!fieldMeta.isPointer && !fieldMeta.isOneOne) {
+      throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Pointer/OneOne")
+    }
+
+    getCascades.find(_._1 == field) match {
+      case None =>
+        val execute: TypedExecuteJoin[R] = creator(getMeta.fieldMap(field)
+          .asInstanceOf[FieldMetaRefer].refer)
+        getCascades += ((field, execute))
+        execute
+      case Some(pair) => pair._2.asInstanceOf[TypedExecuteJoin[R]]
+    }
+  }
+
+  private def cascades[R](fn: (T) => Array[R], creator: (EntityMeta) => TypedExecuteJoin[R]): TypedExecuteJoin[R] = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    val fieldMeta = getMeta.fieldMap(field)
+    if (!fieldMeta.isOneMany) {
+      throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not OneMany")
     }
 
     getCascades.find(_._1 == field) match {
@@ -326,6 +346,10 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
 
   override def insert[R](fn: (T) => R): TypedExecuteJoin[R] = {
     cascade(fn, (meta) => new TypedInsertJoin[R](meta))
+  }
+
+  override def inserts[R](fn: T => Array[R]): TypedExecuteJoin[R] = {
+    cascades(fn, (meta) => new TypedInsertJoin[R](meta))
   }
 
   override def update[R](fn: (T) => R): TypedExecuteJoin[R] = {
@@ -398,6 +422,8 @@ class TypedExecuteRootImpl[T <: Object](obj: T, impl: TypedExecuteJoinImpl[T]) e
   override def fields(fns: (T => Object)*): TypedExecuteJoin[T] = impl.fields(fns: _*)
 
   override def ignore(fns: (T => Object)*): TypedExecuteJoin[T] = impl.ignore(fns: _*)
+
+  override def inserts[R](fn: T => Array[R]) = impl.inserts(fn)
 }
 
 object ExecuteRootImpl {

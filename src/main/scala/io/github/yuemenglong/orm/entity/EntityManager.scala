@@ -5,7 +5,7 @@ import java.lang.reflect.Method
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
-import io.github.yuemenglong.orm.meta._
+import io.github.yuemenglong.orm.meta.{FieldMetaOneOne, _}
 import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
 import scala.reflect.ClassTag
@@ -110,30 +110,22 @@ object EntityManager {
     EntityManager.wrap(newCore)
   }
 
-  def createMarker[T](meta: EntityMeta, ret: Array[String] = Array(null)): T = {
+  def createMarker[T](meta: EntityMeta): T = {
     val enhancer: Enhancer = new Enhancer
     enhancer.setSuperclass(meta.clazz)
-    val prefix = ret(0)
+    var fnName: String = null
+    require(meta != null)
 
     enhancer.setCallback(new MethodInterceptor() {
       @throws[Throwable]
       def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-        (method.getName, meta) match {
-          case ("toString", _) => ret(0)
-          case (_, null) => throw new RuntimeException(s"Not Refer Field [$prefix]")
-          case (_, _) => meta.getterMap.get(method) match {
+        method.getName match {
+          case "toString" => fnName
+          case _ => meta.getterMap.get(method) match {
             case None => throw new RuntimeException(s"Invalid Method Name: ${method.getName}")
             case Some(fieldMeta) =>
-              ret(0) = prefix match {
-                case null => fieldMeta.name
-                case _ => s"$prefix.${fieldMeta.name}"
-              }
-              fieldMeta match {
-                // 返回一个有效的marker，可以继续迭代
-                case referMeta: FieldMetaRefer => createMarker[Object](referMeta.refer, ret)
-                // 返回一个只表示field的String
-                case _ => Types.newInstance(fieldMeta.clazz)
-              }
+              fnName = fieldMeta.name
+              null
           }
         }
       }

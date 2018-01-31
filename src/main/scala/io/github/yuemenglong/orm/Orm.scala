@@ -86,7 +86,6 @@ object Orm {
     OrmMeta.entityMap.get(clazz) match {
       case None => throw new RuntimeException("Not Entity Class")
       case Some(m) =>
-        val rootClazz = clazz
         val rootInner = new JoinInner {
           override val meta: EntityMeta = m
           override val parent: Join = null
@@ -95,14 +94,11 @@ object Orm {
           override val left: String = null
           override val joinType: JoinType = null
         }
-        val root = new RootImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-          override val clazz: Class[T] = rootClazz
+        val root = new RootImpl[T] with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
+          with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
           override val inner: JoinInner = rootInner
         }
         root
-      //        val join = new TypedJoinImpl[T](meta)
-      //        val selectable = new TypedSelectableJoinImpl[T](clazz, join)
-      //        new TypedRootImpl[T](clazz, selectable)
     }
   }
 

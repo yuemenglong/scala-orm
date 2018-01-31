@@ -136,9 +136,7 @@ trait JoinImpl extends Join {
         join
     }
     val joinInner = join.inner
-    val joinClazz = clazz
     new SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-      override val clazz: Class[T] = joinClazz
       override val inner: JoinInner = joinInner
     }
   }
@@ -159,10 +157,9 @@ trait JoinImpl extends Join {
   }
 
   override def as[T](clazz: Class[T]): SelectableJoin[T] = {
+    require(getMeta.clazz == clazz)
     val joinInner = inner
-    val joinClazz = clazz
     new SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-      override val clazz: Class[T] = joinClazz
       override val inner: JoinInner = joinInner
     }
   }
@@ -197,12 +194,12 @@ trait JoinImpl extends Join {
 
 trait SelectFieldJoinImpl extends SelectFieldJoin {
   self: JoinImpl =>
-  protected[impl] var selects = new ArrayBuffer[(String, Self)]()
+  protected[impl] var selects: ArrayBuffer[(String, SelectFieldJoinRet)] = new ArrayBuffer[(String, SelectFieldJoinRet)]()
   //  protected[impl] var fields: Array[FieldImpl] = getMeta.fields().filter(_.isNormalOrPkey).map(f => new FieldImpl(f, this)).toArray
   protected[impl] var fields: Array[FieldImpl] = _
   protected[impl] var ignores: Set[String] = Set()
 
-  override def select(field: String): Self = {
+  override def select(field: String): SelectFieldJoinRet = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Object Field $field")
     }
@@ -227,7 +224,7 @@ trait SelectFieldJoinImpl extends SelectFieldJoin {
     }).filter(f => !ignores.contains(f.getField))
   }
 
-  override def fields(fields: String*): Self = {
+  override def fields(fields: String*): SelectFieldJoinRet = {
     val ret = fields.map(f => {
       if (!this.getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Invalid Field $f In ${this.getMeta.entity}")
@@ -243,7 +240,7 @@ trait SelectFieldJoinImpl extends SelectFieldJoin {
     this
   }
 
-  override def ignore(fields: String*): Self = {
+  override def ignore(fields: String*): SelectFieldJoinRet = {
     fields.foreach(f => {
       if (!getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Not Exists Field, $f")
@@ -283,10 +280,6 @@ trait SelectFieldJoinImpl extends SelectFieldJoin {
 
 trait SelectableImpl[T] extends Selectable[T] {
   self: SelectFieldJoinImpl with JoinImpl =>
-  val clazz: Class[T]
-  //  if (clazz != meta.clazz) {
-  //    throw new RuntimeException("Class Not Match")
-  //  }
 
   private def getOneManyFilterKey(field: String, core: EntityCore): String = {
     s"$getAlias@$field@${core.getPkey.toString}"
@@ -338,7 +331,7 @@ trait SelectableImpl[T] extends Selectable[T] {
     go(this).mkString(",\n")
   }
 
-  override def getType: Class[T] = clazz
+  override def getType: Class[T] = getMeta.clazz.asInstanceOf[Class[T]]
 
   override def getKey(value: Object): String = {
     value match {
@@ -372,6 +365,82 @@ trait RootImpl[T] extends Root[T] {
   override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
 
   override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
+}
+
+trait TypedJoinImpl[T] extends TypedJoin[T] {
+  self: JoinImpl =>
+
+  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoinRet[R] = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    val j: JoinImpl = this.join(field, joinType).asInstanceOf[JoinImpl]
+    new TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
+      override val inner: JoinInner = j.inner
+    }
+  }
+
+  override def get(fn: (T) => Object): Field = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    this.get(field)
+  }
+
+  override def joinAs[R](clazz: Class[R], joinType: JoinType)
+                        (leftFn: (T) => Object, rightFn: (R) => Object): TypedSelectJoinRet[R] = {
+    if (!OrmMeta.entityMap.contains(clazz)) {
+      throw new RuntimeException(s"$clazz Is Not Entity")
+    }
+    val referMeta = OrmMeta.entityMap(clazz)
+    val lm = EntityManager.createMarker[T](getMeta)
+    val rm = EntityManager.createMarker[R](referMeta)
+    leftFn(lm)
+    rightFn(rm)
+    val left = lm.toString
+    val right = rm.toString
+    val j = this.joinAs(left, right, clazz).asInstanceOf[JoinImpl]
+    new TypedSelectJoinImpl[R] with TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
+      override val inner: JoinInner = j.inner
+    }
+  }
+}
+
+trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
+  self: TypedJoinImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
+  override def select[R](fn: (T) => R): TypedSelectJoinRet[R] = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    val j = this.select(field).asInstanceOf[SelectFieldJoinImpl with JoinImpl]
+    val ret = new TypedSelectJoinImpl[R] with TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
+      override val inner: JoinInner = j.inner
+    }
+    ret.fields = j.fields
+    ret.ignores = j.ignores
+    ret.selects = j.selects
+    ret
+  }
+
+  override def fields(fns: (T => Object)*): TypedSelectJoinRet[T] = {
+    val fields = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](getMeta)
+      fn(marker)
+      marker.toString
+    })
+    this.fields(fields: _*)
+    this
+  }
+
+  override def ignore(fns: (T => Object)*): TypedSelectJoinRet[T] = {
+    val fields = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](getMeta)
+      fn(marker)
+      marker.toString
+    })
+    this.ignore(fields: _*)
+    this
+  }
 }
 
 //

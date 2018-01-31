@@ -4,6 +4,8 @@ import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
+import io.github.yuemenglong.orm.operate.impl.core._
+import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
 
 import scala.collection.mutable
 
@@ -42,18 +44,54 @@ trait SelectableField[T] extends Field with Selectable[T] {
 }
 
 trait SelectFieldJoin {
-  type Self = SelectFieldJoin with Join
+  type SelectFieldJoinRet = SelectFieldJoin with Join
 
-  def select(field: String): Self
+  def select(field: String): SelectFieldJoinRet
 
-  def fields(fields: String*): Self
+  def fields(fields: String*): SelectFieldJoinRet
 
-  def ignore(fields: String*): Self
+  def ignore(fields: String*): SelectFieldJoinRet
 
   def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity
+
 }
 
-trait Root[T] extends Selectable[T] with SelectFieldJoin with Join {
+trait TypedBase {
+  type TypedJoinRet[R] = TypedJoinImpl[R] with JoinImpl
+  type TypedSelectJoinRet[R] = TypedSelectJoinImpl[R] with TypedJoinImpl[R]
+    with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl
+}
+
+trait TypedJoin[T] extends TypedBase {
+
+  def get(fn: (T => Object)): Field
+
+  def join[R](fn: (T => R), joinType: JoinType): TypedJoinRet[R]
+
+//  def join[R](fn: (T => Array[R]), joinType: JoinType): TypedJoinRet[R]
+
+  def join[R](fn: (T => R)): TypedJoinRet[R] = join(fn, JoinType.INNER)
+
+  def leftJoin[R](fn: (T => R)): TypedJoinRet[R] = join(fn, JoinType.LEFT)
+
+  def joinAs[R](clazz: Class[R], joinType: JoinType)(leftFn: T => Object, rightFn: R => Object): TypedSelectJoinRet[R]
+
+  def joinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedSelectJoinRet[R] = this.joinAs(clazz, JoinType.INNER)(leftFn, rightFn)
+
+  def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedSelectJoinRet[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn, rightFn)
+}
+
+trait TypedSelectJoin[T] extends TypedBase {
+
+  def select[R](fn: T => R): TypedSelectJoinRet[R]
+
+  def fields(fns: (T => Object)*): TypedSelectJoinRet[T]
+
+  def ignore(fns: (T => Object)*): TypedSelectJoinRet[T]
+}
+
+trait Root[T] extends TypedSelectJoin[T] with TypedJoin[T]
+  with Selectable[T] with SelectFieldJoin with Join {
 
   def getTable: String
 
@@ -74,40 +112,5 @@ trait Root[T] extends Selectable[T] with SelectFieldJoin with Join {
   def min[R](field: Field, clazz: Class[R]): SelectableField[R]
 
   def min[R](field: String, clazz: Class[R]): SelectableField[R] = min(this.get(field), clazz)
-}
 
-//
-//trait TypedJoin[T] extends Join {
-//  def join[R](fn: (T => R)): TypedJoin[R] = join(fn, JoinType.INNER)
-//
-//  def join[R](fn: (T => R), joinType: JoinType): TypedJoin[R]
-//
-//  def leftJoin[R](fn: (T => R)): TypedJoin[R] = join(fn, JoinType.LEFT)
-//
-//  def get(fn: (T => Object)): Field
-//
-//  def joinAs[R](fn: (T => R), clazz: Class[R], joinType: JoinType): SelectableJoin[R] = this.join(fn, joinType).as(clazz)
-//
-//  def joinAs[R](fn: (T => R), clazz: Class[R]): SelectableJoin[R] = this.joinAs(fn, clazz, JoinType.INNER)
-//
-//  def leftJoinAs[R](fn: (T => R), clazz: Class[R]): SelectableJoin[R] = this.joinAs(fn, clazz, JoinType.LEFT)
-//
-//  def joinAs[R](clazz: Class[R], joinType: JoinType)(leftFn: T => Object)(rightFn: R => Object): SelectableJoin[R]
-//
-//  def joinAs[R](clazz: Class[R])(leftFn: T => Object)(rightFn: R => Object): SelectableJoin[R] = this.joinAs(clazz, JoinType.INNER)(leftFn)(rightFn)
-//
-//  def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object)(rightFn: R => Object): SelectableJoin[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn)(rightFn)
-//
-//}
-//
-//trait TypedSelectableJoin[T] extends SelectableJoin[T] with TypedJoin[T] {
-//  def fields(fns: (T => Object)*): TypedSelectableJoin[T]
-//
-//  def ignore(fns: (T => Object)*): TypedSelectableJoin[T]
-//}
-//
-//trait TypedRoot[T] extends Root[T] with TypedJoin[T] {
-//  def fields(fns: (T => Object)*): TypedRoot[T]
-//
-//  def ignore(fns: (T => Object)*): TypedRoot[T]
-//}
+}

@@ -9,7 +9,7 @@ import io.github.yuemenglong.orm.Orm;
 /**
  * Created by <yuemenglong@126.com> on 2017/7/20.
  */
-public class ScalaTest {
+public class ScalaObjTest {
     @Test
     public void testScala() {
         Orm.init("io.github.yuemenglong.orm.test.model");

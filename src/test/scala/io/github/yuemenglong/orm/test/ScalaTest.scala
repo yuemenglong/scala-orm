@@ -14,7 +14,7 @@ import org.junit.{After, Assert, Before, Test}
 /**
   * Created by <yuemenglong@126.com> on 2017/10/19.
   */
-class ScalaTest2 {
+class ScalaTest {
   private var db: Db = _
   private var db2: Db = _
 
