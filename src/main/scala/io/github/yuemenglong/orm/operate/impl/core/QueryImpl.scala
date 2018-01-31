@@ -370,15 +370,27 @@ trait RootImpl[T] extends Root[T] {
 trait TypedJoinImpl[T] extends TypedJoin[T] {
   self: JoinImpl =>
 
-  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoinRet[R] = {
-    val marker = EntityManager.createMarker[T](getMeta)
-    fn(marker)
-    val field = marker.toString
+  def typedJoin[R](field: String, joinType: JoinType) = {
     val j: JoinImpl = this.join(field, joinType).asInstanceOf[JoinImpl]
     new TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
       override val inner: JoinInner = j.inner
     }
   }
+
+  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoinRet[R] = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    typedJoin(field, joinType)
+  }
+
+  override def joins[R](fn: (T) => Array[R], joinType: JoinType) = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    typedJoin(field, joinType)
+  }
+
 
   override def get(fn: (T) => Object): Field = {
     val marker = EntityManager.createMarker[T](getMeta)
@@ -408,10 +420,8 @@ trait TypedJoinImpl[T] extends TypedJoin[T] {
 
 trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
   self: TypedJoinImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
-  override def select[R](fn: (T) => R): TypedSelectJoinRet[R] = {
-    val marker = EntityManager.createMarker[T](getMeta)
-    fn(marker)
-    val field = marker.toString
+
+  def typedSelect[R](field: String) = {
     val j = this.select(field).asInstanceOf[SelectFieldJoinImpl with JoinImpl]
     val ret = new TypedSelectJoinImpl[R] with TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
       override val inner: JoinInner = j.inner
@@ -420,6 +430,20 @@ trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
     ret.ignores = j.ignores
     ret.selects = j.selects
     ret
+  }
+
+  override def select[R](fn: (T) => R): TypedSelectJoinRet[R] = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    typedSelect[R](field)
+  }
+
+  override def selects[R](fn: (T) => Array[R]) = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    typedSelect[R](field)
   }
 
   override def fields(fns: (T => Object)*): TypedSelectJoinRet[T] = {

@@ -68,11 +68,21 @@ trait TypedJoin[T] extends TypedBase {
 
   def join[R](fn: (T => R), joinType: JoinType): TypedJoinRet[R]
 
-//  def join[R](fn: (T => Array[R]), joinType: JoinType): TypedJoinRet[R]
-
   def join[R](fn: (T => R)): TypedJoinRet[R] = join(fn, JoinType.INNER)
 
   def leftJoin[R](fn: (T => R)): TypedJoinRet[R] = join(fn, JoinType.LEFT)
+
+  def join[R](joinType: JoinType): (T => Array[R]) => TypedJoinRet[R] = (fn) => joins(fn, joinType)
+
+  def join[R](): (T => Array[R]) => TypedJoinRet[R] = join(JoinType.INNER)
+
+  def leftJoin[R](): (T => Array[R]) => TypedJoinRet[R] = join(JoinType.LEFT)
+
+  def joins[R](fn: (T => Array[R]), joinType: JoinType): TypedJoinRet[R]
+
+  def joins[R](fn: (T => Array[R])): TypedJoinRet[R] = joins(fn, JoinType.INNER)
+
+  def leftJoins[R](fn: (T => Array[R])): TypedJoinRet[R] = joins(fn, JoinType.LEFT)
 
   def joinAs[R](clazz: Class[R], joinType: JoinType)(leftFn: T => Object, rightFn: R => Object): TypedSelectJoinRet[R]
 
@@ -84,6 +94,10 @@ trait TypedJoin[T] extends TypedBase {
 trait TypedSelectJoin[T] extends TypedBase {
 
   def select[R](fn: T => R): TypedSelectJoinRet[R]
+
+  def selects[R](fn: T => Array[R]): TypedSelectJoinRet[R]
+
+  def select[R](): (T => Array[R]) => TypedSelectJoinRet[R] = fn => selects(fn)
 
   def fields(fns: (T => Object)*): TypedSelectJoinRet[T]
 
