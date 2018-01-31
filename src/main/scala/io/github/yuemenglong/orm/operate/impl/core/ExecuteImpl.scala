@@ -356,8 +356,16 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
     cascade(fn, (meta) => new TypedUpdateJoin[R](meta))
   }
 
+  override def updates[R](fn: T => Array[R]): TypedExecuteJoin[R] = {
+    cascades(fn, (meta) => new TypedUpdateJoin[R](meta))
+  }
+
   override def delete[R](fn: (T) => R): TypedExecuteJoin[R] = {
     cascade(fn, (meta) => new TypedDeleteJoin[R](meta))
+  }
+
+  override def deletes[R](fn: T => Array[R]): TypedExecuteJoin[R] = {
+    cascades(fn, (meta) => new TypedDeleteJoin[R](meta))
   }
 
   override def fields(fns: (T => Object)*): TypedExecuteJoinImpl[T] = {
@@ -424,6 +432,10 @@ class TypedExecuteRootImpl[T <: Object](obj: T, impl: TypedExecuteJoinImpl[T]) e
   override def ignore(fns: (T => Object)*): TypedExecuteJoin[T] = impl.ignore(fns: _*)
 
   override def inserts[R](fn: T => Array[R]) = impl.inserts(fn)
+
+  override def updates[R](fn: T => Array[R]) = impl.updates(fn)
+
+  override def deletes[R](fn: T => Array[R]) = impl.deletes(fn)
 }
 
 object ExecuteRootImpl {

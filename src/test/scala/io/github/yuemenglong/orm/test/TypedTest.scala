@@ -45,7 +45,7 @@ class TypedTest {
       obj.om.foreach(om => {
         om.value = i * i
       })
-      val ex = Orm.insert(Orm.convert(obj))
+      val ex = Orm.insert(obj)
       ex.insert()(_.om)
       session.execute(ex)
     })
@@ -105,7 +105,7 @@ class TypedTest {
     obj.name = ""
     obj.om = Array(new OM, new OM, new OM, new OM, new OM, new OM)
 
-    val ex = Orm.insert(Orm.convert(obj))
+    val ex = Orm.insert(obj)
     ex.insert()(_.om)
     session.execute(ex)
 

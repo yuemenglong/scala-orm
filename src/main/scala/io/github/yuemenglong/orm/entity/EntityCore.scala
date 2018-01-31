@@ -7,8 +7,6 @@ import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta._
 
-import scala.reflect.ClassTag
-
 /**
   * Created by Administrator on 2017/5/18.
   */
@@ -32,7 +30,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     fieldMap(meta.pkey.name)
   }
 
-  def setPkey(id: Object) = {
+  def setPkey(id: Object): Unit = {
     fieldMap += (meta.pkey.name -> id)
   }
 
@@ -42,6 +40,9 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   def set(field: String, value: Object): Object = {
     val fieldMeta = this.meta.fieldMap(field)
+    if (fieldMeta.isRefer && !EntityManager.isEntity(value)) {
+      throw new RuntimeException(s"Can't Set Non Entity Value To Entity Field")
+    }
     fieldMeta match {
       case _: FieldMetaBuildIn => this.setValue(field, value)
       case _: FieldMetaPointer => this.setPointer(field, value)
