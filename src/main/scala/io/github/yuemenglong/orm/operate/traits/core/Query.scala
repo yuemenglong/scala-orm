@@ -64,7 +64,7 @@ trait TypedBase {
 
 trait TypedJoin[T] extends TypedBase {
 
-  def get(fn: (T => Object)): Field
+  def get[R](fn: (T => R)): SelectableField[R]
 
   def join[R](fn: (T => R), joinType: JoinType): TypedJoinRet[R]
 
@@ -72,11 +72,7 @@ trait TypedJoin[T] extends TypedBase {
 
   def leftJoin[R](fn: (T => R)): TypedJoinRet[R] = join(fn, JoinType.LEFT)
 
-  def join[R](joinType: JoinType): (T => Array[R]) => TypedJoinRet[R] = (fn) => joins(fn, joinType)
-
-  def join[R](): (T => Array[R]) => TypedJoinRet[R] = join(JoinType.INNER)
-
-  def leftJoin[R](): (T => Array[R]) => TypedJoinRet[R] = join(JoinType.LEFT)
+  def leftJoinAs[R](fn: (T => R)): TypedJoinRet[R] = join(fn, JoinType.LEFT).as()
 
   def joins[R](fn: (T => Array[R]), joinType: JoinType): TypedJoinRet[R]
 
@@ -89,6 +85,8 @@ trait TypedJoin[T] extends TypedBase {
   def joinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedSelectJoinRet[R] = this.joinAs(clazz, JoinType.INNER)(leftFn, rightFn)
 
   def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedSelectJoinRet[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn, rightFn)
+
+  def as(): TypedSelectJoinRet[T]
 }
 
 trait TypedSelectJoin[T] extends TypedBase {
@@ -104,7 +102,17 @@ trait TypedSelectJoin[T] extends TypedBase {
   def ignore(fns: (T => Object)*): TypedSelectJoinRet[T]
 }
 
-trait Root[T] extends TypedSelectJoin[T] with TypedJoin[T]
+trait TypedRoot[T] {
+  def count(fn: T => Object): SelectableField[java.lang.Long]
+
+  def sum[R](fn: T => R): SelectableField[R]
+
+  def max[R](fn: T => R): SelectableField[R]
+
+  def min[R](fn: T => R): SelectableField[R]
+}
+
+trait Root[T] extends TypedRoot[T] with TypedSelectJoin[T] with TypedJoin[T]
   with Selectable[T] with SelectFieldJoin with Join {
 
   def getTable: String
@@ -113,18 +121,23 @@ trait Root[T] extends TypedSelectJoin[T] with TypedJoin[T]
 
   def count(field: Field): SelectableField[java.lang.Long]
 
-  def count(field: String): SelectableField[java.lang.Long] = this.count(this.get(field))
+  def count(field: String): SelectableField[java.lang.Long] = count(this.get(field))
 
-  def sum(field: Field): SelectableField[java.lang.Double]
+  def sum[R](field: Field, clazz: Class[R]): SelectableField[R]
 
-  def sum(field: String): SelectableField[java.lang.Double] = sum(this.get(field))
+  def sum[R](field: SelectableField[R]): SelectableField[R] = sum(field, field.getType)
+
+  def sum[R](field: String, clazz: Class[R]): SelectableField[R] = sum(this.get(field), clazz)
 
   def max[R](field: Field, clazz: Class[R]): SelectableField[R]
+
+  def max[R](field: SelectableField[R]): SelectableField[R] = max(field, field.getType)
 
   def max[R](field: String, clazz: Class[R]): SelectableField[R] = max(this.get(field), clazz)
 
   def min[R](field: Field, clazz: Class[R]): SelectableField[R]
 
-  def min[R](field: String, clazz: Class[R]): SelectableField[R] = min(this.get(field), clazz)
+  def min[R](field: SelectableField[R]): SelectableField[R] = min(field, field.getType)
 
+  def min[R](field: String, clazz: Class[R]): SelectableField[R] = min(this.get(field), clazz)
 }

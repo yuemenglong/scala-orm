@@ -6,10 +6,9 @@ import java.sql.{Connection, ResultSet}
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, SelectableFieldImpl}
 import io.github.yuemenglong.orm.operate.traits.core._
-import io.github.yuemenglong.orm.operate.traits.{Query, SelectableTuple}
+import io.github.yuemenglong.orm.operate.traits.{Query, QueryBuilder, SelectableTuple, TypedQuery}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -19,8 +18,21 @@ import scala.reflect.ClassTag
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
 
-class QueryImpl[T](private var st: SelectableTuple[T],
-                   private var root: Root[_] = null) extends Query[T] {
+trait QueryBuilderImpl[T] extends QueryBuilder[T] {
+  val st: SelectableTuple[T]
+
+  override def from[R](selectRoot: Root[R]) = {
+    val thisSt = st
+    new QueryImpl[R, T] with QueryBuilderImpl[T] with TypedQueryImpl[R, T] {
+      override val root = selectRoot
+      override val st = thisSt
+    }
+  }
+}
+
+trait QueryImpl[R, T] extends Query[R, T] {
+  self: QueryBuilderImpl[T] with TypedQueryImpl[R, T] =>
+  val root: Root[R]
   private[orm] var cond: Cond = new CondHolder()
   private[orm] var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
   private[orm] var limitOffset: (Long, Long) = (-1, -1)
@@ -91,69 +103,71 @@ class QueryImpl[T](private var st: SelectableTuple[T],
     })
   }
 
-  //////
-
-  //  override def select[T1](t: Selectable[T1]): Query[T1] = {
-  //    val st = new SelectableTupleImpl[T1](t.getType, t)
-  //    new QueryImpl[T1](st, root)
-  //  }
-  //
-  //  override def select[T1, T2](t1: Selectable[T1], t2: Selectable[T2]): Query[(T1, T2)] = {
-  //    val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], t1, t2)
-  //    new QueryImpl[(T1, T2)](st, root)
-  //  }
-
-  override def from(selectRoot: Root[_]): Query[T] = {
-    root = selectRoot
-    this
-  }
-
-  override def limit(l: Long): Query[T] = {
+  override def limit(l: Long): Query[R, T] = {
     limitOffset = (l, limitOffset._2)
     this
   }
 
-  override def offset(o: Long): Query[T] = {
+  override def offset(o: Long): Query[R, T] = {
     limitOffset = (limitOffset._1, o)
     this
   }
 
-  override def asc(field: Field): Query[T] = {
+  override def asc(field: Field): Query[R, T] = {
     orders += ((field, "ASC"))
     this
   }
 
-  override def desc(field: Field): Query[T] = {
+  override def desc(field: Field): Query[R, T] = {
     orders += ((field, "DESC"))
     this
   }
 
-  override def where(c: Cond): Query[T] = {
+  override def where(c: Cond): Query[R, T] = {
     cond = c
     this
   }
 
-  override def groupBy(fields: Array[Field]): Query[T] = {
-    groupByVar = fields
+  override def groupBy(field: Field, fields: Field*): Query[R, T] = {
+    groupByVar = Array(field) ++ fields
     this
   }
 
-  override def groupBy(field: Field): Query[T] = {
-    groupByVar = Array(field)
+  override def groupBy(field: String, fields: String*): Query[R, T] = {
+    groupByVar = Array(root.get(field)) ++ fields.map(root.get)
     this
   }
 
-  override def having(cond: Cond): Query[T] = {
+  override def having(cond: Cond): Query[R, T] = {
     havingVar = cond
     this
   }
 
-  override def getRoot: Root[_] = root
+  override def getRoot: Root[R] = root
 
   override def walk(t: T, fn: (Entity) => Entity): T = st.walk(t, fn)
 
   override def getType: Class[T] = st.getType
+}
 
+trait TypedQueryImpl[R, T] extends TypedQuery[R, T] {
+  self: QueryImpl[R, T] =>
+
+  private def fnToField(fn: R => Object) = {
+    val marker = EntityManager.createMarker[R](root.getMeta)
+    fn(marker)
+    marker.toString
+  }
+
+  override def asc(fn: (R) => Object) = asc(fnToField(fn))
+
+  override def desc(fn: (R) => Object) = desc(fnToField(fn))
+
+  override def groupBy(fn: (R => Object), fns: (R => Object)*) = {
+    val field = fnToField(fn)
+    val fields = fns.map(fnToField)
+    groupBy(field, fields: _*)
+  }
 }
 
 class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {
@@ -243,16 +257,14 @@ class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[jav
   }
 }
 
-class Sum(impl: Field) extends SelectableFieldImpl[java.lang.Double](classOf[java.lang.Double], impl) {
+class Sum[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
   private var distinctVar = ""
-
-  override def getType: Class[lang.Double] = classOf[java.lang.Double]
 
   override def getColumn: String = s"SUM($distinctVar${impl.getColumn})"
 
   override def getAlias: String = s"$$sum$$${impl.getAlias}"
 
-  override def distinct(): SelectableField[lang.Double] = {
+  override def distinct(): SelectableField[T] = {
     distinctVar = "DISTINCT "
     this
   }

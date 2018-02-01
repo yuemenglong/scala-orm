@@ -345,7 +345,41 @@ trait SelectableImpl[T] extends Selectable[T] {
   }
 }
 
-trait RootImpl[T] extends Root[T] {
+trait TypedRootImpl[T] extends TypedRoot[T] {
+  self: RootImpl[T] with JoinImpl =>
+  def count(fn: T => Object): SelectableField[java.lang.Long] = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    count(field)
+  }
+
+  private def fnToField[R](fn: T => R): (Field, Class[R]) = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val fieldName = marker.toString
+    val field = get(fieldName).asInstanceOf[FieldImpl]
+    val clazz = field.meta.clazz.asInstanceOf[Class[R]]
+    (field, clazz)
+  }
+
+  def sum[R](fn: T => R): SelectableField[R] = {
+    val (field, clazz) = fnToField(fn)
+    sum(field, clazz)
+  }
+
+  def max[R](fn: T => R): SelectableField[R] = {
+    val (field, clazz) = fnToField(fn)
+    max(field, clazz)
+  }
+
+  def min[R](fn: T => R): SelectableField[R] = {
+    val (field, clazz) = fnToField(fn)
+    min(field, clazz)
+  }
+}
+
+trait RootImpl[T] extends TypedRoot[T] with Root[T] {
   self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
 
   override def getTable: String = {
@@ -360,7 +394,7 @@ trait RootImpl[T] extends Root[T] {
 
   override def count(field: Field): SelectableField[lang.Long] = new Count(field)
 
-  override def sum(field: Field): SelectableField[lang.Double] = new Sum(field)
+  override def sum[R](field: Field, clazz: Class[R]): SelectableField[R] = new Sum[R](field, clazz)
 
   override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
 
@@ -391,12 +425,18 @@ trait TypedJoinImpl[T] extends TypedJoin[T] {
     typedJoin(field, joinType)
   }
 
-
-  override def get(fn: (T) => Object): Field = {
+  override def get[R](fn: T => R): SelectableField[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
-    val field = marker.toString
-    this.get(field)
+    val field = get(marker.toString).asInstanceOf[FieldImpl]
+    new SelectableFieldImpl[R](field.meta.clazz.asInstanceOf[Class[R]], field)
+  }
+
+  override def as() = {
+    val joinInner = inner
+    new TypedSelectJoinImpl[T] with TypedJoinImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
+      override val inner: JoinInner = joinInner
+    }
   }
 
   override def joinAs[R](clazz: Class[R], joinType: JoinType)

@@ -311,8 +311,8 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
     fn(marker)
     val field = marker.toString
     val fieldMeta = getMeta.fieldMap(field)
-    if (!fieldMeta.isPointer && !fieldMeta.isOneOne) {
-      throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Pointer/OneOne")
+    if (!fieldMeta.isRefer) {
+      throw new RuntimeException(s"[${getMeta.entity}]'s Field [$field] Is Not Refer")
     }
 
     getCascades.find(_._1 == field) match {
@@ -436,6 +436,8 @@ class TypedExecuteRootImpl[T <: Object](obj: T, impl: TypedExecuteJoinImpl[T]) e
   override def updates[R](fn: T => Array[R]) = impl.updates(fn)
 
   override def deletes[R](fn: T => Array[R]) = impl.deletes(fn)
+
+  override def root(): T = obj
 }
 
 object ExecuteRootImpl {

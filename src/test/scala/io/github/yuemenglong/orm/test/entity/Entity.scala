@@ -4,7 +4,6 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.lang.anno._
 import io.github.yuemenglong.orm.lang.types.Types._
-import io.github.yuemenglong.orm.test.model.Obj
 
 /**
   * Created by <yuemenglong@126.com> on 2018/1/31.
@@ -22,7 +21,7 @@ class Obj {
 
   var doubleValue: Double = _
 
-  @Column(precision = 5, scale = 3)
+  @Column(precision = 5, scale = 2)
   var price: BigDecimal = _
 
   @Column(length = 128, nullable = false)
@@ -34,6 +33,8 @@ class Obj {
 
   @LongText
   var longText: String = _
+
+  var birthday: Date = _
 
   @DateTime
   var nowTime: Date = _
@@ -96,6 +97,8 @@ class OM {
 
   @Pointer
   var obj: Obj = _
+
+  var objId: Long = _
 }
 
 @Entity(db = "test")
