@@ -99,6 +99,11 @@ class OM {
   var obj: Obj = _
 
   var objId: Long = _
+
+  @Pointer
+  var sub: Sub = _
+
+  var subId: Long = _
 }
 
 @Entity(db = "test")

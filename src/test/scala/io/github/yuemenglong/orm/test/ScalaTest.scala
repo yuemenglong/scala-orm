@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.traits.core.Root
-import io.github.yuemenglong.orm.test.model._
+import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
 
@@ -20,7 +20,7 @@ class ScalaTest {
 
   @SuppressWarnings(Array("Duplicates"))
   @Before def before(): Unit = {
-    Orm.init("io.github.yuemenglong.orm.test.model")
+    Orm.init("io.github.yuemenglong.orm.test.entity")
     db = openDb()
     db.rebuild()
     db.check()
@@ -42,7 +42,7 @@ class ScalaTest {
 
   @Test
   def testConnPool(): Unit = {
-    for (i <- 0.until(1000)) {
+    for (_ <- 0.until(1000)) {
       db.beginTransaction(session => {
         val root = Orm.root(classOf[Obj])
         session.query(Orm.selectFrom(root))
@@ -55,7 +55,7 @@ class ScalaTest {
     db.beginTransaction(session => {
       1.to(4).foreach(i => {
         val obj = new Obj()
-        obj.setName(i.toString)
+        obj.name = i.toString
         session.execute(Orm.insert(Orm.convert(obj)))
       })
 
@@ -63,15 +63,15 @@ class ScalaTest {
         val root = Orm.root(classOf[Obj])
         val res = session.query(Orm.select(root).from(root).where(root.get("id").in(Array(1, 2))))
         Assert.assertEquals(res.length, 2)
-        Assert.assertEquals(res(0).getId.intValue(), 1)
-        Assert.assertEquals(res(1).getId.intValue(), 2)
+        Assert.assertEquals(res(0).id.intValue(), 1)
+        Assert.assertEquals(res(1).id.intValue(), 2)
       }
       {
         val root = Orm.root(classOf[Obj])
         val res = session.query(Orm.select(root).from(root).where(root.get("id").nin(Array(3, 4))))
         Assert.assertEquals(res.length, 2)
-        Assert.assertEquals(res(0).getId.intValue(), 1)
-        Assert.assertEquals(res(1).getId.intValue(), 2)
+        Assert.assertEquals(res(0).id.intValue(), 1)
+        Assert.assertEquals(res(1).id.intValue(), 2)
       }
     })
   }
@@ -80,16 +80,16 @@ class ScalaTest {
   def testSpecField(): Unit = {
     db.beginTransaction(session => {
       val obj = new Obj()
-      obj.setName("name")
-      obj.setAge(10)
+      obj.name = "name"
+      obj.age = 10
       session.execute(Orm.insert(Orm.convert(obj)))
 
       val root = Orm.root(classOf[Obj])
       root.fields("name")
       val res = session.first(Orm.select(root).from(root))
-      Assert.assertEquals(res.getAge, null)
-      Assert.assertEquals(res.getName, "name")
-      Assert.assertEquals(res.getId, 1L)
+      Assert.assertNull(res.age)
+      Assert.assertEquals(res.name, "name")
+      Assert.assertEquals(res.id.intValue(), 1L)
     })
   }
 
@@ -98,11 +98,11 @@ class ScalaTest {
     db.beginTransaction(session => {
       {
         val obj = new Obj()
-        obj.setName("name")
-        obj.setAge(10)
-        obj.setBirthday(new Date())
-        obj.setOo(new OO)
-        obj.getOo.setValue(10)
+        obj.name = "name"
+        obj.age = 10
+        obj.birthday = new Date()
+        obj.oo = new OO
+        obj.oo.value = 10
         val ex = Orm.insert(Orm.convert(obj))
         ex.insert("oo")
         ex.ignore("age")
@@ -112,13 +112,13 @@ class ScalaTest {
         val root = Orm.root(classOf[Obj])
         root.select("oo")
         val obj = session.first(Orm.select(root).from(root))
-        Assert.assertEquals(obj.getAge, null)
-        Assert.assertEquals(obj.getName, "name")
-        Assert.assertEquals(obj.getOo.getValue, 10)
+        Assert.assertNull(obj.age)
+        Assert.assertEquals(obj.name, "name")
+        Assert.assertEquals(obj.oo.value, 10)
 
         {
-          obj.setName("name1")
-          obj.getOo.setValue(20)
+          obj.name = "name1"
+          obj.oo.value = 20
           val ex = Orm.update(Orm.convert(obj))
           ex.update("oo").ignore("value")
           session.execute(ex)
@@ -127,8 +127,8 @@ class ScalaTest {
           val root = Orm.root(classOf[Obj])
           root.select("oo")
           val obj = session.first(Orm.select(root).from(root))
-          Assert.assertEquals(obj.getName, "name1")
-          Assert.assertEquals(obj.getOo.getValue, 10)
+          Assert.assertEquals(obj.name, "name1")
+          Assert.assertEquals(obj.oo.value, 10)
         }
       }
     })
@@ -139,7 +139,7 @@ class ScalaTest {
     db.beginTransaction(session => {
       1.to(10).foreach(i => {
         val obj = new Obj
-        obj.setName(i.toString)
+        obj.name = i.toString
         session.execute(Orm.insert(Orm.convert(obj)))
       })
       val root = Orm.root(classOf[Obj])
@@ -155,30 +155,30 @@ class ScalaTest {
   def testAttach(): Unit = {
     db.beginTransaction(session => {
       var obj = new Obj
-      obj.setName("")
-      obj.setOm(1.to(5).map(i => {
+      obj.name = ""
+      obj.om = 1.to(5).map(_ => {
         val om = new OM()
-        om.setMo(new MO)
+        om.mo = new MO
         om
-      }).toArray)
-      obj.setOo(new OO)
+      }).toArray
+      obj.oo = new OO
       obj = Orm.convert(obj)
       val ex = Orm.insert(obj)
       ex.insert("om").insert("mo")
       ex.insert("oo")
       session.execute(ex)
-      obj.setOm(Array())
+      obj.om = Array()
       obj = OrmTool.attach[Obj](obj, "om", session, join => join.select("mo"))
-      Assert.assertEquals(obj.getOm.length, 5)
-      Assert.assertEquals(obj.getOm()(0).getMo.getId.intValue(), 1)
+      Assert.assertEquals(obj.om.length, 5)
+      Assert.assertEquals(obj.om(0).mo.id.intValue(), 1)
       obj = OrmTool.attach[Obj](obj, "oo", session)
-      Assert.assertEquals(obj.getOo.getId.longValue(), 1)
+      Assert.assertEquals(obj.oo.id.longValue(), 1)
 
-      obj.getOm.foreach(om => {
+      obj.om.foreach(om => {
         om.asInstanceOf[Entity].$$core().fieldMap += ("mo" -> null)
       })
-      OrmTool.attach(obj.getOm, "mo", session).zipWithIndex.foreach { case (om, idx) =>
-        Assert.assertEquals(om.getId.longValue(), idx + 1)
+      OrmTool.attach(obj.om, "mo", session).zipWithIndex.foreach { case (om, idx) =>
+        Assert.assertEquals(om.id.longValue(), idx + 1)
       }
     })
   }
@@ -186,36 +186,36 @@ class ScalaTest {
   @Test
   def testConvert(): Unit = db.beginTransaction(session => {
     val obj = Orm.convert(new Obj)
-    obj.setName("Age10")
-    obj.setAge(10)
+    obj.name = "Age10"
+    obj.age = 10
     session.execute(Orm.insert(obj))
     val root = Orm.root(classOf[Obj])
     val res = session.first(Orm.selectFrom(root).where(root.get("age").eql(10)))
-    Assert.assertEquals(res.getName, "Age10")
+    Assert.assertEquals(res.name, "Age10")
   })
 
   @Test
   def testIgnore(): Unit = db.beginTransaction(session => {
     val obj = Orm.convert(new Obj)
-    obj.setName("Tom")
-    obj.setAge(100)
-    obj.setDoubleValue(10.0)
+    obj.name = "Tom"
+    obj.age = 100
+    obj.doubleValue = 10.0
     session.execute(Orm.insert(obj))
 
     {
       val root = Orm.root(classOf[Obj])
       val res = session.first(Orm.selectFrom(root))
-      res.setName("Jack")
-      res.setAge(0)
-      res.setDoubleValue(20.0)
+      res.name = "Jack"
+      res.age = 0
+      res.doubleValue = 20.0
       session.execute(Orm.update(res).ignore("name", "age"))
     }
     {
       val root = Orm.root(classOf[Obj])
       val res = session.first(Orm.selectFrom(root))
-      Assert.assertEquals(res.getAge.intValue(), 100)
-      Assert.assertEquals(res.getName, "Tom")
-      Assert.assertEquals(res.getDoubleValue.doubleValue(), 20.0, 0.00001)
+      Assert.assertEquals(res.age.intValue(), 100)
+      Assert.assertEquals(res.name, "Tom")
+      Assert.assertEquals(res.doubleValue.doubleValue(), 20.0, 0.00001)
     }
   })
 
@@ -225,10 +225,10 @@ class ScalaTest {
       var obj = new Obj
 
       {
-        obj.setName("")
-        obj.setOo(new OO)
-        obj.setOm(Array(new OM, new OM))
-        obj.getOm()(0).setMo(new MO)
+        obj.name = ""
+        obj.oo = new OO
+        obj.om = Array(new OM, new OM)
+        obj.om(0).mo = new MO
         obj = Orm.convert(obj)
         val ex = Orm.insert(obj)
         ex.insert("oo")
@@ -252,6 +252,7 @@ class ScalaTest {
         root.select("om").select("mo")
         val query = Orm.select(root.count()).from(root)
         val ret = session.first(query)
+        Assert.assertEquals(ret.longValue(), 0)
       }
     })
   }
@@ -262,10 +263,10 @@ class ScalaTest {
       var obj = new Obj
 
       {
-        obj.setName("")
-        obj.setOo(new OO)
-        obj.setOm(Array(new OM, new OM))
-        obj.getOm()(0).setMo(new MO)
+        obj.name = ""
+        obj.oo = new OO
+        obj.om = Array(new OM, new OM)
+        obj.om(0).mo = new MO
         obj = Orm.convert(obj)
         val ex = Orm.insert(obj)
         ex.insert("oo")
@@ -285,7 +286,7 @@ class ScalaTest {
         val query = Orm.selectFrom(root)
         val obj = session.first(query)
         Assert.assertNotNull(obj)
-        Assert.assertEquals(obj.getOo, null)
+        Assert.assertNull(obj.oo)
       }
     })
   }
@@ -296,10 +297,10 @@ class ScalaTest {
       var obj = new Obj
 
       {
-        obj.setName("")
-        obj.setOo(new OO)
-        obj.setOm(Array(new OM, new OM))
-        obj.getOm()(0).setMo(new MO)
+        obj.name = ""
+        obj.oo = new OO
+        obj.om = Array(new OM, new OM)
+        obj.om(0).mo = new MO
         obj = Orm.convert(obj)
         val ex = Orm.insert(obj)
         ex.insert("oo")
@@ -312,7 +313,7 @@ class ScalaTest {
           root.get("name").assign("Tom"),
           root.leftJoin("oo").get("value").assign(100),
           root.leftJoin("om").get("value").assign(200)
-        ).where(root.get("id").eql(obj.getId).and(
+        ).where(root.get("id").eql(obj.id).and(
           root.leftJoin("om").get("id").eql(1)))
         session.execute(ex)
       }
@@ -322,10 +323,10 @@ class ScalaTest {
         root.select("om")
         val query = Orm.selectFrom(root).where(root.get("id").eql(1))
         val obj = session.first(query)
-        Assert.assertEquals(obj.getName, "Tom")
-        Assert.assertEquals(obj.getOo.getValue.intValue(), 100)
-        Assert.assertEquals(obj.getOm()(0).getValue.intValue(), 200)
-        Assert.assertEquals(obj.getOm()(1).getValue, null)
+        Assert.assertEquals(obj.name, "Tom")
+        Assert.assertEquals(obj.oo.value.intValue(), 100)
+        Assert.assertEquals(obj.om(0).value.intValue(), 200)
+        Assert.assertEquals(obj.om(1).value, null)
       }
     })
   }
@@ -340,25 +341,25 @@ class ScalaTest {
   def testFields(): Unit = {
     db.beginTransaction(session => {
       val obj = new Obj
-      obj.setName("name")
-      obj.setAge(10)
+      obj.name = "name"
+      obj.age = 10
       val ex = Orm.insert(Orm.convert(obj))
       ex.fields("name")
       session.execute(ex)
 
       val obj2 = session.first(Orm.selectFrom(Orm.root(classOf[Obj])))
-      Assert.assertEquals(obj2.getName, "name")
-      Assert.assertEquals(obj2.getAge, null)
+      Assert.assertEquals(obj2.name, "name")
+      Assert.assertNull(obj2.age)
 
-      obj2.setName("name2")
-      obj2.setAge(20)
+      obj2.name = "name2"
+      obj2.age = 20
       val ex2 = Orm.update(obj2)
       ex2.fields("age")
       session.execute(ex2)
 
       val obj3 = session.first(Orm.selectFrom(Orm.root(classOf[Obj])))
-      Assert.assertEquals(obj3.getName, "name")
-      Assert.assertEquals(obj3.getAge.intValue(), 20)
+      Assert.assertEquals(obj3.name, "name")
+      Assert.assertEquals(obj3.age.intValue(), 20)
     })
   }
 
@@ -367,10 +368,10 @@ class ScalaTest {
     db.beginTransaction(session => {
       {
         val obj = new Obj()
-        obj.setName("")
-        obj.setPtr(new Ptr)
-        obj.setOo(new OO)
-        obj.setOm(Array(new OM, new OM))
+        obj.name = ""
+        obj.ptr = new Ptr
+        obj.oo = new OO
+        obj.om = Array(new OM, new OM)
         val ex = Orm.insert(Orm.convert(obj))
         ex.insert("ptr")
         ex.insert("oo")
@@ -385,8 +386,8 @@ class ScalaTest {
         val res = session.query(query)
         Assert.assertEquals(res.length, 1)
         val (obj, ptr) = res(0)
-        Assert.assertEquals(obj.getId, 1L)
-        Assert.assertEquals(ptr.getId, 1L)
+        Assert.assertEquals(obj.id.longValue(), 1L)
+        Assert.assertEquals(ptr.id.longValue(), 1L)
       }
       {
         val root = Orm.root(classOf[Obj])
@@ -395,8 +396,8 @@ class ScalaTest {
         val res = session.query(query)
         Assert.assertEquals(res.length, 2)
         Assert.assertEquals(res(0)._1.toString, res(1)._1.toString)
-        Assert.assertEquals(res(0)._2.getId, 1L)
-        Assert.assertEquals(res(1)._2.getId, 2L)
+        Assert.assertEquals(res(0)._2.id.longValue(), 1L)
+        Assert.assertEquals(res(1)._2.id.longValue(), 2L)
       }
     })
   }
@@ -405,14 +406,14 @@ class ScalaTest {
   def testSelectIgnore(): Unit = {
     db.beginTransaction(session => {
       val obj = new Obj()
-      obj.setName("name")
+      obj.name = "name"
       session.execute(Orm.insert(Orm.convert(obj)))
 
       val root = Orm.root(classOf[Obj])
       root.ignore("name")
       val o = session.first(Orm.selectFrom(root))
-      Assert.assertEquals(o.getId.longValue(), 1)
-      Assert.assertNull(o.getName)
+      Assert.assertEquals(o.id.longValue(), 1)
+      Assert.assertNull(o.name)
     })
   }
 
@@ -420,8 +421,8 @@ class ScalaTest {
   def testSelectDeleteById(): Unit = {
     db.beginTransaction(session => {
       val obj = new Obj()
-      obj.setName("name")
-      obj.setOo(new OO)
+      obj.name = "name"
+      obj.oo = new OO
       val ex = Orm.insert(Orm.convert(obj))
       ex.insert("oo")
       session.execute(ex)
@@ -430,8 +431,8 @@ class ScalaTest {
         val o = OrmTool.selectById(classOf[Obj], 1, session, (root: Root[Obj]) => {
           root.select("oo")
         })
-        Assert.assertEquals(o.getName, "name")
-        Assert.assertEquals(o.getOo.getId.longValue(), 1)
+        Assert.assertEquals(o.name, "name")
+        Assert.assertEquals(o.oo.id.longValue(), 1)
       }
       {
         OrmTool.deleteById(classOf[Obj], 1, session)
@@ -445,34 +446,34 @@ class ScalaTest {
   def testAssignAddSub(): Unit = {
     db.beginTransaction(session => {
       val obj = new Obj()
-      obj.setName("name")
-      obj.setDoubleValue(1.5)
-      obj.setAge(10)
+      obj.name = "name"
+      obj.doubleValue = 1.5
+      obj.age = 10
       session.execute(Orm.insert(Orm.convert(obj)))
 
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assignAdd(1.2)))
         val o = OrmTool.selectById(classOf[Obj], 1, session)
-        Assert assertEquals(o.getDoubleValue.doubleValue(), 2.7, 0.00001)
+        Assert.assertEquals(o.doubleValue.doubleValue(), 2.7, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assignSub(1.5)))
         val o = OrmTool.selectById(classOf[Obj], 1, session)
-        Assert assertEquals(o.getDoubleValue.doubleValue(), 1.2, 0.00001)
+        Assert.assertEquals(o.doubleValue.doubleValue(), 1.2, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assignAdd(root.get("age"), 1.2)))
         val o = OrmTool.selectById(classOf[Obj], 1, session)
-        Assert assertEquals(o.getDoubleValue.doubleValue(), 11.2, 0.00001)
+        Assert.assertEquals(o.doubleValue.doubleValue(), 11.2, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assignSub(root.get("age"), 1.5)))
         val o = OrmTool.selectById(classOf[Obj], 1, session)
-        Assert assertEquals(o.getDoubleValue.doubleValue(), 8.5, 0.00001)
+        Assert.assertEquals(o.doubleValue.doubleValue(), 8.5, 0.00001)
       }
     })
   }
@@ -481,7 +482,7 @@ class ScalaTest {
   def testClearField(): Unit = {
     val obj = Orm.empty(classOf[Obj])
     Assert.assertEquals(obj.toString, "{}")
-    obj.setId(1L)
+    obj.id = 1L
     Assert.assertEquals(obj.toString, """{id: 1}""")
     OrmTool.clearField(obj, "id")
     Assert.assertEquals(obj.toString, "{}")
@@ -492,7 +493,7 @@ class ScalaTest {
     try {
       db.beginTransaction(fn = session => {
         val obj = Orm.create(classOf[Obj])
-        obj.setName("")
+        obj.name = ""
         session.execute(Orm.insert(obj))
         throw new RuntimeException("Test")
       })
@@ -511,8 +512,8 @@ class ScalaTest {
     try {
       db.beginTransaction(fn = session => {
         val obj = Orm.create(classOf[Obj])
-        obj.setName("")
-        session.execute(Orm.insert(classOf[Obj]).values(Array(obj)))
+        obj.name = ""
+        session.execute(Orm.inserts(Array(obj)))
         throw new RuntimeException("Test")
       })
       Assert.assertFalse(true)
@@ -530,13 +531,13 @@ class ScalaTest {
     db.beginTransaction(session => {
       db.check()
       val obj = new Obj
-      obj.setName("enum")
-      obj.setStatus("succ")
+      obj.name = "enum"
+      obj.status = "succ"
       session.execute(Orm.insert(Orm.convert(obj)))
       val root = Orm.root(classOf[Obj])
       val res = session.first(Orm.selectFrom(root).where(root.get("status").eql("succ")))
-      Assert.assertEquals(res.getId.longValue(), 1)
-      Assert.assertEquals(res.getStatus, "succ")
+      Assert.assertEquals(res.id.longValue(), 1)
+      Assert.assertEquals(res.status, "succ")
     })
   }
 
@@ -544,10 +545,10 @@ class ScalaTest {
   def testDefaultValue(): Unit = {
     db.beginTransaction(session => {
       val obj = Orm.empty(classOf[Obj])
-      obj.setName("dft")
+      obj.name = "dft"
       session.execute(Orm.insert(obj))
       val res = OrmTool.selectById(classOf[Obj], 1, session)
-      Assert.assertEquals(res.getDftValue.intValue(), 10)
+      Assert.assertEquals(res.dftValue.intValue(), 10)
     })
   }
 
@@ -555,37 +556,37 @@ class ScalaTest {
   def testOrmToolUpdate(): Unit = {
     db.beginTransaction(session => {
       val obj = Orm.empty(classOf[Obj])
-      obj.setName("update")
+      obj.name = "update"
       session.execute(Orm.insert(obj))
       OrmTool.updateById(classOf[Obj], 1, session, ("name", "update2"), ("age", 10))
       val res = OrmTool.selectById(classOf[Obj], 1, session)
-      Assert.assertEquals(res.getAge.intValue(), 10)
-      Assert.assertEquals(res.getName, "update2")
+      Assert.assertEquals(res.age.intValue(), 10)
+      Assert.assertEquals(res.name, "update2")
     })
   }
 
   @Test
   def testCrossDb(): Unit = {
     db.beginTransaction(session => {
-      val mos = Orm.convert(1.to(5).map(i => {
+      val mos = Orm.convert(1.to(5).map(_ => {
         val mo = new MO()
         mo
       }).toArray)
       session.execute(Orm.inserts(mos))
       val oms = mos.map(mo => {
         val om = Orm.empty(classOf[OM])
-        om.setSubId(1L)
-        om.setMo(mo)
+        om.subId = 1L
+        om.mo = mo
         om
       })
       session.execute(Orm.inserts(oms))
     })
     db.beginTransaction(session => {
       var sub = Orm.empty(classOf[Sub])
-      sub.setId(1L)
+      sub.id = 1L
       sub = OrmTool.attach(sub, "om", session, join => join.select("mo"))
-      Assert.assertEquals(sub.getOm.length, 5)
-      Assert.assertEquals(sub.getOm()(0).getMo.getId.intValue(), 1)
+      Assert.assertEquals(sub.om.length, 5)
+      Assert.assertEquals(sub.om(0).mo.id.intValue(), 1)
     })
   }
 
@@ -594,36 +595,36 @@ class ScalaTest {
     db.beginTransaction(session => {
       val s = 1.to(10000).map(_.toString).mkString("")
       val obj = new Obj
-      obj.setName("")
-      obj.setText(s)
+      obj.name = ""
+      obj.text = s
       session.execute(Orm.insert(Orm.convert(obj)))
 
       val root = Orm.root(classOf[Obj])
       val o2 = session.first(Orm.selectFrom(root).where(root.get("id").eql(1)))
-      Assert.assertEquals(o2.getText, s)
+      Assert.assertEquals(o2.text, s)
     })
   }
 
-//  @Test
-//  def testTypedInsert(): Unit = {
-//    db.beginTransaction(session => {
-//      val obj = new Obj
-//      obj.setName("")
-//      obj.setAge(10)
-//      obj.setOo(new OO)
-//      val ex = Orm.insert(Orm.convert(obj))
-//      ex.insert(_.getOo)
-//      ex.fields(_.getName)
-//      session.execute(ex)
-//
-//      val root = Orm.root(classOf[Obj])
-//      root.select("oo")
-//      val res = session.first(Orm.selectFrom(root))
-//      Assert.assertEquals(res.getId.intValue(), 1)
-//      Assert.assertEquals(res.getAge, null)
-//      Assert.assertEquals(res.getOo.getId.intValue(), 1)
-//    })
-//  }
+  //  @Test
+  //  def testTypedInsert(): Unit = {
+  //    db.beginTransaction(session => {
+  //      val obj = new Obj
+  //      obj.setName("")
+  //      obj.setAge(10)
+  //      obj.setOo(new OO)
+  //      val ex = Orm.insert(Orm.convert(obj))
+  //      ex.insert(_.getOo)
+  //      ex.fields(_.getName)
+  //      session.execute(ex)
+  //
+  //      val root = Orm.root(classOf[Obj])
+  //      root.select("oo")
+  //      val res = session.first(Orm.selectFrom(root))
+  //      Assert.assertEquals(res.getId.intValue(), 1)
+  //      Assert.assertEquals(res.getAge, null)
+  //      Assert.assertEquals(res.getOo.getId.intValue(), 1)
+  //    })
+  //  }
 
   //  @Test
   //  def testTypedJoin(): Unit = {

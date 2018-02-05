@@ -18,7 +18,9 @@ object Scanner {
     val loader = Thread.currentThread().getContextClassLoader
     val filePath = path.replace(".", "/")
     val url = loader.getResource(filePath)
-    require(url != null && url.getProtocol == "file")
+    if (url == null || url.getProtocol != "file") {
+      throw new RuntimeException(s"Scann [${url}] Fail")
+    }
     val fullPath = new File(url.getPath).getPath.replaceAll("\\\\", "/")
     val basePath = Paths.get(fullPath.replaceAll(s"$filePath$$", ""))
     val classes = scanFile(url.getPath).map(path => {
