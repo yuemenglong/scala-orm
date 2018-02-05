@@ -144,8 +144,12 @@ object Orm {
   def inserts[T](arr: Array[T]): ExecutableInsert[T] = {
     arr.isEmpty match {
       case true => throw new RuntimeException("Batch Insert But Array Is Empty")
-      case false => new InsertImpl[T](arr(0).asInstanceOf[Entity].$$core()
-        .meta.clazz.asInstanceOf[Class[T]]).values(Orm.convert(arr))
+      case false => {
+        val entityArr = Orm.convert(arr)
+        val clazz = entityArr(0).asInstanceOf[Entity].$$core()
+          .meta.clazz.asInstanceOf[Class[T]]
+        new InsertImpl[T](clazz).values(entityArr)
+      }
     }
   }
 

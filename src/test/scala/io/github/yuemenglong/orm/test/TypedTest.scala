@@ -1,5 +1,7 @@
 package io.github.yuemenglong.orm.test
 
+import java.text.SimpleDateFormat
+
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.types.Types._
@@ -111,7 +113,7 @@ class TypedTest {
     session.execute(ex)
 
     val root = Orm.root(classOf[Obj])
-    val c = session.first(Orm.select(root.joins(_.om).get(_.id).asLong())
+    val c = session.first(Orm.select(root.joins(_.om).get(_.id))
       .from(root).limit(1).offset(5))
     Assert.assertEquals(c.intValue(), 6)
   })
@@ -362,6 +364,248 @@ class TypedTest {
       val ret = session.execute(Orm.delete(obj))
       Assert.assertEquals(ret, 1)
     }
+  })
 
+  @Test
+  def testUpdateSpec(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = "name"
+    obj.age = 100
+    val ex = Orm.insert(obj)
+    session.execute(ex)
+
+    {
+      val obj = Orm.empty(classOf[Obj])
+      obj.id = ex.root().id
+      obj.age = 200
+      session.execute(Orm.update(obj))
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val obj = session.first(Orm.selectFrom(root))
+      Assert.assertEquals(obj.name, "name")
+      Assert.assertEquals(obj.age.longValue(), 200)
+    }
+  })
+
+  @Test
+  def testDeleteRefer(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.ptr = new Ptr
+    obj.oo = new OO
+    obj.om = Array(new OM, new OM)
+
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    ex.insert(_.oo)
+    ex.insert(_.om)
+    val ret = session.execute(ex)
+    Assert.assertEquals(ret, 5)
+
+    {
+      val root = Orm.root(classOf[Obj])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 1)
+    }
+    {
+      val root = Orm.root(classOf[Ptr])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 1)
+    }
+    {
+      val root = Orm.root(classOf[OO])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 1)
+    }
+    {
+      val root = Orm.root(classOf[OM])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 2)
+    }
+
+    {
+      val dex = Orm.delete(ex.root())
+      dex.delete(_.ptr)
+      dex.delete(_.oo)
+      dex.delete(_.om)
+      session.execute(dex)
+    }
+
+    {
+      val root = Orm.root(classOf[Obj])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 0)
+    }
+    {
+      val root = Orm.root(classOf[Ptr])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 0)
+    }
+    {
+      val root = Orm.root(classOf[OO])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 0)
+    }
+    {
+      val root = Orm.root(classOf[OM])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 0)
+    }
+  })
+
+  @Test
+  def testOrderByLimitOffset(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.om = (1 to 6).map(_ => new OM).toArray
+
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    ex.insert(_.oo)
+    ex.insert(_.om)
+    val ret = session.execute(ex)
+    Assert.assertEquals(ret, 7)
+
+    val root = Orm.root(classOf[OM])
+    val res = session.query(Orm.selectFrom(root).desc(_.id).limit(3).offset(2))
+    Assert.assertEquals(res.length, 3)
+    Assert.assertEquals(res(0).id.intValue(), 4)
+    Assert.assertEquals(res(1).id.intValue(), 3)
+    Assert.assertEquals(res(2).id.intValue(), 2)
+  })
+
+  @Test
+  def testUpdate(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.om = (1 to 6).map(_ => new OM).toArray
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    ex.insert(_.oo)
+    ex.insert(_.om)
+
+    {
+      val ret = session.execute(ex)
+      Assert.assertEquals(ret, 7)
+    }
+
+    {
+      val root = Orm.root(classOf[OM])
+      val ret = session.execute(Orm.update(root)
+        .set(root.get(_.objId).assign(2))
+        .where(root.get(_.id).gt(4)))
+      Assert.assertEquals(ret, 2)
+    }
+
+    {
+      val obj = new Obj
+      obj.name = "name2"
+      session.execute(Orm.insert(obj))
+      val root = Orm.root(classOf[Obj])
+      root.selects(_.om)
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 2)
+      Assert.assertEquals(res(0).om.length, 4)
+      Assert.assertEquals(res(1).om.length, 2)
+    }
+  })
+
+  @Test
+  def testDelete(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.om = (1 to 6).map(_ => new OM).toArray
+
+    (1 to 2).foreach(_ => {
+      val ex = Orm.insert(obj)
+      ex.insert(_.ptr)
+      ex.insert(_.oo)
+      ex.insert(_.om)
+      val ret = session.execute(ex)
+      Assert.assertEquals(ret, 7)
+    })
+
+    val root = Orm.root(classOf[OM])
+    val ret = session.execute(
+      Orm.deleteFrom(root).where(
+        root.join(_.obj).get(_.id).gt(1)
+          .or(root.get(_.id).lt(3))))
+    Assert.assertEquals(ret, 8)
+  })
+
+  @Test
+  def testBatchInsert(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = "name"
+    val objs = Orm.convert((1 to 3).map(_ => obj).toArray)
+    val ret = session.execute(Orm.inserts(objs))
+    Assert.assertEquals(ret, 3)
+    Assert.assertEquals(objs(0).id.intValue(), 1)
+    Assert.assertEquals(objs(1).id.intValue(), 2)
+    Assert.assertEquals(objs(2).id.intValue(), 3)
+  })
+
+  @Test
+  def transactionTest(): Unit = {
+    try {
+      db.beginTransaction(session => {
+        val obj = new Obj
+        obj.name = ""
+        session.execute(Orm.insert(obj))
+        val root = Orm.root(classOf[Obj])
+        val res = session.query(Orm.selectFrom(root))
+        Assert.assertEquals(res.length, 1)
+        throw new RuntimeException("ROLL BACK")
+      })
+    } catch {
+      case _: Throwable =>
+    }
+    db.beginTransaction(session => {
+      val root = Orm.root(classOf[Obj])
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 0)
+    })
+  }
+
+  @Test
+  def dateTimeTest(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.nowTime = new SimpleDateFormat("yyyy-MM-dd").parse("2017-12-12")
+    session.execute(Orm.insert(obj))
+
+    {
+      val root = Orm.root(classOf[Obj])
+      val obj = session.first(Orm.selectFrom(root).where(root.get(_.id).eql(1)))
+      Assert.assertEquals(new SimpleDateFormat("yyyy-MM-dd").format(obj.nowTime), "2017-12-12")
+      Assert.assertEquals(obj.nowTime.getClass.getName, "java.sql.Timestamp")
+    }
+  })
+
+  @Test
+  def likeTest(): Unit = db.beginTransaction(session => {
+    {
+      val obj = new Obj
+      obj.name = "like it"
+      session.execute(Orm.insert(obj))
+    }
+    {
+      val obj = new Obj
+      obj.name = "dont like"
+      session.execute(Orm.insert(obj))
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val res = session.query(Orm.selectFrom(root).where(root.get(_.name).like("like%")))
+      Assert.assertEquals(res.length, 1)
+      Assert.assertEquals(res(0).name, "like it")
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val res = session.query(Orm.selectFrom(root).where(root.get(_.name).like("%like")))
+      Assert.assertEquals(res.length, 1)
+      Assert.assertEquals(res(0).name, "dont like")
+    }
   })
 }
