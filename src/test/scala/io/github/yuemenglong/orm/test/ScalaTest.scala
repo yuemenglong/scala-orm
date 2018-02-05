@@ -168,7 +168,7 @@ class ScalaTest {
       ex.insert("oo")
       session.execute(ex)
       obj.om = Array()
-      obj = OrmTool.attach[Obj](obj, "om", session, join => join.select("mo"))
+      obj = OrmTool.attach(obj, "om", session, join => join.select("mo"), null)
       Assert.assertEquals(obj.om.length, 5)
       Assert.assertEquals(obj.om(0).mo.id.intValue(), 1)
       obj = OrmTool.attach[Obj](obj, "oo", session)
@@ -584,7 +584,7 @@ class ScalaTest {
     db.beginTransaction(session => {
       var sub = Orm.empty(classOf[Sub])
       sub.id = 1L
-      sub = OrmTool.attach(sub, "om", session, join => join.select("mo"))
+      sub = OrmTool.attach(sub, "om", session, join => join.select("mo"), null)
       Assert.assertEquals(sub.om.length, 5)
       Assert.assertEquals(sub.om(0).mo.id.intValue(), 1)
     })

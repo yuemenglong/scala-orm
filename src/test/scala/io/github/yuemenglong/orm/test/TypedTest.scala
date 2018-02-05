@@ -6,6 +6,7 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.test.entity._
+import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
 
 /**
@@ -606,6 +607,38 @@ class TypedTest {
       val res = session.query(Orm.selectFrom(root).where(root.get(_.name).like("%like")))
       Assert.assertEquals(res.length, 1)
       Assert.assertEquals(res(0).name, "dont like")
+    }
+  })
+
+  @Test
+  def testOrmTool(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.om = Array(new OM, new OM, new OM).map(om => {
+      om.mo = new MO
+      om
+    })
+    val ex = Orm.insert(obj)
+    ex.inserts(_.om).insert(_.mo)
+    session.execute(ex)
+
+    {
+      val obj = ex.root()
+      obj.om = Array()
+      OrmTool.attach(obj, session)(_.om)
+      Assert.assertEquals(obj.om.length, 3)
+    }
+
+    {
+      val obj = ex.root()
+      obj.om = Array()
+      OrmTool.attachsx(obj, session)(_.om)(j => {
+        j.select(_.mo)
+      }, null)
+      Assert.assertEquals(obj.om.length, 3)
+      Assert.assertNotNull(obj.om(0).mo)
+      Assert.assertNotNull(obj.om(1).mo)
+      Assert.assertNotNull(obj.om(2).mo)
     }
   })
 }

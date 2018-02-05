@@ -105,32 +105,24 @@ object Orm {
   def cond(): Cond = new CondHolder
 
   def select[T](s: Selectable[T]): QueryBuilder[T] = {
-    //    val st = new SelectableTupleImpl[T](s.getType, s)
     new QueryBuilderImpl[T] {
       override val st = new SelectableTupleImpl[T](s.getType, s)
     }
-    //    new QueryImpl[T](st)
   }
 
   def select[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): QueryBuilder[(T1, T2)] = {
-    //    val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
-    //    new QueryImpl[(T1, T2)](st)
     new QueryBuilderImpl[(T1, T2)] {
       override val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
     }
   }
 
   def select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): QueryBuilder[(T1, T2, T3)] = {
-    //    val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
-    //    new QueryImpl[(T1, T2, T3)](st)
     new QueryBuilderImpl[(T1, T2, T3)] {
       override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
     }
   }
 
   def selectFrom[T](root: Root[T]): Query[T, T] = {
-    //    val st = new SelectableTupleImpl[T](root.getType, root)
-    //    new QueryImpl[T](st, root)
     val pRoot = root
     new QueryImpl[T, T] with TypedQueryImpl[T, T] with QueryBuilderImpl[T] {
       override val root = pRoot

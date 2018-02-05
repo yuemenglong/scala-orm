@@ -5,13 +5,14 @@ import java.lang.reflect.Field
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
+import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.impl.QueryImpl
 import io.github.yuemenglong.orm.operate.traits.Query
-import io.github.yuemenglong.orm.operate.traits.core.{Join, Root, SelectFieldJoin}
+import io.github.yuemenglong.orm.operate.traits.core.{Join, Root, SelectFieldJoin, TypedSelectJoin}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -42,7 +43,7 @@ object OrmTool {
   }
 
   // relateMap保存所有与之相关的类型
-  def stringifyTsClass(clazz: Class[_], relateMap: mutable.Map[String, Set[String]], init: Boolean): String = {
+  private def stringifyTsClass(clazz: Class[_], relateMap: mutable.Map[String, Set[String]], init: Boolean): String = {
     val className = clazz.getSimpleName
     val newFields = new ArrayBuffer[Field]()
     val content = Kit.getDeclaredFields(clazz).map(f => {
@@ -96,9 +97,57 @@ object OrmTool {
     ret
   }
 
+  def attachs[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachsx(orig, session)(fn)(null, null)
+
+  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachx(orig, session)(fn)(null, null)
+
+  def attachsx[T, R](orig: T, session: Session)
+                    (fn: T => Array[R])
+                    (joinFn: TypedSelectJoin[R] => Unit,
+                     queryFn: Query[R, R] => Unit,
+                    ): T = {
+    val obj = Orm.convert(orig)
+    val entity = obj.asInstanceOf[Entity]
+    val marker = EntityManager.createMarker[T](entity.$$core().meta)
+    fn(marker)
+    val field = marker.toString
+    val jf = joinFn match {
+      case null => null
+      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+    }
+    val qf = queryFn match {
+      case null => null
+      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+    }
+    attach(obj, field, session, jf, qf)
+  }
+
+  def attachx[T, R](orig: T, session: Session)
+                   (fn: T => R)
+                   (joinFn: TypedSelectJoin[R] => Unit,
+                    queryFn: Query[R, R] => Unit,
+                   ): T = {
+    val obj = Orm.convert(orig)
+    val entity = obj.asInstanceOf[Entity]
+    val marker = EntityManager.createMarker[T](entity.$$core().meta)
+    fn(marker)
+    val field = marker.toString
+    val jf = joinFn match {
+      case null => null
+      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+    }
+    val qf = queryFn match {
+      case null => null
+      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+    }
+    attach(obj, field, session, jf, qf)
+  }
+
+  def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
+
   def attach[T](obj: T, field: String, session: Session,
-                joinFn: SelectFieldJoin => Unit = _ => {},
-                queryFn: Query[_, _] => Unit = (_: Query[_, _]) => {},
+                joinFn: SelectFieldJoin => Unit,
+                queryFn: Query[_, _] => Unit,
                ): T = {
     if (obj.getClass.isArray) {
       return attachArray(obj.asInstanceOf[Array[_]], field, session, joinFn, queryFn)
@@ -108,28 +157,19 @@ object OrmTool {
       throw new RuntimeException("Not Entity")
     }
     val entity = obj.asInstanceOf[Entity]
-    //    if (entity.$$core().getPkey == null) {
-    //      throw new RuntimeException("Not Has Pkey")
-    //    }
     val core = entity.$$core()
     val meta = core.meta
     if (!meta.fieldMap.contains(field) || meta.fieldMap(field).isNormalOrPkey) {
       throw new RuntimeException(s"Not Refer Feild, $field")
     }
     val refer = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
-    //    val root = Orm.root(entity.$$core().meta.clazz.asInstanceOf[Class[T]])
     val root = Orm.root(refer.refer.clazz)
-    //    root.fields(Array[String]())
     val leftValue = core.get(refer.left)
     val rightField = refer.right
-    //    val pkeyName = entity.$$core().meta.pkey.name
-    //    val pkeyValue = entity.$$core().getPkey
-
-    //    val join = root.select(field)
-    joinFn(root)
+    if (joinFn != null) joinFn(root)
 
     val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[_, _]]
-    queryFn(query)
+    if (queryFn != null) queryFn(query)
     query.where(query.cond.and(root.get(rightField).eql(leftValue)))
 
     val res = refer.isOneMany match {
@@ -137,7 +177,6 @@ object OrmTool {
       case false => session.first(query).asInstanceOf[Object]
     }
 
-    //    val res = session.first(query).asInstanceOf[Entity].$$core().get(field)
     entity.$$core().set(field, res)
     obj
   }
