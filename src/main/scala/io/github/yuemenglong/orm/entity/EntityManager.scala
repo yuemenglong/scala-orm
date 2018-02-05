@@ -4,7 +4,8 @@ import java.lang.reflect.Method
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.meta._
+import io.github.yuemenglong.orm.lang.types.Types
+import io.github.yuemenglong.orm.meta.{FieldMetaOneOne, _}
 import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
 import scala.reflect.ClassTag
@@ -108,4 +109,43 @@ object EntityManager {
     val newCore = new EntityCore(entity.$$core().meta, map)
     EntityManager.wrap(newCore)
   }
+
+  def createMarker[T](meta: EntityMeta): T = {
+    val enhancer: Enhancer = new Enhancer
+    enhancer.setSuperclass(meta.clazz)
+    var fnName: String = null
+    require(meta != null)
+
+    enhancer.setCallback(new MethodInterceptor() {
+      @throws[Throwable]
+      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
+        method.getName match {
+          case "toString" => fnName
+          case _ => meta.getterMap.get(method) match {
+            case None => throw new RuntimeException(s"Invalid Method Name: ${method.getName}")
+            case Some(fieldMeta) =>
+              fnName = fieldMeta.name
+              null
+          }
+        }
+      }
+    })
+    enhancer.create().asInstanceOf[T]
+  }
+
+  //  def createMarkerRet(clazz: Class[_], value: String): Object = {
+  //    val enhancer: Enhancer = new Enhancer
+  //    enhancer.setSuperclass(clazz)
+  //
+  //    enhancer.setCallback(new MethodInterceptor() {
+  //      @throws[Throwable]
+  //      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
+  //        method.getName match {
+  //          case "toString" => value
+  //          case _ => throw new RuntimeException("Marker Only Can Call ToString")
+  //        }
+  //      }
+  //    })
+  //    enhancer.create()
+  //  }
 }

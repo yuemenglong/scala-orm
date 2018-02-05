@@ -7,6 +7,7 @@ import scala.annotation.varargs
 /**
   * Created by yml on 2017/7/15.
   */
+//noinspection ScalaFileName
 
 trait ExecutableUpdate extends Executable {
   @varargs def set(as: Assign*): ExecutableUpdate

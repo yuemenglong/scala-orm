@@ -24,19 +24,44 @@ trait ExecuteJoin {
 
   def ignore(fields: String*): ExecuteJoin
 
-  def insert(obj: Object): ExecuteJoin
+  def insertFor(obj: Object): ExecuteJoin
 
-  def update(obj: Object): ExecuteJoin
+  def updateFor(obj: Object): ExecuteJoin
 
-  def delete(obj: Object): ExecuteJoin
+  def deleteFor(obj: Object): ExecuteJoin
 
-  def ignore(obj: Object): ExecuteJoin
+  def ignoreFor(obj: Object): ExecuteJoin
+
+  def execute(entity: Entity, conn: Connection): Int
+}
+
+trait TypedExecuteJoin[T] extends ExecuteJoin {
+
+  def insert[R](fn: T => R): TypedExecuteJoin[R]
+
+  def inserts[R](fn: T => Array[R]): TypedExecuteJoin[R]
+
+  def update[R](fn: T => R): TypedExecuteJoin[R]
+
+  def updates[R](fn: T => Array[R]): TypedExecuteJoin[R]
+
+  def delete[R](fn: T => R): TypedExecuteJoin[R]
+
+  def deletes[R](fn: T => Array[R]): TypedExecuteJoin[R]
+
+  def fields(fns: (T => Object)*): TypedExecuteJoin[T]
+
+  def ignore(fns: (T => Object)*): TypedExecuteJoin[T]
 }
 
 trait ExecuteRoot extends ExecuteJoin with Executable {
   override def ignore(fields: String*): ExecuteRoot
 
-  override def ignore(obj: Object): ExecuteRoot
+  override def ignoreFor(obj: Object): ExecuteRoot
+}
+
+trait TypedExecuteRoot[T] extends ExecuteRoot with TypedExecuteJoin[T] {
+  def root(): T
 }
 
 

@@ -1,12 +1,12 @@
 package io.github.yuemenglong.orm.logger
 
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{Logger => SLFLogger, LoggerFactory}
 
 /**
   * Created by Administrator on 2017/7/3.
   */
 object Logger {
-  val logger: Logger = LoggerFactory.getLogger("[ORM]")
+  val logger: SLFLogger = LoggerFactory.getLogger("[ORM]")
   var enable: Boolean = true
 
   def trace(msg: String, params: Object*): Unit = {

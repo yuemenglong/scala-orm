@@ -6,36 +6,42 @@ import io.github.yuemenglong.orm.operate.traits.core._
 /**
   * Created by <yuemenglong@126.com> on 2017/7/17.
   */
+trait QueryBuilder[T] {
+  def from[R](selectRoot: Root[R]): Query[R, T]
+}
 
-trait Query[T] extends Queryable[T] {
+trait Query[R, T] extends Queryable[T] with TypedQuery[R, T] {
 
-  def from(selectRoot: Root[_]): Query[T]
+  def limit(l: Long): Query[R, T]
 
-  def limit(l: Long): Query[T]
+  def offset(l: Long): Query[R, T]
 
-  def offset(l: Long): Query[T]
+  def asc(field: Field): Query[R, T]
 
-  def asc(field: String): Query[T] = this.asc(this.getRoot.get(field))
+  def asc(field: String): Query[R, T] = this.asc(this.getRoot.get(field))
 
-  def asc(field: Field): Query[T]
+  def desc(field: Field): Query[R, T]
 
-  def desc(field: String): Query[T] = this.desc(this.getRoot.get(field))
+  def desc(field: String): Query[R, T] = this.desc(this.getRoot.get(field))
 
-  def desc(field: Field): Query[T]
+  def where(cond: Cond): Query[R, T]
 
-  def where(cond: Cond): Query[T]
+  def groupBy(field: Field, fields: Field*): Query[R, T]
 
-  def groupBy(fields: Array[String]): Query[T] = this.groupBy(fields.map(f => this.getRoot.get(f)))
+  def groupBy(field: String, fields: String*): Query[R, T]
 
-  def groupBy(fields: Array[Field]): Query[T]
+  def having(cond: Cond): Query[R, T]
 
-  def groupBy(field: String): Query[T] = this.groupBy(this.getRoot.get(field))
+  def getRoot: Root[R]
+}
 
-  def groupBy(field: Field): Query[T]
+trait TypedQuery[R, T] {
 
-  def having(cond: Cond): Query[T]
+  def asc(fn: R => Object): Query[R, T]
 
-  def getRoot: Root[_]
+  def desc(fn: R => Object): Query[R, T]
+
+  def groupBy(fn: (R => Object), fns: (R => Object)*): Query[R, T]
 }
 
 trait SelectableTuple[T] extends Selectable[T] {

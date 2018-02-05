@@ -3,14 +3,9 @@ package io.github.yuemenglong.orm.kit
 import java.lang.reflect.{Field, Method}
 import java.sql.{Connection, ResultSet}
 
-import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.operate.impl.core.{JoinImpl, SelectJoinImpl}
-import io.github.yuemenglong.orm.operate.traits.Query
-import io.github.yuemenglong.orm.operate.traits.core.{Cond, Root, SelectJoin}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -102,4 +97,6 @@ object Kit {
       stmt.close()
     }
   }
+
+
 }

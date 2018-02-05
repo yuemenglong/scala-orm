@@ -5,11 +5,12 @@ import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.meta.OrmMeta
+import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.impl._
 import io.github.yuemenglong.orm.operate.impl.core._
+import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.traits.core._
-import io.github.yuemenglong.orm.operate.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, Query}
+import io.github.yuemenglong.orm.operate.traits._
 
 import scala.reflect.ClassTag
 
@@ -75,49 +76,80 @@ object Orm {
     Logger.setEnable(b)
   }
 
-  def insert(obj: Object): ExecuteRoot = ExecuteRootImpl.insert(obj)
+  def insert[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.insert(convert(obj))
 
-  def update(obj: Object): ExecuteRoot = ExecuteRootImpl.update(obj)
+  def update[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.update(convert(obj))
 
-  def delete(obj: Object): ExecuteRoot = ExecuteRootImpl.delete(obj)
+  def delete[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.delete(convert(obj))
 
   def root[T](clazz: Class[T]): Root[T] = {
-    if (!OrmMeta.entityMap.contains(clazz)) {
-      throw new RuntimeException("Not Entity Class")
+    OrmMeta.entityMap.get(clazz) match {
+      case None => throw new RuntimeException("Not Entity Class")
+      case Some(m) =>
+        val rootInner = new JoinInner {
+          override val meta: EntityMeta = m
+          override val parent: Join = null
+          override val joinName: String = null
+          override val right: String = null
+          override val left: String = null
+          override val joinType: JoinType = null
+        }
+        val root = new RootImpl[T] with TypedRootImpl[T] with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
+          with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
+          override val inner: JoinInner = rootInner
+        }
+        root
     }
-    new RootImpl[T](clazz, new JoinImpl(OrmMeta.entityMap(clazz)))
   }
 
   def cond(): Cond = new CondHolder
 
-  def select[T](s: Selectable[T]): Query[T] = {
-    val st = new SelectableTupleImpl[T](s.getType, s)
-    new QueryImpl[T](st)
+  def select[T](s: Selectable[T]): QueryBuilder[T] = {
+    //    val st = new SelectableTupleImpl[T](s.getType, s)
+    new QueryBuilderImpl[T] {
+      override val st = new SelectableTupleImpl[T](s.getType, s)
+    }
+    //    new QueryImpl[T](st)
   }
 
-  def select[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): Query[(T1, T2)] = {
-    val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
-    new QueryImpl[(T1, T2)](st)
+  def select[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): QueryBuilder[(T1, T2)] = {
+    //    val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
+    //    new QueryImpl[(T1, T2)](st)
+    new QueryBuilderImpl[(T1, T2)] {
+      override val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
+    }
   }
 
-  def select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): Query[(T1, T2, T3)] = {
-    val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
-    new QueryImpl[(T1, T2, T3)](st)
+  def select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): QueryBuilder[(T1, T2, T3)] = {
+    //    val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
+    //    new QueryImpl[(T1, T2, T3)](st)
+    new QueryBuilderImpl[(T1, T2, T3)] {
+      override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
+    }
   }
 
-  def selectFrom[T](root: Root[T]): Query[T] = {
-    val st = new SelectableTupleImpl[T](root.getType, root)
-    new QueryImpl[T](st, root)
+  def selectFrom[T](root: Root[T]): Query[T, T] = {
+    //    val st = new SelectableTupleImpl[T](root.getType, root)
+    //    new QueryImpl[T](st, root)
+    val pRoot = root
+    new QueryImpl[T, T] with TypedQueryImpl[T, T] with QueryBuilderImpl[T] {
+      override val root = pRoot
+      override val st = new SelectableTupleImpl[T](root.getType, root)
+    }
   }
 
   @Deprecated
   def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
 
-  def insert[T](arr: Array[T]): ExecutableInsert[T] = {
+  def inserts[T](arr: Array[T]): ExecutableInsert[T] = {
     arr.isEmpty match {
       case true => throw new RuntimeException("Batch Insert But Array Is Empty")
-      case false => new InsertImpl[T](arr(0).asInstanceOf[Entity].$$core()
-        .meta.clazz.asInstanceOf[Class[T]]).values(arr)
+      case false => {
+        val entityArr = Orm.convert(arr)
+        val clazz = entityArr(0).asInstanceOf[Entity].$$core()
+          .meta.clazz.asInstanceOf[Class[T]]
+        new InsertImpl[T](clazz).values(entityArr)
+      }
     }
   }
 
