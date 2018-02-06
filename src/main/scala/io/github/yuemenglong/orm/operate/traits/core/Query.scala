@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.traits.core
 
 import java.sql.{Connection, ResultSet}
 
+import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.impl.core._
@@ -13,7 +14,7 @@ import scala.collection.mutable
   * Created by yml on 2017/7/14.
   */
 trait Queryable[T] {
-  def query(conn: Connection): Array[T]
+  def query(session: Session): Array[T]
 
   def walk(t: T, fn: (Entity) => Entity): T
 

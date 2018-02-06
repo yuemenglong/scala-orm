@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.impl
 
 import java.sql.Connection
 
+import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.impl.core.CondHolder
@@ -26,7 +27,7 @@ class DeleteImpl(deletes: Join*) extends ExecutableDelete {
     this
   }
 
-  override def execute(conn: Connection): Int = {
+  override def execute(session: Session): Int = {
     if (root == null) {
       throw new RuntimeException("Must Spec A Delete Root")
     }
@@ -37,6 +38,6 @@ class DeleteImpl(deletes: Join*) extends ExecutableDelete {
     val targets = deletes.map(j => s"`${j.getAlias}`").mkString(", ")
     val sql = s"DELETE $targets FROM\n${root.getTable}\nWHERE $condSql"
     val params = root.getParams ++ cond.getParams
-    Kit.execute(conn, sql, params)
+    session.execute(sql, params)
   }
 }

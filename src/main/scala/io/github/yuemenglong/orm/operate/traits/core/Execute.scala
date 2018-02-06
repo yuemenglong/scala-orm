@@ -2,13 +2,14 @@ package io.github.yuemenglong.orm.operate.traits.core
 
 import java.sql.Connection
 
+import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 
 /**
   * Created by yml on 2017/7/15.
   */
 trait Executable {
-  def execute(conn: Connection): Int
+  def execute(session: Session): Int
 }
 
 trait ExecuteJoin {
@@ -30,7 +31,7 @@ trait ExecuteJoin {
 
   def ignoreFor(obj: Object): ExecuteJoin
 
-  def execute(entity: Entity, conn: Connection): Int
+  def execute(entity: Entity, session: Session): Int
 }
 
 trait TypedExecuteJoin[T] extends ExecuteJoin {

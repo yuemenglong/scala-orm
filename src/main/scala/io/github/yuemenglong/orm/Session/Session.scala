@@ -1,9 +1,8 @@
 package io.github.yuemenglong.orm.Session
 
-import java.sql.Connection
+import java.sql.{Connection, ResultSet, Statement}
 
-import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.traits.core.{Executable, Queryable}
 
 import scala.reflect.ClassTag
@@ -47,11 +46,11 @@ class Session(private val conn: Connection) {
   }
 
   def execute(executor: Executable): Int = {
-    executor.execute(conn)
+    executor.execute(this)
   }
 
   def query[T](query: Queryable[T]): Array[T] = {
-    query.query(conn).toArray(ClassTag(query.getType))
+    query.query(this).toArray(ClassTag(query.getType))
   }
 
   def first[T](q: Queryable[T]): T = {
@@ -61,48 +60,85 @@ class Session(private val conn: Connection) {
     }
   }
 
-  //  def query[T](selector: Target[T]): Array[T] = {
-  //    val ct: ClassTag[T] = selector match {
-  //      case es: JoinT[_] => ClassTag(es.meta.clazz)
-  //      case fs: Target[_] => ClassTag(fs.classT())
-  //    }
-  //    query(Array[Target[_]](selector))
-  //      .map(row => row(0).asInstanceOf[T])
-  //      .toArray(ct)
-  //  }
+  def record(sql: String, params: Array[Object]): Unit = {
+    val paramsSql = params.map {
+      case null => "null"
+      case v => v.toString
+    }.mkString(", ")
+    Logger.info(s"RUN\n$sql\n[$paramsSql]")
+  }
 
-  //  def first[T](selector: Target[T]): T = {
-  //    query(selector) match {
-  //      case Array() => null.asInstanceOf[T]
-  //      case arr => arr(0)
-  //    }
-  //  }
-  //
-  //  def query[T0, T1](s0: Target[T0], s1: Target[T1]): Array[(T0, T1)] = {
-  //    val selectors = Array[Target[_]](s0, s1)
-  //    query(selectors).map(row => {
-  //      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1])
-  //    })
-  //  }
-  //
-  //  def first[T0, T1](s0: Target[T0], s1: Target[T1]): (T0, T1) = {
-  //    query(s0, s1) match {
-  //      case Array() => null.asInstanceOf[(T0, T1)]
-  //      case arr => arr(0)
-  //    }
-  //  }
-  //
-  //  def query[T0, T1, T2](s0: Target[T0], s1: Target[T1], s2: Target[T2]): Array[(T0, T1, T2)] = {
-  //    val selectors = Array[Target[_]](s0, s1, s2)
-  //    query(selectors).map(row => {
-  //      (row(0).asInstanceOf[T0], row(1).asInstanceOf[T1], row(2).asInstanceOf[T2])
-  //    })
-  //  }
-  //
-  //  def first[T0, T1, T2](s0: Target[T0], s1: Target[T1], s2: Target[T2]): (T0, T1, T2) = {
-  //    query(s0, s1, s2) match {
-  //      case Array() => null.asInstanceOf[(T0, T1, T2)]
-  //      case arr => arr(0)
-  //    }
-  //  }
+  def record(sql: String, params: Array[Array[Object]]): Unit = {
+    val paramsSql = params.map(row => {
+      val content = row.map {
+        case null => "null"
+        case v => v.toString
+      }.mkString(", ")
+      s"[$content]"
+    }).mkString("\n")
+    Logger.info(s"RUN\n$sql\n[$paramsSql]")
+  }
+
+  def execute(sql: String, params: Array[Object],
+              postStmt: Statement => Unit = null): Int = {
+    record(sql, params)
+    val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+    try {
+      params.zipWithIndex.foreach { case (param, i) =>
+        stmt.setObject(i + 1, param)
+      }
+      val ret = stmt.executeUpdate()
+      if (postStmt != null) postStmt(stmt)
+      ret
+    } finally {
+      stmt.close()
+    }
+  }
+
+  def batch(sql: String, params: Array[Array[Object]],
+            postStmt: Statement => Unit = null): Int = {
+    record(sql, params)
+    val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+    try {
+      val inTransaction = !conn.getAutoCommit
+      if (!inTransaction) {
+        conn.setAutoCommit(false)
+      }
+      params.foreach(row => {
+        row.zipWithIndex.foreach { case (value, idx) =>
+          stmt.setObject(idx + 1, value)
+        }
+        stmt.addBatch()
+      })
+      val ret = stmt.executeBatch()
+      if (postStmt != null) postStmt(stmt)
+      if (!inTransaction) {
+        conn.commit()
+      }
+      ret.sum
+    } finally {
+      stmt.close()
+    }
+  }
+
+  def query[T](sql: String, params: Array[Object],
+               fn: (ResultSet) => Array[T]): Array[T] = {
+    record(sql, params)
+    val stmt = conn.prepareStatement(sql)
+    params.zipWithIndex.foreach { case (param, i) =>
+      stmt.setObject(i + 1, param)
+    }
+    var rs: ResultSet = null
+    try {
+      rs = stmt.executeQuery()
+      fn(rs)
+    } catch {
+      case e: Throwable => throw e
+    } finally {
+      if (rs != null) {
+        rs.close()
+      }
+      stmt.close()
+    }
+  }
 }

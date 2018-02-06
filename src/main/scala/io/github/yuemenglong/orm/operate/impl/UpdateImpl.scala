@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.impl
 
 import java.sql.Connection
 
+import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.impl.core.CondHolder
@@ -36,7 +37,7 @@ class UpdateImpl(root: Root[_]) extends ExecutableUpdate {
     assigns.flatMap(_.getParams) ++ cond.getParams
   }
 
-  override def execute(conn: Connection): Int = Kit.execute(conn, getSql, getParams)
+  override def execute(session: Session): Int = session.execute(getSql, getParams)
 
   @varargs override def set(as: Assign*): ExecutableUpdate = {
     assigns ++= as

@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.impl.core
 
 import java.sql.{Connection, Statement}
 
+import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
@@ -21,7 +22,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   protected var ignoreFields: Set[String] = Set[String]()
 
 
-  override def execute(entity: Entity, conn: Connection): Int = {
+  override def execute(entity: Entity, session: Session): Int = {
     if (entity.$$core().meta != meta) {
       throw new RuntimeException(s"Meta Info Not Match, ${entity.$$core().meta.entity}:${meta.entity}")
     }
@@ -30,16 +31,16 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     }
     val core = entity.$$core()
     require(meta == core.meta)
-    (executePointer(core, conn)
-      + executeSelf(core, conn)
-      + executeOneOne(core, conn)
-      + executeOneMany(core, conn)
+    (executePointer(core, session)
+      + executeSelf(core, session)
+      + executeOneOne(core, session)
+      + executeOneMany(core, session)
       )
   }
 
-  def executeSelf(core: EntityCore, conn: Connection): Int
+  def executeSelf(core: EntityCore, session: Session): Int
 
-  private def executePointer(core: EntityCore, conn: Connection): Int = {
+  private def executePointer(core: EntityCore, session: Session): Int = {
     var ret = 0
     cascades.filter { case (field, _) =>
       core.meta.fieldMap(field).isPointer &&
@@ -49,7 +50,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
       // insert(b)
       val b = core.fieldMap(field).asInstanceOf[Entity]
       val bCore = b.$$core()
-      ret += ex.execute(b, conn)
+      ret += ex.execute(b, session)
       // a.b_id = b.id
       val fieldMeta = core.meta.fieldMap(field).asInstanceOf[FieldMetaPointer]
       core.fieldMap += (fieldMeta.left -> bCore.fieldMap(fieldMeta.right))
@@ -57,7 +58,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
     ret
   }
 
-  private def executeOneOne(core: EntityCore, conn: Connection): Int = {
+  private def executeOneOne(core: EntityCore, session: Session): Int = {
     var ret = 0
     cascades.filter { case (field, _) =>
       core.meta.fieldMap(field).isOneOne &&
@@ -70,12 +71,12 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
       val bCore = b.$$core()
       bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
       // insert(b)
-      ret += ex.execute(b, conn)
+      ret += ex.execute(b, session)
     }
     ret
   }
 
-  private def executeOneMany(core: EntityCore, conn: Connection): Int = {
+  private def executeOneMany(core: EntityCore, session: Session): Int = {
     var ret = 0
     cascades.filter { case (field, _) =>
       core.meta.fieldMap(field).isOneMany &&
@@ -88,7 +89,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
         if (spec.contains(b)) {
           val specEx = spec(b)
           if (specEx != null) {
-            ret += specEx.execute(b, conn)
+            ret += specEx.execute(b, session)
           }
         } else {
           // b.a_id = a.id
@@ -96,7 +97,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
           val bCore = b.$$core()
           bCore.fieldMap += (fieldMeta.right -> core.fieldMap(fieldMeta.left))
           // insert(b)
-          ret += ex.execute(b, conn)
+          ret += ex.execute(b, session)
         }
       })
     }
@@ -186,7 +187,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
 }
 
 class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
-  override def executeSelf(core: EntityCore, conn: Connection): Int = {
+  override def executeSelf(core: EntityCore, session: Session): Int = {
     val validFields = this.fields.filter(field => {
       field.isNormalOrPkey &&
         core.fieldMap.contains(field.name) &&
@@ -201,32 +202,42 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
 
     val sql = s"INSERT INTO `${core.meta.table}`($columns) values($values)"
     val params = validFields.map(f => core.get(f.name))
+    session.execute(sql, params, stmt => {
+      if (core.meta.pkey.isAuto) {
+        val rs = stmt.getGeneratedKeys
+        if (rs.next()) {
+          val id = rs.getObject(1)
+          core.fieldMap += (core.meta.pkey.name -> id)
+        }
+        rs.close()
+      }
+    })
 
-    Kit.logSql(sql, params)
-
-    val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
-    validFields.zipWithIndex.foreach {
-      case (field, i) => stmt.setObject(i + 1, core.get(field.name))
-    }
-
-    val affected = stmt.executeUpdate()
-    if (!core.meta.pkey.isAuto) {
-      stmt.close()
-      return affected
-    }
-    val rs = stmt.getGeneratedKeys
-    if (rs.next()) {
-      val id = rs.getObject(1)
-      core.fieldMap += (core.meta.pkey.name -> id)
-    }
-    rs.close()
-    stmt.close()
-    affected
+    //    Kit.logSql(sql, params)
+    //
+    //    val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+    //    validFields.zipWithIndex.foreach {
+    //      case (field, i) => stmt.setObject(i + 1, core.get(field.name))
+    //    }
+    //
+    //    val affected = stmt.executeUpdate()
+    //    if (!core.meta.pkey.isAuto) {
+    //      stmt.close()
+    //      return affected
+    //    }
+    //    val rs = stmt.getGeneratedKeys
+    //    if (rs.next()) {
+    //      val id = rs.getObject(1)
+    //      core.fieldMap += (core.meta.pkey.name -> id)
+    //    }
+    //    rs.close()
+    //    stmt.close()
+    //    affected
   }
 }
 
 class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
-  override def executeSelf(core: EntityCore, conn: Connection): Int = {
+  override def executeSelf(core: EntityCore, session: Session): Int = {
     if (core.getPkey == null) throw new RuntimeException("Update Entity Must Has Pkey")
     val validFields = this.fields.filter(field => {
       field.isNormal &&
@@ -241,31 +252,25 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
     val params = validFields.map(f => core.get(f.name)) ++ Array(core.getPkey)
 
     if (validFields.isEmpty) {
-      Kit.logSql(sql, params)
       Logger.warn("No Field To Update")
       return 0
     }
-    Kit.execute(conn, sql, params)
+    session.execute(sql, params)
   }
 }
 
 class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
-  override def executeSelf(core: EntityCore, conn: Connection): Int = {
+  override def executeSelf(core: EntityCore, session: Session): Int = {
     if (core.getPkey == null) throw new RuntimeException("Delete Entity Must Has Pkey")
     val idCond = s"${core.meta.pkey.column} = ?"
     val sql = s"DELETE FROM `${core.meta.table}` WHERE $idCond"
-    Kit.execute(conn, sql, Array(core.getPkey))
-    //    val stmt = conn.prepareStatement(sql)
-    //    stmt.setObject(1, core.getPkey)
-    //    val ret = stmt.executeUpdate()
-    //    stmt.close()
-    //    ret
+    session.execute(sql, Array(core.getPkey))
   }
 }
 
 class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
 
-  override def execute(conn: Connection): Int = impl.execute(obj.asInstanceOf[Entity], conn)
+  override def execute(session: Session): Int = impl.execute(obj.asInstanceOf[Entity], session)
 
   override def insert(field: String): ExecuteJoin = impl.insert(field)
 
@@ -294,7 +299,7 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
     this
   }
 
-  override def execute(entity: Entity, conn: Connection): Int = impl.execute(entity, conn)
+  override def execute(entity: Entity, session: Session): Int = impl.execute(entity, session)
 }
 
 trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {

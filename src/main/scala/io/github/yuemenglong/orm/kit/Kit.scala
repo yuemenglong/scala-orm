@@ -58,45 +58,44 @@ object Kit {
     Class.forName(name)
   }
 
-  def logSql(sql: String, params: Array[Object]): Unit = {
-    val paramsSql = params.map {
-      case null => "null"
-      case v => v.toString
-    }.mkString(", ")
-    Logger.info(s"RUN\n$sql\n[$paramsSql]")
-  }
-
-  def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
-    logSql(sql, params)
-    val stmt = conn.prepareStatement(sql)
-    params.zipWithIndex.foreach { case (param, i) =>
-      stmt.setObject(i + 1, param)
-    }
-    val ret = stmt.executeUpdate()
-    stmt.close()
-    ret
-  }
-
-  def query[T](conn: Connection, sql: String, params: Array[Object],
-               fn: (ResultSet) => Array[T]): Array[T] = {
-    logSql(sql, params)
-    val stmt = conn.prepareStatement(sql)
-    params.zipWithIndex.foreach { case (param, i) =>
-      stmt.setObject(i + 1, param)
-    }
-    var rs: ResultSet = null
-    try {
-      rs = stmt.executeQuery()
-      fn(rs)
-    } catch {
-      case e: Throwable => throw e
-    } finally {
-      if (rs != null) {
-        rs.close()
-      }
-      stmt.close()
-    }
-  }
-
-
+  //
+  //  def logSql(sql: String, params: Array[Object]): Unit = {
+  //    val paramsSql = params.map {
+  //      case null => "null"
+  //      case v => v.toString
+  //    }.mkString(", ")
+  //    Logger.info(s"RUN\n$sql\n[$paramsSql]")
+  //  }
+  //
+  //  def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
+  //    logSql(sql, params)
+  //    val stmt = conn.prepareStatement(sql)
+  //    params.zipWithIndex.foreach { case (param, i) =>
+  //      stmt.setObject(i + 1, param)
+  //    }
+  //    val ret = stmt.executeUpdate()
+  //    stmt.close()
+  //    ret
+  //  }
+  //
+  //  def query[T](conn: Connection, sql: String, params: Array[Object],
+  //               fn: (ResultSet) => Array[T]): Array[T] = {
+  //    logSql(sql, params)
+  //    val stmt = conn.prepareStatement(sql)
+  //    params.zipWithIndex.foreach { case (param, i) =>
+  //      stmt.setObject(i + 1, param)
+  //    }
+  //    var rs: ResultSet = null
+  //    try {
+  //      rs = stmt.executeQuery()
+  //      fn(rs)
+  //    } catch {
+  //      case e: Throwable => throw e
+  //    } finally {
+  //      if (rs != null) {
+  //        rs.close()
+  //      }
+  //      stmt.close()
+  //    }
+  //  }
 }

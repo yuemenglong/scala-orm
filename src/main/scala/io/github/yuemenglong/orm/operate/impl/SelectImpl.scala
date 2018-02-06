@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.impl
 import java.lang
 import java.sql.{Connection, ResultSet}
 
+import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
@@ -81,14 +82,14 @@ trait QueryImpl[R, T] extends Query[R, T] {
     s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$groupByHavingSql$orderBySql$loSql"
   }
 
-  override def query(conn: Connection): Array[T] = {
+  override def query(session: Session): Array[T] = {
     if (root == null || st == null) {
       throw new RuntimeException("Must Select <Tuple> From <Root>, Either Is Null")
     }
     var filterSet = Set[String]()
     val sql = getSql
     val params = getParams
-    Kit.query(conn, sql, params, rs => {
+    session.query(sql, params, rs => {
       var ab = ArrayBuffer[T]()
       val filterMap = mutable.Map[String, Entity]()
       while (rs.next()) {
