@@ -109,6 +109,7 @@ class Db(val host: String, val port: Int,
     } catch {
       case e: Throwable =>
         try {
+          session.errorTrace()
           tx.rollback()
         } catch {
           case e2: Throwable => Logger.error("Roll Back Error", e2)

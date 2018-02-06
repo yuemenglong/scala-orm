@@ -5,6 +5,7 @@ import java.sql.{Connection, ResultSet, Statement}
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.traits.core.{Executable, Queryable}
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -14,6 +15,7 @@ import scala.reflect.ClassTag
 class Session(private val conn: Connection) {
   private var closed = false
   private var tx: Transaction = _
+  private var records = new ArrayBuffer[String]()
 
   def inTransaction(): Boolean = {
     tx != null
@@ -65,7 +67,9 @@ class Session(private val conn: Connection) {
       case null => "null"
       case v => v.toString
     }.mkString(", ")
-    Logger.info(s"RUN\n$sql\n[$paramsSql]")
+    val record = s"\n$sql\n[$paramsSql]"
+    Logger.debug(record)
+    records += record
   }
 
   def record(sql: String, params: Array[Array[Object]]): Unit = {
@@ -76,7 +80,15 @@ class Session(private val conn: Connection) {
       }.mkString(", ")
       s"[$content]"
     }).mkString("\n")
-    Logger.info(s"RUN\n$sql\n[$paramsSql]")
+    val record = s"\n$sql\n$paramsSql"
+    Logger.debug(record)
+    records += record
+  }
+
+  def errorTrace(): Unit = {
+    records.foreach(r => {
+      Logger.error(r.replace("\n", " "))
+    })
   }
 
   def execute(sql: String, params: Array[Object],

@@ -19,6 +19,7 @@ class TypedTest {
 
   @SuppressWarnings(Array("Duplicates"))
   @Before def before(): Unit = {
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "DEBUG")
     Orm.init("io.github.yuemenglong.orm.test.entity")
     db = openDb()
     db.rebuild()
@@ -538,14 +539,19 @@ class TypedTest {
 
   @Test
   def testBatchInsert(): Unit = db.beginTransaction(session => {
-    val obj = new Obj
-    obj.name = "name"
-    val objs = Orm.convert((1 to 3).map(_ => obj).toArray)
+    val objs = (1 to 3).map(i => {
+      val obj = Orm.empty(classOf[Obj])
+      obj.name = i.toString
+      obj
+    }).toArray
     val ret = session.execute(Orm.inserts(objs))
     Assert.assertEquals(ret, 3)
     Assert.assertEquals(objs(0).id.intValue(), 1)
     Assert.assertEquals(objs(1).id.intValue(), 2)
     Assert.assertEquals(objs(2).id.intValue(), 3)
+    Assert.assertEquals(objs(0).name, "1")
+    Assert.assertEquals(objs(1).name, "2")
+    Assert.assertEquals(objs(2).name, "3")
   })
 
   @Test

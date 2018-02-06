@@ -6,10 +6,11 @@ import java.util.Date
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.traits.core.Root
+import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
+import org.slf4j.impl.{SimpleLogger, SimpleLoggerFactory}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/10/19.
@@ -20,6 +21,7 @@ class ScalaTest {
 
   @SuppressWarnings(Array("Duplicates"))
   @Before def before(): Unit = {
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "DEBUG")
     Orm.init("io.github.yuemenglong.orm.test.entity")
     db = openDb()
     db.rebuild()
