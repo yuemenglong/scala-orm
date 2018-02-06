@@ -40,7 +40,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 
   def set(field: String, value: Object): Object = {
     val fieldMeta = this.meta.fieldMap(field)
-    if ((fieldMeta.isPointer || fieldMeta.isOneOne) && !EntityManager.isEntity(value)) {
+    if ((fieldMeta.isPointer || fieldMeta.isOneOne) && value != null && !EntityManager.isEntity(value)) {
       throw new RuntimeException(s"Can't Set Non Entity Value To Entity Field")
     }
     if (fieldMeta.isOneMany && value.asInstanceOf[Array[Object]].exists(!EntityManager.isEntity(_))) {

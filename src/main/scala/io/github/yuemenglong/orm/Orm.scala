@@ -16,20 +16,20 @@ import scala.reflect.ClassTag
 
 object Orm {
 
-  def init(path: String): Unit = {
-    Scanner.scan(path)
-  }
-
   def init(paths: Array[String]): Unit = {
     Scanner.scan(paths)
   }
 
-  def init(clazzs: Array[Class[_]]): Unit = {
+  private[orm] def init(path: String): Unit = {
+    Scanner.scan(path)
+  }
+
+  private def init(clazzs: Array[Class[_]]): Unit = {
     Scanner.scan(clazzs)
   }
 
-  def clear(): Unit = {
-    OrmMeta.clear()
+  def reset(): Unit = {
+    OrmMeta.reset()
   }
 
   def openDb(host: String, port: Int, user: String, pwd: String, db: String,
@@ -150,4 +150,8 @@ object Orm {
   def delete(joins: Join*): ExecutableDelete = new DeleteImpl(joins: _*)
 
   def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
+
+  def clear(obj: Object, field: String): Unit = EntityManager.clear(obj, field)
+
+  def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
 }

@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
@@ -29,7 +30,7 @@ class TypedTest {
   }
 
   @After def after(): Unit = {
-    Orm.clear()
+    Orm.reset()
     db.shutdown()
     db2.shutdown()
   }
@@ -628,7 +629,6 @@ class TypedTest {
       OrmTool.attach(obj, session)(_.om)
       Assert.assertEquals(obj.om.length, 3)
     }
-
     {
       val obj = ex.root()
       obj.om = Array()
@@ -636,9 +636,21 @@ class TypedTest {
         j.select(_.mo)
       }, null)
       Assert.assertEquals(obj.om.length, 3)
-      Assert.assertNotNull(obj.om(0).mo)
-      Assert.assertNotNull(obj.om(1).mo)
-      Assert.assertNotNull(obj.om(2).mo)
+      Assert.assertEquals(obj.om(0).mo.id.intValue(), 1)
+      Assert.assertEquals(obj.om(1).mo.id.intValue(), 2)
+      Assert.assertEquals(obj.om(2).mo.id.intValue(), 3)
+    }
+    {
+      val obj = ex.root()
+      obj.om.foreach(om => {
+        Orm.clear(om)(_.mo)
+        Assert.assertNull(om.mo)
+      })
+
+      OrmTool.sattach(obj.om, session)(_.mo)
+      Assert.assertEquals(obj.om(0).mo.id.intValue(), 1)
+      Assert.assertEquals(obj.om(1).mo.id.intValue(), 2)
+      Assert.assertEquals(obj.om(2).mo.id.intValue(), 3)
     }
   })
 }

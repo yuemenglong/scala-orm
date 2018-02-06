@@ -31,7 +31,7 @@ class ScalaTest {
   }
 
   @After def after(): Unit = {
-    Orm.clear()
+    Orm.reset()
     db.shutdown()
     db2.shutdown()
   }

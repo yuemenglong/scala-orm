@@ -97,9 +97,34 @@ object OrmTool {
     ret
   }
 
+  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachx(orig, session)(fn)(null, null)
+
   def attachs[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachsx(orig, session)(fn)(null, null)
 
-  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachx(orig, session)(fn)(null, null)
+  def sattach[T, R](orig: Array[T], session: Session)(fn: T => R): Array[T] = sattachx(orig, session)(fn)(null, null)
+
+  def sattachs[T, R](orig: Array[T], session: Session)(fn: T => Array[R]): Array[T] = sattachsx(orig, session)(fn)(null, null)
+
+  def attachx[T, R](orig: T, session: Session)
+                   (fn: T => R)
+                   (joinFn: TypedSelectJoin[R] => Unit,
+                    queryFn: Query[R, R] => Unit,
+                   ): T = {
+    val obj = Orm.convert(orig)
+    val entity = obj.asInstanceOf[Entity]
+    val marker = EntityManager.createMarker[T](entity.$$core().meta)
+    fn(marker)
+    val field = marker.toString
+    val jf = joinFn match {
+      case null => null
+      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+    }
+    val qf = queryFn match {
+      case null => null
+      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+    }
+    attach(obj, field, session, jf, qf)
+  }
 
   def attachsx[T, R](orig: T, session: Session)
                     (fn: T => Array[R])
@@ -122,12 +147,16 @@ object OrmTool {
     attach(obj, field, session, jf, qf)
   }
 
-  def attachx[T, R](orig: T, session: Session)
-                   (fn: T => R)
-                   (joinFn: TypedSelectJoin[R] => Unit,
-                    queryFn: Query[R, R] => Unit,
-                   ): T = {
-    val obj = Orm.convert(orig)
+  def sattachx[T, R](orig: Array[T], session: Session)
+                    (fn: T => R)
+                    (joinFn: TypedSelectJoin[R] => Unit,
+                     queryFn: Query[R, R] => Unit,
+                    ): Array[T] = {
+    if (orig.isEmpty) {
+      return orig
+    }
+    val arr = Orm.convert(orig)
+    val obj = arr(0)
     val entity = obj.asInstanceOf[Entity]
     val marker = EntityManager.createMarker[T](entity.$$core().meta)
     fn(marker)
@@ -140,7 +169,32 @@ object OrmTool {
       case null => null
       case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
     }
-    attach(obj, field, session, jf, qf)
+    attach(arr, field, session, jf, qf)
+  }
+
+  def sattachsx[T, R](orig: Array[T], session: Session)
+                     (fn: T => Array[R])
+                     (joinFn: TypedSelectJoin[R] => Unit,
+                      queryFn: Query[R, R] => Unit,
+                     ): Array[T] = {
+    if (orig.isEmpty) {
+      return orig
+    }
+    val arr = Orm.convert(orig)
+    val obj = arr(0)
+    val entity = obj.asInstanceOf[Entity]
+    val marker = EntityManager.createMarker[T](entity.$$core().meta)
+    fn(marker)
+    val field = marker.toString
+    val jf = joinFn match {
+      case null => null
+      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+    }
+    val qf = queryFn match {
+      case null => null
+      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+    }
+    attach(arr, field, session, jf, qf)
   }
 
   def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
@@ -183,8 +237,8 @@ object OrmTool {
 
 
   private def attachArray(arr: Array[_], field: String, session: Session,
-                          joinFn: SelectFieldJoin => Unit = _ => {},
-                          queryFn: Query[_, _] => Unit = (_: Query[_, _]) => {},
+                          joinFn: SelectFieldJoin => Unit = null,
+                          queryFn: Query[_, _] => Unit = null,
                          ): Array[_] = {
     if (arr.exists(!_.isInstanceOf[Entity])) {
       throw new RuntimeException("Array Has Item Not Entity")
@@ -203,10 +257,10 @@ object OrmTool {
     val leftValues = entities.map(_.$$core().get(refer.left))
     val rightField = refer.right
 
-    joinFn(root)
+    if (joinFn != null) joinFn(root)
 
     val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[_, _]]
-    queryFn(query)
+    if (queryFn != null) queryFn(query)
     query.where(query.cond.and(root.get(rightField).in(leftValues)))
 
     val res: Map[Object, Object] = refer.isOneMany match {

@@ -133,19 +133,24 @@ object EntityManager {
     enhancer.create().asInstanceOf[T]
   }
 
-  //  def createMarkerRet(clazz: Class[_], value: String): Object = {
-  //    val enhancer: Enhancer = new Enhancer
-  //    enhancer.setSuperclass(clazz)
-  //
-  //    enhancer.setCallback(new MethodInterceptor() {
-  //      @throws[Throwable]
-  //      def intercept(obj: Object, method: Method, args: Array[Object], proxy: MethodProxy): Object = {
-  //        method.getName match {
-  //          case "toString" => value
-  //          case _ => throw new RuntimeException("Marker Only Can Call ToString")
-  //        }
-  //      }
-  //    })
-  //    enhancer.create()
-  //  }
+  def clear(obj: Object, field: String): Unit = {
+    if (!isEntity(obj)) {
+      throw new RuntimeException("Not Entity")
+    }
+    val entity = obj.asInstanceOf[Entity]
+    if (!entity.$$core().meta.fieldMap.contains(field)) {
+      throw new RuntimeException(s"[${field}] Not Field Of Entity [${entity.$$core().meta.entity}]")
+    }
+    entity.$$core().fieldMap -= field
+  }
+
+  def clear[T <: Object](obj: T)(fn: T => Any): Unit = {
+    if (!isEntity(obj)) {
+      throw new RuntimeException("Not Entity")
+    }
+    val entity = obj.asInstanceOf[Entity]
+    val marker = createMarker[T](entity.$$core().meta)
+    fn(marker)
+    clear(obj, marker.toString)
+  }
 }

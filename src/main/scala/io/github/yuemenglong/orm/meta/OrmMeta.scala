@@ -15,7 +15,7 @@ object OrmMeta {
     require(entityVec.nonEmpty)
   }
 
-  def clear(): Unit = {
+  def reset(): Unit = {
     entityVec.clear()
     entityMap = Map()
   }
