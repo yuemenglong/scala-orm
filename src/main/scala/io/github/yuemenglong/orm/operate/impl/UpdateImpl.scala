@@ -42,8 +42,6 @@ class UpdateImpl(root: Root[_]) extends ExecutableUpdate {
     assigns ++= as
     this
   }
-
-  override def walk(fn: (Entity) => Entity): Unit = {}
 }
 
 

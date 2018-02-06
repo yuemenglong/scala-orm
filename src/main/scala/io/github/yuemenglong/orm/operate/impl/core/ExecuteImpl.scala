@@ -289,10 +289,6 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
     this
   }
 
-  override def walk(fn: (Entity) => Entity): Unit = {
-    EntityManager.walk(obj.asInstanceOf[Entity], fn)
-  }
-
   override def fields(fields: String*): ExecuteRootImpl = {
     impl.fields(fields: _*)
     this

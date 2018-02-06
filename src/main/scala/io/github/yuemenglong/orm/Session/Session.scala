@@ -6,7 +6,6 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.traits.core.{Executable, Queryable}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -14,30 +13,8 @@ import scala.reflect.ClassTag
   */
 
 class Session(private val conn: Connection) {
-  private var cache = new ArrayBuffer[Object]()
   private var closed = false
   private var tx: Transaction = _
-
-  def injectSession(entity: Entity): Entity = {
-    if (entity == null) {
-      return null
-    }
-    val core = entity.$$core()
-    core.setSession(this)
-    entity
-    // 递归在walk中做了
-    //    core.meta.managedFieldVec().filter(field => {
-    //      !field.isNormalOrPkey && core.fieldMap.contains(field.name)
-    //    }).foreach(field => {
-    //      if (field.isOneMany) {
-    //        core.fieldMap(field.name).asInstanceOf[Array[Object]]
-    //          .map(_.asInstanceOf[Entity]).foreach(injectSession)
-    //      } else {
-    //        injectSession(core.fieldMap(field.name).asInstanceOf[Entity])
-    //      }
-    //    })
-    //    entity
-  }
 
   def inTransaction(): Boolean = {
     tx != null
@@ -54,21 +31,9 @@ class Session(private val conn: Connection) {
     tx = null
   }
 
-  def addCache(obj: Object): Unit = {
-    cache += obj
-  }
 
   def isClosed: Boolean = {
     closed
-  }
-
-  def flush(): Unit = {
-    require(!closed)
-    cache.foreach(item => {
-      val ex = Orm.update(item)
-      this.execute(ex)
-    })
-    cache.clear()
   }
 
   def close(): Unit = {
@@ -82,13 +47,11 @@ class Session(private val conn: Connection) {
   }
 
   def execute(executor: Executable): Int = {
-    val ret = executor.execute(conn)
-    executor.walk(injectSession)
-    ret
+    executor.execute(conn)
   }
 
   def query[T](query: Queryable[T]): Array[T] = {
-    query.query(conn).map(query.walk(_, injectSession)).toArray(ClassTag(query.getType))
+    query.query(conn).toArray(ClassTag(query.getType))
   }
 
   def first[T](q: Queryable[T]): T = {

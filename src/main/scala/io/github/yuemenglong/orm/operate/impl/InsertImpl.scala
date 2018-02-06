@@ -20,8 +20,6 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
   val meta: EntityMeta = OrmMeta.entityMap(clazz)
   var array: Array[T] = Array().asInstanceOf[Array[T]] //Array.newBuilder[T](ClassTag(clazz)).result()
 
-  override def walk(fn: (Entity) => Entity): Unit = {}
-
   override def execute(conn: Connection): Int = {
     val entities = array.map(obj => {
       if (!obj.isInstanceOf[Entity]) {

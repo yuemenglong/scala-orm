@@ -12,16 +12,6 @@ import io.github.yuemenglong.orm.meta._
   */
 class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   private val coreFn = "$$core"
-  private var session: Session = _
-
-  // 保证所有数组被初始化
-  //  meta.fieldVec.filter(_.isOneMany).map(_.asInstanceOf[FieldMetaOneMany]).foreach(f => {
-  //    if (!fieldMap.contains(f.name) || fieldMap(f.name) == null) {
-  //      val ct = ClassTag[Any](f.refer.clazz)
-  //      val array = Array.newBuilder(ct).result()
-  //      fieldMap += (f.name -> array)
-  //    }
-  //  })
 
   def getPkey: Object = {
     if (!fieldMap.contains(meta.pkey.name)) {
@@ -92,7 +82,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         case _ =>
           val oldb = EntityManager.core(this.fieldMap(field))
           oldb.fieldMap += (fieldMeta.right -> null)
-          addSessionCache(this.fieldMap(field))
       }
     } else {
       {}
@@ -123,7 +112,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
         if (core.getPkey != null && !newIds.contains(core.getPkey.toString)) {
           // oldb.a_id = null
           core.fieldMap += ((fieldMeta.right, null))
-          addSessionCache(item)
         }
       })
     }
@@ -143,18 +131,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     } else if (this.fieldMap.contains(left)) {
       this.fieldMap -= left
     }
-  }
-
-  def setSession(session: Session): Unit = {
-    this.session = session
-  }
-
-  def addSessionCache(obj: Object): Unit = {
-    if (session == null) {
-      return
-    }
-    require(!session.isClosed)
-    session.addCache(obj)
   }
 
   override def toString: String = {

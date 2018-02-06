@@ -9,8 +9,6 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
   */
 trait Executable {
   def execute(conn: Connection): Int
-
-  def walk(fn: (Entity) => Entity): Unit
 }
 
 trait ExecuteJoin {

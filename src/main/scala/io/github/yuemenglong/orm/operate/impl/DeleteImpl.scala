@@ -39,7 +39,4 @@ class DeleteImpl(deletes: Join*) extends ExecutableDelete {
     val params = root.getParams ++ cond.getParams
     Kit.execute(conn, sql, params)
   }
-
-  override def walk(fn: (Entity) => Entity): Unit = {}
-
 }
