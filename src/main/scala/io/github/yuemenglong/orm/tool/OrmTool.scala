@@ -279,41 +279,50 @@ object OrmTool {
   }
 
   def updateById[T, V](clazz: Class[T], id: V, session: Session,
-                       pairs: (String, Any)*): Unit = {
+                       pair: (String, Any), pairs: (String, Any)*): Unit = {
     val root = Orm.root(clazz)
-    val assigns = pairs.map {
+    val assigns = (Array(pair) ++ pairs).map {
       case (f, v) => root.get(f).assign(v.asInstanceOf[Object])
     }
     val pkey = root.getMeta.pkey.name
     session.execute(Orm.update(root).set(assigns: _*).where(root.get(pkey).eql(id)))
   }
 
-  def selectById[T, V](clazz: Class[T], id: V, session: Session,
-                       rootFn: (Root[T]) => Unit = (_: Root[T]) => {
-                       }): T = {
+  def updateById[T, V](clazz: Class[T], id: V, session: Session)
+                      (fns: (T => Any)*)
+                      (values: Any*): Unit = {
+    val meta = OrmMeta.entityMap(clazz)
+    if (fns.length != values.length) {
+      throw new RuntimeException("Fields And Values Length Not Match")
+    }
+    val names = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](meta)
+      fn(marker)
+      marker.toString
+    })
+    val ps = names.zip(values)
+    ps.length match {
+      case 0 =>
+      case 1 => updateById(clazz, id, session, ps.head)
+      case _ => updateById(clazz, id, session, ps.head, ps.drop(1): _*)
+    }
+  }
+
+  def selectById[T, V](clazz: Class[T], id: V, session: Session)
+                      (rootFn: (Root[T]) => Unit = null): T = {
     val root = Orm.root(clazz)
-    rootFn(root)
+    if (rootFn != null) rootFn(root)
     val pkey = root.getMeta.pkey.name
     session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
   }
 
-  def deleteById[T, V](clazz: Class[T], id: V, session: Session,
-                       rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]()): Int = {
+  def deleteById[T, V](clazz: Class[T], id: V, session: Session)
+                      (rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]()): Int = {
     val root = Orm.root(clazz)
     val cascade = rootFn(root)
     val all: Array[Join] = Array(root) ++ cascade
     val pkey = root.getMeta.pkey.name
     val ex = Orm.delete(all: _*).from(root).where(root.get(pkey).eql(id))
     session.execute(ex)
-  }
-
-  def clearField(obj: Object, field: String): Unit = {
-    if (!obj.isInstanceOf[Entity]) {
-      throw new RuntimeException("Not Entity")
-    }
-    if (!obj.asInstanceOf[Entity].$$core().meta.fieldMap.contains(field)) {
-      throw new RuntimeException(s"Not A Valid Field, $field")
-    }
-    obj.asInstanceOf[Entity].$$core().fieldMap -= field
   }
 }

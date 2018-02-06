@@ -652,5 +652,31 @@ class TypedTest {
       Assert.assertEquals(obj.om(1).mo.id.intValue(), 2)
       Assert.assertEquals(obj.om(2).mo.id.intValue(), 3)
     }
+    {
+      val obj = ex.root()
+      OrmTool.updateById(classOf[Obj], obj.id, session)(_.name, _.age)("name2", 10)
+    }
+    {
+      val obj = ex.root()
+      val res = OrmTool.selectById(classOf[Obj], obj.id, session)(root => {
+        root.select(_.om)
+      })
+      Assert.assertEquals(res.om.length, 3)
+      Assert.assertEquals(res.name, "name2")
+      Assert.assertEquals(res.age, 10)
+    }
+    {
+      val obj = ex.root()
+      OrmTool.deleteById(classOf[Obj], obj.id, session)(root => {
+        Array(root.leftJoin(_.om))
+      })
+      val res = OrmTool.selectById(classOf[Obj], obj.id, session)(root => {
+        root.select(_.om)
+      })
+      Assert.assertNull(res)
+      val root = Orm.root(classOf[OM])
+      val count = session.first(Orm.select(root.count()).from(root))
+      Assert.assertEquals(count.intValue(), 0)
+    }
   })
 }
