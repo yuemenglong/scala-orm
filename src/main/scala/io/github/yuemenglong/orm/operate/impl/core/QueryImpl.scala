@@ -311,9 +311,9 @@ trait SelectableImpl[T] extends Selectable[T] {
             val key = getOneManyFilterKey(field, b.$$core())
             if (!filterMap.contains(key)) {
               // 该对象还未被加入过一对多数组
-              val arr = aCore.fieldMap(field).asInstanceOf[Array[_]]
-              val brr = Kit.newArray(f.refer.clazz, b)
-              aCore.fieldMap += (field -> (arr ++ brr))
+              val arr = aCore.fieldMap(field).asInstanceOf[Array[_]].map(_.asInstanceOf[Entity])
+              val brr = Kit.newArray(f.refer.clazz, arr ++ Array(b): _*)
+              aCore.fieldMap += (field -> brr)
             }
             filterMap += (key -> b)
           }
