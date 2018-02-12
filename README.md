@@ -26,7 +26,6 @@ driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  e
 
 ### beginTransaction[T]
     Db.beginTransaction(Session=>{ })
-    
 ### openConnection
     val urlConnection = new URL(url).openConnection()
     
