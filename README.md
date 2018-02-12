@@ -4,6 +4,7 @@
 * [Types](#types)
 * [Session](#session)
 * [Database](#database)
+* [Orm](#orm)
 
 # Types
 Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
@@ -28,5 +29,8 @@ driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  e
     
 ### openConnection
     val urlConnection = new URL(url).openConnection()
+    
+# Orm
+init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert,  update,  delete,  root,  cond,  select,  selectFrom,  inserts,  deleteFrom,  clear
 
 
