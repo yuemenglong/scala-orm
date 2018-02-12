@@ -4,8 +4,8 @@
 * [Types](#types)
 
 # Types
-Integer
-Long
+Integer 
+Long 
 Float
 Double
 Boolean
