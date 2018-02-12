@@ -20,6 +20,9 @@ intToObject, longToObject, doubleToObject,  booleanToObject
 # Session
 inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
 
-# Database
-### url
+# Database(简称Db)
+### beginTransaction[T]
+
+    Db.beginTransaction(Session=>{ })
+
 driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  entities,  check,  rebuild,  drop,  create,  openSession,    execute,  beginTransaction[T]
