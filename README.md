@@ -5,6 +5,7 @@
 * [Session](#session)
 * [Database(简称Db)](#database)
 * [Orm](#orm)
+  * [Init](#init)
 
 # Types
 Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
@@ -31,5 +32,12 @@ driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  e
     
 # Orm
 init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert,  update,  delete,  root,  cond,  select,  selectFrom,  inserts,  deleteFrom,  clear
+
+### Orm.init(path:string)
+    Orm.init("test.entity")//初始化所有的entity数据
+### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String)
+    Orm.openDb()
+
+
 
 
