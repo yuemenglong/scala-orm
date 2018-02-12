@@ -36,8 +36,10 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
 
 ### Orm.init(path:string)
     Orm.init("test.entity")//Initialize all entity data
+    
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String)
     Orm.openDb("localhost", 3306, "root", "root", "test")
+    
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String,minConn: Int, maxConn: Int, partition: Int)
     Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)
 
