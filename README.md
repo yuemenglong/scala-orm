@@ -35,16 +35,13 @@ driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  e
 init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert,  update,  delete,  root,  cond,  select,  selectFrom,  inserts,  deleteFrom,  clear
 
 ### Orm.init(path:string)
-
     Orm.init("test.entity")//Initialize all entity data
     
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String)
-
-    Orm.openDb("localhost", 3306, "root", "root", "test")
+    Orm.openDb("localhost", 3306, "root", "root", "test")
     
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String,minConn: Int, maxConn: Int, partition: Int)
-
-    Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)
+    Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)
 
 
 
