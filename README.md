@@ -3,7 +3,7 @@
 # Tables of Contents
 * [Types](#types)
 * [Session](#session)
-* [Database](#database)
+* [Database(简称Db)](#database)
 * [Orm](#orm)
 
 # Types
