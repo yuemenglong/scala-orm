@@ -1,7 +1,7 @@
 # scala-orm
 
 # Tables of Contents
-# [Types](#types)
+* [Types](#types)
 
 # Types
 Integer
