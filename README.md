@@ -2,16 +2,11 @@
 
 # Tables of Contents
 * [Types](#types)
+* [Session](#session)
+* [Database](#database)
 
 # Types
-Integer,
-Long ,
-Float,
-Double,
-Boolean,
-String,
-Date,
-BigDecimal
+Integer,Long ,Float,Double,Boolean,String,Date,BigDecimal
 
 Defining the data type of a certain data.
 
@@ -20,7 +15,11 @@ Defining the data type of a certain data.
     var date:Date=_
 
 ### Types Conversion
-intToObject
-longToObject
-doubleToObject
-booleanToObject
+intToObject,longToObject,doubleToObject,booleanToObject
+
+# Session
+inTransaction,beginTransaction,clearTransaction,isClosed,close，getConnection，execute，query，firstrecord，errorTrace，batch，
+
+# Database
+driver,url,config,pool,openConnection,openConnection[T],shutdown,entities,check,rebuild,drop,create,openSession,execute,
+beginTransaction[T]
