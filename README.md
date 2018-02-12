@@ -13,9 +13,13 @@ String
 Date
 BigDecimal
 
-Defining the data type of a certain data
+Defining the data type of a certain data.
 
-`var id:string=_`
+`var id:String=_`
+
+`var age:Integer=_`
+
+`var date:Date=_`
 
 ### Types Conversion
 intToObject
