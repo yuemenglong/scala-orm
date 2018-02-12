@@ -14,12 +14,12 @@ Defining the data type of a certain data.
     var age:Integer=_
     var date:Date=_
 
-### Types Conversion
+## Types Conversion
 intToObject, longToObject, doubleToObject,  booleanToObject
 
 # Session
 inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
 
 # Database
-#### url
+### url
 driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  entities,  check,  rebuild,  drop,  create,  openSession,    execute,  beginTransaction[T]
