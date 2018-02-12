@@ -15,9 +15,9 @@ BigDecimal
 
 Defining the data type of a certain data.
 
-    `var id:String=_
+    var id:String=_
     var age:Integer=_
-    var date:Date=_`
+    var date:Date=_
 
 ### Types Conversion
 intToObject
