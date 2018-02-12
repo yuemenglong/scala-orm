@@ -4,13 +4,13 @@
 * [Types](#types)
 
 # Types
-Integer 
-Long 
-Float
-Double
-Boolean
-String
-Date
+Integer,
+Long ,
+Float,
+Double,
+Boolean,
+String,
+Date,
 BigDecimal
 
 Defining the data type of a certain data.
