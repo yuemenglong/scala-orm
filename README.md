@@ -42,6 +42,12 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
     
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String,minConn: Int, maxConn: Int, partition: Int)
     Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)
+    
+### Orm.create[T](clazz:class[T])
+    Orm.create(classOf[Obj])
+    
+### Orm.empty[T](clazz:class[T])
+    Orm.empty(classOf[Obj])
 
 
 
