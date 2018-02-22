@@ -87,10 +87,10 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
     val root = Orm.root(classOf[Obj])
     
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String)
-    Orm.openDb("localhost", 3306, "root", "root", "test")  //open the database
+    Orm.openDb("localhost", 3306, "root", "root", "test")  //open the database
     
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String,minConn: Int, maxConn: Int, partition: Int)
-    Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)  
+    Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)  
     //Open the database，the minConn is 2，the maxConn is 3，the partition is 5
 
 ### Orm.create\[T\](clazz:class[T])
@@ -104,7 +104,7 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
     val convert=Orm.convert(obj) 
     
 ### Orm.setLogger(b:boolean)
-    Orm.setLogger(true)  //Whether or not the logger system is used
+    Orm.setLogger(true)  //Whether or not the logger system is used
     
 ### Orm.insert[T <: Object](obj: T)
     val obj = Orm.empty(classOf[Obj])
