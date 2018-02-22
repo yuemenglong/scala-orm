@@ -49,7 +49,7 @@ inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConn
 ### close()
     session.close() //close all unclosed connections
 ### getConnection
-    session.getConnection //access to connections
+    session.getConnection //access to connections
     session.getConnection.setAutoCommit(false) //open a transaction
 ### execute(executor: Executable)
     session.execute() //execute program
