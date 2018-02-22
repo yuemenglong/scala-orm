@@ -18,21 +18,21 @@ Database is called db for short
 
 beginTransaction[T], rebuild,  drop, create, check, shutdown, openSession, openConnection, execute, entities
 
-### beginTransaction[T]
+### beginTransaction[T]/(fn: (Session) => T/)
     db.beginTransaction(Session=>{ })  //start the following
-### rebuild
+### rebuild()
     db.rebuild() //Rebuild the data table，This operation is equal to “ drop and  create ”
-### drop 
+### drop() 
     db.drop() //Delete the current table, if it already exists
-### create
+### create()
     db.create() //create new table
-### check
+### check()
     db.check() //Check the difference between the entity and the database
-### shutdown
+### shutdown()
     db.shutdown() //After the thread is finished, close the thread
-### openSession
+### openSession()
     val session=openSession()
-### openConnection
+### openConnection/[T]/(fn: (Connection) => T)
     val oConnection=openConnection()
 
 # Session
