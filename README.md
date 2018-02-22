@@ -60,9 +60,6 @@ inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConn
     val root = Orm.root(classOf[Obj])
     session.first(Orm.select(root).from(root)) //Select the first of all the data in the obj table
     
-
-
-
 # Types
 Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
 
