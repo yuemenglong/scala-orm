@@ -10,7 +10,8 @@
 * [Logger](#logger)
 * [Tool](#tool)
   
-[Learn how to use Scala-Orm in your own project](#types).
+  
+## [Learn how to use Scala-Orm in your own project](#types).
   
 # Types
 Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
