@@ -55,10 +55,10 @@ inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConn
     session.execute() //execute program
 ### query[T](query: Queryable[T])
     val root = Orm.root(classOf[Obj])
-    session.query(Orm.select(root).from(root))  //select all the data in the obj table
+    session.query(Orm.select(root).from(root))  //select all the data in the obj table
 ### first[T](q: Queryable[T])
     val root = Orm.root(classOf[Obj])
-    session.first(Orm.select(root).from(root)) //Select the first of all the data in the obj table
+    session.first(Orm.select(root).from(root)) //Select the first of all the data in the obj table
     
 
 
