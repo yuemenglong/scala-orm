@@ -1,9 +1,9 @@
 # Scala-Orm
 
 # Tables of Contents
+* [Database](#database)
 * [Types](#types)
 * [Session](#session)
-* [Database](#database)
 * [Orm](#orm)
 * [Init](#init)
 * [Kit](#kit)
@@ -12,7 +12,16 @@
   
   
 [Learn how to use Scala-Orm in your own project](#types).
-  
+
+# Database
+Db for short
+driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  entities,  check,  rebuild,  drop,  create,  openSession,    execute,  beginTransaction[T]
+
+### beginTransaction[T]
+    Db.beginTransaction(Session=>{ })
+### openConnection
+    val urlConnection = new URL(url).openConnection()
+
 # Types
 Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
 
@@ -27,15 +36,6 @@ intToObject, longToObject, doubleToObject,  booleanToObject
 
 # Session
 inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
-
-# Database
-Db for short
-driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  entities,  check,  rebuild,  drop,  create,  openSession,    execute,  beginTransaction[T]
-
-### beginTransaction[T]
-    Db.beginTransaction(Session=>{ })
-### openConnection
-    val urlConnection = new URL(url).openConnection()
     
 # Orm
 init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert,  update,  delete,  root,  cond,  select,  selectFrom,  inserts,  deleteFrom,  clear
