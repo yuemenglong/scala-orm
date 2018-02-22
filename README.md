@@ -23,7 +23,7 @@ beginTransaction[T], rebuild,  drop, create, check, shutdown, openSession, openC
 ### rebuild
     db.rebuild() //Rebuild the data table，This operation is equal to “ drop and  create ”
 ### drop 
-    db.drop() //Delete the current table, if it already exists
+    db.drop() //Delete the current table, if it already exists
 ### create
     db.create() //create new table
 ### check
