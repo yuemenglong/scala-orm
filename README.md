@@ -68,7 +68,7 @@ Defining the data type of a certain data.
     var id:String=_
     var age:Integer=_
     var date:Date=_
-    var orderId:Long=_
+    var orderId:Long=_
     var price:Double=_
     var isSponsor:Boolean=_
     var payPrice:BigDecimal=_
