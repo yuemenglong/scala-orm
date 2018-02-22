@@ -5,6 +5,10 @@
 * [Session](#session)
 * [Database](#database)
 * [Orm](#orm)
+* [Init](#init)
+* [Kit](#kit)
+* [Logger](#logger)
+* [Tool](#tool)
   
 # Types
 Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
@@ -48,6 +52,15 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
 ### Orm.empty\[T\](clazz:class[T])
     Orm.empty(classOf[Obj])
 
+# Init
+scan, trace, firstScan, secondScan, indexScan, genGetterSetter, checkPkey, scanFile
 
+# Kit
+lodashCase, lowerCaseFirst, upperCaseFirst, getDeclaredFields, getDeclaredMethods, newArray, getArrayType
 
+# Logger
+trace, debug, info, warn, error, setEnable
+
+# Tool
+getEmptyConstructorMap, exportTsClass, exportTsClass, attach, attachs, sattach, sattachs, attachx, attachsx, sattachx, sattachsx, updateById, selectById, deleteById
 
