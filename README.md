@@ -22,7 +22,7 @@ intToObject, longToObject, doubleToObject,  booleanToObject
 inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
 
 # Database
-简称Db
+Db for short
 driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  entities,  check,  rebuild,  drop,  create,  openSession,    execute,  beginTransaction[T]
 
 ### beginTransaction[T]
