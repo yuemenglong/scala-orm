@@ -38,17 +38,18 @@ beginTransaction[T], rebuild,  drop, create, check, shutdown, openSession, openC
 # Session
 inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
 
-### inTransaction
+### inTransaction()
     Session.inTransaction() //judge whether it is a transaction，return the Boolean value
-### beginTransaction
+### beginTransaction()
     val tx=Session.beginTransaction() //Create a new transaction
-### clearTransaction
+### clearTransaction()
     Session.clearTransaction() // clear the transaction
 ### isClosed
-    session.isClosed() //judge whether it is closed，return the Boolean value
-### close
+    session.isClosed //judge whether it is closed，return the Boolean value
+### close()
     session.close() //close all unclosed connections
 ### getConnection
+    session.getConnection //access to connections
     session.getConnection.setAutoCommit(false) //open a transaction
 ### execute
     session.execute() //execute program
