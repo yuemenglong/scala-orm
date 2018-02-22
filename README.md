@@ -109,7 +109,7 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
 ### Orm.insert[T <: Object](obj: T)
     val obj = Orm.empty(classOf[Obj])
     obj.name = "test"
-    session.execute(Orm.insert(obj))
+    session.execute(Orm.insert(obj))
     //Obj= {name:"test"}
     
 ### Orm.update[T <: Object](obj: T)
@@ -117,7 +117,7 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
     val root = Orm.root(classOf[Obj])
     val res = session.first(Orm.select(root).from(root))
     res.name = "test"
-    session.execute(Orm.update(res))
+    session.execute(Orm.update(res))
     //{name:"test",age:10}
     
 ### Orm.delete[T <: Object](obj: T)
