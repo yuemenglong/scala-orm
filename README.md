@@ -81,19 +81,66 @@ intToObject, longToObject, doubleToObject,  booleanToObject
 init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert,  update,  delete,  root,  cond,  select,  selectFrom,  inserts,  deleteFrom,  clear
 
 ### Orm.init(path:string)
-    Orm.init("test.entity")//Initialize all entity data
+    Orm.init("test.entity") //Initialize all entity data
+    
+### Orm.root[T](clazz: Class[T])
+    val root = Orm.root(classOf[Obj])
     
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String)
-    Orm.openDb("localhost", 3306, "root", "root", "test")
+    Orm.openDb("localhost", 3306, "root", "root", "test")  //open the database
     
 ### Orm.openDb(host: String, port: Int, user: String, pwd: String, db: String,minConn: Int, maxConn: Int, partition: Int)
-    Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)
+    Orm.openDb("localhost", 3306, "root", "root", "test",2,3,5)  
+    //Open the database，the minConn is 2，the maxConn is 3，the partition is 5
 
 ### Orm.create\[T\](clazz:class[T])
-    Orm.create(classOf[Obj])
+    Orm.create(classOf[Obj])  //create an empty obj object with an empty value or create an empty array
     
 ### Orm.empty\[T\](clazz:class[T])
-    Orm.empty(classOf[Obj])
+    Orm.empty(classOf[Obj]) //create an empty obj object  or  create an empty array
+    
+### Orm.convert[T](obj: T)
+    val obj=new Obj()
+    val convert=Orm.convert(obj) 
+    
+### Orm.setLogger(b:boolean)
+    Orm.setLogger(true)  //Whether or not the logger system is used
+    
+### Orm.insert[T <: Object](obj: T)
+    val obj = Orm.empty(classOf[Obj])
+    obj.name = "test"
+    session.execute(Orm.insert(obj))
+    //Obj= {name:"test"}
+    
+### Orm.update[T <: Object](obj: T)
+    val Obj={name:"aa",age:10}
+    val root = Orm.root(classOf[Obj])
+    val res = session.first(Orm.select(root).from(root))
+    res.name = "test"
+    session.execute(Orm.update(res))
+    //{name:"test",age:10}
+    
+### Orm.delete[T <: Object](obj: T)
+    val Obj=[{id:1,name:"a"},}{id:2,name:"b},{id:3,name:"c"}]
+    val root = Orm.root(classOf[Obj])
+    val ex = Orm.delete(root).from(root).where(root.get("id").eql(1))
+    session.execute(ex)
+    // [{id:2,name:"b"},{id:3,name:"c"}]
+    
+### Orm.select[T](s: Selectable[T])
+    val Obj=[{id:1,name:"a"},{id:2,name:"b"},{id:3,name:"c"}]
+    val root = session.query(Orm.select(root).from(root).where(root.get("id").in(Array(3, 4))))
+    // [{id:3,name:"c"}]
+    
+### Orm.select[T1, T2](s1: Selectable[T1], s2: Selectable[T2])
+### Orm.select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3])
+
+### Orm.selectFrom[T](root: Root[T])
+    val Obj=[{id:1,name:"a"},{id:2,name:"b"},{id:3,name:"c"}]
+    val root = session.query(Orm.selectFrom(root).where(root.get("id").eq('1'))))
+    // [{id:1,name:"a"}]
+    
+    
 
 # Init
 scan, trace, firstScan, secondScan, indexScan, genGetterSetter, checkPkey, scanFile
