@@ -18,7 +18,7 @@ Database is called db for short
 
 beginTransaction[T], rebuild,  drop, create, check, shutdown, openSession, openConnection, execute, entities
 
-### beginTransaction[T]/(fn: (Session) => T/)
+### beginTransaction[T](fn: (Session) => T)
     db.beginTransaction(Session=>{ })  //start the following
 ### rebuild()
     db.rebuild() //Rebuild the data table，This operation is equal to “ drop and  create ”
@@ -32,7 +32,7 @@ beginTransaction[T], rebuild,  drop, create, check, shutdown, openSession, openC
     db.shutdown() //After the thread is finished, close the thread
 ### openSession()
     val session=openSession()
-### openConnection/[T]/(fn: (Connection) => T)
+### openConnection[T](fn: (Connection) => T)
     val oConnection=openConnection()
 
 # Session
