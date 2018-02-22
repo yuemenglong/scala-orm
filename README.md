@@ -36,7 +36,7 @@ beginTransaction[T], rebuild,  drop, create, check, shutdown, openSession, openC
     val oConnection=openConnection()
 
 # Session
-inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
+inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  first, record,  errorTrace,  batch
 
 ### inTransaction()
     Session.inTransaction() //judge whether it is a transaction，return the Boolean value
@@ -54,9 +54,12 @@ inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConn
 ### execute(executor: Executable)
     session.execute() //execute program
 ### query[T](query: Queryable[T])
-    session.query()  
-    session.query(Orm.select(root).from(root))
-
+    val root = Orm.root(classOf[Obj])
+    session.query(Orm.select(root).from(root))  //select all the data in the obj table
+### first[T](q: Queryable[T])
+    val root = Orm.root(classOf[Obj])
+    session.first(Orm.select(root).from(root)) //Select the first of all the data in the obj table
+    
 
 
 
