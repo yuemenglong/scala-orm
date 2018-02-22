@@ -39,21 +39,21 @@ beginTransaction[T], rebuild,  drop, create, check, shutdown, openSession, openC
 inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
 
 ### inTransaction
-    Session.inTransaction() //judge whether it is a transaction，return the Boolean value
+    Session.inTransaction() //judge whether it is a transaction，return the Boolean value
 ### beginTransaction
-    val tx=Session.beginTransaction() //Create a new transaction
+    val tx=Session.beginTransaction() //Create a new transaction
 ### clearTransaction
     Session.clearTransaction() // clear the transaction
 ### isClosed
-    session.isClosed() //judge whether it is closed，return the Boolean value
+    session.isClosed() //judge whether it is closed，return the Boolean value
 ### close
-    session.close() //close all unclosed connections
+    session.close() //close all unclosed connections
 ### getConnection
-    session.getConnection.setAutoCommit(false) //open a transaction
+    session.getConnection.setAutoCommit(false) //open a transaction
 ### execute
-    session.execute() //execute program
+    session.execute() //execute program
 ### query
-    session.query()  
+    session.query()  
     session.query(Orm.select(root).from(root))
 
 
