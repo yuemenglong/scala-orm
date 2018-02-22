@@ -3,10 +3,8 @@
 # Tables of Contents
 * [Types](#types)
 * [Session](#session)
-* [Database(简称Db)](#database)
+* [Database](#database)
 * [Orm](#orm)
-  * [Init](#orminitpath-string)
-  * [openDb](#ormopendbhost-string-port-int-user-string-pwd-string-db-string)
   
 # Types
 Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
@@ -23,7 +21,8 @@ intToObject, longToObject, doubleToObject,  booleanToObject
 # Session
 inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConnection,  execute,  query,  firstrecord,  errorTrace,  batch
 
-# Database(简称Db)
+# Database
+简称Db
 driver,  url,  config,  pool,  openConnection,  openConnection[T],  shutdown,  entities,  check,  rebuild,  drop,  create,  openSession,    execute,  beginTransaction[T]
 
 ### beginTransaction[T]
