@@ -61,14 +61,19 @@ inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConn
     session.first(Orm.select(root).from(root)) //Select the first of all the data in the obj table
     
 # Types
-Integer,  Long,  Float,  Double,  Boolean,  String,  Date,  BigDecimal
+String,  Integer,  Date,  Long,  Double,  Boolean, BigDecimal,  Float
 
 Defining the data type of a certain data.
 
     var id:String=_
     var age:Integer=_
     var date:Date=_
-
+    var orderId:Long=_
+    var price:Double=_
+    var isSponsor:Boolean=_
+    var payPrice:BigDecimal=_
+    var num:Foat=_
+    
 ## Types Conversion
 intToObject, longToObject, doubleToObject,  booleanToObject
     
