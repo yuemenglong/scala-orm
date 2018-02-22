@@ -127,18 +127,32 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
     session.execute(ex)
     // [{id:2,name:"b"},{id:3,name:"c"}]
     
+### Orm.deleteFrom(root: Root[\_])
+    val Obj=[{id:1,name:"a"},}{id:2,name:"b},{id:3,name:"c"}]
+    val root = Orm.root(classOf[Obj])
+    val ex = Orm.deleteFrom(root).where(root.get("id").eql(1))
+    session.execute(ex)
+    // [{id:2,name:"b"},{id:3,name:"c"}]
+
+    
 ### Orm.select[T](s: Selectable[T])
     val Obj=[{id:1,name:"a"},{id:2,name:"b"},{id:3,name:"c"}]
     val root = session.query(Orm.select(root).from(root).where(root.get("id").in(Array(3, 4))))
     // [{id:3,name:"c"}]
     
-### Orm.select[T1, T2](s1: Selectable[T1], s2: Selectable[T2])
-### Orm.select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3])
-
 ### Orm.selectFrom[T](root: Root[T])
     val Obj=[{id:1,name:"a"},{id:2,name:"b"},{id:3,name:"c"}]
     val root = session.query(Orm.selectFrom(root).where(root.get("id").eq('1'))))
     // [{id:1,name:"a"}]
+    
+### Orm.select[T1, T2](s1: Selectable[T1], s2: Selectable[T2])
+### Orm.select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3])  
+### Orm.insert[T](clazz: Class[T])
+### Orm.inserts[T](arr: Array[T])
+### Orm.update(root: Root[\_])
+### Orm.delete(joins: Join*)
+### Orm.clear(obj: Object, field: String)
+### Orm.clear[T <: Object](obj: T)(fn: T => Any)
     
     
 
