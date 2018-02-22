@@ -128,7 +128,7 @@ init,  reset,  openDb,  create,  empty,  convert,  converts,  setLogger,  insert
     // [{id:2,name:"b"},{id:3,name:"c"}]
     
 ### Orm.select[T](s: Selectable[T])
-    val Obj=[{id:1,name:"a"},{id:2,name:"b"},{id:3,name:"c"}]
+    val Obj=[{id:1,name:"a"},{id:2,name:"b"},{id:3,name:"c"}]
     val root = session.query(Orm.select(root).from(root).where(root.get("id").in(Array(3, 4))))
     // [{id:3,name:"c"}]
     
