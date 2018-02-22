@@ -51,9 +51,9 @@ inTransaction,  beginTransaction,  clearTransaction,  isClosed,  close,  getConn
 ### getConnection
     session.getConnection //access to connections
     session.getConnection.setAutoCommit(false) //open a transaction
-### execute
+### execute(executor: Executable)
     session.execute() //execute program
-### query
+### query[T](query: Queryable[T])
     session.query()  
     session.query(Orm.select(root).from(root))
 
