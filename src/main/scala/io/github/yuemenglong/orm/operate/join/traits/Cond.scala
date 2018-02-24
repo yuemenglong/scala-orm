@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.operate.field.traits.Field
+import io.github.yuemenglong.orm.operate.field.traits.{Field, FieldExpr}
 
 /**
   * Created by yml on 2017/7/15.
@@ -15,27 +15,27 @@ trait Cond extends Expr {
 trait CondOp {
   def eql[T](v: T): Cond
 
-  def eql(f: Expr): Cond
+  def eql(f: FieldExpr): Cond
 
   def neq[T](v: T): Cond
 
-  def neq(f: Field): Cond
+  def neq(f: FieldExpr): Cond
 
   def gt[T](v: T): Cond
 
-  def gt(f: Field): Cond
+  def gt(f: FieldExpr): Cond
 
   def gte[T](v: T): Cond
 
-  def gte(f: Field): Cond
+  def gte(f: FieldExpr): Cond
 
   def lt[T](v: T): Cond
 
-  def lt(f: Field): Cond
+  def lt(f: FieldExpr): Cond
 
   def lte[T](v: T): Cond
 
-  def lte(f: Field): Cond
+  def lte(f: FieldExpr): Cond
 
   def like(v: String): Cond
 

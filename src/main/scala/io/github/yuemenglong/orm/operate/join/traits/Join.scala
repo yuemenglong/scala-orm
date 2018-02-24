@@ -18,6 +18,8 @@ trait Expr {
   def getParams: Array[Object]
 }
 
+
+
 trait Join extends Expr {
   type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
 

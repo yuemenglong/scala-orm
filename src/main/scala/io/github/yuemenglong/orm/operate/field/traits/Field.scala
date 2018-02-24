@@ -14,7 +14,29 @@ import scala.collection.mutable
 /**
   * Created by <yuemenglong@126.com> on 2018/2/24.
   */
-trait Field extends Expr with CondOp with AssignOp {
+trait FieldExpr extends Expr {
+  def add(f: FieldExpr): FieldExpr = FieldExprFF(this, f, "+")
+
+  def add[V](v: V): FieldExpr = FieldExprFV(this, v, "+")
+
+  def sub(f: FieldExpr): FieldExpr = FieldExprFF(this, f, "-")
+
+  def sub[V](v: V): FieldExpr = FieldExprFV(this, v, "-")
+}
+
+case class FieldExprFF(f1: FieldExpr, f2: FieldExpr, op: String) extends FieldExpr {
+  override def getSql: String = s"${f1.getSql} ${op} ${f2.getSql}"
+
+  override def getParams: Array[Object] = f1.getParams ++ f2.getParams
+}
+
+case class FieldExprFV[V](f1: FieldExpr, v: V, op: String) extends FieldExpr {
+  override def getSql: String = s"${f1.getSql} ${op} ?"
+
+  override def getParams: Array[Object] = f1.getParams ++ Array(v.asInstanceOf[Object])
+}
+
+trait Field extends FieldExpr with CondOp with AssignOp {
 
   def getField: String
 
@@ -40,27 +62,27 @@ trait Field extends Expr with CondOp with AssignOp {
 
   override def eql[T](v: T): Cond = EqFV(this, v.asInstanceOf[Object])
 
-  override def eql(f: Expr): Cond = EqFE(this, f)
+  override def eql(f: FieldExpr): Cond = EqFE(this, f)
 
   override def neq[T](v: T): Cond = NeFV(this, v.asInstanceOf[Object])
 
-  override def neq(f: Field): Cond = NeFE(this, f)
+  override def neq(f: FieldExpr): Cond = NeFE(this, f)
 
   override def gt[T](v: T): Cond = GtFV(this, v.asInstanceOf[Object])
 
-  override def gt(f: Field): Cond = GtFE(this, f)
+  override def gt(f: FieldExpr): Cond = GtFE(this, f)
 
   override def gte[T](v: T): Cond = GteFV(this, v.asInstanceOf[Object])
 
-  override def gte(f: Field): Cond = GteFE(this, f)
+  override def gte(f: FieldExpr): Cond = GteFE(this, f)
 
   override def lt[T](v: T): Cond = LtFV(this, v.asInstanceOf[Object])
 
-  override def lt(f: Field): Cond = LteFE(this, f)
+  override def lt(f: FieldExpr): Cond = LteFE(this, f)
 
   override def lte[T](v: T): Cond = LteFV(this, v.asInstanceOf[Object])
 
-  override def lte(f: Field): Cond = LteFE(this, f)
+  override def lte(f: FieldExpr): Cond = LteFE(this, f)
 
   override def like(v: String): Cond = LikeFV(this, v)
 
@@ -76,17 +98,9 @@ trait Field extends Expr with CondOp with AssignOp {
 
   override def notNull(): Cond = NotNull(this)
 
-  override def assign(f: Expr): Assign = AssignFE(this, f)
+  override def assign(f: FieldExpr): Assign = AssignFE(this, f)
 
   override def assign[T](v: T): Assign = AssignFV(this, v.asInstanceOf[Object])
-
-  override def assignAdd[T](f: Field, v: T): Assign = AssignAdd(this, f, v.asInstanceOf[Object])
-
-  override def assignAdd[T](v: T): Assign = AssignAdd(this, this, v.asInstanceOf[Object])
-
-  override def assignSub[T](f: Field, v: T): Assign = AssignSub(this, f, v.asInstanceOf[Object])
-
-  override def assignSub[T](v: T): Assign = AssignSub(this, this, v.asInstanceOf[Object])
 
   override def assignNull(): Assign = AssignNull(this)
 }

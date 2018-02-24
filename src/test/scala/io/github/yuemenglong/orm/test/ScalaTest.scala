@@ -453,25 +453,25 @@ class ScalaTest {
 
       {
         val root = Orm.root(classOf[Obj])
-        session.execute(Orm.update(root).set(root.get("doubleValue").assignAdd(1.2)))
+        session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("doubleValue").add(1.2))))
         val o = OrmTool.selectById(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 2.7, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
-        session.execute(Orm.update(root).set(root.get("doubleValue").assignSub(1.5)))
+        session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("doubleValue").sub(1.5))))
         val o = OrmTool.selectById(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 1.2, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
-        session.execute(Orm.update(root).set(root.get("doubleValue").assignAdd(root.get("age"), 1.2)))
+        session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("age").add(1.2))))
         val o = OrmTool.selectById(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 11.2, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
-        session.execute(Orm.update(root).set(root.get("doubleValue").assignSub(root.get("age"), 1.5)))
+        session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("age").sub(1.5))))
         val o = OrmTool.selectById(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 8.5, 0.00001)
       }
