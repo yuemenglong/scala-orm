@@ -1,18 +1,19 @@
-package io.github.yuemenglong.orm.operate.traits.core
+package io.github.yuemenglong.orm.operate.field.traits
 
-import io.github.yuemenglong.orm.meta.EntityMeta
-import io.github.yuemenglong.orm.operate.impl.core._
-import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
-import io.github.yuemenglong.orm.lang.types.Types._
+import java.sql.ResultSet
+
+import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Long, String}
+import io.github.yuemenglong.orm.operate.field._
+import io.github.yuemenglong.orm.operate.join._
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp}
+import io.github.yuemenglong.orm.operate.query.traits.Selectable
+
+import scala.collection.mutable
 
 /**
-  * Created by yml on 2017/7/15.
+  * Created by <yuemenglong@126.com> on 2018/2/24.
   */
-object JoinType extends Enumeration {
-  type JoinType = Value
-  val INNER, LEFT, RIGHT, OUTER = Value
-}
-
 trait Field extends CondOp with AssignOp {
 
   def getField: String
@@ -86,41 +87,15 @@ trait Field extends CondOp with AssignOp {
   override def assignNull(): Assign = AssignNull(this)
 }
 
-trait Join extends Expr {
-  type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
+trait SelectableField[T] extends Field with Selectable[T] {
+  override def getColumnWithAs: String = s"$getColumn AS $getAlias"
 
-  def getMeta: EntityMeta
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = resultSet.getObject(getAlias, getType)
 
-  def getAlias: String
+  override def getKey(value: Object): String = value match {
+    case null => ""
+    case _ => value.toString
+  }
 
-  def getTableWithJoinCond: String
-
-  def join(field: String): Join = join(field, JoinType.INNER)
-
-  def join(field: String, joinType: JoinType): Join
-
-  def leftJoin(field: String): Join = join(field, JoinType.LEFT)
-
-  def get(field: String): Field
-
-  def on(c: Cond): Join
-
-  def as[T](clazz: Class[T]): SelectableJoin[T]
-
-  def joinAs[T](field: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T] = this.join(field, joinType).as(clazz)
-
-  def joinAs[T](field: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(field, clazz, JoinType.INNER)
-
-  def leftJoinAs[T](field: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(field, clazz, JoinType.LEFT)
-
-  def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T]
-
-  def joinAs[T](left: String, right: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(left, right, clazz, JoinType.INNER)
-
-  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
-
-  override def getSql: String = getTableWithJoinCond
+  def distinct(): SelectableField[T]
 }
-
-
-

@@ -1,13 +1,10 @@
-package io.github.yuemenglong.orm.operate.impl
-
-import java.sql.Connection
+package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.Session.Session
-import io.github.yuemenglong.orm.kit.Kit
-import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.impl.core.CondHolder
-import io.github.yuemenglong.orm.operate.traits.ExecutableUpdate
-import io.github.yuemenglong.orm.operate.traits.core.{Assign, Cond, Executable, Root}
+import io.github.yuemenglong.orm.operate.execute.traits.{Executable, ExecutableUpdate}
+import io.github.yuemenglong.orm.operate.field.traits.Assign
+import io.github.yuemenglong.orm.operate.join.CondHolder
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root}
 
 import scala.annotation.varargs
 

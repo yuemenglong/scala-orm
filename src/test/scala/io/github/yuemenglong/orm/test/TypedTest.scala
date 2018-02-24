@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool

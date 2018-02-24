@@ -3,7 +3,8 @@ package io.github.yuemenglong.orm.Session
 import java.sql.{Connection, ResultSet, Statement}
 
 import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.operate.traits.core.{Executable, Queryable}
+import io.github.yuemenglong.orm.operate.execute.traits.Executable
+import io.github.yuemenglong.orm.operate.query.traits.Queryable
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag

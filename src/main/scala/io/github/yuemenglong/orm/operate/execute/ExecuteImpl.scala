@@ -1,14 +1,11 @@
-package io.github.yuemenglong.orm.operate.impl.core
-
-import java.sql.{Connection, Statement}
+package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
-import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.traits.core.{ExecuteJoin, ExecuteRoot, TypedExecuteJoin, TypedExecuteRoot}
+import io.github.yuemenglong.orm.operate.execute.traits.{ExecuteJoin, ExecuteRoot, TypedExecuteJoin, TypedExecuteRoot}
 
 import scala.collection.mutable.ArrayBuffer
 

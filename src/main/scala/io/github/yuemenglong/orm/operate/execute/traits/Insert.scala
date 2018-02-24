@@ -1,6 +1,4 @@
-package io.github.yuemenglong.orm.operate.traits
-
-import io.github.yuemenglong.orm.operate.traits.core.Executable
+package io.github.yuemenglong.orm.operate.execute.traits
 
 /**
   * Created by yml on 2017/7/15.

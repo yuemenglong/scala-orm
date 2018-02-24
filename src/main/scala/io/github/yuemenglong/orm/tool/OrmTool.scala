@@ -10,9 +10,8 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.impl.QueryImpl
-import io.github.yuemenglong.orm.operate.traits.Query
-import io.github.yuemenglong.orm.operate.traits.core.{Join, Root, SelectFieldJoin, TypedSelectJoin}
+import io.github.yuemenglong.orm.operate.join.traits.{Join, Root, SelectFieldJoin, TypedSelectJoin}
+import io.github.yuemenglong.orm.operate.query.{Query, QueryImpl}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

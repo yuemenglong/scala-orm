@@ -1,6 +1,7 @@
-package io.github.yuemenglong.orm.operate.impl.core
+package io.github.yuemenglong.orm.operate.join
 
-import io.github.yuemenglong.orm.operate.traits.core.{Cond, Field}
+import io.github.yuemenglong.orm.operate.field.traits.Field
+import io.github.yuemenglong.orm.operate.join.traits.Cond
 
 import scala.collection.mutable.ArrayBuffer
 

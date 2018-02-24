@@ -1,15 +1,16 @@
-package io.github.yuemenglong.orm.operate.impl
+package io.github.yuemenglong.orm.operate.query
 
 import java.lang
-import java.sql.{Connection, ResultSet}
+import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.entity.EntityManager
-import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.impl.core.{CondHolder, SelectableFieldImpl}
-import io.github.yuemenglong.orm.operate.traits.core._
-import io.github.yuemenglong.orm.operate.traits.{Query, QueryBuilder, SelectableTuple, TypedQuery}
+import io.github.yuemenglong.orm.operate.field.SelectableFieldImpl
+import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
+import io.github.yuemenglong.orm.operate.join.CondHolder
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root}
+import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
