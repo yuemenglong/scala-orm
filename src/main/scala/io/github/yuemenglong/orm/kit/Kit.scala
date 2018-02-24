@@ -1,10 +1,8 @@
 package io.github.yuemenglong.orm.kit
 
 import java.lang.reflect.{Field, Method}
-import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.logger.Logger
 
 import scala.reflect.ClassTag
 
@@ -13,7 +11,6 @@ import scala.reflect.ClassTag
   */
 object Kit {
   def lodashCase(str: String): String = {
-    //    val lowerCaseFirst = str.substring(0, 1).toLowerCase() + str.substring(1)
     """[A-Z]""".r.replaceAllIn(lowerCaseFirst(str), m => "_" + m.group(0).toLowerCase())
   }
 
@@ -57,45 +54,4 @@ object Kit {
     val name = clazz.getName.replaceAll("(^\\[L)|(;$)", "")
     Class.forName(name)
   }
-
-  //
-  //  def logSql(sql: String, params: Array[Object]): Unit = {
-  //    val paramsSql = params.map {
-  //      case null => "null"
-  //      case v => v.toString
-  //    }.mkString(", ")
-  //    Logger.info(s"RUN\n$sql\n[$paramsSql]")
-  //  }
-  //
-  //  def execute(conn: Connection, sql: String, params: Array[Object]): Int = {
-  //    logSql(sql, params)
-  //    val stmt = conn.prepareStatement(sql)
-  //    params.zipWithIndex.foreach { case (param, i) =>
-  //      stmt.setObject(i + 1, param)
-  //    }
-  //    val ret = stmt.executeUpdate()
-  //    stmt.close()
-  //    ret
-  //  }
-  //
-  //  def query[T](conn: Connection, sql: String, params: Array[Object],
-  //               fn: (ResultSet) => Array[T]): Array[T] = {
-  //    logSql(sql, params)
-  //    val stmt = conn.prepareStatement(sql)
-  //    params.zipWithIndex.foreach { case (param, i) =>
-  //      stmt.setObject(i + 1, param)
-  //    }
-  //    var rs: ResultSet = null
-  //    try {
-  //      rs = stmt.executeQuery()
-  //      fn(rs)
-  //    } catch {
-  //      case e: Throwable => throw e
-  //    } finally {
-  //      if (rs != null) {
-  //        rs.close()
-  //      }
-  //      stmt.close()
-  //    }
-  //  }
 }

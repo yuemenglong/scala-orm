@@ -3,15 +3,11 @@ package io.github.yuemenglong.orm.operate.traits.core
 /**
   * Created by yml on 2017/7/15.
   */
-trait GetSql {
+trait Expr {
   def getSql: String
-}
 
-trait GetParams {
   def getParams: Array[Object]
 }
-
-trait Expr extends GetSql with GetParams
 
 trait Cond extends Expr {
   def and(cond: Cond): Cond

@@ -13,11 +13,7 @@ object JoinType extends Enumeration {
   val INNER, LEFT, RIGHT, OUTER = Value
 }
 
-trait Node {
-  def getRoot: Node
-}
-
-trait Field extends Node with CondOp with AssignOp {
+trait Field extends CondOp with AssignOp {
 
   def getField: String
 
@@ -90,7 +86,7 @@ trait Field extends Node with CondOp with AssignOp {
   override def assignNull(): Assign = AssignNull(this)
 }
 
-trait Join extends Node with Expr {
+trait Join extends Expr {
   type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
 
   def getMeta: EntityMeta

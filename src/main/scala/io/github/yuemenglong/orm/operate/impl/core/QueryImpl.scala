@@ -25,8 +25,6 @@ class FieldImpl(val meta: FieldMeta, val parent: JoinImpl) extends Field {
 
   override def getAlias: String = s"${parent.getAlias}$$${Kit.lodashCase(meta.name)}"
 
-  override def getRoot: Node = parent.getRoot
-
   override def as[T](clazz: Class[T]): SelectableField[T] = new SelectableFieldImpl[T](clazz, this)
 }
 
@@ -40,8 +38,6 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends Selectabl
   override def getAlias: String = impl.getAlias
 
   override def getType: Class[T] = clazz
-
-  override def getRoot: Node = impl.getRoot
 
   override def as[R](clazz: Class[R]): SelectableField[R] = throw new RuntimeException("Already Selectable")
 
@@ -147,13 +143,6 @@ trait JoinImpl extends Join {
     }
     val fieldMeta = getMeta.fieldMap(field)
     new FieldImpl(fieldMeta, this)
-  }
-
-  override def getRoot: Node = {
-    inner.parent match {
-      case null => this
-      case _ => inner.parent.getRoot
-    }
   }
 
   override def as[T](clazz: Class[T]): SelectableJoin[T] = {
