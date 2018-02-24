@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.join
 
 import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.Cond
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -93,11 +93,21 @@ abstract class CondFF(f1: Field, f2: Field) extends CondItem {
   }
 }
 
+abstract class CondFE(f1: Field, f2: Expr) extends CondItem {
+  def op(): String
+
+  override def getSql: String = {
+    s"${f1.getColumn} ${op()} ${f2.getSql}"
+  }
+
+  override def getParams: Array[Object] = f2.getParams
+}
+
 case class EqFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "="
 }
 
-case class EqFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+case class EqFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "="
 }
 
@@ -105,7 +115,7 @@ case class NeFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "<>"
 }
 
-case class NeFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+case class NeFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "<>"
 }
 
@@ -113,7 +123,7 @@ case class GtFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = ">"
 }
 
-case class GtFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+case class GtFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = ">"
 }
 
@@ -121,7 +131,7 @@ case class LtFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "<"
 }
 
-case class LtFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+case class LtFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "<"
 }
 
@@ -129,7 +139,7 @@ case class GteFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = ">="
 }
 
-case class GteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+case class GteFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = ">="
 }
 
@@ -137,7 +147,7 @@ case class LteFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "<="
 }
 
-case class LteFF(f1: Field, f2: Field) extends CondFF(f1, f2) {
+case class LteFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "<="
 }
 

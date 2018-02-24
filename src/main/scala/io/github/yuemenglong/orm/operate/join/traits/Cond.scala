@@ -15,7 +15,7 @@ trait Cond extends Expr {
 trait CondOp {
   def eql[T](v: T): Cond
 
-  def eql(f: Field): Cond
+  def eql(f: Expr): Cond
 
   def neq[T](v: T): Cond
 

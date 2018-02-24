@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Long, String}
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp, Expr}
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
@@ -14,13 +14,17 @@ import scala.collection.mutable
 /**
   * Created by <yuemenglong@126.com> on 2018/2/24.
   */
-trait Field extends CondOp with AssignOp {
+trait Field extends Expr with CondOp with AssignOp {
 
   def getField: String
 
   def getColumn: String
 
   def getAlias: String
+
+  def getSql: String = getColumn
+
+  def getParams: Array[Object] = Array()
 
   def as[T](clazz: Class[T]): SelectableField[T]
 
@@ -36,27 +40,27 @@ trait Field extends CondOp with AssignOp {
 
   override def eql[T](v: T): Cond = EqFV(this, v.asInstanceOf[Object])
 
-  override def eql(f: Field): Cond = EqFF(this, f)
+  override def eql(f: Expr): Cond = EqFE(this, f)
 
   override def neq[T](v: T): Cond = NeFV(this, v.asInstanceOf[Object])
 
-  override def neq(f: Field): Cond = NeFF(this, f)
+  override def neq(f: Field): Cond = NeFE(this, f)
 
   override def gt[T](v: T): Cond = GtFV(this, v.asInstanceOf[Object])
 
-  override def gt(f: Field): Cond = GtFF(this, f)
+  override def gt(f: Field): Cond = GtFE(this, f)
 
   override def gte[T](v: T): Cond = GteFV(this, v.asInstanceOf[Object])
 
-  override def gte(f: Field): Cond = GteFF(this, f)
+  override def gte(f: Field): Cond = GteFE(this, f)
 
   override def lt[T](v: T): Cond = LtFV(this, v.asInstanceOf[Object])
 
-  override def lt(f: Field): Cond = LteFF(this, f)
+  override def lt(f: Field): Cond = LteFE(this, f)
 
   override def lte[T](v: T): Cond = LteFV(this, v.asInstanceOf[Object])
 
-  override def lte(f: Field): Cond = LteFF(this, f)
+  override def lte(f: Field): Cond = LteFE(this, f)
 
   override def like(v: String): Cond = LikeFV(this, v)
 
@@ -72,7 +76,7 @@ trait Field extends CondOp with AssignOp {
 
   override def notNull(): Cond = NotNull(this)
 
-  override def assign(f: Field): Assign = AssignFF(this, f)
+  override def assign(f: Expr): Assign = AssignFE(this, f)
 
   override def assign[T](v: T): Assign = AssignFV(this, v.asInstanceOf[Object])
 

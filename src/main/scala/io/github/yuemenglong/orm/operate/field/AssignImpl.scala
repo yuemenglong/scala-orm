@@ -13,16 +13,10 @@ case class AssignFV(f: Field, v: Object) extends Assign {
   override def getParams: Array[Object] = Array(v)
 }
 
-case class AssignFF(f1: Field, f2: Field) extends Assign {
-  override def getSql: String = s"${f1.getColumn} = ${f2.getColumn}"
-
-  override def getParams: Array[Object] = Array()
-}
-
-case class AssignExpr(f1: Field, f2: Expr) extends Assign {
+case class AssignFE(f1: Field, f2: Expr) extends Assign {
   override def getSql: String = s"${f1.getColumn} = ${f2.getSql}"
 
-  override def getParams = f2.getParams
+  override def getParams: Array[Object] = f2.getParams
 }
 
 case class AssignNull(f1: Field) extends Assign {

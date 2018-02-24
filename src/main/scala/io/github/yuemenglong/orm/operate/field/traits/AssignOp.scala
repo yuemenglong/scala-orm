@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.operate.join.traits.Expr
 trait AssignOp {
   def assign[T](v: T): Assign
 
-  def assign(f: Field): Assign
+  def assign(f: Expr): Assign
 
   def assignAdd[T](f: Field, value: T): Assign
 
