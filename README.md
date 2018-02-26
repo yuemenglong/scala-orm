@@ -4,12 +4,13 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
 # QuickStart
 ## install
 将下面内容加入到pom.xml文件中
-    
-    <dependency>
-        <groupId>io.github.yuemenglong</groupId>
-        <artifactId>scala-orm</artifactId>
-        <version>1.3.0</version>
-    </dependency>
+    <!-- https://mvnrepository.com/artifact/io.github.yuemenglong/scala-orm -->
+<dependency>
+    <groupId>io.github.yuemenglong</groupId>
+    <artifactId>scala-orm</artifactId>
+    <version>1.3.0</version>
+</dependency>
+
 
 ## 定义实体
 ## 实体间的关系
