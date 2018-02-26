@@ -93,17 +93,9 @@ db.beginTransaction(session => {
   ex.insert("department")
   session.execute(ex)
 
-  //或
-  //      val ex=Orm.insert(Orm.convert(manager)).insert("department")
-  //      session.execute(ex)
-
   //写法二
   //      val ex = Orm.insert(Orm.convert(manager))
   //            ex.insert(_.department)
-  //      session.execute(ex)
-
-  //或
-  //      val ex=Orm.insert(Orm.convert(manager)).insert(_.department)
   //      session.execute(ex)
 })
 //结果：数据库中manager表格会增加一条数据 (40,1,李红,22222222)
@@ -170,6 +162,94 @@ db.beginTransaction(session => {
   OrmTool.deleteById(classOf[Manager], "0.7628532707482609", session)(root => {
     Array(root.leftJoin(_.department))
   })
+})
+```
+
+## 更新
+### update
+##### Orm.update(root: Root[\_])
+```jsx
+//更新id为0.7013507943626212的职员的(name:小奇，age：25)
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Stuff])
+  val ex = Orm.update(root).set(
+    root.get("name").assign("小奇"),
+    root.get(_.age).assign(25)
+  ).where(root.get("id").eql("0.7013507943626212"))
+  session.execute(ex)
+})
+```
+
+### update
+##### Orm.update[T <: Object](obj: T)
+##### update[R](fn: T => R)
+```jsx
+//更新部门id为0.29005326502737394的(number:10,computers:20),该部门下的职员id为0.7013507943626212的(name:小明，age:20)
+db.beginTransaction(session => {
+  val department = OrmTool.selectById(classOf[Department], "0.29005326502737394", session)()
+  department.numbers = 10
+  department.computers = 20
+  val stuffs = session.query(Orm.selectFrom(Orm.root(classOf[Stuff])))
+  department.stuffs = stuffs.map((item: Stuff) => {
+    if (item.id == "0.7013507943626212") {
+      item.name = "小明"
+      item.age = 20
+    }
+    item
+  })
+  val ex = Orm.update(department)
+  ex.update(_.stuffs)
+  session.execute(ex)
+})
+```
+### updateById
+##### Orm.updateById[T, V](clazz: Class[T], id: V, session: Session,pair: (String, Any), pairs: (String, Any)*)
+```jsx
+//更新id为0.7013507943626212的职员的(name:小奇，age：25)
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Stuff])
+  OrmTool.updateById(classOf[Stuff], "0.7013507943626212", session, ("name", "小奇"), ("age", "25"))
+})
+```
+
+## 查询
+### select
+##### Orm.select[T](s: Selectable[T])
+```jsx
+//查询出部门id为0.29005326502737394的部门信息，及该部门下的所有职员信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  root.select(_.stuffs)
+  val ex = Orm.select(root).from(root).where(root.get("id").eql("0.29005326502737394"))
+  val department = session.query(ex)
+  println("department", department.toList)
+})
+```
+
+### selectFrom
+##### selectFrom[T](root: Root[T])
+```jsx
+//查询出部门id为0.29005326502737394的部门信息，及该部门下的所有职员信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  root.select(_.stuffs)
+  val ex = Orm.selectFrom(root).where(root.get("id").eql("0.29005326502737394"))
+  val department = session.query(ex)
+  println("department", department.toList)
+})
+```
+
+### selectById
+##### selectById[T, V](clazz: Class[T], id: V, session: Session)(rootFn: (Root[T]) => Unit = null)
+```jsx
+//查询出部门id为0.29005326502737394的部门信息，及该部门下的所有职员信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  root.select(_.stuffs)
+  val department = OrmTool.selectById(classOf[Department], "0.29005326502737394", session)(root => {
+    root.select(_.stuffs)
+  })
+  println("department", department)
 })
 ```
 
