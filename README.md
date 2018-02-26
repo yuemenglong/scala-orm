@@ -12,25 +12,21 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
         <version>1.3.0</version>
     </dependency>
 ## 定义实体
-    //职员表
-    
-    @Entity(db = "yxytest")
-    class Stuff {
-      @Id
+    //职员表
+    @Entity(db = "yxytest")
+    class Stuff {
+      @Id
       var id: String = _
       var departId: String = _
       var age: Integer = _
       @Column(length = 30)
       var name: String = _
       var sex: Integer = _
-      
       @Pointer
       var department: Department = _
     }
-    
-    //领导表
-    
-    @Entity(db = "yxytest")
+
+    @Entity(db = "yxytest")
     class Manager {
       @Id
       var id: String = _
@@ -38,24 +34,19 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
       var age: Integer = _
       var sex: Integer = _
       var phone: String = _
-      
       @OneToOne(left = "id", right = "id")
       var department: Department = _
     }
 
-    //部门表
-    
-    @Entity(db = "yxytest")
+    @Entity(db = "yxytest")
     class Department {
       @Id
       var id: String = _
       var name: String = _
       var numbers: Integer = _
       var computers: Integer = _
-      
       @OneToMany(left = "id", right = "departId")
       var stuffs: Array[Stuff] = Array()
-      
       @Pointer(left = "id", right = "id")
       var manager: Manager = _
     }
