@@ -62,6 +62,8 @@ class Department {
 ### OneToOne
 ### OneToMany
 ### Pointer
+
+
 ## 新增
 ###  insert(一次添加一条数据)
 ##### Orm.insert[T <: Object](obj: T)
@@ -133,7 +135,40 @@ db.beginTransaction(session => {
 (小天，22，0，0.29005326502737394)
 ```
 
+## 删除
+### delete,deleteFrom,deleteById
 
+```jsx
+//删除领导,id为 0.7628532707482609
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Manager])
+  val ex = Orm.delete(root).from(root).where(root.get("id").eql("0.7628532707482609"))
+  session.execute(ex)
+})
+```
+### deleteFrom
+```jsx
+//删除领导，id为 0.7628532707482609
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Manager])
+  //写法二 删除领导，id为 0.7628532707482609
+  val ex = Orm.deleteFrom(root).where(root.get("id").eql("0.7628532707482609"))
+  session.execute(ex)
+})
+```
+### deleteById
+```jsx
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Manager])
+  //写法一  删除领导，id为 0.7628532707482609
+  OrmTool.deleteById(classOf[Manager], "0.7628532707482609", session)()
+
+  //写法二  删除领导，id为 0.7628532707482609,且 删除该领导下方的所有部门
+  OrmTool.deleteById(classOf[Manager], "0.7628532707482609", session)(root => {
+    Array(root.leftJoin(_.department))
+  })
+})
+```
 
 # Tables of Contents
 * [Database](#database)
