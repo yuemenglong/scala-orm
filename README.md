@@ -26,6 +26,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
       var department: Department = _
     }
 
+    //领导表
     @Entity(db = "yxytest")
     class Manager {
       @Id
@@ -34,10 +35,12 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
       var age: Integer = _
       var sex: Integer = _
       var phone: String = _
+
       @OneToOne(left = "id", right = "id")
       var department: Department = _
     }
 
+    //部门表
     @Entity(db = "yxytest")
     class Department {
       @Id
@@ -45,8 +48,10 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
       var name: String = _
       var numbers: Integer = _
       var computers: Integer = _
+
       @OneToMany(left = "id", right = "departId")
       var stuffs: Array[Stuff] = Array()
+
       @Pointer(left = "id", right = "id")
       var manager: Manager = _
     }
