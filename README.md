@@ -68,7 +68,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
       manager.name = "小天"
       manager.phone = "1111111"
       manager.sex = 0
-      **session.execute(Orm.insert(Orm.convert(manager)))**
+      \**session.execute(Orm.insert(Orm.convert(manager)))\**
     })
 
 
