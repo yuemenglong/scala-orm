@@ -4,7 +4,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
 # QuickStart
 ## install
 将下面内容加入到pom.xml文件中
-    <!-- https://mvnrepository.com/artifact/io.github.yuemenglong/scala-orm -->
+    
     <dependency>
         <groupId>io.github.yuemenglong</groupId>
         <artifactId>scala-orm</artifactId>
