@@ -136,8 +136,8 @@ db.beginTransaction(session => {
 ```
 
 ## 删除
-### delete,deleteFrom,deleteById
-
+### delete
+##### Orm.delete(joins: Join*)
 ```jsx
 //删除领导,id为 0.7628532707482609
 db.beginTransaction(session => {
@@ -147,6 +147,7 @@ db.beginTransaction(session => {
 })
 ```
 ### deleteFrom
+##### Orm.deleteFrom(root: Root[_])
 ```jsx
 //删除领导，id为 0.7628532707482609
 db.beginTransaction(session => {
@@ -157,6 +158,8 @@ db.beginTransaction(session => {
 })
 ```
 ### deleteById
+##### deleteById[T, V](clazz: Class[T], id: V, session: Session)
+                      (rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]())
 ```jsx
 db.beginTransaction(session => {
   val root = Orm.root(classOf[Manager])
