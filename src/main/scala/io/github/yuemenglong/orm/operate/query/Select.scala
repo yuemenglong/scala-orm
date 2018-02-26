@@ -1,7 +1,9 @@
-package io.github.yuemenglong.orm.operate.traits
+package io.github.yuemenglong.orm.operate.query
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.traits.core._
+import io.github.yuemenglong.orm.operate.field.traits.Field
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root}
+import io.github.yuemenglong.orm.operate.query.traits.{Queryable, Selectable}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/17.

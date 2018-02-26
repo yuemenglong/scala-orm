@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.operate.impl.core
+package io.github.yuemenglong.orm.operate.join
 
 import java.lang
 import java.sql.ResultSet
@@ -8,47 +8,19 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.impl._
-import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
-import io.github.yuemenglong.orm.operate.traits.core._
+import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
+import io.github.yuemenglong.orm.operate.field.{FieldImpl, SelectableFieldImpl}
+import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
+import io.github.yuemenglong.orm.operate.join.traits._
+import io.github.yuemenglong.orm.operate.query._
+import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-/**
-  * Created by <yuemenglong@126.com> on 2017/7/15.
-  */
-class FieldImpl(val meta: FieldMeta, val parent: JoinImpl) extends Field {
-  override def getField: String = meta.name
-
-  override def getColumn: String = s"${parent.getAlias}.${meta.column}"
-
-  override def getAlias: String = s"${parent.getAlias}$$${Kit.lodashCase(meta.name)}"
-
-  override def getRoot: Node = parent.getRoot
-
-  override def as[T](clazz: Class[T]): SelectableField[T] = new SelectableFieldImpl[T](clazz, this)
-}
-
-class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends SelectableField[T] {
-  private var distinctVar: String = ""
-
-  override def getColumn: String = s"$distinctVar${impl.getColumn}"
-
-  override def getField: String = impl.getField
-
-  override def getAlias: String = impl.getAlias
-
-  override def getType: Class[T] = clazz
-
-  override def getRoot: Node = impl.getRoot
-
-  override def as[R](clazz: Class[R]): SelectableField[R] = throw new RuntimeException("Already Selectable")
-
-  override def distinct(): SelectableField[T] = {
-    distinctVar = "DISTINCT "
-    this
-  }
+object JoinType extends Enumeration {
+  type JoinType = Value
+  val INNER, LEFT, RIGHT, OUTER = Value
 }
 
 trait JoinInner {
@@ -149,13 +121,6 @@ trait JoinImpl extends Join {
     new FieldImpl(fieldMeta, this)
   }
 
-  override def getRoot: Node = {
-    inner.parent match {
-      case null => this
-      case _ => inner.parent.getRoot
-    }
-  }
-
   override def as[T](clazz: Class[T]): SelectableJoin[T] = {
     require(getMeta.clazz == clazz)
     val joinInner = inner
@@ -194,10 +159,10 @@ trait JoinImpl extends Join {
 
 trait SelectFieldJoinImpl extends SelectFieldJoin {
   self: JoinImpl =>
-  protected[impl] var selects: ArrayBuffer[(String, SelectFieldJoinRet)] = new ArrayBuffer[(String, SelectFieldJoinRet)]()
+  protected[orm] var selects: ArrayBuffer[(String, SelectFieldJoinRet)] = new ArrayBuffer[(String, SelectFieldJoinRet)]()
   //  protected[impl] var fields: Array[FieldImpl] = getMeta.fields().filter(_.isNormalOrPkey).map(f => new FieldImpl(f, this)).toArray
-  protected[impl] var fields: Array[FieldImpl] = _
-  protected[impl] var ignores: Set[String] = Set()
+  protected[orm] var fields: Array[FieldImpl] = _
+  protected[orm] var ignores: Set[String] = Set()
 
   override def select(field: String): SelectFieldJoinRet = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
@@ -345,62 +310,6 @@ trait SelectableImpl[T] extends Selectable[T] {
   }
 }
 
-trait TypedRootImpl[T] extends TypedRoot[T] {
-  self: RootImpl[T] with JoinImpl =>
-  def count(fn: T => Object): SelectableField[java.lang.Long] = {
-    val marker = EntityManager.createMarker[T](getMeta)
-    fn(marker)
-    val field = marker.toString
-    count(field)
-  }
-
-  private def fnToField[R](fn: T => R): (Field, Class[R]) = {
-    val marker = EntityManager.createMarker[T](getMeta)
-    fn(marker)
-    val fieldName = marker.toString
-    val field = get(fieldName).asInstanceOf[FieldImpl]
-    val clazz = field.meta.clazz.asInstanceOf[Class[R]]
-    (field, clazz)
-  }
-
-  def sum[R](fn: T => R): SelectableField[R] = {
-    val (field, clazz) = fnToField(fn)
-    sum(field, clazz)
-  }
-
-  def max[R](fn: T => R): SelectableField[R] = {
-    val (field, clazz) = fnToField(fn)
-    max(field, clazz)
-  }
-
-  def min[R](fn: T => R): SelectableField[R] = {
-    val (field, clazz) = fnToField(fn)
-    min(field, clazz)
-  }
-}
-
-trait RootImpl[T] extends TypedRoot[T] with Root[T] {
-  self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
-
-  override def getTable: String = {
-    def go(join: JoinImpl): Array[String] = {
-      Array(join.getTableWithJoinCond) ++ join.inner.joins.flatMap(go)
-    }
-
-    go(this).mkString("\n")
-  }
-
-  override def count(): Selectable[java.lang.Long] = new Count_(this)
-
-  override def count(field: Field): SelectableField[lang.Long] = new Count(field)
-
-  override def sum[R](field: Field, clazz: Class[R]): SelectableField[R] = new Sum[R](field, clazz)
-
-  override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
-
-  override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
-}
-
 trait TypedJoinImpl[T] extends TypedJoin[T] {
   self: JoinImpl =>
 
@@ -507,157 +416,58 @@ trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
   }
 }
 
-//
-//class TypedJoinImpl[T](meta: EntityMeta, parent: Join,
-//                       joinName: String, left: String, right: String,
-//                       joinType: JoinType)
-//  extends JoinImpl(meta, parent, joinName, left, right, joinType) with TypedJoin[T] {
-//
-//  def this(meta: EntityMeta) {
-//    // for create root
-//    this(meta, null, null, null, null, null)
-//  }
-//
-//  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = {
-//    val marker = EntityManager.createMarker[T](meta)
-//    fn(marker)
-//    val field = marker.toString
-//    if (!meta.fieldMap.contains(field) || !meta.fieldMap(field).isRefer) {
-//      throw new RuntimeException(s"Unknown Field $field On ${meta.entity}")
-//    }
-//    if (meta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != meta.db) {
-//      throw new RuntimeException(s"Field $field Not the Same DB")
-//    }
-//    joins.find(_.joinName == field) match {
-//      case Some(p) => p.joinType == joinType match {
-//        case true => p.asInstanceOf[TypedJoin[R]]
-//        case false => throw new RuntimeException(s"JoinType Not Match, ${p.joinType} Exists")
-//      }
-//      case None =>
-//        val referField = meta.fieldMap(field).asInstanceOf[FieldMetaRefer]
-//        val join = new TypedJoinImpl[R](referField.refer, this, field, referField.left, referField.right, joinType)
-//        joins += join
-//        join
-//    }
-//  }
-//
-//  override def get(fn: (T) => Object): Field = {
-//    val marker = EntityManager.createMarker[T](meta)
-//    fn(marker)
-//    val field = marker.toString
-//    require(field.nonEmpty)
-//    val fields = field.split("\\.")
-//    val join: Join = fields.take(fields.length - 1).foldLeft(this.asInstanceOf[Join]) { case (j, f) =>
-//      j.leftJoin(f)
-//    }
-//    join.get(fields.last)
-//  }
-//
-//  override def joinAs[R](clazz: Class[R], joinType: JoinType)
-//                        (leftFn: T => Object)
-//                        (rightFn: R => Object)
-//
-//  : SelectableJoinImpl[R] = {
-//    if (!OrmMeta.entityMap.contains(clazz)) {
-//      throw new RuntimeException(s"$clazz Is Not Entity")
-//    }
-//    val referMeta = OrmMeta.entityMap(clazz)
-//    val lm = EntityManager.createMarker[T](meta)
-//    val rm = EntityManager.createMarker[R](referMeta)
-//    leftFn(lm)
-//    rightFn(rm)
-//    val left = lm.toString
-//    val right = rm.toString
-//    if (!meta.fieldMap.contains(left)) {
-//      throw new RuntimeException(s"Unknown Field $left On ${meta.entity}")
-//    }
-//    if (!referMeta.fieldMap.contains(right)) {
-//      throw new RuntimeException(s"Unknown Field $right On ${referMeta.entity}")
-//    }
-//    if (meta.db != referMeta.db) {
-//      throw new RuntimeException(s"$left And $right Not The Same DB")
-//    }
-//    val join = joins.find(_.joinName == referMeta.entity) match {
-//      case Some(p) => p
-//      case None =>
-//        val join = new TypedJoinImpl[R](referMeta, this, referMeta.entity, left, right, joinType)
-//        joins += join
-//        join
-//    }
-//    new SelectableJoinImpl[R](clazz, join)
-//  }
-//}
-//
-//class TypedSelectableJoinImpl[T](clazz: Class[T], impl: TypedJoinImpl[T])
-//  extends SelectableJoinImpl[T](clazz, impl) with TypedSelectableJoin[T] {
-//  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = impl.join(fn, joinType)
-//
-//  override def fields(fields: Array[String]): TypedSelectableJoin[T] = {
-//    super.fields(fields)
-//    this
-//  }
-//
-//  override def ignore(fields: Array[String]): TypedSelectableJoin[T] = {
-//    super.ignore(fields)
-//    this
-//  }
-//
-//  override def get(fn: (T) => Object): Field = impl.get(fn)
-//
-//  override def joinAs[R](clazz: Class[R], joinType: JoinType)
-//                        (leftFn: (T) => Object)
-//                        (rightFn: (R) => Object): SelectableJoinImpl[R]
-//  = impl.joinAs(clazz, joinType)(leftFn)(rightFn)
-//
-//  override def fields(fns: (T => Object)*): TypedSelectableJoin[T] = {
-//    val fields = fns.map(fn => {
-//      val marker = EntityManager.createMarker[T](impl.meta)
-//      fn(marker)
-//      marker.toString
-//    })
-//    super.fields(fields: _*)
-//    this
-//  }
-//
-//  override def ignore(fns: (T => Object)*): TypedSelectableJoin[T] = {
-//    val fields = fns.map(fn => {
-//      val marker = EntityManager.createMarker[T](impl.meta)
-//      fn(marker)
-//      marker.toString
-//    })
-//    super.ignore(fields: _*)
-//    this
-//  }
-//}
-//
-//class TypedRootImpl[T](clazz: Class[T], impl: TypedSelectableJoinImpl[T])
-//  extends RootImpl[T](clazz, impl.impl) with TypedRoot[T] {
-//  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoin[R] = impl.join(fn, joinType)
-//
-//  override def fields(fields: Array[String]): TypedRoot[T] = {
-//    super.fields(fields)
-//    this
-//  }
-//
-//  override def ignore(fields: Array[String]): TypedRoot[T] = {
-//    super.ignore(fields)
-//    this
-//  }
-//
-//  override def get(fn: (T) => Object): Field = impl.get(fn)
-//
-//  override def joinAs[R](clazz: Class[R], joinType: JoinType)
-//                        (leftFn: (T) => Object)
-//                        (rightFn: (R) => Object): SelectableJoinImpl[R]
-//  = impl.joinAs(clazz, joinType)(leftFn)(rightFn)
-//
-//  override def fields(fns: (T => Object)*): TypedRoot[T] = {
-//    impl.fields(fns: _*)
-//    this
-//  }
-//
-//  override def ignore(fns: (T => Object)*): TypedRoot[T] = {
-//    impl.ignore(fns: _*)
-//    this
-//  }
-//}
+trait TypedRootImpl[T] extends TypedRoot[T] {
+  self: RootImpl[T] with JoinImpl =>
+  def count(fn: T => Object): SelectableField[java.lang.Long] = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val field = marker.toString
+    count(field)
+  }
+
+  private def fnToField[R](fn: T => R): (Field, Class[R]) = {
+    val marker = EntityManager.createMarker[T](getMeta)
+    fn(marker)
+    val fieldName = marker.toString
+    val field = get(fieldName).asInstanceOf[FieldImpl]
+    val clazz = field.meta.clazz.asInstanceOf[Class[R]]
+    (field, clazz)
+  }
+
+  def sum[R](fn: T => R): SelectableField[R] = {
+    val (field, clazz) = fnToField(fn)
+    sum(field, clazz)
+  }
+
+  def max[R](fn: T => R): SelectableField[R] = {
+    val (field, clazz) = fnToField(fn)
+    max(field, clazz)
+  }
+
+  def min[R](fn: T => R): SelectableField[R] = {
+    val (field, clazz) = fnToField(fn)
+    min(field, clazz)
+  }
+}
+
+trait RootImpl[T] extends TypedRoot[T] with Root[T] {
+  self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
+
+  override def getTable: String = {
+    def go(join: JoinImpl): Array[String] = {
+      Array(join.getTableWithJoinCond) ++ join.inner.joins.flatMap(go)
+    }
+
+    go(this).mkString("\n")
+  }
+
+  override def count(): Selectable[java.lang.Long] = new Count_(this)
+
+  override def count(field: Field): SelectableField[lang.Long] = new Count(field)
+
+  override def sum[R](field: Field, clazz: Class[R]): SelectableField[R] = new Sum[R](field, clazz)
+
+  override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
+
+  override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
+}

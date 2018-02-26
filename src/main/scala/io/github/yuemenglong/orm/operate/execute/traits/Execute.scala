@@ -1,6 +1,4 @@
-package io.github.yuemenglong.orm.operate.traits.core
-
-import java.sql.Connection
+package io.github.yuemenglong.orm.operate.execute.traits
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity

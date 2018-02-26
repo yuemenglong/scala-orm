@@ -6,11 +6,13 @@ import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
-import io.github.yuemenglong.orm.operate.impl._
-import io.github.yuemenglong.orm.operate.impl.core._
-import io.github.yuemenglong.orm.operate.traits.core.JoinType.JoinType
-import io.github.yuemenglong.orm.operate.traits.core._
-import io.github.yuemenglong.orm.operate.traits._
+import io.github.yuemenglong.orm.operate.execute._
+import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
+import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
+import io.github.yuemenglong.orm.operate.join._
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Join, Root}
+import io.github.yuemenglong.orm.operate.query._
+import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.reflect.ClassTag
 

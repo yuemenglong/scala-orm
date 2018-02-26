@@ -1,13 +1,9 @@
-package io.github.yuemenglong.orm.operate.impl
-
-import java.sql.Connection
+package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.Session.Session
-import io.github.yuemenglong.orm.kit.Kit
-import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.impl.core.CondHolder
-import io.github.yuemenglong.orm.operate.traits.ExecutableDelete
-import io.github.yuemenglong.orm.operate.traits.core.{Cond, Join, Root}
+import io.github.yuemenglong.orm.operate.execute.traits.ExecutableDelete
+import io.github.yuemenglong.orm.operate.join.CondHolder
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Join, Root}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.
