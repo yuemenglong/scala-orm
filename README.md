@@ -2,7 +2,7 @@
 scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibernate的一些问题
 
 # QuickStart
-## install
+## Installation
 将下面内容加入到pom.xml文件中
 
     <!-- https://mvnrepository.com/artifact/io.github.yuemenglong/scala-orm -->
@@ -11,9 +11,44 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
         <artifactId>scala-orm</artifactId>
         <version>1.3.0</version>
     </dependency>
-
-
 ## 定义实体
+    @Entity(db = "yxytest")
+    class Stuff {
+      @Id
+      var id: String = _
+      var departId: String = _
+      var age: Integer = _
+      @Column(length = 30)
+      var name: String = _
+      var sex: Integer = _
+      @Pointer
+      var department: Department = _
+    }
+
+    @Entity(db = "yxytest")
+    class Manager {
+      @Id
+      var id: String = _
+      var name: String = _
+      var age: Integer = _
+      var sex: Integer = _
+      var phone: String = _
+      @OneToOne(left = "id", right = "id")
+      var department: Department = _
+    }
+
+    @Entity(db = "yxytest")
+    class Department {
+      @Id
+      var id: String = _
+      var name: String = _
+      var numbers: Integer = _
+      var computers: Integer = _
+      @OneToMany(left = "id", right = "departId")
+      var stuffs: Array[Stuff] = Array()
+      @Pointer(left = "id", right = "id")
+      var manager: Manager = _
+    }
 ## 实体间的关系
 ### pointer
 ## 新增
