@@ -61,15 +61,17 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
 ### Pointer
 ## 新增
 ### 新增一个领导
-    db.beginTransaction(session => {
-      val manager = new Manager()
-      manager.id = Math.random().toString
-      manager.age = 50
-      manager.name = "小天"
-      manager.phone = "1111111"
-      manager.sex = 0
-      \**session.execute(Orm.insert(Orm.convert(manager)))\**
-    })
+```jsx
+db.beginTransaction(session => {
+  val manager = new Manager()
+  manager.id = Math.random().toString
+  manager.age = 50
+  manager.name = "小天"
+  manager.phone = "1111111"
+  manager.sex = 0
+  \**session.execute(Orm.insert(Orm.convert(manager)))\**
+})
+```
 
 
 
