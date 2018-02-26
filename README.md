@@ -13,6 +13,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
     </dependency>
 ## 定义实体
     //职员表
+    
     @Entity(db = "yxytest")
     class Stuff {
       @Id
@@ -28,6 +29,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
     }
     
     //领导表
+    
     @Entity(db = "yxytest")
     class Manager {
       @Id
@@ -42,6 +44,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
     }
 
     //部门表
+    
     @Entity(db = "yxytest")
     class Department {
       @Id
