@@ -158,8 +158,7 @@ db.beginTransaction(session => {
 })
 ```
 ### deleteById
-##### deleteById[T, V](clazz: Class[T], id: V, session: Session)
-(rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]())
+##### deleteById[T, V](clazz: Class[T], id: V, session: Session)(rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]())
                       
 ```jsx
 db.beginTransaction(session => {
