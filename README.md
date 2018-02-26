@@ -69,7 +69,7 @@ db.beginTransaction(session => {
   manager.name = "小天"
   manager.phone = "1111111"
   manager.sex = 0
-  \**session.execute(Orm.insert(Orm.convert(manager)))\**
+  session.execute(Orm.insert(Orm.convert(manager)))
 })
 ```
 
