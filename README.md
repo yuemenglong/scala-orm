@@ -24,7 +24,7 @@ class Stuff {
   @Column(length = 30)
   var name: String = _
   var sex: Integer = _
-  @Pointer
+  @Pointer(left = "departId", right = "id")
   var department: Department = _
 }
 
@@ -60,9 +60,12 @@ class Department {
 ```
 ## 实体间的关系
 ### OneToOne
+一个领导管理一个部门，manager的id对应department的id
 ### OneToMany
+一个部门对应多个职员，deparment的id对应stuff的departId
 ### Pointer
-
+一个职员对应一个部门，stuff的departId对应department的id
+一个部门对应一个领导，department的id对应manager的id
 
 ## 新增
 ###  insert(一次添加一条数据)
