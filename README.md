@@ -63,23 +63,75 @@ class Department {
 ### OneToMany
 ### Pointer
 ## 新增
-### 新增一个领导
+###  insert(一次添加一条数据)
+##### Orm.insert[T <: Object](obj: T)
+##### insert(field: String)
+##### insert[R](fn: T => R)
+
 ```jsx
+//新增一个领导及下方一个部门
 db.beginTransaction(session => {
   val manager = new Manager()
   manager.id = Math.random().toString
-  manager.age = 50
-  manager.name = "小天"
-  manager.phone = "1111111"
-  manager.sex = 0
-  session.execute(Orm.insert(Orm.convert(manager)))
+  manager.age = 40
+  manager.sex = 1
+  manager.name = "李红"
+  manager.phone = "22222222"
+
+  val department = new Department()
+  department.id = manager.id
+  department.name = "财务部门"
+  department.numbers = 5
+  department.computers = 5
+
+  manager.department = department
+
+  //写法一
+  val ex = Orm.insert(Orm.convert(manager))
+  ex.insert("department")
+  session.execute(ex)
+
+  //或
+  //      val ex=Orm.insert(Orm.convert(manager)).insert("department")
+  //      session.execute(ex)
+
+  //写法二
+  //      val ex = Orm.insert(Orm.convert(manager))
+  //            ex.insert(_.department)
+  //      session.execute(ex)
+
+  //或
+  //      val ex=Orm.insert(Orm.convert(manager)).insert(_.department)
+  //      session.execute(ex)
 })
+//结果：数据库中manager表格会增加一条数据 (40,1,李红,22222222)
+//department表中增加一条数据 (财务部门，5，5)
 ```
+###  inserts(一次添加多条数据)
+##### Orm.inserts[T](arr: Array[T])
+```jsx
+//新增多名职员
+db.beginTransaction(session => {
+  val ages = Array(20, 21, 22)
+  val names = Array("小明", "小红", "小天")
+  val sexs = Array(0, 1, 0)
+  val stuffs = (0 to 2).map((item: Int) => {
+    val stuff = new Stuff()
+    stuff.id = Math.random().toString
+    stuff.departId = "0.29005326502737394"
+    stuff.age = ages(item)
+    stuff.sex = sexs(item)
+    stuff.name = names(item)
+    stuff
+  }).toArray
 
-
-
-
-
+  session.execute(Orm.inserts(stuffs))
+})
+//数据库中stuff表中增加三条数据
+(小明，20，0，0.29005326502737394)
+(小红，21，1，0.29005326502737394)
+(小天，22，0，0.29005326502737394)
+```
 
 
 
