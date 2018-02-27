@@ -56,6 +56,7 @@ class Obj {
 
   @Pointer
   var ptr: Ptr = _
+  var ptrId: Long = _
 
   @OneToOne
   var oo: OO = _
@@ -94,6 +95,7 @@ class OM {
 
   @Pointer
   var mo: MO = _
+  var moId: Long = _
 
   @Pointer
   var obj: Obj = _

@@ -28,7 +28,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     this.getValue(field)
   }
 
-  def set(field: String, value: Object): Object = {
+  def check(field: String, value: Object): Unit = {
     val fieldMeta = this.meta.fieldMap(field)
     if ((fieldMeta.isPointer || fieldMeta.isOneOne) && value != null && !EntityManager.isEntity(value)) {
       throw new RuntimeException(s"Can't Set Non Entity Value To Entity Field")
@@ -36,6 +36,17 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     if (fieldMeta.isOneMany && value.asInstanceOf[Array[Object]].exists(!EntityManager.isEntity(_))) {
       throw new RuntimeException(s"Can't Set Non Entity Value To Entity Field")
     }
+  }
+
+  def set(field: String, value: Object): Object = {
+    check(field, value)
+    this.setValue(field, value)
+    null
+  }
+
+  def setRefer(field: String, value: Object): Object = {
+    check(field, value)
+    val fieldMeta = this.meta.fieldMap(field)
     fieldMeta match {
       case _: FieldMetaBuildIn => this.setValue(field, value)
       case _: FieldMetaPointer => this.setPointer(field, value)
@@ -45,12 +56,9 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     null
   }
 
-  def getValue(field: String): Object = {
-    if (this.fieldMap.contains(field)) {
-      this.fieldMap(field)
-    } else {
-      null
-    }
+  def getValue(field: String): Object = this.fieldMap.get(field) match {
+    case Some(v) => v
+    case None => null
   }
 
   def setValue(field: String, value: Object): Unit = {
@@ -100,21 +108,21 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     val a = this
     val fieldMeta = a.meta.fieldMap(field).asInstanceOf[FieldMetaOneMany]
     val arr = value.asInstanceOf[Array[Object]]
-    // 新id的集合，用来判断老数据是否需要断开id
-    val newIds: Set[String] = arr.map(EntityManager.core(_).getPkey)
-      .filter(_ != null)
-      .map(_.toString)(collection.breakOut)
-    // 老数据断开id
-    if (a.fieldMap.contains(field)) {
-      a.fieldMap(field).asInstanceOf[Array[Object]].foreach(item => {
-        val core = EntityManager.core(item)
-        // 不在新数组里，说明关系断开了
-        if (core.getPkey != null && !newIds.contains(core.getPkey.toString)) {
-          // oldb.a_id = null
-          core.fieldMap += ((fieldMeta.right, null))
-        }
-      })
-    }
+    //    // 新id的集合，用来判断老数据是否需要断开id
+    //    val newIds: Set[String] = arr.map(EntityManager.core(_).getPkey)
+    //      .filter(_ != null)
+    //      .map(_.toString)(collection.breakOut)
+    //    // 老数据断开id，改为不断开，上层处理
+    //    if (a.fieldMap.contains(field)) {
+    //      a.fieldMap(field).asInstanceOf[Array[Object]].foreach(item => {
+    //        val core = EntityManager.core(item)
+    //        // 不在新数组里，说明关系断开了
+    //        if (core.getPkey != null && !newIds.contains(core.getPkey.toString)) {
+    //          // oldb.a_id = null
+    //          core.fieldMap += ((fieldMeta.right, null))
+    //        }
+    //      })
+    //    }
     arr.foreach(item => {
       // b.a_id = a.id
       val b = EntityManager.core(item)

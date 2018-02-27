@@ -40,6 +40,39 @@ class TypedTest {
   def openDb2(): Db = Orm.openDb("localhost", 3306, "root", "root", "test2")
 
   @Test
+  def testInsert(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.ptr = new Ptr
+    obj.oo = new OO
+    obj.om = Array(new OM, new OM)
+    obj.om(0).mo = new MO
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    ex.insert(_.oo)
+    ex.inserts(_.om).insert(_.mo)
+    session.execute(ex)
+    val r = ex.root()
+    Assert.assertEquals(r.id, 1L)
+    Assert.assertEquals(r.ptrId, r.ptr.id)
+    Assert.assertEquals(r.oo.objId, r.id)
+    Assert.assertEquals(r.om(0).mo.id, r.om(0).moId)
+    r.om.foreach(m => {
+      Assert.assertEquals(m.objId, r.id)
+    })
+
+    {
+      r.name = "name"
+      r.om = r.om ++ Array(Orm.create(classOf[OM]))
+      val ex = Orm.update(r)
+      (0 to 1).foreach(i => ex.ignoreFor(r.om(i)))
+      ex.insert(_.om)
+      session.execute(ex)
+      Assert.assertEquals(r.om(2).objId, r.id)
+    }
+  })
+
+  @Test
   def testOr(): Unit = db.beginTransaction(session => {
     (1 to 10).foreach(i => {
       val obj = new Obj
@@ -339,8 +372,10 @@ class TypedTest {
     }
 
     {
-      obj.age = 20
-      val ret = session.execute(Orm.update(obj))
+      val o = Orm.empty(classOf[Obj])
+      o.id = obj.id
+      o.age = 20
+      val ret = session.execute(Orm.update(o))
       Assert.assertEquals(ret, 1)
     }
 

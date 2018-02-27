@@ -576,7 +576,7 @@ class ScalaTest {
       val oms = mos.map(mo => {
         val om = Orm.empty(classOf[OM])
         om.subId = 1L
-        om.mo = mo
+        om.moId = mo.id
         om
       })
       session.execute(Orm.inserts(oms))

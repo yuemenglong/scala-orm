@@ -230,7 +230,7 @@ object OrmTool {
       case false => session.first(query).asInstanceOf[Object]
     }
 
-    entity.$$core().set(field, res)
+    entity.$$core().setRefer(field, res)
     obj
   }
 
@@ -271,7 +271,7 @@ object OrmTool {
     entities.foreach(e => {
       val leftValue = e.$$core().get(refer.left)
       if (res.contains(leftValue)) {
-        e.$$core().set(field, res(leftValue))
+        e.$$core().setRefer(field, res(leftValue))
       }
     })
     arr
