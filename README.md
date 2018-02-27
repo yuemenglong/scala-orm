@@ -1,5 +1,9 @@
 # Scala-Orm
-scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibernate的一些问题
+scala-orm是一个用scala开发的轻量级的开源ORM框架，用来替代hibernate
+## hibernate的问题
+* 无法判断字段为空的情况。字段为null究竟是确实为null还是没有从数据库查询，这两个情况是无法分辨的
+* 只能基于对象操作，无法操作部分字段
+* 性能低下，多出大量无效查询
 
 # QuickStart
 ## Installation
