@@ -93,7 +93,7 @@ db.beginTransaction(session => {
 
   manager.department = department
 
-  val ex = Orm.insert(Orm.convert(manager))
+  val ex = Orm.insert(Orm.convert(manager)) //convert表示将java对象转化为代理对象，数据库处理的是代理对象
   ex.insert("department") //级联插入，还可写成 ex.insert(_.department) ，级联删除，级联更新，级联查询都和级联插入一样有两种写法
   session.execute(ex)
 })
@@ -129,7 +129,7 @@ db.beginTransaction(session => {
 ### delete，deleteFrom
 ```jsx
 db.beginTransaction(session => {
-  val root = Orm.root(classOf[Manager])
+  val root = Orm.root(classOf[Manager]) //root表示最原始的Manager对象，所有操作都是基于Manager对象处理
   //删除所有领导
   val ex = Orm.delete(root).from(root)//也可写成 val ex=Orm.deleteFrom(root)
   // 删除 id为 0.7628532707482609的领导
