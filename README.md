@@ -144,7 +144,6 @@ db.beginTransaction(session => {
 })
 ```
 
-
 ```jsx
 //更新id为0.7013507943626212的职员的(name:小奇，age：25)
 db.beginTransaction(session => {
@@ -207,6 +206,7 @@ db.beginTransaction(session => {
  session.execute(ex)
 })
 ```
+
 ##### assignSub 减少
 ```jsx
 //将每个部门的人数减2
