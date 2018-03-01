@@ -251,7 +251,7 @@ db.beginTransaction(session => {
 })
 ```
 
-##### gt 大于，gte大于等于  lt小于 lte小于等于
+##### gt 大于，gte大于等于， lt小于， lte小于等于
 ```jsx
 //查询人数大于10的部门信息
 db.beginTransaction(session => {
