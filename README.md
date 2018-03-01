@@ -15,7 +15,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibern
 ## 定义实体
 ```jsx
 //职员表
-@Entity(db = "yxytest")
+@Entity(db = "dbtest")
 class Stuff {
   @Id
   var id: String = _
@@ -29,7 +29,7 @@ class Stuff {
 }
 
 //领导表
-@Entity(db = "yxytest")
+@Entity(db = "dbtest")
 class Manager {
   @Id
   var id: String = _
@@ -43,7 +43,7 @@ class Manager {
 }
 
 //部门表
-@Entity(db = "yxytest")
+@Entity(db = "dbtest")
 class Department {
   @Id
   var id: String = _
