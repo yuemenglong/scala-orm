@@ -59,15 +59,15 @@ class Department {
 }
 ```
 ## 实体间的关系
-### OneToOne
-![一对一](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
+### OneToOne Pointer
+![一对一，Pointer](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
 
 一个领导管理一个部门，manager的id对应department的id
 ### OneToMany
 ![一对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_many.png)
 
 一个部门对应多个职员，deparment的id对应stuff的departId
-### Pointer
+### ManyToMany
 ![多对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/many_to_many.png)
 
 一个职员对应一个部门，stuff的departId对应department的id
