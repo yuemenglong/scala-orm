@@ -60,6 +60,9 @@ class Department {
 ```
 ## 实体间的关系
 ### OneToOne
+
+![index](https://github.com/SimpleSmile412/scala-orm/edit/master/doc/imgs/one_to_one.png)
+
 一个领导管理一个部门，manager的id对应department的id
 ### OneToMany
 一个部门对应多个职员，deparment的id对应stuff的departId
