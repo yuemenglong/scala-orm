@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://nodejs.org/">
+    <img alt="Node.js" src="https://github.com/SimpleSmile412/scala-orm/edit/master/doc/one_to_one.png" width="400"/>
+  </a>
+</p>
+
 # Scala-Orm
 scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibernate的一些问题
 
@@ -60,7 +66,6 @@ class Department {
 ```
 ## 实体间的关系
 ### OneToOne
-<img src="https://github.com/SimpleSmile412/scala-orm/edit/master/doc/imgs/one_to_one.png"/>
 一个领导管理一个部门，manager的id对应department的id
 ### OneToMany
 一个部门对应多个职员，deparment的id对应stuff的departId
