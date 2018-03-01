@@ -188,7 +188,7 @@ db.beginTransaction(session => {
 })
 ```
 
-##### assignAdd 增加
+##### assignAdd 增加 ，assignSub 减少
 ```jsx
 //将每个部门的人数加2
 db.beginTransaction(session => {
@@ -203,25 +203,6 @@ db.beginTransaction(session => {
 db.beginTransaction(session => {
  val root = Orm.root(classOf[Department])
  val ex = Orm.update(root).set(root.get("numbers").assignAdd(root.get("computers"), 3))
- session.execute(ex)
-})
-```
-
-##### assignSub 减少
-```jsx
-//将每个部门的人数减2
-db.beginTransaction(session => {
-  val root = Orm.root(classOf[Department])
-  val ex = Orm.update(root).set(root.get("numbers").assignSub(2))
-  session.execute(ex)
-})
-```
-
-```jsx
-//将每个部门的人数在电脑的基础上减3，例如部门电脑数量是5，则部门人数为2
-db.beginTransaction(session => {
- val root = Orm.root(classOf[Department])
- val ex = Orm.update(root).set(root.get("numbers").assignSub(root.get("computers"), 3))
  session.execute(ex)
 })
 ```
@@ -258,20 +239,58 @@ db.beginTransaction(session => {
 
 
 ### where 条件语句不同情况解析（删除，更新，查询均可用）
-
+ 
+##### eql 相等，neq不相等
 ```jsx
-//查询出id为0.29005326502737394的部门信息的第一条
+//查询出id等于0.29005326502737394的部门信息
 db.beginTransaction(session => {
   val root = Orm.root(classOf[Department])
   val ex = Orm.selectFrom(root).where(root.get("id").eql("0.29005326502737394")) 
-  // neq不等于   gt大于  gte大于等于  lt小于 lte小于等于  in包含  nin不包含  isNull空  notNull非空   
-  //like模糊匹配  IT%（模糊匹配以‘IT’开头）  %部门（模糊匹配以‘部门’结尾）  %部%（模糊匹配中间含‘部’字）
-  val department = session.first(ex)
+  //   in包含  nin不包含  isNull空  notNull非空   
+  session.query(ex)
 })
 ```
 
+##### gt 大于，gte大于等于  lt小于 lte小于等于
+```jsx
+//查询人数大于10的部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("numbers").gt(10)) 
+  session.query(ex)
+})
+```
 
+##### like模糊查询
+```jsx
+//查询 姓名中间带“部”字的 部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("name").like("%部%")) 
+  //IT%（模糊匹配以‘IT’开头）  %部门（模糊匹配以‘部门’结尾）  %部%（模糊匹配中间含‘部’字）
+  session.query(ex)
+})
+```
 
+##### in包含，nin不包含
+```jsx
+//查询 部门名称包含在以下数组中的 部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("name").in(Array("IT部门", "财务部门", "销售部门")))
+  session.query(ex)
+})
+```
+
+##### isNull 空，notNull非空
+```jsx
+//查询 name非空的 部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("name").notNull()) //若为空是isNull
+  session.query(ex)
+})
+```
 
 
 # Tables of Contents
