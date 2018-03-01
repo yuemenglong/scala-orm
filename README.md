@@ -1,8 +1,5 @@
-<p align="center">
-  <a href="https://nodejs.org/">
-    <img alt="Node.js" src="https://github.com/SimpleSmile412/scala-orm/edit/master/doc/one_to_one.png" width="400"/>
-  </a>
-</p>
+
+![测试](https://github.com/SimpleSmile412/scala-orm/edit/master/doc/one_to_one.png)
 
 # Scala-Orm
 scala-orm是一个用scala开发的轻量级的开源ORM框架，解决了Hibernate的一些问题
