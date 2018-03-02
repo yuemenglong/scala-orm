@@ -62,7 +62,7 @@ class Department {
 ### Pointer
 ![Pointer](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
 
-Pointer关系中，判断哪个是主表，如图所示：若A为主表，A表中的主键充当B表中的外键，则B表对A表来说是Pointer关系
+> Pointer关系中，判断哪个是主表，如图所示：若A为主表，A表中的主键充当B表中的外键，则B表对A表来说是Pointer关系
 
 A表中的一行最多只能匹配B表中的一行
 
