@@ -63,24 +63,33 @@ class Department {
 ![Pointer](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
 
 Pointer关系中，判断哪个是主表，如图所示：若A为主表，A表中的主键充当B表中的外键，则B表对A表来说是Pointer关系
+
 A表中的一行最多只能匹配B表中的一行
+
 @Pointer(left="id",right="id"),left表示department表中的主键，对应manager中的主键；right表示manager表中的主键，具有唯一性
+
 例如：一个部门属于一个领导管理，department的id对应manager的id
 
 ### OneToOne
 ![一对一](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
 
 一对一关系中，判断哪个为主表，如图所示：若A为主表，A表的主键充当B表的外键，则A表对B表来说是OneToOne关系
+
 A表中的一行最多只能匹配B表中的一行
+
 @OneToOne(left="id",right="id"),left表示manager表中的主键，具有唯一性；right表示department表中主键，对应manager中的主键，具有唯一性
+
 例如：一个领导管理一个部门，manager的id对应department的id
 
 ### OneToMany
 ![一对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_many.png)
 
 一对多关系中，在多的一方添加外键，如图所示：A表中的主键充当B表中的外键
+
 A表中的一行可以匹配B表中的多行
+
 @OneToMany(left="id",right="departId"),left表示department表中的主键，具有唯一性；right表示stuff中的外键，对应department中的主键，不具有唯一性
+
 例如：一个部门对应多个职员，deparment的id对应stuff的departId
 ### ManyToMany
 ![多对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/many_to_many.png)
