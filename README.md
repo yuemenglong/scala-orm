@@ -62,7 +62,7 @@ class Department {
 ### Pointer
 ![Pointer](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
 
-> Pointer关系中，判断哪个是主表，如图所示：若A为主表，A表中的主键充当B表中的外键，则B表对A表来说是Pointer关系
+Pointer关系中，判断哪个是主表，如图所示：若A为主表，A表中的主键充当B表中的外键，则B表对A表来说是Pointer关系
 
 A表中的一行最多只能匹配B表中的一行
 
@@ -318,6 +318,19 @@ db.beginTransaction(session => {
   val root = Orm.root(classOf[Department])
   val ex = Orm.selectFrom(root).where(root.get("name").notNull()) //若为空是isNull
   session.query(ex)
+})
+```
+
+##### and并且，or或者
+```jsx
+//查询 部门人员数量大于6，并且职员年龄大于24的 部门信息及该部门下方的职员信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  root.select(_.stuffs)
+  val ex = Orm.selectFrom(root).where(root.get(_.numbers).gt(6).and(
+    root.leftJoin(_.stuffs).get("age").gt(24)
+  ))
+  session.query(ex)
 })
 ```
 
