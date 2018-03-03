@@ -19,7 +19,7 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，用来替代hib
 ## 定义实体
 ```jsx
 //职员表
-@Entity(db = "yxytest")
+@Entity(db = "dbtest")
 class Stuff {
   @Id
   var id: String = _
@@ -33,7 +33,7 @@ class Stuff {
 }
 
 //领导表
-@Entity(db = "yxytest")
+@Entity(db = "dbtest")
 class Manager {
   @Id
   var id: String = _
@@ -47,7 +47,7 @@ class Manager {
 }
 
 //部门表
-@Entity(db = "yxytest")
+@Entity(db = "dbtest")
 class Department {
   @Id
   var id: String = _
@@ -63,20 +63,45 @@ class Department {
 }
 ```
 ## 实体间的关系
-### OneToOne
-一个领导管理一个部门，manager的id对应department的id
-### OneToMany
-一个部门对应多个职员，deparment的id对应stuff的departId
 ### Pointer
-一个职员对应一个部门，stuff的departId对应department的id
-一个部门对应一个领导，department的id对应manager的id
+![Pointer](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
+
+Pointer关系中，判断哪个是主表，如图所示：若A为主表，A表中的主键充当B表中的外键，则B表对A表来说是Pointer关系
+
+A表中的一行最多只能匹配B表中的一行
+
+@Pointer(left="id",right="id"),left表示department表中的主键，对应manager中的主键；right表示manager表中的主键，具有唯一性
+
+例如：一个部门属于一个领导管理，department的id对应manager的id
+
+### OneToOne
+![一对一](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
+
+一对一关系中，判断哪个为主表，如图所示：若A为主表，A表的主键充当B表的外键，则A表对B表来说是OneToOne关系
+
+A表中的一行最多只能匹配B表中的一行
+
+@OneToOne(left="id",right="id"),left表示manager表中的主键，具有唯一性；right表示department表中主键，对应manager中的主键，具有唯一性
+
+例如：一个领导管理一个部门，manager的id对应department的id
+
+### OneToMany
+![一对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_many.png)
+
+一对多关系中，在多的一方添加外键，如图所示：A表中的主键充当B表中的外键
+
+A表中的一行可以匹配B表中的多行
+
+@OneToMany(left="id",right="departId"),left表示department表中的主键，具有唯一性；right表示stuff中的外键，对应department中的主键，不具有唯一性
+
+例如：一个部门对应多个职员，deparment的id对应stuff的departId
+### ManyToMany
+![多对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/many_to_many.png)
+
+多对多关系中，一般需要一个中间表将两个表关联，如图所示：A表中的主键充当AB中间表中的外键，A表和AB中间表示一对多关系，B表中的主键充当AB表中的外键，B表中和AB中间表表示一对多关系，则A表和B表示多对多关系
 
 ## 新增
 ###  insert(一次添加一条数据)
-##### Orm.insert[T <: Object](obj: T)
-##### insert(field: String)
-##### insert[R](fn: T => R)
-
 ```jsx
 //新增一个领导及下方一个部门
 db.beginTransaction(session => {
@@ -95,21 +120,14 @@ db.beginTransaction(session => {
 
   manager.department = department
 
-  //写法一
-  val ex = Orm.insert(Orm.convert(manager))
-  ex.insert("department")
-  session.execute(ex)
-
-  //写法二
-  //      val ex = Orm.insert(Orm.convert(manager))
-  //            ex.insert(_.department)
-  //      session.execute(ex)
+  val ex = Orm.insert(Orm.convert(manager)) //convert表示将java对象转化为代理对象，数据库处理的是代理对象
+  ex.insert("department") //级联插入，还可写成 ex.insert(_.department) ，级联删除，级联更新，级联查询都和级联插入一样有两种写法
+  session.execute(ex)
 })
 //结果：数据库中manager表格会增加一条数据 (40,1,李红,22222222)
 //department表中增加一条数据 (财务部门，5，5)
 ```
 ###  inserts(一次添加多条数据)
-##### Orm.inserts[T](arr: Array[T])
 ```jsx
 //新增多名职员
 db.beginTransaction(session => {
@@ -135,46 +153,30 @@ db.beginTransaction(session => {
 ```
 
 ## 删除
-### delete
-##### Orm.delete(joins: Join*)
-```jsx
-//删除领导,id为 0.7628532707482609
-db.beginTransaction(session => {
-  val root = Orm.root(classOf[Manager])
-  val ex = Orm.delete(root).from(root).where(root.get("id").eql("0.7628532707482609"))
-  session.execute(ex)
-})
-```
-### deleteFrom
-##### Orm.deleteFrom(root: Root[_])
-```jsx
-//删除领导，id为 0.7628532707482609
-db.beginTransaction(session => {
-  val root = Orm.root(classOf[Manager])
-  //写法二 删除领导，id为 0.7628532707482609
-  val ex = Orm.deleteFrom(root).where(root.get("id").eql("0.7628532707482609"))
-  session.execute(ex)
-})
-```
-### deleteById
-##### deleteById[T, V](clazz: Class[T], id: V, session: Session)(rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]())
-                      
+### delete，deleteFrom
 ```jsx
 db.beginTransaction(session => {
-  val root = Orm.root(classOf[Manager])
-  //写法一  删除领导，id为 0.7628532707482609
-  OrmTool.deleteById(classOf[Manager], "0.7628532707482609", session)()
-
-  //写法二  删除领导，id为 0.7628532707482609,且 删除该领导下方的所有部门
-  OrmTool.deleteById(classOf[Manager], "0.7628532707482609", session)(root => {
-    Array(root.leftJoin(_.department))
-  })
+  val root = Orm.root(classOf[Manager]) //root表示最原始的Manager对象，所有操作都是基于Manager对象处理
+  //删除所有领导
+  val ex = Orm.delete(root).from(root)//也可写成 val ex=Orm.deleteFrom(root)
+  // 删除 id为 0.7628532707482609的领导
+  // val ex = Orm.deleteFrom(root).where(root.get("id").eql("0.7628532707482609"))
+  session.execute(ex)
 })
 ```
 
 ## 更新
 ### update
-##### Orm.update(root: Root[\_])
+
+```jsx
+//将所有职员的名字改为 小奇
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Stuff])
+  val ex = Orm.update(root).set(root.get("name").assign("小奇"))
+  session.execute(ex)
+})
+```
+
 ```jsx
 //更新id为0.7013507943626212的职员的(name:小奇，age：25)
 db.beginTransaction(session => {
@@ -183,15 +185,12 @@ db.beginTransaction(session => {
     root.get("name").assign("小奇"),
     root.get(_.age).assign(25)
   ).where(root.get("id").eql("0.7013507943626212"))
-  session.execute(ex)
+  session.execute(ex)
 })
 ```
 
-### update
-##### Orm.update[T <: Object](obj: T)
-##### update[R](fn: T => R)
 ```jsx
-//更新部门id为0.29005326502737394的(number:10,computers:20),该部门下的职员id为0.7013507943626212的(name:小明，age:20)
+//更新部门id为0.29005326502737394的(number:10,computers:20),同时更新该部门下的职员id为0.7013507943626212的(name:小明，age:20)
 db.beginTransaction(session => {
   val department = OrmTool.selectById(classOf[Department], "0.29005326502737394", session)()
   department.numbers = 10
@@ -209,56 +208,136 @@ db.beginTransaction(session => {
   session.execute(ex)
 })
 ```
-### updateById
-##### Orm.updateById[T, V](clazz: Class[T], id: V, session: Session,pair: (String, Any), pairs: (String, Any)*)
+
+### update中set的不同情况举例
+
+##### assign 等于
 ```jsx
-//更新id为0.7013507943626212的职员的(name:小奇，age：25)
+//将所有部门的名字改为 财务部门
 db.beginTransaction(session => {
-  val root = Orm.root(classOf[Stuff])
-  OrmTool.updateById(classOf[Stuff], "0.7013507943626212", session, ("name", "小奇"), ("age", "25"))
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.update(root).set(root.get("name").assign("财务部门"))
+  session.execute(ex)
+})
+```
+
+##### assignAdd 增加 ，assignSub 减少
+```jsx
+//将每个部门的人数加2
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.update(root).set(root.get("numbers").assignAdd(2))
+  session.execute(ex)
+})
+```
+
+```jsx
+//将每个部门的人数在电脑的基础上加3，例如部门电脑数量是5，则部门人数为8
+db.beginTransaction(session => {
+ val root = Orm.root(classOf[Department])
+ val ex = Orm.update(root).set(root.get("numbers").assignAdd(root.get("computers"), 3))
+ session.execute(ex)
 })
 ```
 
 ## 查询
-### select
-##### Orm.select[T](s: Selectable[T])
+### select selectFrom
 ```jsx
-//查询出部门id为0.29005326502737394的部门信息，及该部门下的所有职员信息
+//查询出所有部门
 db.beginTransaction(session => {
   val root = Orm.root(classOf[Department])
-  root.select(_.stuffs)
-  val ex = Orm.select(root).from(root).where(root.get("id").eql("0.29005326502737394"))
-  val department = session.query(ex)
-  println("department", department.toList)
+  val ex = Orm.select(root).from(root) //也可写成 Orm.selectFrom(root)
+  val department = session.query(ex)
 })
 ```
 
-### selectFrom
-##### selectFrom[T](root: Root[T])
 ```jsx
-//查询出部门id为0.29005326502737394的部门信息，及该部门下的所有职员信息
+//查询出所有部门的第一条
 db.beginTransaction(session => {
   val root = Orm.root(classOf[Department])
-  root.select(_.stuffs)
-  val ex = Orm.selectFrom(root).where(root.get("id").eql("0.29005326502737394"))
-  val department = session.query(ex)
-  println("department", department.toList)
+  val ex = Orm.select(root).from(root)
+  val department = session.first(ex)
 })
 ```
 
-### selectById
-##### selectById[T, V](clazz: Class[T], id: V, session: Session)(rootFn: (Root[T]) => Unit = null)
 ```jsx
-//查询出部门id为0.29005326502737394的部门信息，及该部门下的所有职员信息
+//查询出所有部门，及该部门下所有职员信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  root.select(_.stuffs) //级联查询该部门下的职员信息  也可写成 room.select("stuffs")
+  val ex = Orm.select(root).from(root)
+  val department = session.query(ex)
+})
+```
+
+
+### where 条件语句不同情况解析（删除，更新，查询均可用）
+ 
+##### eql 相等，neq不相等
+```jsx
+//查询出id等于0.29005326502737394的部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("id").eql("0.29005326502737394")) 
+  //   in包含  nin不包含  isNull空  notNull非空   
+  session.query(ex)
+})
+```
+
+##### gt 大于，gte大于等于， lt小于， lte小于等于
+```jsx
+//查询人数大于10的部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("numbers").gt(10)) 
+  session.query(ex)
+})
+```
+
+##### like模糊查询
+```jsx
+//查询 姓名中间带“部”字的 部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("name").like("%部%")) 
+  //IT%（模糊匹配以‘IT’开头）  %部门（模糊匹配以‘部门’结尾）  %部%（模糊匹配中间含‘部’字）
+  session.query(ex)
+})
+```
+
+##### in包含，nin不包含
+```jsx
+//查询 部门名称包含在以下数组中的 部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("name").in(Array("IT部门", "财务部门", "销售部门")))
+  session.query(ex)
+})
+```
+
+##### isNull 空，notNull非空
+```jsx
+//查询 name非空的 部门信息
+db.beginTransaction(session => {
+  val root = Orm.root(classOf[Department])
+  val ex = Orm.selectFrom(root).where(root.get("name").notNull()) //若为空是isNull
+  session.query(ex)
+})
+```
+
+##### and并且，or或者
+```jsx
+//查询 部门人员数量大于6，并且职员年龄大于24的 部门信息及该部门下方的职员信息
 db.beginTransaction(session => {
   val root = Orm.root(classOf[Department])
   root.select(_.stuffs)
-  val department = OrmTool.selectById(classOf[Department], "0.29005326502737394", session)(root => {
-    root.select(_.stuffs)
-  })
-  println("department", department)
+  val ex = Orm.selectFrom(root).where(root.get(_.numbers).gt(6).and(
+    root.leftJoin(_.stuffs).get("age").gt(24)
+  ))
+  session.query(ex)
 })
 ```
+
 
 # Tables of Contents
 * [Database](#database)
