@@ -107,7 +107,7 @@ object OrmTool {
   def attachx[T, R](orig: T, session: Session)
                    (fn: T => R)
                    (joinFn: TypedSelectJoin[R] => Unit,
-                    queryFn: Query[R, R] => Unit,
+                    queryFn: Query[R, R] => Unit
                    ): T = {
     val obj = Orm.convert(orig)
     val entity = obj.asInstanceOf[Entity]
@@ -128,7 +128,7 @@ object OrmTool {
   def attachsx[T, R](orig: T, session: Session)
                     (fn: T => Array[R])
                     (joinFn: TypedSelectJoin[R] => Unit,
-                     queryFn: Query[R, R] => Unit,
+                     queryFn: Query[R, R] => Unit
                     ): T = {
     val obj = Orm.convert(orig)
     val entity = obj.asInstanceOf[Entity]
@@ -149,7 +149,7 @@ object OrmTool {
   def sattachx[T, R](orig: Array[T], session: Session)
                     (fn: T => R)
                     (joinFn: TypedSelectJoin[R] => Unit,
-                     queryFn: Query[R, R] => Unit,
+                     queryFn: Query[R, R] => Unit
                     ): Array[T] = {
     if (orig.isEmpty) {
       return orig
@@ -174,7 +174,7 @@ object OrmTool {
   def sattachsx[T, R](orig: Array[T], session: Session)
                      (fn: T => Array[R])
                      (joinFn: TypedSelectJoin[R] => Unit,
-                      queryFn: Query[R, R] => Unit,
+                      queryFn: Query[R, R] => Unit
                      ): Array[T] = {
     if (orig.isEmpty) {
       return orig
@@ -200,7 +200,7 @@ object OrmTool {
 
   def attach[T](obj: T, field: String, session: Session,
                 joinFn: SelectFieldJoin => Unit,
-                queryFn: Query[_, _] => Unit,
+                queryFn: Query[_, _] => Unit
                ): T = {
     if (obj.getClass.isArray) {
       return attachArray(obj.asInstanceOf[Array[_]], field, session, joinFn, queryFn)
@@ -237,7 +237,7 @@ object OrmTool {
 
   private def attachArray(arr: Array[_], field: String, session: Session,
                           joinFn: SelectFieldJoin => Unit = null,
-                          queryFn: Query[_, _] => Unit = null,
+                          queryFn: Query[_, _] => Unit = null
                          ): Array[_] = {
     if (arr.exists(!_.isInstanceOf[Entity])) {
       throw new RuntimeException("Array Has Item Not Entity")

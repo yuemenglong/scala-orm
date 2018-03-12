@@ -276,7 +276,7 @@ class ScalaTest {
       {
         val root = Orm.root(classOf[Obj])
         val ex = Orm.delete(
-          root.leftJoin("oo"),
+          root.leftJoin("oo")
         ).from(root).where(root.get("id").eql(1))
         session.execute(ex)
       }
