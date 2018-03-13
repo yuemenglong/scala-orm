@@ -12,7 +12,7 @@ import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, Join, Root}
 import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.query.traits.Selectable
+import io.github.yuemenglong.orm.operate.query.traits.{Query, QueryBuilder, Selectable}
 
 import scala.reflect.ClassTag
 

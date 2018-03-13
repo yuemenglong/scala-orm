@@ -11,7 +11,8 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.join.traits.{Join, Root, SelectFieldJoin, TypedSelectJoin}
-import io.github.yuemenglong.orm.operate.query.{Query, QueryImpl}
+import io.github.yuemenglong.orm.operate.query.QueryImpl
+import io.github.yuemenglong.orm.operate.query.traits.Query
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

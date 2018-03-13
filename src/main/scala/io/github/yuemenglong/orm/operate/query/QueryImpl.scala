@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.operate.field.SelectableFieldImpl
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.CondHolder
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, SubRoot}
-import io.github.yuemenglong.orm.operate.query.traits.Selectable
+import io.github.yuemenglong.orm.operate.query.traits.{Query, QueryBuilder, Selectable, SelectableTuple}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

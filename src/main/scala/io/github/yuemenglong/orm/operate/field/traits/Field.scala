@@ -7,8 +7,7 @@ import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Lon
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp, Expr}
-import io.github.yuemenglong.orm.operate.query.Query
-import io.github.yuemenglong.orm.operate.query.traits.Selectable
+import io.github.yuemenglong.orm.operate.query.traits.{Query, Selectable}
 
 import scala.collection.mutable
 

@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.operate.query.Query
+import io.github.yuemenglong.orm.operate.query.traits.Query
 
 /**
   * Created by yml on 2017/7/15.
