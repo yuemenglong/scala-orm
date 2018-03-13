@@ -329,7 +329,7 @@ class TypedTest {
         root.count(root.joins(_.om).get(_.id))
       ).from(root)
         .groupBy(root.get(_.id))
-        .having(root.count(root.get(_.id)).gt(1)))
+        .having(root.count(root(_.id)).gt(1)))
       Assert.assertEquals(res.length, 1)
       Assert.assertEquals(res(0)._1.longValue(), 2)
       Assert.assertEquals(res(0)._2.longValue(), 5)

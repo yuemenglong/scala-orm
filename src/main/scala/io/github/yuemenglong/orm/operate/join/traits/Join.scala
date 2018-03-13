@@ -71,6 +71,8 @@ trait TypedBase {
 
 trait TypedJoin[T] extends TypedBase {
 
+  def apply[R](fn: T => R): SelectableField[R] = get(fn)
+
   def get[R](fn: (T => R)): SelectableField[R]
 
   def join[R](fn: (T => R), joinType: JoinType): TypedJoinRet[R]
