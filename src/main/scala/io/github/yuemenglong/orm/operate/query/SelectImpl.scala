@@ -58,7 +58,7 @@ trait QueryImpl[R, T] extends Query[R, T] {
 
   def getSql: String = {
     val columnsSql = st.getColumnWithAs
-    val tableSql = root.getTable
+    val tableSql = root.getSql
     val condSql = cond.getSql match {
       case "" => "1 = 1"
       case s => s

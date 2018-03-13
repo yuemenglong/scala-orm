@@ -18,16 +18,12 @@ trait Expr {
   def getParams: Array[Object]
 }
 
-
-
 trait Join extends Expr {
   type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
 
   def getMeta: EntityMeta
 
   def getAlias: String
-
-  def getTableWithJoinCond: String
 
   def join(field: String): Join = join(field, JoinType.INNER)
 
@@ -52,8 +48,6 @@ trait Join extends Expr {
   def joinAs[T](left: String, right: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(left, right, clazz, JoinType.INNER)
 
   def leftJoinAs[T](left: String, right: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
-
-  override def getSql: String = getTableWithJoinCond
 }
 
 trait SelectFieldJoin {
@@ -127,8 +121,6 @@ trait TypedRoot[T] {
 
 trait Root[T] extends TypedRoot[T] with TypedSelectJoin[T] with TypedJoin[T]
   with Selectable[T] with SelectFieldJoin with Join {
-
-  def getTable: String
 
   def count(): Selectable[java.lang.Long]
 

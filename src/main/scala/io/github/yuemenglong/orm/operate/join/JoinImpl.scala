@@ -136,8 +136,8 @@ trait JoinImpl extends Join {
     }
   }
 
-  override def getTableWithJoinCond: String = {
-    if (inner.parent == null) {
+  override def getSql: String = {
+    val self = if (inner.parent == null) {
       s"`${getMeta.table}` AS `$getAlias`"
     } else {
       val leftColumn = inner.parent.getMeta.fieldMap(inner.left).column
@@ -147,6 +147,7 @@ trait JoinImpl extends Join {
       val condSql = new JoinCond(leftTable, leftColumn, rightTable, rightColumn).and(inner.cond).getSql
       s"${inner.joinType.toString} JOIN `${getMeta.table}` AS `$getAlias` ON $condSql"
     }
+    (Array(self) ++ inner.joins.map(_.getSql)).mkString("\n")
   }
 
   override def getParams: Array[Object] = inner.cond.getParams ++ inner.joins.flatMap(_.getParams).toArray[Object]
@@ -452,14 +453,6 @@ trait TypedRootImpl[T] extends TypedRoot[T] {
 
 trait RootImpl[T] extends TypedRoot[T] with Root[T] {
   self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
-
-  override def getTable: String = {
-    def go(join: JoinImpl): Array[String] = {
-      Array(join.getTableWithJoinCond) ++ join.inner.joins.flatMap(go)
-    }
-
-    go(this).mkString("\n")
-  }
 
   override def count(): Selectable[java.lang.Long] = new Count_(this)
 
