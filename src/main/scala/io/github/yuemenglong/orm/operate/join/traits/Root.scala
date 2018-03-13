@@ -26,16 +26,9 @@ trait RootOp {
   def min[R](field: SelectableField[R]): SelectableField[R] = min(field, field.getType)
 }
 
-trait IRoot[T] extends TypedSelectJoin[T] with TypedJoin[T]
+trait SubRoot[T] extends TypedSelectJoin[T] with TypedJoin[T]
   with Selectable[T] with SelectFieldJoin with Join
 
-trait SubRoot[T] extends IRoot[T] {
-
-  val index: Int
-
-  override def getAlias = s"${Kit.lowerCaseFirst(getMeta.entity)}$$${index}"
-}
-
-trait Root[T] extends IRoot[T] with RootOp {
+trait Root[T] extends SubRoot[T] with RootOp {
   def sub[R](clazz: Class[R]): SubRoot[R]
 }

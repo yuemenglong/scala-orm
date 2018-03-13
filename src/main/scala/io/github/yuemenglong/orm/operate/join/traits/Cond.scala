@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.operate.field.traits.{Field, FieldExpr}
+import io.github.yuemenglong.orm.operate.query.Query
 
 /**
   * Created by yml on 2017/7/15.
@@ -19,57 +19,59 @@ trait Cond extends Expr {
 trait CondOp {
   def eql[T](v: T): Cond
 
-  def eql(f: FieldExpr): Cond
+  def eql(f: Expr): Cond
 
   def ===[T](v: T): Cond = eql(v)
 
-  def ===(f: FieldExpr): Cond = eql(f)
+  def ===(f: Expr): Cond = eql(f)
 
   def neq[T](v: T): Cond
 
-  def neq(f: FieldExpr): Cond
+  def neq(f: Expr): Cond
 
   def !==[T](v: T): Cond = neq(v)
 
-  def !==(f: FieldExpr): Cond = neq(f)
+  def !==(f: Expr): Cond = neq(f)
 
   def gt[T](v: T): Cond
 
-  def gt(f: FieldExpr): Cond
+  def gt(f: Expr): Cond
 
   def >[T](v: T): Cond = gt(v)
 
-  def >(f: FieldExpr): Cond = gt(f)
+  def >(f: Expr): Cond = gt(f)
 
   def gte[T](v: T): Cond
 
-  def gte(f: FieldExpr): Cond
+  def gte(f: Expr): Cond
 
   def >=[T](v: T): Cond = gte(v)
 
-  def >=(f: FieldExpr): Cond = gte(f)
+  def >=(f: Expr): Cond = gte(f)
 
   def lt[T](v: T): Cond
 
-  def lt(f: FieldExpr): Cond
+  def lt(f: Expr): Cond
 
   def <[T](v: T): Cond = lt(v)
 
-  def <(f: FieldExpr): Cond = lt(f)
+  def <(f: Expr): Cond = lt(f)
 
   def lte[T](v: T): Cond
 
-  def lte(f: FieldExpr): Cond
+  def lte(f: Expr): Cond
 
   def <=[T](v: T): Cond = lte(v)
 
-  def <=(f: FieldExpr): Cond = lte(f)
+  def <=(f: Expr): Cond = lte(f)
 
   def like(v: String): Cond
 
   def in[T](a: Array[T])(implicit ev: T => Object): Cond
 
   def in(a: Array[Object]): Cond
+
+  def in(query: Query[_, _]): Cond
 
   def nin[T](a: Array[T])(implicit ev: T => Object): Cond
 

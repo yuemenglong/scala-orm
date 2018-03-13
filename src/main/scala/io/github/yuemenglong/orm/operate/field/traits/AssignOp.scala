@@ -8,11 +8,11 @@ import io.github.yuemenglong.orm.operate.join.traits.Expr
 trait AssignOp {
   def assign[T](v: T): Assign
 
-  def assign(f: FieldExpr): Assign
+  def assign(f: Expr): Assign
 
   def :=[T](v: T): Assign = assign(v)
 
-  def :=(f: FieldExpr): Assign = assign(f)
+  def :=(f: Expr): Assign = assign(f)
 }
 
 trait Assign extends Expr

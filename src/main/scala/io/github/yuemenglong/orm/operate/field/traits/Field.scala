@@ -7,6 +7,7 @@ import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Lon
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp, Expr}
+import io.github.yuemenglong.orm.operate.query.Query
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
@@ -62,33 +63,35 @@ trait Field extends FieldExpr with CondOp with AssignOp {
 
   override def eql[T](v: T): Cond = EqFV(this, v.asInstanceOf[Object])
 
-  override def eql(f: FieldExpr): Cond = EqFE(this, f)
+  override def eql(f: Expr): Cond = EqFE(this, f)
 
   override def neq[T](v: T): Cond = NeFV(this, v.asInstanceOf[Object])
 
-  override def neq(f: FieldExpr): Cond = NeFE(this, f)
+  override def neq(f: Expr): Cond = NeFE(this, f)
 
   override def gt[T](v: T): Cond = GtFV(this, v.asInstanceOf[Object])
 
-  override def gt(f: FieldExpr): Cond = GtFE(this, f)
+  override def gt(f: Expr): Cond = GtFE(this, f)
 
   override def gte[T](v: T): Cond = GteFV(this, v.asInstanceOf[Object])
 
-  override def gte(f: FieldExpr): Cond = GteFE(this, f)
+  override def gte(f: Expr): Cond = GteFE(this, f)
 
   override def lt[T](v: T): Cond = LtFV(this, v.asInstanceOf[Object])
 
-  override def lt(f: FieldExpr): Cond = LteFE(this, f)
+  override def lt(f: Expr): Cond = LteFE(this, f)
 
   override def lte[T](v: T): Cond = LteFV(this, v.asInstanceOf[Object])
 
-  override def lte(f: FieldExpr): Cond = LteFE(this, f)
+  override def lte(f: Expr): Cond = LteFE(this, f)
 
   override def like(v: String): Cond = LikeFV(this, v)
 
   override def in[T](a: Array[T])(implicit ev: T => Object): Cond = InFA(this, a)
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
+
+  override def in(query: Query[_, _]): Cond = InFQ(this, query)
 
   override def nin[T](a: Array[T])(implicit ev: T => Object): Cond = NinFA(this, a)
 
@@ -98,7 +101,7 @@ trait Field extends FieldExpr with CondOp with AssignOp {
 
   override def notNull(): Cond = NotNull(this)
 
-  override def assign(f: FieldExpr): Assign = AssignFE(this, f)
+  override def assign(f: Expr): Assign = AssignFE(this, f)
 
   override def assign[T](v: T): Assign = AssignFV(this, v.asInstanceOf[Object])
 }

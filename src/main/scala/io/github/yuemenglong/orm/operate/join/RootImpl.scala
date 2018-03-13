@@ -29,15 +29,14 @@ trait RootOpImpl extends RootOp {
 trait RootImpl[T] extends Root[T] with RootOpImpl {
   self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
 
-  var subIdx: Int = 0
+  var subCounter: Int = 0
 
   override def sub[R](clazz: Class[R]) = {
     val subMeta = OrmMeta.entityMap(clazz)
-    subIdx += 1
+    subCounter += 1
     new SubRoot[R]
       with TypedSelectJoinImpl[R] with TypedJoinImpl[R]
       with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
-      override val index = subIdx
       override val inner = new JoinInner {
         override val meta = subMeta
         override val parent = null
@@ -45,6 +44,7 @@ trait RootImpl[T] extends Root[T] with RootOpImpl {
         override val right = null
         override val joinName = null
         override val joinType = null
+        override val subIdx = subCounter
       }
     }
   }

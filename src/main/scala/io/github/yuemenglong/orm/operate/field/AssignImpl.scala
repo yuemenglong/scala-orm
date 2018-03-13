@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm.operate.field
 
 import io.github.yuemenglong.orm.operate.field.traits.{Assign, Field, FieldExpr}
+import io.github.yuemenglong.orm.operate.join.traits.Expr
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.
@@ -12,7 +13,7 @@ case class AssignFV(f: Field, v: Object) extends Assign {
   override def getParams: Array[Object] = Array(v)
 }
 
-case class AssignFE(f1: Field, f2: FieldExpr) extends Assign {
+case class AssignFE(f1: Field, f2: Expr) extends Assign {
   private def value = f2 match {
     case null => "NULL"
     case _ => f2.getSql

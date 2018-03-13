@@ -765,4 +765,31 @@ class TypedTest {
       Assert.assertEquals(res(1).name, "2")
     }
   })
+
+  @Test
+  def testSubQuery(): Unit = db.beginTransaction(session => {
+    {
+      val obj = new Obj
+      obj.name = "name"
+      obj.ptr = new Ptr
+      obj.oo = new OO
+      obj.om = Array(new OM, new OM, new OM)
+      val ex = Orm.insert(obj)
+      ex.insert(_.ptr)
+      ex.insert(_.oo)
+      ex.insert(_.om)
+      session.execute(ex)
+    }
+
+    {
+      val r = Orm.root(classOf[Obj])
+      r.fields(_.name)
+      val sr = r.sub(classOf[OM])
+      val query = Orm.selectFrom(r).where(r(_.id).in(
+        Orm.select(sr(_.id)).from(sr)
+      ))
+      val res = session.query(query)
+      Assert.assertEquals(res.length, 1)
+    }
+  })
 }

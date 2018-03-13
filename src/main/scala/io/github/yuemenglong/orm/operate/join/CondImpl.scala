@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.join
 
 import io.github.yuemenglong.orm.operate.field.traits.{Field, FieldExpr}
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr}
+import io.github.yuemenglong.orm.operate.query.Query
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -107,7 +108,7 @@ case class EqFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "="
 }
 
-case class EqFE(f1: Field, f2: FieldExpr) extends CondFE(f1, f2) {
+case class EqFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "="
 }
 
@@ -115,7 +116,7 @@ case class NeFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "<>"
 }
 
-case class NeFE(f1: Field, f2: FieldExpr) extends CondFE(f1, f2) {
+case class NeFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "<>"
 }
 
@@ -123,7 +124,7 @@ case class GtFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = ">"
 }
 
-case class GtFE(f1: Field, f2: FieldExpr) extends CondFE(f1, f2) {
+case class GtFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = ">"
 }
 
@@ -131,7 +132,7 @@ case class LtFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "<"
 }
 
-case class LtFE(f1: Field, f2: FieldExpr) extends CondFE(f1, f2) {
+case class LtFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "<"
 }
 
@@ -139,7 +140,7 @@ case class GteFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = ">="
 }
 
-case class GteFE(f1: Field, f2: FieldExpr) extends CondFE(f1, f2) {
+case class GteFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = ">="
 }
 
@@ -147,7 +148,7 @@ case class LteFV(f: Field, v: Object) extends CondFV(f, v) {
   override def op(): String = "<="
 }
 
-case class LteFE(f1: Field, f2: FieldExpr) extends CondFE(f1, f2) {
+case class LteFE(f1: Field, f2: Expr) extends CondFE(f1, f2) {
   override def op(): String = "<="
 }
 
@@ -161,6 +162,14 @@ case class InFA[T](f: Field, a: Array[T])(implicit ev: T => Object) extends Cond
   }
 
   override def getParams: Array[Object] = a.map(_.asInstanceOf[Object])
+}
+
+case class InFQ(f: Field, q: Query[_, _]) extends CondItem {
+  override def getSql: String = {
+    s"${f.getColumn} IN (\n${q.getSql}\n)"
+  }
+
+  override def getParams: Array[Object] = q.getParams
 }
 
 case class NinFA[T](f: Field, a: Array[T])(implicit ev: T => Object) extends CondItem {
