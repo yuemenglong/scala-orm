@@ -96,7 +96,7 @@ object Orm {
           override val left: String = null
           override val joinType: JoinType = null
         }
-        val root = new RootImpl[T]  with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
+        val root = new RootImpl[T] with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
           with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
           override val inner: JoinInner = rootInner
         }

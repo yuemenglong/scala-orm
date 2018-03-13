@@ -417,16 +417,3 @@ trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
   }
 }
 
-trait RootImpl[T] extends Root[T] {
-  self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
-
-  override def count(): Selectable[java.lang.Long] = new Count_(this)
-
-  override def count(field: Field): SelectableField[lang.Long] = new Count(field)
-
-  override def sum[R](field: Field, clazz: Class[R]): SelectableField[R] = new Sum[R](field, clazz)
-
-  override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
-
-  override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
-}

@@ -205,7 +205,7 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
   }
 }
 
-class Count_(root: Root[_]) extends Selectable[java.lang.Long] {
+class Count_ extends Selectable[java.lang.Long] {
   def getAlias: String = "$count$"
 
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): java.lang.Long = resultSet.getObject(getAlias, classOf[java.lang.Long])

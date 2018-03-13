@@ -109,31 +109,4 @@ trait TypedSelectJoin[T] extends TypedBase {
   def ignore(fns: (T => Object)*): TypedSelectJoinRet[T]
 }
 
-trait Root[T] extends TypedSelectJoin[T] with TypedJoin[T]
-  with Selectable[T] with SelectFieldJoin with Join {
-
-  def count(): Selectable[java.lang.Long]
-
-  def count(field: Field): SelectableField[java.lang.Long]
-
-  def count(field: String): SelectableField[java.lang.Long] = count(this.get(field))
-
-  def sum[R](field: Field, clazz: Class[R]): SelectableField[R]
-
-  def sum[R](field: SelectableField[R]): SelectableField[R] = sum(field, field.getType)
-
-  def sum[R](field: String, clazz: Class[R]): SelectableField[R] = sum(this.get(field), clazz)
-
-  def max[R](field: Field, clazz: Class[R]): SelectableField[R]
-
-  def max[R](field: SelectableField[R]): SelectableField[R] = max(field, field.getType)
-
-  def max[R](field: String, clazz: Class[R]): SelectableField[R] = max(this.get(field), clazz)
-
-  def min[R](field: Field, clazz: Class[R]): SelectableField[R]
-
-  def min[R](field: SelectableField[R]): SelectableField[R] = min(field, field.getType)
-
-  def min[R](field: String, clazz: Class[R]): SelectableField[R] = min(this.get(field), clazz)
-}
 
