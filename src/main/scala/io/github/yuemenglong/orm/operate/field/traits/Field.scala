@@ -101,8 +101,6 @@ trait Field extends FieldExpr with CondOp with AssignOp {
   override def assign(f: FieldExpr): Assign = AssignFE(this, f)
 
   override def assign[T](v: T): Assign = AssignFV(this, v.asInstanceOf[Object])
-
-  override def assignNull(): Assign = AssignNull(this)
 }
 
 trait SelectableField[T] extends Field with Selectable[T] {

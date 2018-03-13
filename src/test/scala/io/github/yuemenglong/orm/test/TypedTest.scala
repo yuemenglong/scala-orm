@@ -536,9 +536,26 @@ class TypedTest {
     }
 
     {
-      val obj = new Obj
+      val obj = Orm.empty(classOf[Obj])
       obj.name = "name2"
+      obj.age = 10
       session.execute(Orm.insert(obj))
+
+      {
+        val root = Orm.root(classOf[Obj])
+        session.execute(Orm.update(root).set(
+          root.get(_.age) := null,
+          root.get(_.doubleValue) := 20.0
+        ).where(root.get(_.id) === obj.id))
+      }
+      {
+        val root = Orm.root(classOf[Obj])
+        val o = session.first(Orm.selectFrom(root).where(root.get(_.id) === obj.id))
+        Assert.assertEquals(o.doubleValue, 20.0)
+        Assert.assertNull(o.age)
+      }
+    }
+    {
       val root = Orm.root(classOf[Obj])
       root.selects(_.om)
       val res = session.query(Orm.selectFrom(root))

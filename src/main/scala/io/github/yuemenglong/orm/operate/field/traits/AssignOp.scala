@@ -10,7 +10,9 @@ trait AssignOp {
 
   def assign(f: FieldExpr): Assign
 
-  def assignNull(): Assign
+  def :=[T](v: T): Assign = assign(v)
+
+  def :=(f: FieldExpr): Assign = assign(f)
 }
 
 trait Assign extends Expr
