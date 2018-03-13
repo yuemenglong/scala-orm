@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.lang.types.Types.String
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
@@ -26,5 +26,16 @@ trait RootOp {
   def min[R](field: SelectableField[R]): SelectableField[R] = min(field, field.getType)
 }
 
-trait Root[T] extends RootOp with TypedSelectJoin[T] with TypedJoin[T]
+trait IRoot[T] extends TypedSelectJoin[T] with TypedJoin[T]
   with Selectable[T] with SelectFieldJoin with Join
+
+trait SubRoot[T] extends IRoot[T] {
+
+  val index: Int
+
+  override def getAlias = s"${Kit.lowerCaseFirst(getMeta.entity)}$$${index}"
+}
+
+trait Root[T] extends IRoot[T] with RootOp {
+  def sub[R](clazz: Class[R]): SubRoot[R]
+}

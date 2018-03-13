@@ -2,17 +2,17 @@ package io.github.yuemenglong.orm.operate.query
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr, IRoot}
 import io.github.yuemenglong.orm.operate.query.traits.{Queryable, Selectable}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/17.
   */
 trait QueryBuilder[T] {
-  def from[R](selectRoot: Root[R]): Query[R, T]
+  def from[R](selectRoot: IRoot[R]): Query[R, T]
 }
 
-trait Query[R, T] extends Queryable[T] {
+trait Query[R, T] extends Queryable[T] with Expr {
 
   def limit(l: Long): Query[R, T]
 

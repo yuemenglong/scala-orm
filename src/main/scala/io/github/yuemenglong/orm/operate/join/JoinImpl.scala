@@ -1,6 +1,5 @@
 package io.github.yuemenglong.orm.operate.join
 
-import java.lang
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
@@ -12,7 +11,6 @@ import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.field.{FieldImpl, SelectableFieldImpl}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join.traits._
-import io.github.yuemenglong.orm.operate.query._
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
@@ -371,7 +369,7 @@ trait TypedJoinImpl[T] extends TypedJoin[T] {
 trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
   self: TypedJoinImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
 
-  def typedSelect[R](field: String) = {
+  private def typedSelect[R](field: String) = {
     val j = this.select(field).asInstanceOf[SelectFieldJoinImpl with JoinImpl]
     val ret = new TypedSelectJoinImpl[R] with TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
       override val inner: JoinInner = j.inner

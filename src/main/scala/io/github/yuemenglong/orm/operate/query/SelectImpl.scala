@@ -9,7 +9,7 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.field.SelectableFieldImpl
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.CondHolder
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, IRoot}
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
@@ -23,9 +23,9 @@ import scala.reflect.ClassTag
 trait QueryBuilderImpl[T] extends QueryBuilder[T] {
   val st: SelectableTuple[T]
 
-  override def from[R](selectRoot: Root[R]) = {
+  override def from[R](selectRoot: IRoot[R]) = {
     val thisSt = st
-    new QueryImpl[R, T] with QueryBuilderImpl[T]  {
+    new QueryImpl[R, T] with QueryBuilderImpl[T] {
       override val root = selectRoot
       override val st = thisSt
     }
@@ -33,8 +33,8 @@ trait QueryBuilderImpl[T] extends QueryBuilder[T] {
 }
 
 trait QueryImpl[R, T] extends Query[R, T] {
-  self: QueryBuilderImpl[T]  =>
-  val root: Root[R]
+  self: QueryBuilderImpl[T] =>
+  val root: IRoot[R]
   private[orm] var cond: Cond = new CondHolder()
   private[orm] var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
   private[orm] var limitOffset: (Long, Long) = (-1, -1)
