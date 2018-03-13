@@ -719,4 +719,32 @@ class TypedTest {
       Assert.assertEquals(count.intValue(), 0)
     }
   })
+
+  @Test
+  def testCondEx(): Unit = db.beginTransaction(session => {
+    {
+      (1 to 3).foreach(f = i => {
+        val obj = new Obj
+        obj.name = i.toString
+        val ex = Orm.insert(obj)
+        session.execute(ex)
+      })
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val cond = (root.get(_.id) === 1).or(root.get(_.id) > 2)
+      val res = session.query(Orm.selectFrom(root).where(cond))
+      Assert.assertEquals(res.length, 2)
+      Assert.assertEquals(res(0).name, "1")
+      Assert.assertEquals(res(1).name, "3")
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val cond = (root.get(_.id) <= 2).or(root.get(_.id) !== 3)
+      val res = session.query(Orm.selectFrom(root).where(cond))
+      Assert.assertEquals(res.length, 2)
+      Assert.assertEquals(res(0).name, "1")
+      Assert.assertEquals(res(1).name, "2")
+    }
+  })
 }
