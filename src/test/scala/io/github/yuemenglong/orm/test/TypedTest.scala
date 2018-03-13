@@ -792,4 +792,18 @@ class TypedTest {
       Assert.assertEquals(res.length, 1)
     }
   })
+
+  @Test
+  def testAssignEx(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.age = 10
+    session.execute(Orm.insert(obj))
+
+    val root = Orm.root(classOf[Obj])
+    session.execute(Orm.update(root).set(root(_.age) := (root(_.age) + 10)))
+
+    val res = session.first(Orm.select(root(_.age)).from(root))
+    Assert.assertEquals(res.intValue(), 20)
+  })
 }

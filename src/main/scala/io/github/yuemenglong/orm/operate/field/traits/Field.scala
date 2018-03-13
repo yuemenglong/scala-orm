@@ -19,9 +19,17 @@ trait FieldExpr extends Expr {
 
   def add[V](v: V): FieldExpr = FieldExprFV(this, v, "+")
 
+  def +(f: FieldExpr): FieldExpr = FieldExprFF(this, f, "+")
+
+  def +[V](v: V): FieldExpr = FieldExprFV(this, v, "+")
+
   def sub(f: FieldExpr): FieldExpr = FieldExprFF(this, f, "-")
 
   def sub[V](v: V): FieldExpr = FieldExprFV(this, v, "-")
+
+  def -(f: FieldExpr): FieldExpr = FieldExprFF(this, f, "-")
+
+  def -[V](v: V): FieldExpr = FieldExprFV(this, v, "-")
 }
 
 case class FieldExprFF(f1: FieldExpr, f2: FieldExpr, op: String) extends FieldExpr {
