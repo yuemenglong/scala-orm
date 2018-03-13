@@ -245,12 +245,12 @@ class TypedTest {
 
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(root.count(_.objId)).from(root))
+      val res = session.first(Orm.select(root.count(root.get(_.objId))).from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(root.count(_.objId).distinct()).from(root))
+      val res = session.first(Orm.select(root.count(root.get(_.objId)).distinct()).from(root))
       Assert.assertEquals(res.longValue(), 1)
     }
     {
@@ -312,7 +312,7 @@ class TypedTest {
         root.get(_.id),
         root.sum(om.get(_.id)),
         root.count(om.get(_.id))
-      ).from(root).groupBy(_.id))
+      ).from(root).groupBy(root.get(_.id)))
       Assert.assertEquals(res.length, 2)
       Assert.assertEquals(res(0)._1.longValue(), 1)
       Assert.assertEquals(res(0)._2.longValue(), 1)
@@ -328,8 +328,8 @@ class TypedTest {
         root.sum(root.joins(_.om).get(_.id)),
         root.count(root.joins(_.om).get(_.id))
       ).from(root)
-        .groupBy(_.id)
-        .having(root.count(_.id).gt(1)))
+        .groupBy(root.get(_.id))
+        .having(root.count(root.get(_.id)).gt(1)))
       Assert.assertEquals(res.length, 1)
       Assert.assertEquals(res(0)._1.longValue(), 2)
       Assert.assertEquals(res(0)._2.longValue(), 5)
@@ -505,7 +505,8 @@ class TypedTest {
     Assert.assertEquals(ret, 7)
 
     val root = Orm.root(classOf[OM])
-    val res = session.query(Orm.selectFrom(root).desc(_.id).limit(3).offset(2))
+    val res = session.query(Orm.selectFrom(root)
+      .desc(root.get(_.id)).limit(3).offset(2))
     Assert.assertEquals(res.length, 3)
     Assert.assertEquals(res(0).id.intValue(), 4)
     Assert.assertEquals(res(1).id.intValue(), 3)

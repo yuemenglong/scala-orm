@@ -96,7 +96,7 @@ object Orm {
           override val left: String = null
           override val joinType: JoinType = null
         }
-        val root = new RootImpl[T] with TypedRootImpl[T] with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
+        val root = new RootImpl[T]  with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
           with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
           override val inner: JoinInner = rootInner
         }
@@ -126,7 +126,7 @@ object Orm {
 
   def selectFrom[T](root: Root[T]): Query[T, T] = {
     val pRoot = root
-    new QueryImpl[T, T] with TypedQueryImpl[T, T] with QueryBuilderImpl[T] {
+    new QueryImpl[T, T] with QueryBuilderImpl[T] {
       override val root = pRoot
       override val st = new SelectableTupleImpl[T](root.getType, root)
     }
@@ -152,6 +152,10 @@ object Orm {
   def delete(joins: Join*): ExecutableDelete = new DeleteImpl(joins: _*)
 
   def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
+
+  def set[V](obj: Object, field: String, value: V): Unit = obj.asInstanceOf[Entity].$$core().set(field, value.asInstanceOf[Object])
+
+  def get(obj: Object, field: String): Object = obj.asInstanceOf[Entity].$$core().get(field)
 
   def clear(obj: Object, field: String): Unit = EntityManager.clear(obj, field)
 

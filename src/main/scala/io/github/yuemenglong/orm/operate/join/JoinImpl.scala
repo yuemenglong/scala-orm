@@ -417,41 +417,7 @@ trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
   }
 }
 
-trait TypedRootImpl[T] extends TypedRoot[T] {
-  self: RootImpl[T] with JoinImpl =>
-  def count(fn: T => Object): SelectableField[java.lang.Long] = {
-    val marker = EntityManager.createMarker[T](getMeta)
-    fn(marker)
-    val field = marker.toString
-    count(field)
-  }
-
-  private def fnToField[R](fn: T => R): (Field, Class[R]) = {
-    val marker = EntityManager.createMarker[T](getMeta)
-    fn(marker)
-    val fieldName = marker.toString
-    val field = get(fieldName).asInstanceOf[FieldImpl]
-    val clazz = field.meta.clazz.asInstanceOf[Class[R]]
-    (field, clazz)
-  }
-
-  def sum[R](fn: T => R): SelectableField[R] = {
-    val (field, clazz) = fnToField(fn)
-    sum(field, clazz)
-  }
-
-  def max[R](fn: T => R): SelectableField[R] = {
-    val (field, clazz) = fnToField(fn)
-    max(field, clazz)
-  }
-
-  def min[R](fn: T => R): SelectableField[R] = {
-    val (field, clazz) = fnToField(fn)
-    min(field, clazz)
-  }
-}
-
-trait RootImpl[T] extends TypedRoot[T] with Root[T] {
+trait RootImpl[T] extends Root[T] {
   self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
 
   override def count(): Selectable[java.lang.Long] = new Count_(this)

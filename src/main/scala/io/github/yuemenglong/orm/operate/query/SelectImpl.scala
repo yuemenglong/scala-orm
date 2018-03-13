@@ -25,7 +25,7 @@ trait QueryBuilderImpl[T] extends QueryBuilder[T] {
 
   override def from[R](selectRoot: Root[R]) = {
     val thisSt = st
-    new QueryImpl[R, T] with QueryBuilderImpl[T] with TypedQueryImpl[R, T] {
+    new QueryImpl[R, T] with QueryBuilderImpl[T]  {
       override val root = selectRoot
       override val st = thisSt
     }
@@ -33,7 +33,7 @@ trait QueryBuilderImpl[T] extends QueryBuilder[T] {
 }
 
 trait QueryImpl[R, T] extends Query[R, T] {
-  self: QueryBuilderImpl[T] with TypedQueryImpl[R, T] =>
+  self: QueryBuilderImpl[T]  =>
   val root: Root[R]
   private[orm] var cond: Cond = new CondHolder()
   private[orm] var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
@@ -135,41 +135,14 @@ trait QueryImpl[R, T] extends Query[R, T] {
     this
   }
 
-  override def groupBy(field: String, fields: String*): Query[R, T] = {
-    groupByVar = Array(root.get(field)) ++ fields.map(root.get)
-    this
-  }
-
   override def having(cond: Cond): Query[R, T] = {
     havingVar = cond
     this
   }
 
-  override def getRoot: Root[R] = root
-
   override def walk(t: T, fn: (Entity) => Entity): T = st.walk(t, fn)
 
   override def getType: Class[T] = st.getType
-}
-
-trait TypedQueryImpl[R, T] extends TypedQuery[R, T] {
-  self: QueryImpl[R, T] =>
-
-  private def fnToField(fn: R => Object) = {
-    val marker = EntityManager.createMarker[R](root.getMeta)
-    fn(marker)
-    marker.toString
-  }
-
-  override def asc(fn: (R) => Object) = asc(fnToField(fn))
-
-  override def desc(fn: (R) => Object) = desc(fnToField(fn))
-
-  override def groupBy(fn: (R => Object), fns: (R => Object)*) = {
-    val field = fnToField(fn)
-    val fields = fns.map(fnToField)
-    groupBy(field, fields: _*)
-  }
 }
 
 class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {
