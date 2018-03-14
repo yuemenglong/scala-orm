@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Lon
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp, Expr}
-import io.github.yuemenglong.orm.operate.query.traits.{Query, Selectable}
+import io.github.yuemenglong.orm.operate.query.traits.{Query, Selectable, SubQuery}
 
 import scala.collection.mutable
 
@@ -98,7 +98,7 @@ trait Field extends FieldExpr with CondOp with AssignOp {
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
-  override def in(query: Query[_, _]): Cond = InFQ(this, query)
+  override def in(query: SubQuery[_, _]): Cond = InFQ(this, query)
 
   override def nin[T](a: Array[T])(implicit ev: T => Object): Cond = NinFA(this, a)
 

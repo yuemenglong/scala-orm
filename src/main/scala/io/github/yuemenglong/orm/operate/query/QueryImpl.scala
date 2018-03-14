@@ -4,13 +4,12 @@ import java.lang
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.Session.Session
-import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.field.SelectableFieldImpl
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.CondHolder
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, SubRoot}
-import io.github.yuemenglong.orm.operate.query.traits.{Query, QueryBuilder, Selectable, SelectableTuple}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root, SubRoot}
+import io.github.yuemenglong.orm.operate.query.traits._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -21,12 +20,24 @@ import scala.reflect.ClassTag
   */
 
 trait QueryBuilderImpl[T] extends QueryBuilder[T] {
-  val st: SelectableTuple[T]
+  val st: Selectable[T]
 
-  override def from[R](selectRoot: SubRoot[R]) = {
+  override def from[R](selectRoot: Root[R]): Query[R, T] = {
     val thisSt = st
     new QueryImpl[R, T] with QueryBuilderImpl[T] {
       override val root = selectRoot
+      override val st = thisSt
+    }
+  }
+}
+
+trait SubQueryBuilderImpl[T] extends SubQueryBuilder[T] {
+  val st: Selectable[T]
+
+  override def from[R](subRoot: SubRoot[R]): SubQuery[R, T] = {
+    val thisSt = st
+    new SubQuery[R, T] with QueryImpl[R, T] with QueryBuilderImpl[T] {
+      override val root = subRoot
       override val st = thisSt
     }
   }
@@ -140,12 +151,10 @@ trait QueryImpl[R, T] extends Query[R, T] {
     this
   }
 
-  override def walk(t: T, fn: (Entity) => Entity): T = st.walk(t, fn)
-
   override def getType: Class[T] = st.getType
 }
 
-class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends SelectableTuple[T] {
+class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Selectable[T] {
   val selects: Array[Selectable[_]] = ss.toArray
   val tuple2Class: Class[(_, _)] = classOf[(_, _)]
   val tuple3Class: Class[(_, _, _)] = classOf[(_, _, _)]
@@ -194,14 +203,6 @@ class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Select
       case `tuple8Class` => (arr(0), arr(1), arr(2), arr(3), arr(4), arr(5), arr(6), arr(7)).asInstanceOf[T]
       case _ => arr(0).asInstanceOf[T]
     }
-  }
-
-  override def walk(tuple: T, fn: (Entity) => Entity): T = {
-    val arr = tupleToArray(tuple).map {
-      case e: Entity => EntityManager.walk(e, fn)
-      case obj => obj
-    }
-    arrayToTuple(arr)
   }
 }
 

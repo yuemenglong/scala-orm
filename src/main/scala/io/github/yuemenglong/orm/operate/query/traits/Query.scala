@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr, SubRoot}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr, Root, SubRoot}
 
 import scala.collection.mutable
 
@@ -15,8 +15,6 @@ import scala.collection.mutable
   */
 trait Queryable[T] {
   def query(session: Session): Array[T]
-
-  def walk(t: T, fn: (Entity) => Entity): T
 
   def getType: Class[T]
 }
@@ -31,9 +29,16 @@ trait Selectable[T] {
   def getKey(value: Object): String
 }
 
-
 trait QueryBuilder[T] {
-  def from[R](selectRoot: SubRoot[R]): Query[R, T]
+  def from[R](selectRoot: Root[R]): Query[R, T]
+}
+
+trait SubQueryBuilder[T] {
+  def from[R](subRoot: SubRoot[R]): SubQuery[R, T]
+}
+
+trait SubQuery[R, T] extends Queryable[T] with Expr {
+  self: Query[R, T] =>
 }
 
 trait Query[R, T] extends Queryable[T] with Expr {
@@ -52,8 +57,3 @@ trait Query[R, T] extends Queryable[T] with Expr {
 
   def having(cond: Cond): Query[R, T]
 }
-
-trait SelectableTuple[T] extends Selectable[T] {
-  def walk(tuple: T, fn: (Entity) => Entity): T
-}
-

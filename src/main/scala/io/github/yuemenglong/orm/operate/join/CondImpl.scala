@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.operate.join
 
 import io.github.yuemenglong.orm.operate.field.traits.Field
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr}
-import io.github.yuemenglong.orm.operate.query.traits.Query
+import io.github.yuemenglong.orm.operate.query.traits.{Query, SubQuery}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -164,7 +164,7 @@ case class InFA[T](f: Field, a: Array[T])(implicit ev: T => Object) extends Cond
   override def getParams: Array[Object] = a.map(_.asInstanceOf[Object])
 }
 
-case class InFQ(f: Field, q: Query[_, _]) extends CondItem {
+case class InFQ(f: Field, q: SubQuery[_, _]) extends CondItem {
   override def getSql: String = {
     s"${f.getColumn} IN (\n${q.getSql}\n)"
   }

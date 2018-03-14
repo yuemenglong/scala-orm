@@ -31,7 +31,7 @@ trait RootImpl[T] extends Root[T] with RootOpImpl {
 
   var subCounter: Int = 0
 
-  override def sub[R](clazz: Class[R]) = {
+  override def subRoot[R](clazz: Class[R]) = {
     val subMeta = OrmMeta.entityMap(clazz)
     subCounter += 1
     new SubRoot[R]

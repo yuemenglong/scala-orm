@@ -30,5 +30,5 @@ trait SubRoot[T] extends TypedSelectJoin[T] with TypedJoin[T]
   with Selectable[T] with SelectFieldJoin with Join
 
 trait Root[T] extends SubRoot[T] with RootOp {
-  def sub[R](clazz: Class[R]): SubRoot[R]
+  def subRoot[R](clazz: Class[R]): SubRoot[R]
 }

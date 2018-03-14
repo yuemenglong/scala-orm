@@ -784,9 +784,9 @@ class TypedTest {
     {
       val r = Orm.root(classOf[Obj])
       r.fields(_.name)
-      val sr = r.sub(classOf[OM])
+      val sr = r.subRoot(classOf[OM])
       val query = Orm.selectFrom(r).where(r(_.id).in(
-        Orm.select(sr(_.id)).from(sr)
+        Orm.subSelect(sr(_.id)).from(sr)
       ))
       val res = session.query(query)
       Assert.assertEquals(res.length, 1)

@@ -12,7 +12,7 @@ import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, Join, Root}
 import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.query.traits.{Query, QueryBuilder, Selectable}
+import io.github.yuemenglong.orm.operate.query.traits.{Query, QueryBuilder, Selectable, SubQueryBuilder}
 
 import scala.reflect.ClassTag
 
@@ -120,6 +120,24 @@ object Orm {
 
   def select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): QueryBuilder[(T1, T2, T3)] = {
     new QueryBuilderImpl[(T1, T2, T3)] {
+      override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
+    }
+  }
+
+  def subSelect[T](s: Selectable[T]): SubQueryBuilder[T] = {
+    new SubQueryBuilderImpl[T] {
+      override val st = new SelectableTupleImpl[T](s.getType, s)
+    }
+  }
+
+  def subSelect[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): SubQueryBuilder[(T1, T2)] = {
+    new SubQueryBuilderImpl[(T1, T2)] {
+      override val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
+    }
+  }
+
+  def subSelect[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): SubQueryBuilder[(T1, T2, T3)] = {
+    new SubQueryBuilderImpl[(T1, T2, T3)] {
       override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
     }
   }

@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.operate.query.traits.Query
+import io.github.yuemenglong.orm.operate.query.traits.{Query, SubQuery}
 
 /**
   * Created by yml on 2017/7/15.
@@ -71,7 +71,7 @@ trait CondOp {
 
   def in(a: Array[Object]): Cond
 
-  def in(query: Query[_, _]): Cond
+  def in(query: SubQuery[_, _]): Cond
 
   def nin[T](a: Array[T])(implicit ev: T => Object): Cond
 
