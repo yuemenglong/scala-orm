@@ -19,9 +19,8 @@ class FieldImpl(val meta: FieldMeta, val parent: JoinImpl) extends Field {
 }
 
 class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends SelectableField[T] {
-  private var distinctVar: String = ""
 
-  override def getColumn: String = s"$distinctVar${impl.getColumn}"
+  override def getColumn: String = s"${impl.getColumn}"
 
   override def getField: String = impl.getField
 
@@ -30,9 +29,4 @@ class SelectableFieldImpl[T](clazz: Class[T], val impl: Field) extends Selectabl
   override def getType: Class[T] = clazz
 
   override def as[R](clazz: Class[R]): SelectableField[R] = throw new RuntimeException("Already Selectable")
-
-  override def distinct(): SelectableField[T] = {
-    distinctVar = "DISTINCT "
-    this
-  }
 }

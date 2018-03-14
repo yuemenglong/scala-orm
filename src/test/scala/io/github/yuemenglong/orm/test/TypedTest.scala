@@ -250,7 +250,12 @@ class TypedTest {
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(root.count(root.get(_.objId)).distinct()).from(root))
+      val res = session.first(Orm.select(root.count(root.get(_.objId))).distinct.from(root))
+      Assert.assertEquals(res.longValue(), 3)
+    }
+    {
+      val root = Orm.root(classOf[OM])
+      val res = session.first(Orm.select(root.count(root.get(_.objId)).distinct).from(root))
       Assert.assertEquals(res.longValue(), 1)
     }
     {

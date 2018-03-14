@@ -21,25 +21,41 @@ import scala.reflect.ClassTag
 
 trait QueryBuilderImpl[T] extends QueryBuilder[T] {
   val st: Selectable[T]
+  var dist: String = ""
 
   override def from[R](selectRoot: Root[R]): Query[R, T] = {
     val thisSt = st
+    val thisDist = dist
     new QueryImpl[R, T] with QueryBuilderImpl[T] {
       override val root = selectRoot
       override val st = thisSt
+      dist = thisDist
     }
+  }
+
+  override def distinct = {
+    dist = " DISTINCT"
+    this
   }
 }
 
 trait SubQueryBuilderImpl[T] extends SubQueryBuilder[T] {
   val st: Selectable[T]
+  var dist: String = ""
 
   override def from[R](subRoot: SubRoot[R]): SubQuery[R, T] = {
     val thisSt = st
+    val thisDist = dist
     new SubQueryImpl[R, T] with QueryBaseImpl[R, T] with QueryBuilderImpl[T] {
       override val root = subRoot
       override val st = thisSt
+      dist = thisDist
     }
+  }
+
+  override def distinct = {
+    dist = " DISTINCT"
+    this
   }
 }
 
@@ -114,7 +130,7 @@ trait QueryBaseImpl[R, T] extends QueryBase[R, T] {
       case (_, null) => s"\nGROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}"
       case (_, _) => s"\nGROUP BY ${groupByVar.map(_.getColumn).mkString(", ")}\nHAVING ${havingVar.getSql}"
     }
-    s"SELECT\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$groupByHavingSql$orderBySql$loSql"
+    s"SELECT${dist}\n$columnsSql\nFROM\n$tableSql\nWHERE\n$condSql$groupByHavingSql$orderBySql$loSql"
   }
 
   override def query(session: Session): Array[T] = {
@@ -250,7 +266,7 @@ class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[jav
 
   override def getAlias: String = s"$$count$$${impl.getAlias}"
 
-  override def distinct(): SelectableField[lang.Long] = {
+  def distinct: SelectableField[lang.Long] = {
     distinctVar = "DISTINCT "
     this
   }
@@ -263,7 +279,7 @@ class Sum[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz,
 
   override def getAlias: String = s"$$sum$$${impl.getAlias}"
 
-  override def distinct(): SelectableField[T] = {
+  def distinct: SelectableField[T] = {
     distinctVar = "DISTINCT "
     this
   }
@@ -273,18 +289,10 @@ class Max[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz,
   override def getColumn: String = s"MAX(${impl.getColumn})"
 
   override def getAlias: String = s"$$max$$${impl.getAlias}"
-
-  override def distinct(): SelectableField[T] = {
-    throw new RuntimeException("Max() Not Need Distinct")
-  }
 }
 
 class Min[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
   override def getColumn: String = s"MIN(${impl.getColumn})"
 
   override def getAlias: String = s"$$min$$${impl.getAlias}"
-
-  override def distinct(): SelectableField[T] = {
-    throw new RuntimeException("Min() Not Need Distinct")
-  }
 }

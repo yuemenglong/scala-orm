@@ -122,6 +122,4 @@ trait SelectableField[T] extends Field with Selectable[T] {
     case null => ""
     case _ => value.toString
   }
-
-  def distinct(): SelectableField[T]
 }

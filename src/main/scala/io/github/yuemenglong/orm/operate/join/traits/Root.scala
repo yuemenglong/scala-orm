@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.join.traits
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
+import io.github.yuemenglong.orm.operate.query.{Count, Count_, Sum}
 import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
 
 /**
@@ -9,13 +10,13 @@ import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
   */
 
 trait RootOp {
-  def count(): Selectable[java.lang.Long]
+  def count(): Count_
 
-  def count(field: Field): SelectableField[java.lang.Long]
+  def count(field: Field): Count
 
-  def sum[R](field: Field, clazz: Class[R]): SelectableField[R]
+  def sum[R](field: Field, clazz: Class[R]): Sum[R]
 
-  def sum[R](field: SelectableField[R]): SelectableField[R] = sum(field, field.getType)
+  def sum[R](field: SelectableField[R]): Sum[R] = sum(field, field.getType)
 
   def max[R](field: Field, clazz: Class[R]): SelectableField[R]
 

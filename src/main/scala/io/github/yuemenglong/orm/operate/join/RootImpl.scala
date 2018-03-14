@@ -13,11 +13,11 @@ import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
   * Created by <yuemenglong@126.com> on 2018/3/13.
   */
 trait RootOpImpl extends RootOp {
-  override def count(): Selectable[java.lang.Long] = new Count_
+  override def count(): Count_ = new Count_
 
-  override def count(field: Field): SelectableField[lang.Long] = new Count(field)
+  override def count(field: Field): Count = new Count(field)
 
-  override def sum[R](field: Field, clazz: Class[R]): SelectableField[R] = new Sum[R](field, clazz)
+  override def sum[R](field: Field, clazz: Class[R]): Sum[R] = new Sum[R](field, clazz)
 
   override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
 

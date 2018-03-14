@@ -31,10 +31,14 @@ trait Selectable[T] {
 
 trait QueryBuilder[T] {
   def from[R](selectRoot: Root[R]): Query[R, T]
+
+  def distinct: this.type
 }
 
 trait SubQueryBuilder[T] {
   def from[R](subRoot: SubRoot[R]): SubQuery[R, T]
+
+  def distinct: this.type
 }
 
 trait QueryBase[R, T] extends Queryable[T] with Expr {
@@ -52,6 +56,8 @@ trait QueryBase[R, T] extends Queryable[T] with Expr {
   def groupBy(field: Field, fields: Field*): this.type
 
   def having(cond: Cond): this.type
+
+  def distinct(): this.type
 }
 
 trait SubQuery[R, T] extends QueryBase[R, T] {
