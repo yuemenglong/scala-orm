@@ -36,14 +36,26 @@ trait SubQueryBuilderImpl[T] extends SubQueryBuilder[T] {
 
   override def from[R](subRoot: SubRoot[R]): SubQuery[R, T] = {
     val thisSt = st
-    new SubQuery[R, T] with QueryImpl[R, T] with QueryBuilderImpl[T] {
+    new SubQueryImpl[R, T] with QueryBaseImpl[R, T] with QueryBuilderImpl[T] {
       override val root = subRoot
       override val st = thisSt
     }
   }
 }
 
-trait QueryImpl[R, T] extends Query[R, T] {
+trait SubQueryImpl[R, T] extends SubQuery[R, T] {
+  self: QueryBaseImpl[R, T] =>
+
+  override def getSql = s"(\n${getSql0}\n)"
+}
+
+trait QueryImpl[R, T] extends QueryBaseImpl[R, T] with Query[R, T] {
+  self: QueryBuilderImpl[T] =>
+
+  override def getSql: String = getSql0
+}
+
+trait QueryBaseImpl[R, T] extends QueryBase[R, T] {
   self: QueryBuilderImpl[T] =>
   val root: SubRoot[R]
   private[orm] var cond: Cond = new CondHolder()
@@ -67,7 +79,7 @@ trait QueryImpl[R, T] extends Query[R, T] {
     root.getParams ++ cond.getParams ++ loParams ++ groupByHavingParams
   }
 
-  def getSql: String = {
+  protected def getSql0: String = {
     val columnsSql = st.getColumnWithAs
     val tableSql = root.getSql
     val condSql = cond.getSql match {
@@ -116,37 +128,37 @@ trait QueryImpl[R, T] extends Query[R, T] {
     })
   }
 
-  override def limit(l: Long): Query[R, T] = {
+  override def limit(l: Long): this.type = {
     limitOffset = (l, limitOffset._2)
     this
   }
 
-  override def offset(o: Long): Query[R, T] = {
+  override def offset(o: Long): this.type = {
     limitOffset = (limitOffset._1, o)
     this
   }
 
-  override def asc(field: Field): Query[R, T] = {
+  override def asc(field: Field): this.type = {
     orders += ((field, "ASC"))
     this
   }
 
-  override def desc(field: Field): Query[R, T] = {
+  override def desc(field: Field): this.type = {
     orders += ((field, "DESC"))
     this
   }
 
-  override def where(c: Cond): Query[R, T] = {
+  override def where(c: Cond): this.type = {
     cond = c
     this
   }
 
-  override def groupBy(field: Field, fields: Field*): Query[R, T] = {
+  override def groupBy(field: Field, fields: Field*): this.type = {
     groupByVar = Array(field) ++ fields
     this
   }
 
-  override def having(cond: Cond): Query[R, T] = {
+  override def having(cond: Cond): this.type = {
     havingVar = cond
     this
   }

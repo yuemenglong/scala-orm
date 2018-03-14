@@ -132,7 +132,7 @@ trait JoinImpl extends Join {
     inner.parent match {
       case null => inner.subIdx match {
         case 0 => Kit.lowerCaseFirst(getMeta.entity)
-        case n => s"${Kit.lowerCaseFirst(getMeta.entity)}$$${n}"
+        case n => s"${n}$$${Kit.lowerCaseFirst(getMeta.entity)}"
       }
       case _ => s"${inner.parent.getAlias}_${Kit.lowerCaseFirst(inner.joinName)}"
     }

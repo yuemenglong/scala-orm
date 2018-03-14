@@ -166,7 +166,7 @@ case class InFA[T](f: Field, a: Array[T])(implicit ev: T => Object) extends Cond
 
 case class InFQ(f: Field, q: SubQuery[_, _]) extends CondItem {
   override def getSql: String = {
-    s"${f.getColumn} IN (\n${q.getSql}\n)"
+    s"${f.getColumn} IN ${q.getSql}"
   }
 
   override def getParams: Array[Object] = q.getParams

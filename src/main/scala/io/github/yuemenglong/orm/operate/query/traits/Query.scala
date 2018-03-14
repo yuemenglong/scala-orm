@@ -37,23 +37,26 @@ trait SubQueryBuilder[T] {
   def from[R](subRoot: SubRoot[R]): SubQuery[R, T]
 }
 
-trait SubQuery[R, T] extends Queryable[T] with Expr {
-  self: Query[R, T] =>
+trait QueryBase[R, T] extends Queryable[T] with Expr {
+
+  def limit(l: Long): this.type
+
+  def offset(l: Long): this.type
+
+  def asc(field: Field): this.type
+
+  def desc(field: Field): this.type
+
+  def where(cond: Cond): this.type
+
+  def groupBy(field: Field, fields: Field*): this.type
+
+  def having(cond: Cond): this.type
 }
 
-trait Query[R, T] extends Queryable[T] with Expr {
+trait SubQuery[R, T] extends QueryBase[R, T] {
+}
 
-  def limit(l: Long): Query[R, T]
+trait Query[R, T] extends QueryBase[R, T] {
 
-  def offset(l: Long): Query[R, T]
-
-  def asc(field: Field): Query[R, T]
-
-  def desc(field: Field): Query[R, T]
-
-  def where(cond: Cond): Query[R, T]
-
-  def groupBy(field: Field, fields: Field*): Query[R, T]
-
-  def having(cond: Cond): Query[R, T]
 }
