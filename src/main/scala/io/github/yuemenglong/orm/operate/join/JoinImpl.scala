@@ -28,7 +28,6 @@ trait JoinInner {
   val left: String
   val right: String
   val joinType: JoinType
-  val subIdx: Int = 0
 
   protected[orm] var cond: Cond = new CondHolder
   protected[orm] val joins = new ArrayBuffer[JoinImpl]()
@@ -130,10 +129,7 @@ trait JoinImpl extends Join {
 
   override def getAlias: String = {
     inner.parent match {
-      case null => inner.subIdx match {
-        case 0 => Kit.lowerCaseFirst(getMeta.entity)
-        case n => s"${n}$$${Kit.lowerCaseFirst(getMeta.entity)}"
-      }
+      case null => Kit.lowerCaseFirst(getMeta.entity)
       case _ => s"${inner.parent.getAlias}_${Kit.lowerCaseFirst(inner.joinName)}"
     }
   }

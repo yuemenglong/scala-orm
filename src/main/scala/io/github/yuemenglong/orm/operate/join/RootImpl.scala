@@ -1,12 +1,10 @@
 package io.github.yuemenglong.orm.operate.join
 
 import java.lang
-import java.sql.ResultSet
 
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
-import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join.traits._
 import io.github.yuemenglong.orm.operate.query._
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
@@ -31,12 +29,12 @@ trait RootImpl[T] extends Root[T] with RootOpImpl {
 
   var subCounter: Int = 0
 
-  override def subRoot[R](clazz: Class[R]) = {
+  override def subRoot[R](clazz: Class[R]): SubRoot[R] = {
     val subMeta = OrmMeta.entityMap(clazz)
     subCounter += 1
-    new SubRoot[R]
-      with TypedSelectJoinImpl[R] with TypedJoinImpl[R]
-      with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
+    new TypedSelectJoinImpl[R] with TypedJoinImpl[R]
+      with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl
+      with SubRootImpl[R] {
       override val inner = new JoinInner {
         override val meta = subMeta
         override val parent = null
@@ -44,8 +42,16 @@ trait RootImpl[T] extends Root[T] with RootOpImpl {
         override val right = null
         override val joinName = null
         override val joinType = null
-        override val subIdx = subCounter
       }
+      override val no = subCounter
     }
+  }
+}
+
+trait SubRootImpl[T] extends SubRoot[T] {
+  val no: Int
+
+  override def getAlias = {
+    s"${no}$$${Kit.lowerCaseFirst(getMeta.entity)}"
   }
 }

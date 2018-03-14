@@ -55,6 +55,9 @@ trait QueryBase[R, T] extends Queryable[T] with Expr {
 }
 
 trait SubQuery[R, T] extends QueryBase[R, T] {
+  def all: this.type
+
+  def any: this.type
 }
 
 trait Query[R, T] extends QueryBase[R, T] {

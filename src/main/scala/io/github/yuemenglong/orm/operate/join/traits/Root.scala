@@ -26,9 +26,13 @@ trait RootOp {
   def min[R](field: SelectableField[R]): SelectableField[R] = min(field, field.getType)
 }
 
-trait SubRoot[T] extends TypedSelectJoin[T] with TypedJoin[T]
-  with Selectable[T] with SelectFieldJoin with Join
+trait RootBase[T] extends TypedSelectJoin[T] with TypedJoin[T]
+  with Selectable[T] with SelectFieldJoin with Join {
+}
 
-trait Root[T] extends SubRoot[T] with RootOp {
+trait SubRoot[T] extends RootBase[T] {
+}
+
+trait Root[T] extends RootBase[T] with RootOp {
   def subRoot[R](clazz: Class[R]): SubRoot[R]
 }

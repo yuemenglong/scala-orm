@@ -800,6 +800,16 @@ class TypedTest {
       val res = session.query(query)
       Assert.assertEquals(res.length, 3)
     }
+    {
+      val r = Orm.root(classOf[OM])
+      val sr = r.subRoot(classOf[Obj])
+      val query = Orm.selectFrom(r).where(r.get(_.id).>(
+        Orm.subSelect(sr.get(_.id)).from(sr).all
+      ))
+      val res = session.query(query)
+      Assert.assertEquals(res(0).id.intValue(), 2)
+      Assert.assertEquals(res(1).id.intValue(), 3)
+    }
   })
 
   @Test

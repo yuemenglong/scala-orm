@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.field.SelectableFieldImpl
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.CondHolder
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root, SubRoot}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root, RootBase, SubRoot}
 import io.github.yuemenglong.orm.operate.query.traits._
 
 import scala.collection.mutable
@@ -45,8 +45,19 @@ trait SubQueryBuilderImpl[T] extends SubQueryBuilder[T] {
 
 trait SubQueryImpl[R, T] extends SubQuery[R, T] {
   self: QueryBaseImpl[R, T] =>
+  private var prefix: String = ""
 
-  override def getSql = s"(\n${getSql0}\n)"
+  override def all = {
+    prefix = "ALL"
+    this
+  }
+
+  override def any = {
+    prefix = "ANY"
+    this
+  }
+
+  override def getSql = s"${prefix}(\n${getSql0}\n)"
 }
 
 trait QueryImpl[R, T] extends QueryBaseImpl[R, T] with Query[R, T] {
@@ -57,7 +68,7 @@ trait QueryImpl[R, T] extends QueryBaseImpl[R, T] with Query[R, T] {
 
 trait QueryBaseImpl[R, T] extends QueryBase[R, T] {
   self: QueryBuilderImpl[T] =>
-  val root: SubRoot[R]
+  val root: RootBase[R]
   private[orm] var cond: Cond = new CondHolder()
   private[orm] var orders: ArrayBuffer[(Field, String)] = new ArrayBuffer[(Field, String)]()
   private[orm] var limitOffset: (Long, Long) = (-1, -1)
