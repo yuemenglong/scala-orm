@@ -172,6 +172,7 @@ case class InFQ(f: Field, q: SubQuery[_, _]) extends CondItem {
   override def getParams: Array[Object] = q.getParams
 }
 
+
 case class NinFA[T](f: Field, a: Array[T])(implicit ev: T => Object) extends CondItem {
   override def getSql: String = {
     s"${f.getColumn} NOT IN (${a.map(_ => "?").mkString(", ")})"
@@ -190,4 +191,20 @@ case class NotNull(f: Field) extends CondItem {
   override def getSql: String = s"${f.getColumn} IS NOT NULL"
 
   override def getParams: Array[Object] = Array()
+}
+
+case class ExistsQ(q: SubQuery[_, _]) extends CondItem {
+  override def getSql: String = {
+    s" EXISTS ${q.getSql}"
+  }
+
+  override def getParams: Array[Object] = q.getParams
+}
+
+case class NotExsQ(q: SubQuery[_, _]) extends CondItem {
+  override def getSql: String = {
+    s" NOT EXISTS ${q.getSql}"
+  }
+
+  override def getParams: Array[Object] = q.getParams
 }

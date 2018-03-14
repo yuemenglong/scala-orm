@@ -81,7 +81,3 @@ trait CondOp {
 
   def notNull(): Cond
 }
-
-
-
-
