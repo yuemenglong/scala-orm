@@ -32,7 +32,7 @@ class DeleteImpl(deletes: Join*) extends ExecutableDelete {
       case s => s
     }
     val targets = deletes.map(j => s"`${j.getAlias}`").mkString(", ")
-    val sql = s"DELETE $targets FROM\n${root.getSql}\nWHERE $condSql"
+    val sql = s"DELETE $targets FROM\n${root.getTable}\nWHERE $condSql"
     val params = root.getParams ++ cond.getParams
     session.execute(sql, params)
   }

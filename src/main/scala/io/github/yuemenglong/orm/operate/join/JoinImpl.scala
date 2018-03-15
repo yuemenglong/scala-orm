@@ -134,7 +134,7 @@ trait JoinImpl extends Join {
     }
   }
 
-  override def getSql: String = {
+  override def getTable: String = {
     val self = if (inner.parent == null) {
       s"`${getMeta.table}` AS `$getAlias`"
     } else {
@@ -145,12 +145,12 @@ trait JoinImpl extends Join {
       val condSql = new JoinCond(leftTable, leftColumn, rightTable, rightColumn).and(inner.cond).getSql
       s"${inner.joinType.toString} JOIN `${getMeta.table}` AS `$getAlias` ON $condSql"
     }
-    (Array(self) ++ inner.joins.map(_.getSql)).mkString("\n")
+    (Array(self) ++ inner.joins.map(_.getTable)).mkString("\n")
   }
 
   override def getParams: Array[Object] = inner.cond.getParams ++ inner.joins.flatMap(_.getParams).toArray[Object]
 
-  override def on(c: Cond): Join = {
+  override def on(c: Cond): this.type = {
     inner.cond = c
     this
   }

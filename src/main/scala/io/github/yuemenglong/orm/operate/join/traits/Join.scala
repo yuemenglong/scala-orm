@@ -18,16 +18,16 @@ trait Table extends Params with Alias {
 
   def get(field: String): Field
 
-  def join(left: String, right: String, table: Table, joinType: JoinType): this.type
-
-  def join(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.INNER)
-
-  def leftJoin(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.LEFT)
+  //  def join(left: String, right: String, table: Table, joinType: JoinType): this.type
+  //
+  //  def join(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.INNER)
+  //
+  //  def leftJoin(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.LEFT)
 
   def on(c: Cond): this.type
 }
 
-trait Join extends Expr with Alias {
+trait Join extends Table {
   type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
 
   def getMeta: EntityMeta
@@ -37,10 +37,6 @@ trait Join extends Expr with Alias {
   def join(field: String, joinType: JoinType): Join
 
   def leftJoin(field: String): Join = join(field, JoinType.LEFT)
-
-  def get(field: String): Field
-
-  def on(c: Cond): Join
 
   def as[T](clazz: Class[T]): SelectableJoin[T]
 
