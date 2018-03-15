@@ -5,13 +5,27 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta.EntityMeta
-import io.github.yuemenglong.orm.operate.core.traits.{Alias, Expr}
+import io.github.yuemenglong.orm.operate.core.traits.{Alias, Expr, Params}
 import io.github.yuemenglong.orm.operate.field.traits._
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
+
+trait Table extends Params with Alias {
+  def getTable: String
+
+  def get(field: String): Field
+
+  def join(left: String, right: String, table: Table, joinType: JoinType): this.type
+
+  def join(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.INNER)
+
+  def leftJoin(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.LEFT)
+
+  def on(c: Cond): this.type
+}
 
 trait Join extends Expr with Alias {
   type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
