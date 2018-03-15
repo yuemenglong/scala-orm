@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta.EntityMeta
-import io.github.yuemenglong.orm.operate.core.traits.{Alias, Expr, Params}
+import io.github.yuemenglong.orm.operate.core.traits.Join
 import io.github.yuemenglong.orm.operate.field.traits._
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join._
@@ -13,24 +13,12 @@ import io.github.yuemenglong.orm.operate.query.traits.Selectable
 
 import scala.collection.mutable
 
-trait Table extends Params with Alias {
-  def getTable: String
-
-  def get(field: String): Field
-
-  //  def join(left: String, right: String, table: Table, joinType: JoinType): this.type
-  //
-  //  def join(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.INNER)
-  //
-  //  def leftJoin(left: String, right: String, table: Table): this.type = join(left, right, table, JoinType.LEFT)
-
-  def on(c: Cond): this.type
-}
-
-trait Cascade extends Table {
-  type SelectableJoin[T] = Selectable[T] with SelectFieldCascade with Cascade
+trait Cascade extends Join {
+  type SelectableCascade[T] = Selectable[T] with SelectFieldCascade with Cascade
 
   def getMeta: EntityMeta
+
+  def get(field: String): Field
 
   def join(field: String): Cascade = join(field, JoinType.INNER)
 
@@ -38,19 +26,19 @@ trait Cascade extends Table {
 
   def leftJoin(field: String): Cascade = join(field, JoinType.LEFT)
 
-  def as[T](clazz: Class[T]): SelectableJoin[T]
+  def as[T](clazz: Class[T]): SelectableCascade[T]
 
-  def joinAs[T](field: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T] = this.join(field, joinType).as(clazz)
+  def joinAs[T](field: String, clazz: Class[T], joinType: JoinType): SelectableCascade[T] = this.join(field, joinType).as(clazz)
 
-  def joinAs[T](field: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(field, clazz, JoinType.INNER)
+  def joinAs[T](field: String, clazz: Class[T]): SelectableCascade[T] = this.joinAs(field, clazz, JoinType.INNER)
 
-  def leftJoinAs[T](field: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(field, clazz, JoinType.LEFT)
+  def leftJoinAs[T](field: String, clazz: Class[T]): SelectableCascade[T] = this.joinAs(field, clazz, JoinType.LEFT)
 
-  def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T]
+  def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableCascade[T]
 
-  def joinAs[T](left: String, right: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(left, right, clazz, JoinType.INNER)
+  def joinAs[T](left: String, right: String, clazz: Class[T]): SelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.INNER)
 
-  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): SelectableJoin[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
+  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): SelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
 }
 
 trait SelectFieldCascade {

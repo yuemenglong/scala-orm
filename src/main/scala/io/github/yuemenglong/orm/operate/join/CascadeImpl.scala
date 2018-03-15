@@ -3,10 +3,11 @@ package io.github.yuemenglong.orm.operate.join
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
-import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.kit.{Kit, UnreachableException}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.meta._
+import io.github.yuemenglong.orm.operate.core.traits.Join
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.field.{FieldImpl, SelectableFieldImpl}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
@@ -30,11 +31,29 @@ trait CascadeInner {
   val joinType: JoinType
 
   protected[orm] var cond: Cond = new CondHolder
-  protected[orm] val joins = new ArrayBuffer[CascadeImpl]()
+  protected[orm] var joins = List[Join]()
 }
 
 trait CascadeImpl extends Cascade {
   val inner: CascadeInner
+
+  override def getTableString: String = inner.meta.table
+
+  override def getJoinName: String = inner.joinName
+
+  override def getParent: Cascade = inner.parent // Cascade的parent必然是Cascade
+
+  override def getJoins: List[Join] = inner.joins
+
+  override def getJoinType = inner.joinType
+
+  override def getLeftColumn = s"${getParent.getAlias}.${getParent.getMeta.fieldMap(inner.left).column}"
+
+  override def getRightColumn = s"${getAlias}.${getMeta.fieldMap(inner.right).column}"
+
+  override def getCond = inner.cond
+
+  //-------------------------------------------------------------------
 
   override def getMeta: EntityMeta = inner.meta
 
@@ -45,10 +64,13 @@ trait CascadeImpl extends Cascade {
     if (getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != getMeta.db) {
       throw new RuntimeException(s"Field $field Not the Same DB")
     }
-    inner.joins.find(_.inner.joinName == field) match {
-      case Some(p) => p.inner.joinType == joinType match {
-        case true => p
-        case false => throw new RuntimeException(s"JoinType Not Match, ${p.inner.joinType} Exists")
+    inner.joins.find(_.getJoinName == field) match {
+      case Some(p) => p.getJoinType == joinType match {
+        case true => p match {
+          case c: CascadeImpl => c
+          case _ => throw UnreachableException()
+        }
+        case false => throw new RuntimeException(s"JoinType Not Match, ${p.getJoinType} Exists")
       }
       case None =>
         val referField = getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer]
@@ -66,12 +88,12 @@ trait CascadeImpl extends Cascade {
         val join = new CascadeImpl {
           override val inner: CascadeInner = joinInner
         }
-        inner.joins += join
+        inner.joins ::= join
         join
     }
   }
 
-  override def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableJoin[T] = {
+  override def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): SelectableCascade[T] = {
     if (!OrmMeta.entityMap.contains(clazz)) {
       throw new RuntimeException(s"$clazz Is Not Entity")
     }
@@ -86,8 +108,11 @@ trait CascadeImpl extends Cascade {
       throw new RuntimeException(s"$left And $right Not The Same DB")
     }
     val that = this
-    val join: CascadeImpl = inner.joins.find(_.inner.joinName == referMeta.entity) match {
-      case Some(p) => p
+    val join: CascadeImpl = inner.joins.find(_.getJoinName == referMeta.entity) match {
+      case Some(p) => p match {
+        case c: CascadeImpl => c
+        case _ => throw UnreachableException()
+      }
       case None =>
         //        val join = new JoinImpl(referMeta, this, referMeta.entity, left, right, joinType)
         val (l, r, jt) = (left, right, joinType)
@@ -102,7 +127,7 @@ trait CascadeImpl extends Cascade {
         val join = new CascadeImpl {
           override val inner: CascadeInner = joinInner
         }
-        inner.joins += join
+        inner.joins ::= join
         join
     }
     val joinInner = join.inner
@@ -119,7 +144,7 @@ trait CascadeImpl extends Cascade {
     new FieldImpl(fieldMeta, this)
   }
 
-  override def as[T](clazz: Class[T]): SelectableJoin[T] = {
+  override def as[T](clazz: Class[T]): SelectableCascade[T] = {
     require(getMeta.clazz == clazz)
     val joinInner = inner
     new SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl {
