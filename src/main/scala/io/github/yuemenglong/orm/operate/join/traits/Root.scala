@@ -31,8 +31,8 @@ trait RootOp {
   def notexs(query: SubQuery[_, _]): Cond
 }
 
-trait RootBase[T] extends TypedSelectJoin[T] with TypedJoin[T]
-  with Selectable[T] with SelectFieldJoin with Join {
+trait RootBase[T] extends TypedSelectCascade[T] with TypedCascade[T]
+  with Selectable[T] with SelectFieldCascade with Cascade {
 }
 
 trait SubRoot[T] extends RootBase[T] {

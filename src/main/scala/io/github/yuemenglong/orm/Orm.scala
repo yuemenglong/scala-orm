@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join._
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Join, Root}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Cascade, Root}
 import io.github.yuemenglong.orm.operate.query._
 import io.github.yuemenglong.orm.operate.query.traits.{Query, QueryBuilder, Selectable, SubQueryBuilder}
 
@@ -88,17 +88,17 @@ object Orm {
     OrmMeta.entityMap.get(clazz) match {
       case None => throw new RuntimeException("Not Entity Class")
       case Some(m) =>
-        val rootInner = new JoinInner {
+        val rootInner = new CascadeInner {
           override val meta: EntityMeta = m
-          override val parent: Join = null
+          override val parent: Cascade = null
           override val joinName: String = null
           override val right: String = null
           override val left: String = null
           override val joinType: JoinType = null
         }
-        val root = new RootImpl[T] with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
-          with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-          override val inner: JoinInner = rootInner
+        val root = new RootImpl[T] with TypedSelectCascadeImpl[T] with TypedCascadeImpl[T]
+          with SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl {
+          override val inner: CascadeInner = rootInner
         }
         root
     }
@@ -167,7 +167,7 @@ object Orm {
 
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
-  def delete(joins: Join*): ExecutableDelete = new DeleteImpl(joins: _*)
+  def delete(joins: Cascade*): ExecutableDelete = new DeleteImpl(joins: _*)
 
   def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
 

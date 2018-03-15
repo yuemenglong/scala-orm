@@ -12,10 +12,10 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by yml on 2017/7/15.
   */
-abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
+abstract class ExecuteCascadeImpl(meta: EntityMeta) extends ExecuteJoin {
   protected var fields: Array[FieldMeta] = meta.fields().filter(_.isNormalOrPkey).toArray
   protected var cascades = new ArrayBuffer[(String, ExecuteJoin)]()
-  protected var spec: Map[Object, ExecuteJoinImpl] = Map[Object, ExecuteJoinImpl]()
+  protected var spec: Map[Object, ExecuteCascadeImpl] = Map[Object, ExecuteCascadeImpl]()
   protected var ignoreFields: Set[String] = Set[String]()
 
 
@@ -183,7 +183,7 @@ abstract class ExecuteJoinImpl(meta: EntityMeta) extends ExecuteJoin {
   }
 }
 
-class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
+class InsertJoin(meta: EntityMeta) extends ExecuteCascadeImpl(meta) {
   override def executeSelf(core: EntityCore, session: Session): Int = {
     val validFields = this.fields.filter(field => {
       field.isNormalOrPkey &&
@@ -233,7 +233,7 @@ class InsertJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   }
 }
 
-class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
+class UpdateJoin(meta: EntityMeta) extends ExecuteCascadeImpl(meta) {
   override def executeSelf(core: EntityCore, session: Session): Int = {
     if (core.getPkey == null) throw new RuntimeException("Update Entity Must Has Pkey")
     val validFields = this.fields.filter(field => {
@@ -256,7 +256,7 @@ class UpdateJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
   }
 }
 
-class DeleteJoin(meta: EntityMeta) extends ExecuteJoinImpl(meta) {
+class DeleteJoin(meta: EntityMeta) extends ExecuteCascadeImpl(meta) {
   override def executeSelf(core: EntityCore, session: Session): Int = {
     if (core.getPkey == null) throw new RuntimeException("Delete Entity Must Has Pkey")
     val idCond = s"${core.meta.pkey.column} = ?"
@@ -299,7 +299,7 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
   override def execute(entity: Entity, session: Session): Int = impl.execute(entity, session)
 }
 
-trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
+trait TypedExecuteCascadeImpl[T] extends TypedExecuteJoin[T] {
   def getMeta: EntityMeta
 
   def getCascades: ArrayBuffer[(String, ExecuteJoin)]
@@ -366,7 +366,7 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
     cascades(fn, (meta) => new TypedDeleteJoin[R](meta))
   }
 
-  override def fields(fns: (T => Object)*): TypedExecuteJoinImpl[T] = {
+  override def fields(fns: (T => Object)*): TypedExecuteCascadeImpl[T] = {
     val fields = fns.map(fn => {
       val marker = EntityManager.createMarker[T](getMeta)
       fn(marker)
@@ -380,7 +380,7 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
     this
   }
 
-  override def ignore(fns: (T => Object)*): TypedExecuteJoinImpl[T] = {
+  override def ignore(fns: (T => Object)*): TypedExecuteCascadeImpl[T] = {
     val fields = fns.map(fn => {
       val marker = EntityManager.createMarker[T](getMeta)
       fn(marker)
@@ -396,7 +396,7 @@ trait TypedExecuteJoinImpl[T] extends TypedExecuteJoin[T] {
 }
 
 class TypedInsertJoin[T](meta: EntityMeta) extends InsertJoin(meta)
-  with TypedExecuteJoinImpl[T] {
+  with TypedExecuteCascadeImpl[T] {
   override def getMeta: EntityMeta = meta
 
   override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
@@ -404,20 +404,20 @@ class TypedInsertJoin[T](meta: EntityMeta) extends InsertJoin(meta)
 }
 
 class TypedUpdateJoin[T](meta: EntityMeta) extends UpdateJoin(meta)
-  with TypedExecuteJoinImpl[T] {
+  with TypedExecuteCascadeImpl[T] {
   override def getMeta: EntityMeta = meta
 
   override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
 }
 
 class TypedDeleteJoin[T](meta: EntityMeta) extends DeleteJoin(meta)
-  with TypedExecuteJoinImpl[T] {
+  with TypedExecuteCascadeImpl[T] {
   override def getMeta: EntityMeta = meta
 
   override def getCascades: ArrayBuffer[(String, ExecuteJoin)] = this.cascades
 }
 
-class TypedExecuteRootImpl[T <: Object](obj: T, impl: TypedExecuteJoinImpl[T]) extends ExecuteRootImpl(obj, impl)
+class TypedExecuteRootImpl[T <: Object](obj: T, impl: TypedExecuteCascadeImpl[T]) extends ExecuteRootImpl(obj, impl)
   with TypedExecuteRoot[T] {
   override def insert[R](fn: (T) => R): TypedExecuteJoin[R] = impl.insert(fn)
 
@@ -444,27 +444,6 @@ object ExecuteRootImpl {
       throw new RuntimeException("Not Entity, Maybe Need Convert")
     }
   }
-
-  //  def insert(obj: Object): ExecuteRoot = {
-  //    check(obj)
-  //    val meta = obj.asInstanceOf[Entity].$$core().meta
-  //    val ex = new InsertJoin(meta)
-  //    new ExecuteRootImpl(obj, ex)
-  //  }
-  //
-  //  def update(obj: Object): ExecuteRoot = {
-  //    check(obj)
-  //    val meta = obj.asInstanceOf[Entity].$$core().meta
-  //    val ex = new UpdateJoin(meta)
-  //    new ExecuteRootImpl(obj, ex)
-  //  }
-  //
-  //  def delete(obj: Object): ExecuteRoot = {
-  //    check(obj)
-  //    val meta = obj.asInstanceOf[Entity].$$core().meta
-  //    val ex = new DeleteJoin(meta)
-  //    new ExecuteRootImpl(obj, ex)
-  //  }
 
   def insert[T <: Object](obj: T): TypedExecuteRoot[T] = {
     check(obj)

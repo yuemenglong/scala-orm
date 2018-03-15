@@ -3,13 +3,13 @@ package io.github.yuemenglong.orm.operate.execute
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.operate.execute.traits.ExecutableDelete
 import io.github.yuemenglong.orm.operate.join.CondHolder
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Join, Root}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Cascade, Root}
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
 
-class DeleteImpl(deletes: Join*) extends ExecutableDelete {
+class DeleteImpl(deletes: Cascade*) extends ExecutableDelete {
   var cond: Cond = new CondHolder
   var root: Root[_] = _
 

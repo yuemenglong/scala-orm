@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.join.traits.{Join, Root, SelectFieldJoin, TypedSelectJoin}
+import io.github.yuemenglong.orm.operate.join.traits.{Cascade, Root, SelectFieldCascade, TypedSelectCascade}
 import io.github.yuemenglong.orm.operate.query.QueryImpl
 import io.github.yuemenglong.orm.operate.query.traits.Query
 
@@ -107,7 +107,7 @@ object OrmTool {
 
   def attachx[T, R](orig: T, session: Session)
                    (fn: T => R)
-                   (joinFn: TypedSelectJoin[R] => Unit,
+                   (joinFn: TypedSelectCascade[R] => Unit,
                     queryFn: Query[R, R] => Unit
                    ): T = {
     val obj = Orm.convert(orig)
@@ -117,7 +117,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectCascade[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -128,7 +128,7 @@ object OrmTool {
 
   def attachsx[T, R](orig: T, session: Session)
                     (fn: T => Array[R])
-                    (joinFn: TypedSelectJoin[R] => Unit,
+                    (joinFn: TypedSelectCascade[R] => Unit,
                      queryFn: Query[R, R] => Unit
                     ): T = {
     val obj = Orm.convert(orig)
@@ -138,7 +138,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectCascade[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -149,7 +149,7 @@ object OrmTool {
 
   def sattachx[T, R](orig: Array[T], session: Session)
                     (fn: T => R)
-                    (joinFn: TypedSelectJoin[R] => Unit,
+                    (joinFn: TypedSelectCascade[R] => Unit,
                      queryFn: Query[R, R] => Unit
                     ): Array[T] = {
     if (orig.isEmpty) {
@@ -163,7 +163,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectCascade[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -174,7 +174,7 @@ object OrmTool {
 
   def sattachsx[T, R](orig: Array[T], session: Session)
                      (fn: T => Array[R])
-                     (joinFn: TypedSelectJoin[R] => Unit,
+                     (joinFn: TypedSelectCascade[R] => Unit,
                       queryFn: Query[R, R] => Unit
                      ): Array[T] = {
     if (orig.isEmpty) {
@@ -188,7 +188,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectCascade[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -200,7 +200,7 @@ object OrmTool {
   def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
 
   def attach[T](obj: T, field: String, session: Session,
-                joinFn: SelectFieldJoin => Unit,
+                joinFn: SelectFieldCascade => Unit,
                 queryFn: Query[_, _] => Unit
                ): T = {
     if (obj.getClass.isArray) {
@@ -237,7 +237,7 @@ object OrmTool {
 
 
   private def attachArray(arr: Array[_], field: String, session: Session,
-                          joinFn: SelectFieldJoin => Unit = null,
+                          joinFn: SelectFieldCascade => Unit = null,
                           queryFn: Query[_, _] => Unit = null
                          ): Array[_] = {
     if (arr.exists(!_.isInstanceOf[Entity])) {
@@ -317,10 +317,10 @@ object OrmTool {
   }
 
   def deleteById[T, V](clazz: Class[T], id: V, session: Session)
-                      (rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]()): Int = {
+                      (rootFn: (Root[T]) => Array[Cascade] = (_: Root[T]) => Array[Cascade]()): Int = {
     val root = Orm.root(clazz)
     val cascade = rootFn(root)
-    val all: Array[Join] = Array(root) ++ cascade
+    val all: Array[Cascade] = Array(root) ++ cascade
     val pkey = root.getMeta.pkey.name
     val ex = Orm.delete(all: _*).from(root).where(root.get(pkey).eql(id))
     session.execute(ex)

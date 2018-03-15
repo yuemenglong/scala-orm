@@ -21,24 +21,24 @@ object JoinType extends Enumeration {
   val INNER, LEFT, RIGHT, OUTER = Value
 }
 
-trait JoinInner {
+trait CascadeInner {
   val meta: EntityMeta
-  val parent: Join
+  val parent: Cascade
   val joinName: String
   val left: String
   val right: String
   val joinType: JoinType
 
   protected[orm] var cond: Cond = new CondHolder
-  protected[orm] val joins = new ArrayBuffer[JoinImpl]()
+  protected[orm] val joins = new ArrayBuffer[CascadeImpl]()
 }
 
-trait JoinImpl extends Join {
-  val inner: JoinInner
+trait CascadeImpl extends Cascade {
+  val inner: CascadeInner
 
   override def getMeta: EntityMeta = inner.meta
 
-  override def join(field: String, joinType: JoinType): Join = {
+  override def join(field: String, joinType: JoinType): Cascade = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
     }
@@ -55,16 +55,16 @@ trait JoinImpl extends Join {
         //        val join = new JoinImpl(referField.refer, this, field, referField.left, referField.right, joinType)
         val that = this
         val jt = joinType
-        val joinInner = new JoinInner {
+        val joinInner = new CascadeInner {
           override val meta: EntityMeta = referField.refer
-          override val parent: Join = that
+          override val parent: Cascade = that
           override val joinName: String = field
           override val left: String = referField.left
           override val right: String = referField.right
           override val joinType: JoinType = jt
         }
-        val join = new JoinImpl {
-          override val inner: JoinInner = joinInner
+        val join = new CascadeImpl {
+          override val inner: CascadeInner = joinInner
         }
         inner.joins += join
         join
@@ -86,28 +86,28 @@ trait JoinImpl extends Join {
       throw new RuntimeException(s"$left And $right Not The Same DB")
     }
     val that = this
-    val join: JoinImpl = inner.joins.find(_.inner.joinName == referMeta.entity) match {
+    val join: CascadeImpl = inner.joins.find(_.inner.joinName == referMeta.entity) match {
       case Some(p) => p
       case None =>
         //        val join = new JoinImpl(referMeta, this, referMeta.entity, left, right, joinType)
         val (l, r, jt) = (left, right, joinType)
-        val joinInner = new JoinInner {
+        val joinInner = new CascadeInner {
           override val meta: EntityMeta = referMeta
-          override val parent: Join = that
+          override val parent: Cascade = that
           override val joinName: String = referMeta.entity
           override val left: String = l
           override val right: String = r
           override val joinType: JoinType = jt
         }
-        val join = new JoinImpl {
-          override val inner: JoinInner = joinInner
+        val join = new CascadeImpl {
+          override val inner: CascadeInner = joinInner
         }
         inner.joins += join
         join
     }
     val joinInner = join.inner
-    new SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-      override val inner: JoinInner = joinInner
+    new SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl {
+      override val inner: CascadeInner = joinInner
     }
   }
 
@@ -122,8 +122,8 @@ trait JoinImpl extends Join {
   override def as[T](clazz: Class[T]): SelectableJoin[T] = {
     require(getMeta.clazz == clazz)
     val joinInner = inner
-    new SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-      override val inner: JoinInner = joinInner
+    new SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl {
+      override val inner: CascadeInner = joinInner
     }
   }
 
@@ -156,23 +156,23 @@ trait JoinImpl extends Join {
   }
 }
 
-trait SelectFieldJoinImpl extends SelectFieldJoin {
-  self: JoinImpl =>
-  protected[orm] var selects: ArrayBuffer[(String, SelectFieldJoinRet)] = new ArrayBuffer[(String, SelectFieldJoinRet)]()
+trait SelectFieldCascadeImpl extends SelectFieldCascade {
+  self: CascadeImpl =>
+  protected[orm] var selects: ArrayBuffer[(String, SelectFieldCascadeRet)] = new ArrayBuffer[(String, SelectFieldCascadeRet)]()
   //  protected[impl] var fields: Array[FieldImpl] = getMeta.fields().filter(_.isNormalOrPkey).map(f => new FieldImpl(f, this)).toArray
   protected[orm] var fields: Array[FieldImpl] = _
   protected[orm] var ignores: Set[String] = Set()
 
-  override def select(field: String): SelectFieldJoinRet = {
+  override def select(field: String): SelectFieldCascadeRet = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Object Field $field")
     }
     selects.find(_._1 == field) match {
       case Some(p) => p._2
       case None =>
-        val j = leftJoin(field).asInstanceOf[JoinImpl]
-        val s = new SelectFieldJoinImpl with JoinImpl {
-          override val inner: JoinInner = j.inner
+        val j = leftJoin(field).asInstanceOf[CascadeImpl]
+        val s = new SelectFieldCascadeImpl with CascadeImpl {
+          override val inner: CascadeInner = j.inner
         }
         selects += ((field, s))
         s
@@ -188,7 +188,7 @@ trait SelectFieldJoinImpl extends SelectFieldJoin {
     }).filter(f => !ignores.contains(f.getField))
   }
 
-  override def fields(fields: String*): SelectFieldJoinRet = {
+  override def fields(fields: String*): SelectFieldCascadeRet = {
     val ret = fields.map(f => {
       if (!this.getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Invalid Field $f In ${this.getMeta.entity}")
@@ -204,7 +204,7 @@ trait SelectFieldJoinImpl extends SelectFieldJoin {
     this
   }
 
-  override def ignore(fields: String*): SelectFieldJoinRet = {
+  override def ignore(fields: String*): SelectFieldCascadeRet = {
     fields.foreach(f => {
       if (!getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Not Exists Field, $f")
@@ -243,13 +243,13 @@ trait SelectFieldJoinImpl extends SelectFieldJoin {
 }
 
 trait SelectableImpl[T] extends Selectable[T] {
-  self: SelectFieldJoinImpl with JoinImpl =>
+  self: SelectFieldCascadeImpl with CascadeImpl =>
 
   private def getOneManyFilterKey(field: String, core: EntityCore): String = {
     s"$getAlias@$field@${core.getPkey.toString}"
   }
 
-  private def pickSelfAndRefer(select: SelectFieldJoinImpl, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+  private def pickSelfAndRefer(select: SelectFieldCascadeImpl, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
     val a = select.pickSelf(resultSet, filterMap)
     if (a == null) {
       return null
@@ -258,11 +258,11 @@ trait SelectableImpl[T] extends Selectable[T] {
     a
   }
 
-  protected def pickRefer(selfSelect: SelectFieldJoinImpl, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
+  protected def pickRefer(selfSelect: SelectFieldCascadeImpl, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
     val aCore = EntityManager.core(a)
     selfSelect.selects.foreach { case (field, select) =>
       val fieldMeta = getMeta.fieldMap(field)
-      val b = pickSelfAndRefer(select.asInstanceOf[SelectFieldJoinImpl], resultSet, filterMap)
+      val b = pickSelfAndRefer(select.asInstanceOf[SelectFieldCascadeImpl], resultSet, filterMap)
       fieldMeta match {
         case _: FieldMetaPointer => aCore.fieldMap += (field -> b)
         case _: FieldMetaOneOne => aCore.fieldMap += (field -> b)
@@ -286,10 +286,10 @@ trait SelectableImpl[T] extends Selectable[T] {
   }
 
   override def getColumnWithAs: String = {
-    def go(select: SelectFieldJoinImpl): Array[String] = {
+    def go(select: SelectFieldCascadeImpl): Array[String] = {
       val selfColumn = select.validFields().map(field => s"${field.getColumn} AS ${field.getAlias}")
       // 1. 属于自己的字段 2. 级联的部分
-      selfColumn ++ select.selects.map(_._2.asInstanceOf[SelectFieldJoinImpl]).flatMap(go)
+      selfColumn ++ select.selects.map(_._2.asInstanceOf[SelectFieldCascadeImpl]).flatMap(go)
     }
 
     go(this).mkString(",\n")
@@ -309,28 +309,28 @@ trait SelectableImpl[T] extends Selectable[T] {
   }
 }
 
-trait TypedJoinImpl[T] extends TypedJoin[T] {
-  self: JoinImpl =>
+trait TypedCascadeImpl[T] extends TypedCascade[T] {
+  self: CascadeImpl =>
 
-  def typedJoin[R](field: String, joinType: JoinType) = {
-    val j: JoinImpl = this.join(field, joinType).asInstanceOf[JoinImpl]
-    new TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
-      override val inner: JoinInner = j.inner
+  def typedCascade[R](field: String, joinType: JoinType) = {
+    val j: CascadeImpl = this.join(field, joinType).asInstanceOf[CascadeImpl]
+    new TypedCascadeImpl[R] with SelectableImpl[R] with SelectFieldCascadeImpl with CascadeImpl {
+      override val inner: CascadeInner = j.inner
     }
   }
 
-  override def join[R](fn: (T) => R, joinType: JoinType): TypedJoinRet[R] = {
+  override def join[R](fn: (T) => R, joinType: JoinType): TypedCascadeRet[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = marker.toString
-    typedJoin(field, joinType)
+    typedCascade(field, joinType)
   }
 
   override def joins[R](fn: (T) => Array[R], joinType: JoinType) = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = marker.toString
-    typedJoin(field, joinType)
+    typedCascade(field, joinType)
   }
 
   override def get[R](fn: T => R): SelectableField[R] = {
@@ -342,13 +342,13 @@ trait TypedJoinImpl[T] extends TypedJoin[T] {
 
   override def as() = {
     val joinInner = inner
-    new TypedSelectJoinImpl[T] with TypedJoinImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-      override val inner: JoinInner = joinInner
+    new TypedSelectCascadeImpl[T] with TypedCascadeImpl[T] with SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl {
+      override val inner: CascadeInner = joinInner
     }
   }
 
   override def joinAs[R](clazz: Class[R], joinType: JoinType)
-                        (leftFn: (T) => Object, rightFn: (R) => Object): TypedSelectJoinRet[R] = {
+                        (leftFn: (T) => Object, rightFn: (R) => Object): TypedSelectCascadeRet[R] = {
     if (!OrmMeta.entityMap.contains(clazz)) {
       throw new RuntimeException(s"$clazz Is Not Entity")
     }
@@ -359,20 +359,20 @@ trait TypedJoinImpl[T] extends TypedJoin[T] {
     rightFn(rm)
     val left = lm.toString
     val right = rm.toString
-    val j = this.joinAs(left, right, clazz).asInstanceOf[JoinImpl]
-    new TypedSelectJoinImpl[R] with TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
-      override val inner: JoinInner = j.inner
+    val j = this.joinAs(left, right, clazz).asInstanceOf[CascadeImpl]
+    new TypedSelectCascadeImpl[R] with TypedCascadeImpl[R] with SelectableImpl[R] with SelectFieldCascadeImpl with CascadeImpl {
+      override val inner: CascadeInner = j.inner
     }
   }
 }
 
-trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
-  self: TypedJoinImpl[T] with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
+trait TypedSelectCascadeImpl[T] extends TypedSelectCascade[T] {
+  self: TypedCascadeImpl[T] with SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl =>
 
   private def typedSelect[R](field: String) = {
-    val j = this.select(field).asInstanceOf[SelectFieldJoinImpl with JoinImpl]
-    val ret = new TypedSelectJoinImpl[R] with TypedJoinImpl[R] with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl {
-      override val inner: JoinInner = j.inner
+    val j = this.select(field).asInstanceOf[SelectFieldCascadeImpl with CascadeImpl]
+    val ret = new TypedSelectCascadeImpl[R] with TypedCascadeImpl[R] with SelectableImpl[R] with SelectFieldCascadeImpl with CascadeImpl {
+      override val inner: CascadeInner = j.inner
     }
     ret.fields = j.fields
     ret.ignores = j.ignores
@@ -380,7 +380,7 @@ trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
     ret
   }
 
-  override def select[R](fn: (T) => R): TypedSelectJoinRet[R] = {
+  override def select[R](fn: (T) => R): TypedSelectCascadeRet[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = marker.toString
@@ -394,7 +394,7 @@ trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
     typedSelect[R](field)
   }
 
-  override def fields(fns: (T => Object)*): TypedSelectJoinRet[T] = {
+  override def fields(fns: (T => Object)*): TypedSelectCascadeRet[T] = {
     val fields = fns.map(fn => {
       val marker = EntityManager.createMarker[T](getMeta)
       fn(marker)
@@ -404,7 +404,7 @@ trait TypedSelectJoinImpl[T] extends TypedSelectJoin[T] {
     this
   }
 
-  override def ignore(fns: (T => Object)*): TypedSelectJoinRet[T] = {
+  override def ignore(fns: (T => Object)*): TypedSelectCascadeRet[T] = {
     val fields = fns.map(fn => {
       val marker = EntityManager.createMarker[T](getMeta)
       fn(marker)

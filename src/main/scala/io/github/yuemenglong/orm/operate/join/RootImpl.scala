@@ -29,17 +29,17 @@ trait RootOpImpl extends RootOp {
 }
 
 trait RootImpl[T] extends Root[T] with RootOpImpl {
-  self: SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl =>
+  self: SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl =>
 
   var subCounter: Int = 0
 
   override def subRoot[R](clazz: Class[R]): SubRoot[R] = {
     val subMeta = OrmMeta.entityMap(clazz)
     subCounter += 1
-    new TypedSelectJoinImpl[R] with TypedJoinImpl[R]
-      with SelectableImpl[R] with SelectFieldJoinImpl with JoinImpl
+    new TypedSelectCascadeImpl[R] with TypedCascadeImpl[R]
+      with SelectableImpl[R] with SelectFieldCascadeImpl with CascadeImpl
       with SubRootImpl[R] {
-      override val inner = new JoinInner {
+      override val inner = new CascadeInner {
         override val meta = subMeta
         override val parent = null
         override val left = null
