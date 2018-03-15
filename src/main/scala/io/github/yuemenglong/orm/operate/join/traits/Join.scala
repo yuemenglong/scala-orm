@@ -18,12 +18,14 @@ trait Expr {
   def getParams: Array[Object]
 }
 
-trait Join extends Expr {
+trait Alias {
+  def getAlias: String
+}
+
+trait Join extends Expr with Alias {
   type SelectableJoin[T] = Selectable[T] with SelectFieldJoin with Join
 
   def getMeta: EntityMeta
-
-  def getAlias: String
 
   def join(field: String): Join = join(field, JoinType.INNER)
 

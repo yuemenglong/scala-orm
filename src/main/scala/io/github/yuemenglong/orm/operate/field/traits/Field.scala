@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Long, String}
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp, Expr}
+import io.github.yuemenglong.orm.operate.join.traits.{Alias, Cond, CondOp, Expr}
 import io.github.yuemenglong.orm.operate.query.traits.{Query, Selectable, SubQuery}
 
 import scala.collection.mutable
@@ -44,13 +44,11 @@ case class FieldExprFV[V](f1: FieldExpr, v: V, op: String) extends FieldExpr {
   override def getParams: Array[Object] = f1.getParams ++ Array(v.asInstanceOf[Object])
 }
 
-trait Field extends FieldExpr with CondOp with AssignOp {
+trait Field extends FieldExpr with CondOp with AssignOp with Alias {
 
   def getField: String
 
   def getColumn: String
-
-  def getAlias: String
 
   def getSql: String = getColumn
 
