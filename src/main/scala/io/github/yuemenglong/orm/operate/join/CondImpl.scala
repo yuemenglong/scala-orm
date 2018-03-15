@@ -1,8 +1,9 @@
 package io.github.yuemenglong.orm.operate.join
 
+import io.github.yuemenglong.orm.operate.core.traits.Expr
 import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr}
-import io.github.yuemenglong.orm.operate.query.traits.{Query, SubQuery}
+import io.github.yuemenglong.orm.operate.join.traits.Cond
+import io.github.yuemenglong.orm.operate.query.traits.SubQuery
 
 import scala.collection.mutable.ArrayBuffer
 

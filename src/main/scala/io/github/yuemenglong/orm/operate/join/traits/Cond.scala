@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.operate.query.traits.{Query, SubQuery}
+import io.github.yuemenglong.orm.operate.core.traits.Expr
+import io.github.yuemenglong.orm.operate.query.traits.SubQuery
 
 /**
   * Created by yml on 2017/7/15.
