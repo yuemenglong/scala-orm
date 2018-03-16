@@ -2,11 +2,12 @@ package io.github.yuemenglong.orm.operate.join.traits
 
 import java.sql.ResultSet
 
-import io.github.yuemenglong.orm.kit.UnreachableException
+import io.github.yuemenglong.orm.kit.{Kit, UnreachableException}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMetaRefer}
 import io.github.yuemenglong.orm.operate.core.traits.Join
+import io.github.yuemenglong.orm.operate.field.FieldImpl
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.JoinType
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
@@ -24,53 +25,62 @@ trait Cascade extends Join {
 
   def getMeta: EntityMeta
 
-  //  def get(field: String): Field = {
-  //    if (!getMeta.fieldMap.contains(field) || getMeta.fieldMap(field).isRefer) {
-  //      throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
-  //    }
-  //    val fieldMeta = getMeta.fieldMap(field)
-  //    new FieldImpl(fieldMeta, this)
-  //  }
+  def get(field: String): Field = {
+    if (!getMeta.fieldMap.contains(field) || getMeta.fieldMap(field).isRefer) {
+      throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
+    }
+    val fieldMeta = getMeta.fieldMap(field)
+    new FieldImpl(fieldMeta, this)
+  }
 
-  //  def join(field: String, joinType: JoinType): Cascade = {
-  //    if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
-  //      throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
-  //    }
-  //    if (getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != getMeta.db) {
-  //      throw new RuntimeException(s"Field $field Not the Same DB")
-  //    }
-  //    val newInner = inner.joins.find(_.getJoinName == field) match {
-  //      case Some(j) => j.getJoinType == joinType match {
-  //        case true => j
-  //        case false => throw new RuntimeException(s"JoinType Not Match, ${j.getJoinType} Exists")
-  //      }
-  //      case None =>
-  //        val referMeta = getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer]
-  //        val leftColumn = getMeta.fieldMap(referMeta.left).column
-  //        val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
-  //        join
-  //    }
-  //  }
+  def join(field: String, joinType: JoinType): Cascade = {
+    if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
+      throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
+    }
+    if (getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer].refer.db != getMeta.db) {
+      throw new RuntimeException(s"Field $field Not the Same DB")
+    }
+    val referMeta = getMeta.fieldMap(field).asInstanceOf[FieldMetaRefer]
+    val table = referMeta.refer.table
+    val leftColumn = getMeta.fieldMap(referMeta.left).column
+    val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
+    val j = join(leftColumn, rightColumn, table, field, joinType)
+    new Cascade {
+      override def getMeta = referMeta.refer
 
-  def get(field: String): Field
-
-  def join(field: String, joinType: JoinType): Cascade
+      override val inner = j
+    }
+  }
 
   def join(field: String): Cascade = join(field, JoinType.INNER)
 
   def leftJoin(field: String): Cascade = join(field, JoinType.LEFT)
 
-  def joinAs[T](field: String, clazz: Class[T], joinType: JoinType): TypedSelectableCascade[T]
+  //  def joinAs[T](field: String, clazz: Class[T], joinType: JoinType): TypedSelectableCascade[T]
+  //
+  //  def joinAs[T](field: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(field, clazz, JoinType.INNER)
+  //
+  //  def leftJoinAs[T](field: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(field, clazz, JoinType.LEFT)
+  //
+  //  def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): TypedSelectableCascade[T]
+  //
+  //  def joinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.INNER)
+  //
+  //  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
 
-  def joinAs[T](field: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(field, clazz, JoinType.INNER)
+  //--------------------------------------------------------------
 
-  def leftJoinAs[T](field: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(field, clazz, JoinType.LEFT)
+  override def getTableName = inner.getTableName
 
-  def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): TypedSelectableCascade[T]
+  override def getParent = inner.getParent
 
-  def joinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.INNER)
+  override def getLeftColumn = inner.getLeftColumn
 
-  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
+  override def getRightColumn = inner.getRightColumn
+
+  override def getJoinType = inner.getJoinType
+
+  override def getJoinName = inner.getJoinName
 }
 
 

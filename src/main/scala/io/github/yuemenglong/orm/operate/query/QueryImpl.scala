@@ -108,7 +108,7 @@ trait QueryBaseImpl[R, T] extends QueryBase[R, T] {
 
   protected def getSql0: String = {
     val columnsSql = st.getColumnWithAs
-    val tableSql = root.getTable
+    val tableSql = root.getTableSql
     val condSql = cond.getSql match {
       case "" => "1 = 1"
       case s => s
