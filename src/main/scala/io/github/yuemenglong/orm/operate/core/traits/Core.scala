@@ -71,7 +71,13 @@ trait Join extends Alias with Params { // 代表所属的Table
     case _ => s"${getParent.getAlias}_${getJoinName}"
   }
 
-  override def getParams = inner.cond.getParams ++ inner.joins.flatMap(_.getParams)
+  override def getParams = {
+    val self = inner.cond match {
+      case null => Array()
+      case c => c.getParams
+    }
+    self ++ inner.joins.flatMap(_.getParams)
+  }
 
   def getTableSql: String = {
     val self = getParent match {
@@ -98,5 +104,13 @@ trait Join extends Alias with Params { // 代表所属的Table
         inner.joins ::= newJoin
         newJoin
     }
+  }
+
+  def on(c: Cond): Join = {
+    inner.cond match {
+      case null => inner.cond = c
+      case cond => inner.cond = cond.and(c)
+    }
+    this
   }
 }

@@ -248,6 +248,13 @@ trait TypedCascade[T] extends Cascade {
   def joinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedCascade[R] = this.joinAs(clazz, JoinType.INNER)(leftFn, rightFn)
 
   def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedCascade[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn, rightFn)
+
+  def as(): TypedSelectableCascade[T] = {
+    val that = this
+    new TypedSelectableCascade[T] {
+      override private[orm] val inner = that.inner
+    }
+  }
 }
 
 trait TypedSelectableCascade[T] extends TypedCascade[T]
