@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.join.traits
 
 import java.sql.ResultSet
 
+import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.{Kit, UnreachableException}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
@@ -12,6 +13,8 @@ import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.JoinType
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
+
+import scala.collection.mutable.ArrayBuffer
 //import io.github.yuemenglong.orm.operate.field.FieldImpl
 //import io.github.yuemenglong.orm.operate.field.traits._
 //import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
@@ -22,7 +25,7 @@ import scala.collection.mutable
 
 trait Cascade extends Join {
 
-  def getMeta: EntityMeta
+  def getMeta: EntityMeta = inner.meta
 
   def get(field: String): Field = {
     if (!getMeta.fieldMap.contains(field) || getMeta.fieldMap(field).isRefer) {
@@ -44,26 +47,10 @@ trait Cascade extends Join {
     val leftColumn = getMeta.fieldMap(referMeta.left).column
     val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
     val j = join(leftColumn, rightColumn, table, field, joinType)
+    j.inner.meta = referMeta.refer
     new Cascade {
-      override def getMeta = referMeta.refer
-
-      override def getJoinName = j.getJoinName
-
-      override def getLeftColumn = j.getLeftColumn
-
-      override def getRightColumn = j.getRightColumn
-
-      override def getParent = j.getParent
-
-      override def getTableName = j.getTableName
-
-      override def getJoinType = j.getJoinType
-
       override val inner = j.inner
     }
-    //    new Cascade {
-    //      override def getMeta = referMeta.refer
-    //    }
   }
 
   def join(field: String): Cascade = join(field, JoinType.INNER)
@@ -83,18 +70,105 @@ trait Cascade extends Join {
   //  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
 }
 
-
 trait SelectFieldCascade extends Cascade {
-  type SelectFieldCascadeRet = SelectFieldCascade with Cascade
 
-  def select(field: String): SelectFieldCascadeRet
+  def select(field: String): SelectFieldCascade = {
+    if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
+      throw new RuntimeException(s"Unknown Object Field $field")
+    }
+    if(inner.selects==null){
+      inner.selects = new ArrayBuffer[(String, SelectFieldCascade)]()
+    }
+    inner.selects.find(_._1 == field) match {
+      case Some(p) => p._2
+      case None =>
+        val j = leftJoin(field)
+        val s = new SelectFieldCascade {
+          override private[orm] val inner = j.inner
+        }
+        inner.selects += ((field, s))
+        s
+    }
+  }
 
-  def fields(fields: String*): SelectFieldCascadeRet
+  def fields(fields: String*): SelectFieldCascade = {
+    val ret = fields.map(f => {
+      if (!this.getMeta.fieldMap.contains(f)) {
+        throw new RuntimeException(s"Invalid Field $f In ${this.getMeta.entity}")
+      }
+      if (!this.getMeta.fieldMap(f).isNormal) {
+        throw new RuntimeException(s"Not Normal Field $f In ${this.getMeta.entity}")
+      }
+      new FieldImpl(this.getMeta.fieldMap(f), this)
+    })
+    val pkey = new FieldImpl(this.getMeta.pkey, this)
+    inner.fields = Array(pkey) ++ ret
+    this
+  }
 
-  def ignore(fields: String*): SelectFieldCascadeRet
+  def ignore(fields: String*): SelectFieldCascade = {
+    fields.foreach(f => {
+      if (!getMeta.fieldMap.contains(f)) {
+        throw new RuntimeException(s"Not Exists Field, $f")
+      }
+      val fieldMeta = getMeta.fieldMap(f)
+      if (!fieldMeta.isNormal) {
+        throw new RuntimeException(s"Only Normal Field Can Ignore, $f")
+      }
+    })
+    inner.ignores = fields.toSet
+    this
+  }
 
-  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity
+  private def validFields(): Array[FieldImpl] = {
+    val fields = inner.fields match {
+      case null =>
+        getMeta.fields().filter(_.isNormalOrPkey)
+          .map(f => new FieldImpl(f, this)).toArray
+      case _ => inner.fields
+    }
+    val ignores = inner.ignores match {
+      case null => Set[String]()
+      case _ => inner.ignores
+    }
+    fields.filter(f => !ignores.contains(f.getField))
+  }
 
+  private def getFilterKey(core: EntityCore): String = {
+    s"$getAlias@${core.getPkey.toString}"
+  }
+
+  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+    val map: Map[String, Object] = validFields().map(field => {
+      val alias = field.getAlias
+      val value = resultSet.getObject(alias)
+      (field.meta.name, value)
+    })(collection.breakOut)
+    val core = new EntityCore(getMeta, map)
+    if (core.getPkey == null) {
+      return null
+    }
+    val key = getFilterKey(core)
+    if (filterMap.contains(key)) {
+      return filterMap(key)
+    }
+    val a = EntityManager.wrap(core)
+    filterMap += (key -> a)
+    a
+  }
+
+  def getColumnWithAs: String = {
+    def go(select: SelectFieldCascade): Array[String] = {
+      val selfColumn = select.validFields().map(field => s"${field.getColumn} AS ${field.getAlias}")
+      // 1. 属于自己的字段 2. 级联的部分
+      select.inner.selects match {
+        case null => selfColumn
+        case selects => selfColumn ++ selects.map(_._2.asInstanceOf[SelectFieldCascade]).flatMap(go)
+      }
+    }
+
+    go(this).mkString(",\n")
+  }
 }
 
 trait TypedCascade[T] extends Cascade {

@@ -5,7 +5,7 @@ import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.core.traits.{Join, JoinInner}
-import io.github.yuemenglong.orm.operate.join.traits.Cascade
+import io.github.yuemenglong.orm.operate.join.traits.{Cascade, SelectFieldCascade}
 import io.github.yuemenglong.orm.test.entity.Obj
 
 /**
@@ -16,25 +16,14 @@ object PerformanceTest {
 
   def main(args: Array[String]): Unit = {
     Orm.init("io.github.yuemenglong.orm.test.entity")
-    val root = new Cascade {
-      override val inner = new JoinInner
-
-      override def getMeta = OrmMeta.entityMap(classOf[Obj])
-
-      override def getTableName = getMeta.table
-
-      override def getParent = null
-
-      override def getLeftColumn = null
-
-      override def getRightColumn = null
-
-      override def getJoinType = null
-
-      override def getJoinName = Kit.lowerCaseFirst(getTableName)
+    val meta = OrmMeta.entityMap(classOf[Obj])
+    val root = new SelectFieldCascade {
+      override val inner = new JoinInner(meta)
     }
-    root.join("om").join("mo")
-    println(root.getTableSql)
+
+    val mo = root.select("om").select("mo")
+    mo.fields()
+    println(root.getColumnWithAs)
   }
 }
 

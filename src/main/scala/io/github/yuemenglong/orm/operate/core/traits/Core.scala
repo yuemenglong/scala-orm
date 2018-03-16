@@ -1,10 +1,14 @@
 package io.github.yuemenglong.orm.operate.core.traits
 
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.meta.EntityMeta
 import io.github.yuemenglong.orm.operate.field.FieldImpl
 import io.github.yuemenglong.orm.operate.field.traits.Field
+import io.github.yuemenglong.orm.operate.join.traits.SelectFieldCascade
 import io.github.yuemenglong.orm.operate.join.{CondHolder, JoinCond, JoinType}
+
+import scala.collection.mutable.ArrayBuffer
 //import io.github.yuemenglong.orm.operate.join.{CondHolder, JoinCond, JoinType}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join.traits.Cond
@@ -28,25 +32,41 @@ trait GetField {
   def get(field: String): Field
 }
 
-class JoinInner {
-  private[orm] var joins: List[Join] = List()
-  private[orm] var cond: Cond = _
+class JoinInner(val tableName: String, val joinName: String,
+                val joinType: JoinType, val parent: Join,
+                val leftColumn: String, val rightColumn: String) {
+  def this(meta: EntityMeta) = {
+    this(meta.table, Kit.lowerCaseFirst(meta.table), null, null, null, null)
+    this.meta = meta
+  }
+
+  // Join
+  var joins: List[Join] = List()
+  var cond: Cond = _
+
+  // Cascade
+  var meta: EntityMeta = _
+
+  // SelectFieldCascade
+  var selects: ArrayBuffer[(String, SelectFieldCascade)] = _
+  var fields: Array[FieldImpl] = _
+  var ignores: Set[String] = _
 }
 
 trait Join extends Alias with Params { // 代表所属的Table
-  val inner: JoinInner
+  private[orm] val inner: JoinInner
 
-  def getTableName: String
+  def getTableName: String = inner.tableName
 
-  def getParent: Join
+  def getParent: Join = inner.parent
 
-  def getLeftColumn: String
+  def getLeftColumn: String = inner.leftColumn
 
-  def getRightColumn: String
+  def getRightColumn: String = inner.rightColumn
 
-  def getJoinType: JoinType
+  def getJoinType: JoinType = inner.joinType
 
-  def getJoinName: String
+  def getJoinName: String = inner.joinName
 
   override def getAlias = getParent match {
     case null => s"${getJoinName}"
@@ -75,19 +95,7 @@ trait Join extends Alias with Params { // 代表所属的Table
       case None =>
         val that = this
         val newJoin = new Join {
-          override def getParent = that
-
-          override def getTableName = table
-
-          override def getJoinType = joinType
-
-          override def getLeftColumn = leftColumn
-
-          override def getRightColumn = rightColumn
-
-          override def getJoinName = joinName
-
-          override val inner = new JoinInner
+          override val inner = new JoinInner(table, joinName, joinType, that, leftColumn, rightColumn)
         }
         inner.joins ::= newJoin
         newJoin
