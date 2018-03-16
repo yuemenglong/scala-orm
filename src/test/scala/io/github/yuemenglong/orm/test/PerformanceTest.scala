@@ -2,10 +2,9 @@ package io.github.yuemenglong.orm.test
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
-import io.github.yuemenglong.orm.operate.core.traits.{Join, JoinInner}
-import io.github.yuemenglong.orm.operate.join.traits.{Cascade, SelectFieldCascade}
+import io.github.yuemenglong.orm.operate.core.traits.JoinInner
+import io.github.yuemenglong.orm.operate.join.traits.SelectFieldCascade
 import io.github.yuemenglong.orm.test.entity.Obj
 
 /**
