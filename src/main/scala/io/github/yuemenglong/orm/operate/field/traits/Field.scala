@@ -97,7 +97,7 @@ trait Field extends FieldExpr with CondOp with AssignOp with Alias {
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
-  override def in(query: SubQuery[_, _]): Cond = InFQ(this, query)
+//  override def in(query: SubQuery[_, _]): Cond = InFQ(this, query)
 
   override def nin[T](a: Array[T])(implicit ev: T => Object): Cond = NinFA(this, a)
 

@@ -1,6 +1,6 @@
+
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.query.{Count, Count_, Sum}
 import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
@@ -31,8 +31,7 @@ trait RootOp {
   def notexs(query: SubQuery[_, _]): Cond
 }
 
-trait RootBase[T] extends TypedSelectCascade[T] with TypedCascade[T]
-  with Selectable[T] with SelectFieldCascade with Cascade {
+trait RootBase[T] extends TypedSelectableCascade[T] {
 }
 
 trait SubRoot[T] extends RootBase[T] {
@@ -41,3 +40,4 @@ trait SubRoot[T] extends RootBase[T] {
 trait Root[T] extends RootBase[T] with RootOp {
   def subRoot[R](clazz: Class[R]): SubRoot[R]
 }
+

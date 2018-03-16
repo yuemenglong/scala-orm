@@ -11,7 +11,6 @@ import scala.collection.mutable.ArrayBuffer
   * Created by yml on 2017/7/15.
   */
 
-
 abstract class JointCond(cs: Cond*) extends Cond {
   var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]
 

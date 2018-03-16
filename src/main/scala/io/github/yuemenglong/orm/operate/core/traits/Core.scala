@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.core.traits
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.field.traits.Field
 import io.github.yuemenglong.orm.operate.join.{CondHolder, JoinCond, JoinType}
+//import io.github.yuemenglong.orm.operate.join.{CondHolder, JoinCond, JoinType}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join.traits.Cond
 
@@ -21,11 +22,13 @@ trait Alias {
   def getAlias: String
 }
 
-trait Join extends Params with Alias {
+trait Table extends Params with Alias {
+  def getTableString: String // 自己的table字符串(可以是子查询)
+}
+
+trait Join extends Table {
   var joins: List[Join] = List()
   var cond: Cond = new CondHolder
-
-  def getTableString: String // 自己的table字符串(可以是子查询)
 
   def getJoinName: String // 用于命名AS后的表名
 

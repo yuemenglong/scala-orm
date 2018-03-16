@@ -12,50 +12,50 @@ import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
 /**
   * Created by <yuemenglong@126.com> on 2018/3/13.
   */
-trait RootOpImpl extends RootOp {
-  override def count(): Count_ = new Count_
-
-  override def count(field: Field): Count = new Count(field)
-
-  override def sum[R](field: Field, clazz: Class[R]): Sum[R] = new Sum[R](field, clazz)
-
-  override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
-
-  override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
-
-  override def exists(query: SubQuery[_, _]): Cond = ExistsQ(query)
-
-  override def notexs(query: SubQuery[_, _]): Cond = NotExsQ(query)
-}
-
-trait RootImpl[T] extends Root[T] with RootOpImpl {
-  self: SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl =>
-
-  var subCounter: Int = 0
-
-  override def subRoot[R](clazz: Class[R]): SubRoot[R] = {
-    val subMeta = OrmMeta.entityMap(clazz)
-    subCounter += 1
-    new TypedSelectCascadeImpl[R] with TypedCascadeImpl[R]
-      with SelectableImpl[R] with SelectFieldCascadeImpl with CascadeImpl
-      with SubRootImpl[R] {
-      override val inner = new CascadeInner {
-        override val meta = subMeta
-        override val parent = null
-        override val left = null
-        override val right = null
-        override val joinName = null
-        override val joinType = null
-      }
-      override val no = subCounter
-    }
-  }
-}
-
-trait SubRootImpl[T] extends SubRoot[T] {
-  val no: Int
-
-  override def getAlias = {
-    s"${no}$$${Kit.lowerCaseFirst(getMeta.entity)}"
-  }
-}
+//trait RootOpImpl extends RootOp {
+//  override def count(): Count_ = new Count_
+//
+//  override def count(field: Field): Count = new Count(field)
+//
+//  override def sum[R](field: Field, clazz: Class[R]): Sum[R] = new Sum[R](field, clazz)
+//
+//  override def max[R](field: Field, clazz: Class[R]): SelectableField[R] = new Max(field, clazz)
+//
+//  override def min[R](field: Field, clazz: Class[R]): SelectableField[R] = new Min(field, clazz)
+//
+//  override def exists(query: SubQuery[_, _]): Cond = ExistsQ(query)
+//
+//  override def notexs(query: SubQuery[_, _]): Cond = NotExsQ(query)
+//}
+//
+//trait RootImpl[T] extends Root[T] with RootOpImpl {
+//  self: SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl =>
+//
+//  var subCounter: Int = 0
+//
+//  override def subRoot[R](clazz: Class[R]): SubRoot[R] = {
+//    val subMeta = OrmMeta.entityMap(clazz)
+//    subCounter += 1
+//    new TypedSelectCascadeImpl[R] with TypedCascadeImpl[R]
+//      with SelectableImpl[R] with SelectFieldCascadeImpl with CascadeImpl
+//      with SubRootImpl[R] {
+//      override val inner = new CascadeInner {
+//        override val meta = subMeta
+//        override val parent = null
+//        override val left = null
+//        override val right = null
+//        override val joinName = null
+//        override val joinType = null
+//      }
+//      override val no = subCounter
+//    }
+//  }
+//}
+//
+//trait SubRootImpl[T] extends SubRoot[T] {
+//  val no: Int
+//
+//  override def getAlias = {
+//    s"${no}$$${Kit.lowerCaseFirst(getMeta.entity)}"
+//  }
+//}
