@@ -27,18 +27,15 @@ import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
 //
 //  override def notexs(query: SubQuery[_, _]): Cond = NotExsQ(query)
 //}
-//
+
 //trait RootImpl[T] extends Root[T] with RootOpImpl {
-//  self: SelectableImpl[T] with SelectFieldCascadeImpl with CascadeImpl =>
 //
 //  var subCounter: Int = 0
 //
 //  override def subRoot[R](clazz: Class[R]): SubRoot[R] = {
 //    val subMeta = OrmMeta.entityMap(clazz)
 //    subCounter += 1
-//    new TypedSelectCascadeImpl[R] with TypedCascadeImpl[R]
-//      with SelectableImpl[R] with SelectFieldCascadeImpl with CascadeImpl
-//      with SubRootImpl[R] {
+//    new SubRootImpl[R] {
 //      override val inner = new CascadeInner {
 //        override val meta = subMeta
 //        override val parent = null
@@ -51,7 +48,7 @@ import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
 //    }
 //  }
 //}
-//
+
 //trait SubRootImpl[T] extends SubRoot[T] {
 //  val no: Int
 //
