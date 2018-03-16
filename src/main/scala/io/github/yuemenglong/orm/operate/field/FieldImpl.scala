@@ -4,12 +4,6 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.FieldMeta
 import io.github.yuemenglong.orm.operate.core.traits.Join
 import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
-import io.github.yuemenglong.orm.operate.join.traits.Cascade
-
-//import io.github.yuemenglong.orm.kit.Kit
-//import io.github.yuemenglong.orm.meta.FieldMeta
-//import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
-//import io.github.yuemenglong.orm.operate.join.CascadeImpl
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/15.
