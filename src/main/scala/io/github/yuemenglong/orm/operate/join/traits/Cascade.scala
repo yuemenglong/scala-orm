@@ -21,7 +21,6 @@ import io.github.yuemenglong.orm.operate.query.traits.Selectable
 import scala.collection.mutable
 
 trait Cascade extends Join {
-  val inner: Join
 
   def getMeta: EntityMeta
 
@@ -48,8 +47,23 @@ trait Cascade extends Join {
     new Cascade {
       override def getMeta = referMeta.refer
 
-      override val inner = j
+      override def getJoinName = j.getJoinName
+
+      override def getLeftColumn = j.getLeftColumn
+
+      override def getRightColumn = j.getRightColumn
+
+      override def getParent = j.getParent
+
+      override def getTableName = j.getTableName
+
+      override def getJoinType = j.getJoinType
+
+      override val inner = j.inner
     }
+    //    new Cascade {
+    //      override def getMeta = referMeta.refer
+    //    }
   }
 
   def join(field: String): Cascade = join(field, JoinType.INNER)
@@ -67,20 +81,6 @@ trait Cascade extends Join {
   //  def joinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.INNER)
   //
   //  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
-
-  //--------------------------------------------------------------
-
-  override def getTableName = inner.getTableName
-
-  override def getParent = inner.getParent
-
-  override def getLeftColumn = inner.getLeftColumn
-
-  override def getRightColumn = inner.getRightColumn
-
-  override def getJoinType = inner.getJoinType
-
-  override def getJoinName = inner.getJoinName
 }
 
 

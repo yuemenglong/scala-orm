@@ -28,9 +28,13 @@ trait GetField {
   def get(field: String): Field
 }
 
+class JoinInner {
+  private[orm] var joins: List[Join] = List()
+  private[orm] var cond: Cond = _
+}
+
 trait Join extends Alias with Params { // 代表所属的Table
-  var joins = List[Join]()
-  var cond: Cond = _
+  val inner: JoinInner
 
   def getTableName: String
 
@@ -44,25 +48,29 @@ trait Join extends Alias with Params { // 代表所属的Table
 
   def getJoinName: String
 
-  override def getAlias = s"${getParent.getAlias}_${getJoinName}"
+  override def getAlias = getParent match {
+    case null => s"${getJoinName}"
+    case _ => s"${getParent.getAlias}_${getJoinName}"
+  }
 
-  override def getParams = cond.getParams ++ joins.flatMap(_.getParams)
+  override def getParams = inner.cond.getParams ++ inner.joins.flatMap(_.getParams)
 
   def getTableSql: String = {
-    val joinCond = s"${getParent.getAlias}.${getLeftColumn} = ${getAlias}.${getRightColumn}"
-    val condSql = cond match {
-      case null => joinCond
-      case _ => s"${joinCond} AND ${cond.getSql}"
-    }
     val self = getParent match {
       case null => s"${getTableName} AS ${getAlias}"
-      case _ => s"${getJoinType} JOIN ${getTableName} AS ${getAlias} ON ${condSql}"
+      case _ =>
+        val joinCond = s"${getParent.getAlias}.${getLeftColumn} = ${getAlias}.${getRightColumn}"
+        val condSql = inner.cond match {
+          case null => joinCond
+          case _ => s"${joinCond} AND ${inner.cond.getSql}"
+        }
+        s"${getJoinType} JOIN ${getTableName} AS ${getAlias} ON ${condSql}"
     }
-    (Array(self) ++ joins.map(_.getTableSql)).mkString("\n")
+    (Array(self) ++ inner.joins.map(_.getTableSql)).mkString("\n")
   }
 
   def join(leftColumn: String, rightColumn: String, table: String, joinName: String, joinType: JoinType): Join = {
-    joins.find(_.getJoinName == joinName) match {
+    inner.joins.find(_.getJoinName == joinName) match {
       case Some(j) => j
       case None =>
         val that = this
@@ -78,8 +86,10 @@ trait Join extends Alias with Params { // 代表所属的Table
           override def getRightColumn = rightColumn
 
           override def getJoinName = joinName
+
+          override val inner = new JoinInner
         }
-        joins ::= newJoin
+        inner.joins ::= newJoin
         newJoin
     }
   }

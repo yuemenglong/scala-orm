@@ -1,15 +1,43 @@
-//package io.github.yuemenglong.orm.test
-//
-//import io.github.yuemenglong.orm.Orm
-//import io.github.yuemenglong.orm.db.Db
-//import io.github.yuemenglong.orm.test.entity.Obj
-//
-///**
-//  * Created by <yuemenglong@126.com> on 2018/3/14.
-//  */
-//object PerformanceTest {
-//  def openDb(): Db = Orm.openDb("localhost", 3306, "root", "root", "test")
-//
+package io.github.yuemenglong.orm.test
+
+import io.github.yuemenglong.orm.Orm
+import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.meta.OrmMeta
+import io.github.yuemenglong.orm.operate.core.traits.{Join, JoinInner}
+import io.github.yuemenglong.orm.operate.join.traits.Cascade
+import io.github.yuemenglong.orm.test.entity.Obj
+
+/**
+  * Created by <yuemenglong@126.com> on 2018/3/14.
+  */
+object PerformanceTest {
+  def openDb(): Db = Orm.openDb("localhost", 3306, "root", "root", "test")
+
+  def main(args: Array[String]): Unit = {
+    Orm.init("io.github.yuemenglong.orm.test.entity")
+    val root = new Cascade {
+      override val inner = new JoinInner
+
+      override def getMeta = OrmMeta.entityMap(classOf[Obj])
+
+      override def getTableName = getMeta.table
+
+      override def getParent = null
+
+      override def getLeftColumn = null
+
+      override def getRightColumn = null
+
+      override def getJoinType = null
+
+      override def getJoinName = Kit.lowerCaseFirst(getTableName)
+    }
+    root.join("om").join("mo")
+    println(root.getTableSql)
+  }
+}
+
 //  def main(args: Array[String]): Unit = {
 //    Orm.init("io.github.yuemenglong.orm.test.entity")
 //    val db = openDb()
