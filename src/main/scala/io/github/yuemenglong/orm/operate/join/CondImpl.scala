@@ -1,15 +1,15 @@
 package io.github.yuemenglong.orm.operate.join
 
+import io.github.yuemenglong.orm.operate.core.traits.Expr
 import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr}
-import io.github.yuemenglong.orm.operate.query.traits.{Query, SubQuery}
+import io.github.yuemenglong.orm.operate.join.traits.Cond
+import io.github.yuemenglong.orm.operate.query.traits.SubQuery
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by yml on 2017/7/15.
   */
-
 
 abstract class JointCond(cs: Cond*) extends Cond {
   var conds: ArrayBuffer[Cond] = cs.to[ArrayBuffer]

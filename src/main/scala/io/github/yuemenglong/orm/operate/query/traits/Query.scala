@@ -5,8 +5,9 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
+import io.github.yuemenglong.orm.operate.core.traits.Expr
 import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Expr, Root, SubRoot}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root, SubRoot}
 
 import scala.collection.mutable
 

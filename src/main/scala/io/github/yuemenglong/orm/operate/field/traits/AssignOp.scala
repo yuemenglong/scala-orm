@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.field.traits
 
-import io.github.yuemenglong.orm.operate.join.traits.Expr
+import io.github.yuemenglong.orm.operate.core.traits.Expr
 
 /**
   * Created by <yuemenglong@126.com> on 2018/2/24.

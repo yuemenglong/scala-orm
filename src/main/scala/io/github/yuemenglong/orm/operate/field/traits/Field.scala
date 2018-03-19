@@ -4,10 +4,11 @@ import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Long, String}
+import io.github.yuemenglong.orm.operate.core.traits.{Alias, Expr}
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
-import io.github.yuemenglong.orm.operate.join.traits.{Alias, Cond, CondOp, Expr}
-import io.github.yuemenglong.orm.operate.query.traits.{Query, Selectable, SubQuery}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp}
+import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
 
 import scala.collection.mutable
 
@@ -96,7 +97,7 @@ trait Field extends FieldExpr with CondOp with AssignOp with Alias {
 
   override def in(a: Array[Object]): Cond = InFA(this, a)
 
-  override def in(query: SubQuery[_, _]): Cond = InFQ(this, query)
+//  override def in(query: SubQuery[_, _]): Cond = InFQ(this, query)
 
   override def nin[T](a: Array[T])(implicit ev: T => Object): Cond = NinFA(this, a)
 

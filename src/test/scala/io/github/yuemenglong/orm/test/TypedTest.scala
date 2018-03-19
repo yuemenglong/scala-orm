@@ -786,44 +786,44 @@ class TypedTest {
       session.execute(ex)
     }
 
-    {
-      val r = Orm.root(classOf[Obj])
-      r.fields(_.name)
-      val sr = r.subRoot(classOf[OM])
-      val query = Orm.selectFrom(r).where(r(_.id).in(
-        Orm.subSelect(sr(_.id)).from(sr)
-      ))
-      val res = session.query(query)
-      Assert.assertEquals(res.length, 1)
-    }
-    {
-      val r = Orm.root(classOf[OM])
-      val sr = r.subRoot(classOf[Obj])
-      val query = Orm.selectFrom(r).where(r(_.objId).===(
-        Orm.subSelect(sr(_.id)).from(sr).where(sr.get(_.id).===(1))
-      ))
-      val res = session.query(query)
-      Assert.assertEquals(res.length, 3)
-    }
-    {
-      val r = Orm.root(classOf[OM])
-      val sr = r.subRoot(classOf[Obj])
-      val query = Orm.selectFrom(r).where(r.get(_.id).>(
-        Orm.subSelect(sr.get(_.id)).from(sr).all
-      ))
-      val res = session.query(query)
-      Assert.assertEquals(res(0).id.intValue(), 2)
-      Assert.assertEquals(res(1).id.intValue(), 3)
-    }
-    {
-      val r = Orm.root(classOf[OM])
-      val sr = r.subRoot(classOf[Obj])
-      val query = Orm.selectFrom(r).where(r.exists(
-        Orm.subSelect(sr.get(_.id)).from(sr).where(sr.get(_.id).eql(r.get(_.objId)))
-      ))
-      val res = session.query(query)
-      Assert.assertEquals(res.length, 3)
-    }
+    //    {
+    //      val r = Orm.root(classOf[Obj])
+    //      r.fields(_.name)
+    //      val sr = r.subRoot(classOf[OM])
+    //      val query = Orm.selectFrom(r).where(r(_.id).in(
+    //        Orm.subSelect(sr(_.id)).from(sr)
+    //      ))
+    //      val res = session.query(query)
+    //      Assert.assertEquals(res.length, 1)
+    //    }
+    //    {
+    //      val r = Orm.root(classOf[OM])
+    //      val sr = r.subRoot(classOf[Obj])
+    //      val query = Orm.selectFrom(r).where(r(_.objId).===(
+    //        Orm.subSelect(sr(_.id)).from(sr).where(sr.get(_.id).===(1))
+    //      ))
+    //      val res = session.query(query)
+    //      Assert.assertEquals(res.length, 3)
+    //    }
+    //    {
+    //      val r = Orm.root(classOf[OM])
+    //      val sr = r.subRoot(classOf[Obj])
+    //      val query = Orm.selectFrom(r).where(r.get(_.id).>(
+    //        Orm.subSelect(sr.get(_.id)).from(sr).all
+    //      ))
+    //      val res = session.query(query)
+    //      Assert.assertEquals(res(0).id.intValue(), 2)
+    //      Assert.assertEquals(res(1).id.intValue(), 3)
+    //    }
+    //    {
+    //      val r = Orm.root(classOf[OM])
+    //      val sr = r.subRoot(classOf[Obj])
+    //      val query = Orm.selectFrom(r).where(r.exists(
+    //        Orm.subSelect(sr.get(_.id)).from(sr).where(sr.get(_.id).eql(r.get(_.objId)))
+    //      ))
+    //      val res = session.query(query)
+    //      Assert.assertEquals(res.length, 3)
+    //    }
   })
 
   @Test
