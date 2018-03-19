@@ -1,5 +1,7 @@
 package io.github.yuemenglong.orm.sql
 
+import io.github.yuemenglong.orm.kit.UnreachableException
+
 /**
   * Created by <yuemenglong@126.com> on 2018/3/17.
   */
@@ -28,11 +30,13 @@ trait SelectStatement extends DmlStatement {
   override def genSql(sb: StringBuffer): Unit = children match {
     case (q, null) => q.genSql(sb)
     case (null, q) => q.genSql(sb)
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
     case (q, null) => q.getParams
     case (null, q) => q.getParams
+    case _ => throw new UnreachableException
   }
 }
 
@@ -48,11 +52,13 @@ trait QueryExpression extends SelectStatement {
       sb.append("(")
       q.genSql(sb)
       sb.append(")")
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
     case (q, null) => q.getParams
     case (null, q) => q.getParams
+    case _ => throw new UnreachableException
   }
 }
 
@@ -85,7 +91,7 @@ trait QuerySpecification extends SqlExpr {
   }
 
   override def getParams: List[Object] = {
-    var list = List()
+    var list = List[Object]()
     selectElement.foreach(list :::= _.getParams)
     if (fromClause != null) {
       list :::= fromClause.getParams
@@ -109,6 +115,7 @@ trait SelectElement extends SqlExpr {
       case (f, null, null) => f.genSql(sb)
       case (null, f, null) => f.genSql(sb)
       case (null, null, e) => e.genSql(sb)
+      case _ => throw new UnreachableException
     }
     sb.append(s" AS ${uid}")
   }
@@ -117,6 +124,7 @@ trait SelectElement extends SqlExpr {
     case (f, null, null) => f.getParams
     case (null, f, null) => f.getParams
     case (null, null, e) => e.getParams
+    case _ => throw new UnreachableException
   }
 
 }
@@ -137,10 +145,12 @@ trait FunctionCall extends SqlExpr with FunctionArg {
 
   override def genSql(sb: StringBuffer): Unit = children match {
     case (null, a) => a.genSql(sb)
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
     case (null, a) => a.getParams
+    case _ => throw new UnreachableException
   }
 
 }
@@ -198,12 +208,14 @@ trait Expression extends SqlExpr with FunctionArg {
       r.genSql(sb)
     case (null, null, p) =>
       p.genSql(sb)
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
     case (e, null, null) => e.getParams
     case (null, (l, _, r), null) => l.getParams ::: r.getParams
     case (null, null, p) => p.getParams
+    case _ => throw new UnreachableException
   }
 }
 
@@ -228,6 +240,7 @@ trait Predicate extends SqlExpr {
       t match {
         case (s, null) => s.genSql(sb)
         case (null, l) => bufferMkString(sb, l, ",")
+        case _ => throw new UnreachableException
       }
       sb.append(")")
     case (null, (p, b), null, null, null, null, null) =>
@@ -257,12 +270,14 @@ trait Predicate extends SqlExpr {
       r.genSql(sb)
     case (null, null, null, null, null, null, e) =>
       e.genSql(sb)
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
     case ((p, _, t), null, null, null, null, null, null) => t match {
       case (s, null) => p.getParams ::: s.getParams
       case (null, e) => p.getParams ::: e.flatMap(_.getParams)
+      case _ => throw new UnreachableException
     }
     case (null, (p, _), null, null, null, null, null) =>
       p.getParams
@@ -276,6 +291,7 @@ trait Predicate extends SqlExpr {
       l.getParams ::: r.getParams
     case (null, null, null, null, null, null, e) =>
       e.getParams
+    case _ => throw new UnreachableException
   }
 }
 
@@ -316,6 +332,7 @@ trait ExpressionAtom extends SqlExpr {
       l.genSql(sb)
       sb.append(s" ${op} ")
       r.genSql(sb)
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
@@ -333,6 +350,7 @@ trait ExpressionAtom extends SqlExpr {
       s.getParams
     case (null, null, null, null, null, null, (l, _, r)) =>
       l.getParams ::: r.getParams
+    case _ => throw new UnreachableException
   }
 }
 
@@ -422,7 +440,7 @@ trait JoinPart extends SqlExpr {
 trait TableSourceItem extends SqlExpr {
   var children: (
     (String, String), // tableName uid
-      (SelectStatement, String), // 是否有括号
+      (SelectStatement, String), // subQuery uid
       List[TableSource]
     )
 
@@ -434,11 +452,11 @@ trait TableSourceItem extends SqlExpr {
       s.genSql(sb)
       sb.append(")")
       sb.append(s" AS ${uid}")
-    case (null, null, list) => {
+    case (null, null, list) =>
       sb.append("(")
       bufferMkString(sb, list, ",")
       sb.append(")")
-    }
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
@@ -448,6 +466,7 @@ trait TableSourceItem extends SqlExpr {
       s.getParams
     case (null, null, list) =>
       list.flatMap(_.getParams)
+    case _ => throw new UnreachableException
   }
 }
 
