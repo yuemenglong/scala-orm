@@ -25,9 +25,6 @@ trait SqlItem {
 trait SelectStmt extends SqlItem {
   var core: SelectCore
   var comps: List[(String, SelectCore)]
-  var orderBy: List[(Expr, String)] // ASC/DESC
-  var limit: Integer
-  var offset: Integer
 
   override def genSql(sb: StringBuffer): Unit = {
     core.genSql(sb)
@@ -37,37 +34,13 @@ trait SelectStmt extends SqlItem {
         s.genSql(sb)
       }
     }
-    if (nonEmpty(orderBy)) {
-      sb.append(" ORDER BY ")
-      orderBy.foreach { case (e, o) =>
-        sb.append(" ")
-        e.genSql(sb)
-        sb.append(s" ${o}")
-      }
-    }
-    if (limit != null) {
-      sb.append(" LIMIT ?")
-      if (offset != null) {
-        sb.append(" OFFSET ?")
-      }
-    }
   }
 
   override def getParams: List[Object] = {
-    val lo: List[Object] = (limit, offset) match {
-      case (null, null) => List()
-      case (l, null) => List(l)
-      case (l, o) => List(l, o)
-      case _ => throw new UnreachableException
-    }
     var list = core.getParams
     if (nonEmpty(comps)) {
       list :::= comps.flatMap(_._2.getParams)
     }
-    if (nonEmpty(orderBy)) {
-      list :::= orderBy.flatMap(_._1.getParams)
-    }
-    list :::= lo
     list
   }
 }
@@ -79,6 +52,9 @@ trait SelectCore extends SqlItem {
   var where: Expr
   var groupBy: List[Expr]
   var having: Expr
+  var orderBy: List[(Expr, String)] // ASC/DESC
+  var limit: Integer
+  var offset: Integer
 
   override def genSql(sb: StringBuffer): Unit = {
     distinct match {
@@ -102,6 +78,20 @@ trait SelectCore extends SqlItem {
         having.genSql(sb)
       }
     }
+    if (nonEmpty(orderBy)) {
+      sb.append(" ORDER BY ")
+      orderBy.foreach { case (e, o) =>
+        sb.append(" ")
+        e.genSql(sb)
+        sb.append(s" ${o}")
+      }
+    }
+    if (limit != null) {
+      sb.append(" LIMIT ?")
+      if (offset != null) {
+        sb.append(" OFFSET ?")
+      }
+    }
   }
 
   override def getParams: List[Object] = {
@@ -117,6 +107,15 @@ trait SelectCore extends SqlItem {
       if (having != null) {
         list :::= having.getParams
       }
+    }
+    if (nonEmpty(orderBy)) {
+      list :::= orderBy.flatMap(_._1.getParams)
+    }
+    (limit, offset) match {
+      case (null, null) =>
+      case (l, null) => list :::= List(l)
+      case (l, o) => list :::= List(l, o)
+      case _ => throw new UnreachableException
     }
     list
   }
