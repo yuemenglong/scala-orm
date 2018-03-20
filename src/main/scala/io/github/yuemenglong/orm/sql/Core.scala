@@ -7,24 +7,61 @@ import io.github.yuemenglong.orm.kit.UnreachableException
   */
 
 trait Select extends SelectStmt {
-  def from(table: Table)
+  def distinct(): Select = {
+    core._distinct = true
+    this
+  }
 
-  def where(expr: Expression)
+  def from(ts: Table*): Select = {
+    core._from = ts.toList
+    this
+  }
+
+  def where(expr: Expr): Select = {
+    core._where = expr
+    this
+  }
+
+  def groupBy(es: Expr*): Select = {
+    core._groupBy = es.toList
+    this
+  }
+
+  def having(e: Expr): Select = {
+    core._having = e
+    this
+  }
+
+  def orderBy(e: Expr, t: String): Select = {
+    core._orderBy ::= (e, t)
+    this
+  }
+
+  def limit(l: Integer): Select = {
+    core._limit = l
+    this
+  }
+
+  def offset(o: Integer): Select = {
+    core._offset = o
+    this
+  }
+
+  def union(stmt: Select): Select = {
+    comps ::= ("UNION", stmt.core)
+    this
+  }
+}
+
+object Select {
+  def apply(columns: ResultColumn*): Select = new Select {
+    override private[orm] val core = new SelectCore(columns: _*)
+  }
 }
 
 trait Table extends TableSource {
-  //(c: (
-  //  (String, String), // tableName, uid
-  //    (SelectStmt, String), // (Select xx) AS
-  //    JoinPart, // JoinPart
-  //  )) extends TableSource {
-
-  //  def this(table: String, uid: String) = this(((table, uid), null, null))
-  //
-  //  def this(stmt: SelectStmt, uid: String) = this((null, (stmt, uid), null))
-
   def join(t: Table, joinType: String, leftColunm: String, rightColumn: String): Table = {
-    val c = Expr(get(leftColunm), "=", t.get(rightColumn))
+    val c = Expr(get(leftColunm).expr, "=", t.get(rightColumn).expr)
 
     val jp: JoinPart = children(0) match {
       case ((name, uid), null, null) => new JoinPart {
@@ -45,8 +82,12 @@ trait Table extends TableSource {
     this
   }
 
-  def get(column: String): Expression = {
-    Expr.column(getAlias, column)
+  def get(column: String): ResultColumn = {
+    val col = Expr.column(getAlias, column)
+    new ResultColumn {
+      override private[orm] val expr = col
+      override private[orm] val uid = s"${getAlias}$$${column}"
+    }
   }
 
   def getUid(children: (
@@ -77,19 +118,15 @@ object Table {
   def apply(stmt: SelectStmt, uid: String): Table = Table((null, (stmt, uid), null))
 }
 
-trait Expr extends Expression {
-
-}
-
 object Expr {
-  def const(v: Object): Expression = new Expression() {
+  def const[T](v: T): Expr = new Expr() {
     val c = new Constant {
-      override val value = v
+      override val value = v.asInstanceOf[Object]
     }
     override val children = (c, null, null, null, null, null, null, null, null)
   }
 
-  def column(t: String, c: String): Expression = new Expression() {
+  def column(t: String, c: String): Expr = new Expr() {
     val tc = new TableColumn {
       override val table = t
       override val column = c
@@ -97,7 +134,7 @@ object Expr {
     override val children = (null, tc, null, null, null, null, null, null, null)
   }
 
-  def func(f: String, d: Boolean, p: List[Expression]): Expression = new Expression {
+  def func(f: String, d: Boolean, p: List[Expr]): Expr = new Expr {
     val fc = new FunctionCall {
       override val fn = f
       override val distinct = d
@@ -106,29 +143,30 @@ object Expr {
     override val children = (null, null, fc, null, null, null, null, null, null)
   }
 
-  def apply(op: String, e: Expression): Expression = new Expression {
+  def apply(op: String, e: Expr): Expr = new Expr {
     override val children = (null, null, null, (op, e), null, null, null, null, null)
   }
 
-  def apply(e: Expression, op: String): Expression = new Expression {
+  def apply(e: Expr, op: String): Expr = new Expr {
     override val children = (null, null, null, null, (e, op), null, null, null, null)
   }
 
-  def apply(l: Expression, op: String, r: Expression): Expression = new Expression {
+  def apply(l: Expr, op: String, r: Expr): Expr = new Expr {
     override val children = (null, null, null, null, null, (l, op, r), null, null, null)
   }
 
-  def apply(e: Expression, l: Expression, r: Expression): Expression = new Expression {
+  def apply(e: Expr, l: Expr, r: Expr): Expr = new Expr {
     override val children = (null, null, null, null, null, null, (e, l, r), null, null)
   }
 
-  def apply(e: Expression, op: String, stmt: SelectStmt): Expression = new Expression {
+  def apply(e: Expr, op: String, stmt: SelectStmt): Expr = new Expr {
     override val children = (null, null, null, null, null, null, null, (e, op, stmt), null)
   }
 
-  def apply(list: List[Expression]): Expression = new Expression {
+  def apply(list: List[Expr]): Expr = new Expr {
     override val children = (null, null, null, null, null, null, null, null, list)
   }
+
 }
 
 object Core {
@@ -138,8 +176,11 @@ object Core {
 
     obj.join(ptr, "LEFT", "ptr_id", "id")
 
+    val select = Select(obj.get("id"), obj.get("name")).from(obj, ptr)
+      .where(Expr(obj.get("id").expr, "=", Expr.const(1)))
+
     val sb = new StringBuffer()
-    obj.genSql(sb)
+    select.genSql(sb)
     println(sb.toString)
   }
 }

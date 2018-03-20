@@ -24,7 +24,7 @@ trait SqlItem {
 
 trait SelectStmt extends SqlItem {
   private[orm] val core: SelectCore
-  private[orm] val comps: List[(String, SelectCore)]
+  private[orm] var comps: List[(String, SelectCore)] = List()
 
   override def genSql(sb: StringBuffer): Unit = {
     core.genSql(sb)
@@ -45,73 +45,73 @@ trait SelectStmt extends SqlItem {
   }
 }
 
-trait SelectCore extends SqlItem {
-  private[orm] val distinct: Boolean
-  private[orm] val columns: List[ResultColumn]
-  private[orm] val from: List[TableSource]
-  private[orm] val where: Expression
-  private[orm] val groupBy: List[Expression]
-  private[orm] val having: Expression
-  private[orm] val orderBy: List[(Expression, String)] // ASC/DESC
-  private[orm] val limit: Integer
-  private[orm] val offset: Integer
+class SelectCore(cs: ResultColumn*) extends SqlItem {
+  private[orm] var _distinct: Boolean = _
+  private[orm] var _columns: List[ResultColumn] = cs.toList
+  private[orm] var _from: List[TableSource] = _
+  private[orm] var _where: Expr = _
+  private[orm] var _groupBy: List[Expr] = _
+  private[orm] var _having: Expr = _
+  private[orm] var _orderBy: List[(Expr, String)] = _
+  private[orm] var _limit: Integer = _
+  private[orm] var _offset: Integer = _
 
   override def genSql(sb: StringBuffer): Unit = {
-    distinct match {
+    _distinct match {
       case true => sb.append("SELECT DISTINCT ")
       case false => sb.append("SELECT ")
     }
-    bufferMkString(sb, columns, ",")
-    if (nonEmpty(from)) {
+    bufferMkString(sb, _columns, ",")
+    if (nonEmpty(_from)) {
       sb.append(" FROM ")
-      bufferMkString(sb, from, ",")
+      bufferMkString(sb, _from, ",")
     }
-    if (where != null) {
+    if (_where != null) {
       sb.append(" WHERE ")
-      where.genSql(sb)
+      _where.genSql(sb)
     }
-    if (nonEmpty(groupBy)) {
+    if (nonEmpty(_groupBy)) {
       sb.append(" GROUP BY ")
-      bufferMkString(sb, groupBy, ",")
-      if (having != null) {
+      bufferMkString(sb, _groupBy, ",")
+      if (_having != null) {
         sb.append(" HAVING ")
-        having.genSql(sb)
+        _having.genSql(sb)
       }
     }
-    if (nonEmpty(orderBy)) {
+    if (nonEmpty(_orderBy)) {
       sb.append(" ORDER BY ")
-      orderBy.foreach { case (e, o) =>
+      _orderBy.foreach { case (e, o) =>
         sb.append(" ")
         e.genSql(sb)
         sb.append(s" ${o}")
       }
     }
-    if (limit != null) {
+    if (_limit != null) {
       sb.append(" LIMIT ?")
-      if (offset != null) {
+      if (_offset != null) {
         sb.append(" OFFSET ?")
       }
     }
   }
 
   override def getParams: List[Object] = {
-    var list = columns.flatMap(_.getParams)
-    if (from != null) {
-      list :::= from.flatMap(_.getParams)
+    var list = _columns.flatMap(_.getParams)
+    if (_from != null) {
+      list :::= _from.flatMap(_.getParams)
     }
-    if (where != null) {
-      list :::= where.getParams
+    if (_where != null) {
+      list :::= _where.getParams
     }
-    if (nonEmpty(groupBy)) {
-      list :::= groupBy.flatMap(_.getParams)
-      if (having != null) {
-        list :::= having.getParams
+    if (nonEmpty(_groupBy)) {
+      list :::= _groupBy.flatMap(_.getParams)
+      if (_having != null) {
+        list :::= _having.getParams
       }
     }
-    if (nonEmpty(orderBy)) {
-      list :::= orderBy.flatMap(_._1.getParams)
+    if (nonEmpty(_orderBy)) {
+      list :::= _orderBy.flatMap(_._1.getParams)
     }
-    (limit, offset) match {
+    (_limit, _offset) match {
       case (null, null) =>
       case (l, null) => list :::= List(l)
       case (l, o) => list :::= List(l, o)
@@ -121,17 +121,17 @@ trait SelectCore extends SqlItem {
   }
 }
 
-trait Expression extends SqlItem {
+trait Expr extends SqlItem {
   private[orm] val children: (
     Constant,
       TableColumn,
       FunctionCall,
-      (String, Expression),
-      (Expression, String),
-      (Expression, String, Expression), // A AND B, A IN (1,2,3)
-      (Expression, Expression, Expression), // BETWEEN AND
-      (Expression, String, SelectStmt), // IN (SUBQUERY)
-      List[Expression], // (A, B)
+      (String, Expr),
+      (Expr, String),
+      (Expr, String, Expr), // A AND B, A IN (1,2,3)
+      (Expr, Expr, Expr), // BETWEEN AND
+      (Expr, String, SelectStmt), // IN (SUBQUERY)
+      List[Expr], // (A, B)
     )
 
   override def genSql(sb: StringBuffer): Unit = children match {
@@ -213,7 +213,7 @@ trait TableColumn extends SqlItem {
 trait FunctionCall extends SqlItem {
   private[orm] val fn: String // Include COUNT(*)
   private[orm] val distinct: Boolean
-  private[orm] val params: List[Expression]
+  private[orm] val params: List[Expr]
 
   override def genSql(sb: StringBuffer): Unit = fn match {
     case "COUNT(*)" => sb.append("COUNT(*)")
@@ -232,7 +232,7 @@ trait FunctionCall extends SqlItem {
 }
 
 trait ResultColumn extends SqlItem {
-  private[orm] val expr: Expression
+  private[orm] val expr: Expr
   private[orm] val uid: String
 
   override def genSql(sb: StringBuffer): Unit = {
@@ -272,7 +272,7 @@ trait TableSource extends SqlItem {
 
 trait JoinPart extends SqlItem {
   private[orm] val table: TableSource
-  private[orm] val joins: List[(String, TableSource, Expression)] // JoinType
+  private[orm] val joins: List[(String, TableSource, Expr)] // JoinType
 
   override def genSql(sb: StringBuffer): Unit = {
     table.genSql(sb)
