@@ -23,7 +23,7 @@ trait Queryable[T] {
 trait Selectable[T] {
   def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T
 
-  def getColumnWithAs: String
+//  def getColumnWithAs: String
 
   def getType: Class[T]
 

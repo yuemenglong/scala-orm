@@ -50,6 +50,21 @@ trait Field extends ResultColumn {
   def getAlias: String = uid
 }
 
+trait SelectableField[T] extends Field with Selectable[T] {
+  val clazz: Class[T]
+
+  override def getType = clazz
+
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
+    resultSet.getObject(getAlias, getType)
+  }
+
+  override def getKey(value: Object): String = value match {
+    case null => ""
+    case _ => value.toString
+  }
+}
+
 //trait Field extends FieldExpr with CondOp with AssignOp with Alias {
 //
 //  def getField: String
