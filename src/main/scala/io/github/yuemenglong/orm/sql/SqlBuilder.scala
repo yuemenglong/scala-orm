@@ -23,8 +23,8 @@ trait SqlItem {
 }
 
 trait SelectStmt extends SqlItem {
-  var core: SelectCore
-  var comps: List[(String, SelectCore)]
+  private[orm] val core: SelectCore
+  private[orm] val comps: List[(String, SelectCore)]
 
   override def genSql(sb: StringBuffer): Unit = {
     core.genSql(sb)
@@ -46,15 +46,15 @@ trait SelectStmt extends SqlItem {
 }
 
 trait SelectCore extends SqlItem {
-  var distinct: Boolean
-  var columns: List[ResultColumn]
-  var from: TableSource
-  var where: Expr
-  var groupBy: List[Expr]
-  var having: Expr
-  var orderBy: List[(Expr, String)] // ASC/DESC
-  var limit: Integer
-  var offset: Integer
+  private[orm] val distinct: Boolean
+  private[orm] val columns: List[ResultColumn]
+  private[orm] val from: List[TableSource]
+  private[orm] val where: Expression
+  private[orm] val groupBy: List[Expression]
+  private[orm] val having: Expression
+  private[orm] val orderBy: List[(Expression, String)] // ASC/DESC
+  private[orm] val limit: Integer
+  private[orm] val offset: Integer
 
   override def genSql(sb: StringBuffer): Unit = {
     distinct match {
@@ -62,9 +62,9 @@ trait SelectCore extends SqlItem {
       case false => sb.append("SELECT ")
     }
     bufferMkString(sb, columns, ",")
-    if (from != null) {
+    if (nonEmpty(from)) {
       sb.append(" FROM ")
-      from.genSql(sb)
+      bufferMkString(sb, from, ",")
     }
     if (where != null) {
       sb.append(" WHERE ")
@@ -97,7 +97,7 @@ trait SelectCore extends SqlItem {
   override def getParams: List[Object] = {
     var list = columns.flatMap(_.getParams)
     if (from != null) {
-      list :::= from.getParams
+      list :::= from.flatMap(_.getParams)
     }
     if (where != null) {
       list :::= where.getParams
@@ -121,17 +121,17 @@ trait SelectCore extends SqlItem {
   }
 }
 
-trait Expr extends SqlItem {
-  var children: (
+trait Expression extends SqlItem {
+  private[orm] val children: (
     Constant,
       TableColumn,
       FunctionCall,
-      (String, Expr),
-      (Expr, String),
-      (Expr, String, Expr), // A AND B, A IN (1,2,3)
-      (Expr, Expr, Expr), // BETWEEN AND
-      (Expr, String, SelectStmt), // IN (SUBQUERY)
-      List[Expr], // (A, B)
+      (String, Expression),
+      (Expression, String),
+      (Expression, String, Expression), // A AND B, A IN (1,2,3)
+      (Expression, Expression, Expression), // BETWEEN AND
+      (Expression, String, SelectStmt), // IN (SUBQUERY)
+      List[Expression], // (A, B)
     )
 
   override def genSql(sb: StringBuffer): Unit = children match {
@@ -165,6 +165,7 @@ trait Expr extends SqlItem {
       sb.append("(")
       bufferMkString(sb, list, ",")
       sb.append(")")
+    case _ => throw new UnreachableException
   }
 
   override def getParams: List[Object] = children match {
@@ -186,11 +187,12 @@ trait Expr extends SqlItem {
       e.getParams ::: s.getParams
     case (null, null, null, null, null, null, null, null, list) =>
       list.flatMap(_.getParams)
+    case _ => throw new UnreachableException
   }
 }
 
 trait Constant extends SqlItem {
-  var value: Object
+  private[orm] val value: Object
 
   override def genSql(sb: StringBuffer): Unit = sb.append("?")
 
@@ -198,20 +200,21 @@ trait Constant extends SqlItem {
 }
 
 trait TableColumn extends SqlItem {
-  var table: String
-  var uid: String
+  private[orm] val table: String
+  private[orm] val column: String
+  private[orm] val uid: String
 
   override def genSql(sb: StringBuffer): Unit = {
-    sb.append(s"${table} AS ${uid}")
+    sb.append(s"${table}.${column} AS ${uid}")
   }
 
   override def getParams = List()
 }
 
 trait FunctionCall extends SqlItem {
-  var fn: String // Include COUNT(*)
-  var distinct: Boolean
-  var params: List[Expr]
+  private[orm] val fn: String // Include COUNT(*)
+  private[orm] val distinct: Boolean
+  private[orm] val params: List[Expression]
 
   override def genSql(sb: StringBuffer): Unit = fn match {
     case "COUNT(*)" => sb.append("COUNT(*)")
@@ -230,8 +233,8 @@ trait FunctionCall extends SqlItem {
 }
 
 trait ResultColumn extends SqlItem {
-  var expr: Expr
-  var uid: String
+  private[orm] val expr: Expression
+  private[orm] val uid: String
 
   override def genSql(sb: StringBuffer): Unit = {
     expr.genSql(sb)
@@ -244,34 +247,33 @@ trait ResultColumn extends SqlItem {
 }
 
 trait TableSource extends SqlItem {
-  var children: (
+  private[orm] var children: (
     (String, String), // tableName, uid
-      JoinPart, // JoinPart
-      List[TableSource], // A, B
-      (SelectStmt, String) // (Select xx) AS
-    )
+      (SelectStmt, String), // (Select xx) AS
+      JoinPart // JoinPart
+    ) = _
 
   override def genSql(sb: StringBuffer): Unit = children match {
-    case ((table, uid), null, null, null) => sb.append(s"${table} AS ${uid}")
-    case (null, j, null, null) => j.genSql(sb)
-    case (null, null, list, null) => bufferMkString(sb, list, ",")
-    case (null, null, null, (s, uid)) =>
+    case ((table, uid), null, null) => sb.append(s"${table} AS ${uid}")
+    case (null, (s, uid), null) =>
       sb.append("(")
       s.genSql(sb)
       sb.append(s") AS ${uid}")
+    case (null, null, j) => j.genSql(sb)
+    case _ => throw new UnreachableException
   }
 
   override def getParams = children match {
-    case (_, null, null, null) => List()
-    case (null, j, null, null) => j.getParams
-    case (null, null, list, null) => list.flatMap(_.getParams)
-    case (null, null, null, (s, _)) => s.getParams
+    case (_, null, null) => List()
+    case (null, (s, _), null) => s.getParams
+    case (null, null, j) => j.getParams
+    case _ => throw new UnreachableException
   }
 }
 
 trait JoinPart extends SqlItem {
-  var table: TableSource
-  var joins: List[(String, TableSource, Expr)] // JoinType
+  private[orm] val table: TableSource
+  private[orm] val joins: List[(String, TableSource, Expression)] // JoinType
 
   override def genSql(sb: StringBuffer): Unit = {
     table.genSql(sb)
@@ -284,6 +286,6 @@ trait JoinPart extends SqlItem {
   }
 
   override def getParams: List[Object] = {
-    joins.flatMap { case (_, t, e) => t.getParams ::: e.getParams }
+    table.getParams ::: joins.flatMap { case (_, t, e) => t.getParams ::: e.getParams }
   }
 }
