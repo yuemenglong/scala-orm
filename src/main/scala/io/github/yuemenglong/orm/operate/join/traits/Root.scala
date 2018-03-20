@@ -34,7 +34,9 @@ trait RootOp {
   def notexs(query: SubQuery[_, _]): Cond = NotExsQ(query)
 }
 
-trait RootBase[T] extends TypedSelectableCascade[T] {
+//trait RootBase[T] extends TypedSelectableCascade[T] {
+trait RootBase[T] {
+
 }
 
 trait SubRoot[T] extends RootBase[T] {
@@ -42,28 +44,28 @@ trait SubRoot[T] extends RootBase[T] {
 }
 
 trait Root[T] extends RootBase[T] with RootOp {
-  var subCounter: Int = 0
-
-  def subRoot[R](clazz: Class[R]): SubRoot[R] = {
-    val subMeta = OrmMeta.entityMap(clazz)
-    subCounter += 1
-    val inn = new JoinInner(subMeta)
-    new SubRoot[R] {
-      override private[orm] val no = subCounter
-      override private[orm] val inner = inn
-    }
-  }
+//  var subCounter: Int = 0
+//
+//  def subRoot[R](clazz: Class[R]): SubRoot[R] = {
+//    val subMeta = OrmMeta.entityMap(clazz)
+//    subCounter += 1
+//    val inn = new JoinInner(subMeta)
+//    new SubRoot[R] {
+//      override private[orm] val no = subCounter
+//      override private[orm] val inner = inn
+//    }
+//  }
 }
 
-object Root {
-  def apply[T](clazz: Class[T]): Root[T] = {
-    val meta = OrmMeta.entityMap.get(clazz) match {
-      case Some(m) => m
-      case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
-    }
-    val inn = new JoinInner(meta)
-    new Root[T] {
-      override private[orm] val inner = inn
-    }
-  }
-}
+//object Root {
+//  def apply[T](clazz: Class[T]): Root[T] = {
+//    val meta = OrmMeta.entityMap.get(clazz) match {
+//      case Some(m) => m
+//      case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
+//    }
+//    val inn = new JoinInner(meta)
+//    new Root[T] {
+//      override private[orm] val inner = inn
+//    }
+//  }
+//}

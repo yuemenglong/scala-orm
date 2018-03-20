@@ -118,56 +118,7 @@ object Table {
   def apply(stmt: SelectStmt, uid: String): Table = Table((null, (stmt, uid), null))
 }
 
-object Expr {
-  def const[T](v: T): Expr = new Expr() {
-    val c = new Constant {
-      override val value = v.asInstanceOf[Object]
-    }
-    override val children = (c, null, null, null, null, null, null, null, null)
-  }
 
-  def column(t: String, c: String): Expr = new Expr() {
-    val tc = new TableColumn {
-      override val table = t
-      override val column = c
-    }
-    override val children = (null, tc, null, null, null, null, null, null, null)
-  }
-
-  def func(f: String, d: Boolean, p: List[Expr]): Expr = new Expr {
-    val fc = new FunctionCall {
-      override val fn = f
-      override val distinct = d
-      override val params = p
-    }
-    override val children = (null, null, fc, null, null, null, null, null, null)
-  }
-
-  def apply(op: String, e: Expr): Expr = new Expr {
-    override val children = (null, null, null, (op, e), null, null, null, null, null)
-  }
-
-  def apply(e: Expr, op: String): Expr = new Expr {
-    override val children = (null, null, null, null, (e, op), null, null, null, null)
-  }
-
-  def apply(l: Expr, op: String, r: Expr): Expr = new Expr {
-    override val children = (null, null, null, null, null, (l, op, r), null, null, null)
-  }
-
-  def apply(e: Expr, l: Expr, r: Expr): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, (e, l, r), null, null)
-  }
-
-  def apply(e: Expr, op: String, stmt: SelectStmt): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, (e, op, stmt), null)
-  }
-
-  def apply(list: List[Expr]): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, null, list)
-  }
-
-}
 
 object Core {
   def main(args: Array[String]): Unit = {
