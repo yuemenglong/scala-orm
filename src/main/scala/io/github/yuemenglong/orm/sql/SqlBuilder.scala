@@ -202,10 +202,9 @@ trait Constant extends SqlItem {
 trait TableColumn extends SqlItem {
   private[orm] val table: String
   private[orm] val column: String
-  private[orm] val uid: String
 
   override def genSql(sb: StringBuffer): Unit = {
-    sb.append(s"${table}.${column} AS ${uid}")
+    sb.append(s"${table}.${column}")
   }
 
   override def getParams = List()
@@ -247,13 +246,13 @@ trait ResultColumn extends SqlItem {
 }
 
 trait TableSource extends SqlItem {
-  private[orm] var children: (
+  private[orm] val children: Array[(
     (String, String), // tableName, uid
       (SelectStmt, String), // (Select xx) AS
       JoinPart // JoinPart
-    ) = _
+    )]
 
-  override def genSql(sb: StringBuffer): Unit = children match {
+  override def genSql(sb: StringBuffer): Unit = children(0) match {
     case ((table, uid), null, null) => sb.append(s"${table} AS ${uid}")
     case (null, (s, uid), null) =>
       sb.append("(")
@@ -263,7 +262,7 @@ trait TableSource extends SqlItem {
     case _ => throw new UnreachableException
   }
 
-  override def getParams = children match {
+  override def getParams = children(0) match {
     case (_, null, null) => List()
     case (null, (s, _), null) => s.getParams
     case (null, null, j) => j.getParams
