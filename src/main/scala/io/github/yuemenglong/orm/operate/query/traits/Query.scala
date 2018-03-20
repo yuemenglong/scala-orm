@@ -5,9 +5,9 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
-import io.github.yuemenglong.orm.operate.core.traits.Expr
+import io.github.yuemenglong.orm.operate.core.traits.Expr2
 import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root, SubRoot}
+import io.github.yuemenglong.orm.operate.join.traits.{Cond}
 
 import scala.collection.mutable
 
@@ -30,19 +30,19 @@ trait Selectable[T] {
   def getKey(value: Object): String
 }
 
-trait QueryBuilder[T] {
-  def from[R](selectRoot: Root[R]): Query[R, T]
+//trait QueryBuilder[T] {
+//  def from[R](selectRoot: Root[R]): Query[R, T]
+//
+//  def distinct: this.type
+//}
+//
+//trait SubQueryBuilder[T] {
+//  def from[R](subRoot: SubRoot[R]): SubQuery[R, T]
+//
+//  def distinct: this.type
+//}
 
-  def distinct: this.type
-}
-
-trait SubQueryBuilder[T] {
-  def from[R](subRoot: SubRoot[R]): SubQuery[R, T]
-
-  def distinct: this.type
-}
-
-trait QueryBase[R, T] extends Queryable[T] with Expr {
+trait QueryBase[R, T] extends Queryable[T] with Expr2 {
 
   def limit(l: Long): this.type
 

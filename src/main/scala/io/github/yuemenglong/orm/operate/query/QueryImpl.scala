@@ -5,10 +5,7 @@ import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.field.SelectableFieldImpl
-import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
-import io.github.yuemenglong.orm.operate.join.CondHolder
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root, RootBase, SubRoot}
+import io.github.yuemenglong.orm.operate.field.traits.{Field}
 import io.github.yuemenglong.orm.operate.query.traits._
 
 import scala.collection.mutable
@@ -244,55 +241,55 @@ import scala.reflect.ClassTag
 //    }
 //  }
 //}
-
-class Count_ extends Selectable[java.lang.Long] {
-  def getAlias: String = "$count$"
-
-  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): java.lang.Long = resultSet.getObject(getAlias, classOf[java.lang.Long])
-
-  override def getColumnWithAs: String = s"COUNT(*) AS $getAlias"
-
-  override def getType: Class[java.lang.Long] = classOf[java.lang.Long]
-
-  override def getKey(value: Object): String = value.toString
-}
-
-class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {
-  private var distinctVar = ""
-
-  override def getType: Class[lang.Long] = classOf[java.lang.Long]
-
-  override def getColumn: String = s"COUNT($distinctVar${impl.getColumn})"
-
-  override def getAlias: String = s"$$count$$${impl.getAlias}"
-
-  def distinct: SelectableField[lang.Long] = {
-    distinctVar = "DISTINCT "
-    this
-  }
-}
-
-class Sum[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
-  private var distinctVar = ""
-
-  override def getColumn: String = s"SUM($distinctVar${impl.getColumn})"
-
-  override def getAlias: String = s"$$sum$$${impl.getAlias}"
-
-  def distinct: SelectableField[T] = {
-    distinctVar = "DISTINCT "
-    this
-  }
-}
-
-class Max[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
-  override def getColumn: String = s"MAX(${impl.getColumn})"
-
-  override def getAlias: String = s"$$max$$${impl.getAlias}"
-}
-
-class Min[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
-  override def getColumn: String = s"MIN(${impl.getColumn})"
-
-  override def getAlias: String = s"$$min$$${impl.getAlias}"
-}
+//
+//class Count_ extends Selectable[java.lang.Long] {
+//  def getAlias: String = "$count$"
+//
+//  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): java.lang.Long = resultSet.getObject(getAlias, classOf[java.lang.Long])
+//
+//  override def getColumnWithAs: String = s"COUNT(*) AS $getAlias"
+//
+//  override def getType: Class[java.lang.Long] = classOf[java.lang.Long]
+//
+//  override def getKey(value: Object): String = value.toString
+//}
+//
+//class Count(impl: Field) extends SelectableFieldImpl[java.lang.Long](classOf[java.lang.Long], impl) {
+//  private var distinctVar = ""
+//
+//  override def getType: Class[lang.Long] = classOf[java.lang.Long]
+//
+//  override def getColumn: String = s"COUNT($distinctVar${impl.getColumn})"
+//
+//  override def getAlias: String = s"$$count$$${impl.getAlias}"
+//
+//  def distinct: SelectableField[lang.Long] = {
+//    distinctVar = "DISTINCT "
+//    this
+//  }
+//}
+//
+//class Sum[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
+//  private var distinctVar = ""
+//
+//  override def getColumn: String = s"SUM($distinctVar${impl.getColumn})"
+//
+//  override def getAlias: String = s"$$sum$$${impl.getAlias}"
+//
+//  def distinct: SelectableField[T] = {
+//    distinctVar = "DISTINCT "
+//    this
+//  }
+//}
+//
+//class Max[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
+//  override def getColumn: String = s"MAX(${impl.getColumn})"
+//
+//  override def getAlias: String = s"$$max$$${impl.getAlias}"
+//}
+//
+//class Min[T](impl: Field, clazz: Class[T]) extends SelectableFieldImpl[T](clazz, impl) {
+//  override def getColumn: String = s"MIN(${impl.getColumn})"
+//
+//  override def getAlias: String = s"$$min$$${impl.getAlias}"
+//}

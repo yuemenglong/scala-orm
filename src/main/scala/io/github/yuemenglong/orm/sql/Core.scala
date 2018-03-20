@@ -61,7 +61,7 @@ object Select {
 
 trait Table extends TableSource {
   def join(t: Table, joinType: String, leftColunm: String, rightColumn: String): Table = {
-    val c = Expr(get(leftColunm).expr, "=", t.get(rightColumn).expr)
+    val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
 
     val jp: JoinPart = children(0) match {
       case ((name, uid), null, null) => new JoinPart {
@@ -82,11 +82,11 @@ trait Table extends TableSource {
     this
   }
 
-  def get(column: String): ResultColumn = {
-    val col = Expr.column(getAlias, column)
+  def getColumn(c: String): ResultColumn = {
+    val col = Expr.column(getAlias, c)
     new ResultColumn {
       override private[orm] val expr = col
-      override private[orm] val uid = s"${getAlias}$$${column}"
+      override private[orm] val uid = s"${getAlias}$$${c}"
     }
   }
 
@@ -118,8 +118,6 @@ object Table {
   def apply(stmt: SelectStmt, uid: String): Table = Table((null, (stmt, uid), null))
 }
 
-
-
 object Core {
   def main(args: Array[String]): Unit = {
     val obj = Table("obj", "obj")
@@ -127,8 +125,8 @@ object Core {
 
     obj.join(ptr, "LEFT", "ptr_id", "id")
 
-    val select = Select(obj.get("id"), obj.get("name")).from(obj, ptr)
-      .where(Expr(obj.get("id").expr, "=", Expr.const(1)))
+    val select = Select(obj.getColumn("id"), obj.getColumn("name")).from(obj, ptr)
+      .where(Expr(obj.getColumn("id").expr, "=", Expr.const(1)))
 
     val sb = new StringBuffer()
     select.genSql(sb)

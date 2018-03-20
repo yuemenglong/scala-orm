@@ -3,7 +3,6 @@ package io.github.yuemenglong.orm.operate.core.traits
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.meta.EntityMeta
-import io.github.yuemenglong.orm.operate.field.FieldImpl
 import io.github.yuemenglong.orm.operate.field.traits.Field
 
 import scala.collection.mutable.ArrayBuffer
@@ -21,7 +20,7 @@ trait Alias {
   def getAlias: String
 }
 
-trait Expr extends Params {
+trait Expr2 extends Params {
   def getSql: String
 }
 
@@ -44,10 +43,10 @@ class JoinInner(val tableName: String, val joinName: String,
   // Cascade
   var meta: EntityMeta = _
 
-//  // SelectFieldCascade
-//  var selects: ArrayBuffer[(String, SelectFieldCascade)] = _
-//  var fields: Array[FieldImpl] = _
-//  var ignores: Set[String] = _
+  //  // SelectFieldCascade
+  //  var selects: ArrayBuffer[(String, SelectFieldCascade)] = _
+  //  var fields: Array[FieldImpl] = _
+  //  var ignores: Set[String] = _
 }
 
 trait Join extends Alias with Params { // 代表所属的Table

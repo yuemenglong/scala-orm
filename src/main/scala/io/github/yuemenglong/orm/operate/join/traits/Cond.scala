@@ -1,13 +1,13 @@
 package io.github.yuemenglong.orm.operate.join.traits
 
-import io.github.yuemenglong.orm.operate.core.traits.Expr
+import io.github.yuemenglong.orm.operate.core.traits.Expr2
 //import io.github.yuemenglong.orm.operate.query.traits.SubQuery
 
 /**
   * Created by yml on 2017/7/15.
   */
 
-trait Cond extends Expr {
+trait Cond extends Expr2 {
   def and(cond: Cond): Cond
 
   def &&(cond: Cond): Cond = and(cond)
@@ -20,51 +20,51 @@ trait Cond extends Expr {
 trait CondOp {
   def eql[T](v: T): Cond
 
-  def eql(f: Expr): Cond
+  def eql(f: Expr2): Cond
 
   def ===[T](v: T): Cond = eql(v)
 
-  def ===(f: Expr): Cond = eql(f)
+  def ===(f: Expr2): Cond = eql(f)
 
   def neq[T](v: T): Cond
 
-  def neq(f: Expr): Cond
+  def neq(f: Expr2): Cond
 
   def !==[T](v: T): Cond = neq(v)
 
-  def !==(f: Expr): Cond = neq(f)
+  def !==(f: Expr2): Cond = neq(f)
 
   def gt[T](v: T): Cond
 
-  def gt(f: Expr): Cond
+  def gt(f: Expr2): Cond
 
   def >[T](v: T): Cond = gt(v)
 
-  def >(f: Expr): Cond = gt(f)
+  def >(f: Expr2): Cond = gt(f)
 
   def gte[T](v: T): Cond
 
-  def gte(f: Expr): Cond
+  def gte(f: Expr2): Cond
 
   def >=[T](v: T): Cond = gte(v)
 
-  def >=(f: Expr): Cond = gte(f)
+  def >=(f: Expr2): Cond = gte(f)
 
   def lt[T](v: T): Cond
 
-  def lt(f: Expr): Cond
+  def lt(f: Expr2): Cond
 
   def <[T](v: T): Cond = lt(v)
 
-  def <(f: Expr): Cond = lt(f)
+  def <(f: Expr2): Cond = lt(f)
 
   def lte[T](v: T): Cond
 
-  def lte(f: Expr): Cond
+  def lte(f: Expr2): Cond
 
   def <=[T](v: T): Cond = lte(v)
 
-  def <=(f: Expr): Cond = lte(f)
+  def <=(f: Expr2): Cond = lte(f)
 
   def like(v: String): Cond
 
