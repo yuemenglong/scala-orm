@@ -7,57 +7,58 @@ import io.github.yuemenglong.orm.kit.UnreachableException
   */
 
 //noinspection ScalaRedundantCast
-trait SelectStatement extends SelectStmt {
-  type Self = this.type
+trait SelectStatement[S] extends SelectStmt {
 
-  def distinct(): Self = {
+  def distinct(): S = {
     core._distinct = true
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def from(ts: Table*): Self = {
+  def from(ts: Table*): S = {
     core._from = ts.toList
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def where(expr: Expr): Self = {
+  def where(expr: Expr): S = {
     core._where = expr
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def groupBy(es: Expr*): Self = {
+  def groupBy(es: Expr*): S = {
     core._groupBy = es.toList
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def having(e: Expr): Self = {
+  def having(e: Expr): S = {
     core._having = e
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def orderBy(e: Expr, t: String): Self = {
+  def orderBy(e: Expr, t: String): S = {
     core._orderBy ::= (e, t)
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def limit(l: Integer): Self = {
+  def limit(l: Integer): S = {
     core._limit = l
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def offset(o: Integer): Self = {
+  def offset(o: Integer): S = {
     core._offset = o
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 
-  def union(stmt: SelectStatement): Self = {
+  def union(stmt: SelectStatement[_]): S = {
     comps ::= ("UNION", stmt.core)
-    this.asInstanceOf[Self]
+    this.asInstanceOf[S]
   }
 }
 
+trait SelectT extends SelectStatement[SelectT]
+
 object SelectStatement {
-  def apply(columns: ResultColumn*): SelectStatement = new SelectStatement {
+  def apply(columns: ResultColumn*): SelectStatement[SelectT] = new SelectStatement[SelectT] {
     override private[orm] val core = new SelectCore(columns: _*)
   }
 }

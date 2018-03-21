@@ -101,7 +101,7 @@ trait Selectable[T] {
 //  }
 //}
 
-trait QueryBase extends SelectStatement {
+trait QueryBase[S] extends SelectStatement[S] {
   val targets: Array[Selectable[_]]
 
   def query0(session: Session): Array[_] = {
@@ -132,8 +132,7 @@ trait QueryBase extends SelectStatement {
   }
 }
 
-trait Query[T] extends QueryBase with Queryable[T] {
-  override type Self = this.type
+trait Query[T] extends QueryBase[Query[T]] with Queryable[T] {
 
   //noinspection ScalaRedundantCast
   override def query(session: Session): Array[T] = {
