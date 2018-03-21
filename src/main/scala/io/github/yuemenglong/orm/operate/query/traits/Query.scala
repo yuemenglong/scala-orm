@@ -109,7 +109,11 @@ trait QueryBase[S] extends SelectStatement[S] {
       genSql(sb)
       sb.toString
     }
-    val params = getParams.toArray
+    val params = {
+      val ab = new ArrayBuffer[Object]()
+      genParams(ab)
+      ab.toArray
+    }
     session.query(sql, params, rs => {
       var list = List[Array[Any]]()
       val filterMap = mutable.Map[String, Entity]()

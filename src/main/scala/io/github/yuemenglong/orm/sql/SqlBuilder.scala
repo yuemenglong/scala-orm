@@ -2,13 +2,15 @@ package io.github.yuemenglong.orm.sql
 
 import io.github.yuemenglong.orm.kit.UnreachableException
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by <yuemenglong@126.com> on 2018/3/17.
   */
 trait SqlItem {
   def genSql(sb: StringBuffer)
 
-  def getParams: List[Object]
+  def genParams(ab: ArrayBuffer[Object])
 
   def bufferMkString(sb: StringBuffer, list: List[SqlItem], gap: String): Unit = {
     list.zipWithIndex.foreach { case (e, i) =>
@@ -36,12 +38,11 @@ trait SelectStmt extends SqlItem {
     }
   }
 
-  override def getParams: List[Object] = {
-    var list = core.getParams
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    core.genParams(ab)
     if (nonEmpty(comps)) {
-      list :::= comps.flatMap(_._2.getParams)
+      comps.foreach(_._2.genParams(ab))
     }
-    list
   }
 }
 
@@ -94,30 +95,29 @@ class SelectCore(cs: List[ResultColumn] = List()) extends SqlItem {
     }
   }
 
-  override def getParams: List[Object] = {
-    var list = _columns.flatMap(_.getParams)
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    _columns.foreach(_.genParams(ab))
     if (_from != null) {
-      list :::= _from.flatMap(_.getParams)
+      _from.foreach(_.genParams(ab))
     }
     if (_where != null) {
-      list :::= _where.getParams
+      _where.genParams(ab)
     }
     if (nonEmpty(_groupBy)) {
-      list :::= _groupBy.flatMap(_.getParams)
+      _groupBy.foreach(_.genParams(ab))
       if (_having != null) {
-        list :::= _having.getParams
+        _having.genParams(ab)
       }
     }
     if (nonEmpty(_orderBy)) {
-      list :::= _orderBy.flatMap(_._1.getParams)
+      _orderBy.foreach(_._1.genParams(ab))
     }
     (_limit, _offset) match {
       case (null, null) =>
-      case (l, null) => list :::= List(l)
-      case (l, o) => list :::= List(l, o)
+      case (l, null) => ab += l
+      case (l, o) => ab += l += o
       case _ => throw new UnreachableException
     }
-    list
   }
 }
 
@@ -168,25 +168,29 @@ trait Expr extends SqlItem with ExprOp {
     case _ => throw new UnreachableException
   }
 
-  override def getParams: List[Object] = children match {
+  override def genParams(ab: ArrayBuffer[Object]): Unit = children match {
     case (c, null, null, null, null, null, null, null, null) =>
-      c.getParams
+      c.genParams(ab)
     case (null, t, null, null, null, null, null, null, null) =>
-      t.getParams
+      t.genParams(ab)
     case (null, null, f, null, null, null, null, null, null) =>
-      f.getParams
+      f.genParams(ab)
     case (null, null, null, (_, e), null, null, null, null, null) =>
-      e.getParams
+      e.genParams(ab)
     case (null, null, null, null, (e, _), null, null, null, null) =>
-      e.getParams
+      e.genParams(ab)
     case (null, null, null, null, null, (l, _, r), null, null, null) =>
-      l.getParams ::: r.getParams
+      l.genParams(ab)
+      r.genParams(ab)
     case (null, null, null, null, null, null, (e, l, r), null, null) =>
-      e.getParams ::: l.getParams ::: r.getParams
+      e.genParams(ab)
+      l.genParams(ab)
+      r.genParams(ab)
     case (null, null, null, null, null, null, null, (e, _, s), null) =>
-      e.getParams ::: s.getParams
+      e.genParams(ab)
+      s.genParams(ab)
     case (null, null, null, null, null, null, null, null, list) =>
-      list.flatMap(_.getParams)
+      list.foreach(_.genParams(ab))
     case _ => throw new UnreachableException
   }
 
@@ -249,7 +253,7 @@ trait Constant extends SqlItem {
 
   override def genSql(sb: StringBuffer): Unit = sb.append("?")
 
-  override def getParams = List(value)
+  override def genParams(ab: ArrayBuffer[Object]): Unit = ab += value
 }
 
 trait TableColumn extends SqlItem {
@@ -260,7 +264,7 @@ trait TableColumn extends SqlItem {
     sb.append(s"${table}.${column}")
   }
 
-  override def getParams = List()
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {}
 }
 
 trait FunctionCall extends SqlItem {
@@ -279,8 +283,8 @@ trait FunctionCall extends SqlItem {
       sb.append(")")
   }
 
-  override def getParams = {
-    params.flatMap(_.getParams)
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    params.foreach(_.genParams(ab))
   }
 }
 
@@ -293,8 +297,8 @@ trait ResultColumn extends SqlItem {
     sb.append(s" AS ${uid}")
   }
 
-  override def getParams = {
-    expr.getParams
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    expr.genParams(ab)
   }
 }
 
@@ -315,10 +319,10 @@ trait TableSource extends SqlItem {
     case _ => throw new UnreachableException
   }
 
-  override def getParams = children(0) match {
-    case (_, null, null) => List()
-    case (null, (s, _), null) => s.getParams
-    case (null, null, j) => j.getParams
+  override def genParams(ab: ArrayBuffer[Object]): Unit = children(0) match {
+    case (_, null, null) =>
+    case (null, (s, _), null) => s.genParams(ab)
+    case (null, null, j) => j.genParams(ab)
     case _ => throw new UnreachableException
   }
 }
@@ -329,7 +333,7 @@ trait JoinPart extends SqlItem {
 
   override def genSql(sb: StringBuffer): Unit = {
     table.genSql(sb)
-    joins.zipWithIndex.foreach { case ((joinType, t, e), i) =>
+    joins.foreach { case (joinType, t, e) =>
       sb.append(s"\n${joinType} JOIN ")
       t.genSql(sb)
       sb.append(" ON ")
@@ -337,8 +341,12 @@ trait JoinPart extends SqlItem {
     }
   }
 
-  override def getParams: List[Object] = {
-    table.getParams ::: joins.flatMap { case (_, t, e) => t.getParams ::: e.getParams }
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    table.genParams(ab)
+    joins.foreach { case (_, t, e) =>
+      t.genParams(ab)
+      e.genParams(ab)
+    }
   }
 }
 
