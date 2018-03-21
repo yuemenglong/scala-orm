@@ -11,9 +11,10 @@ import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.JoinType
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
-import io.github.yuemenglong.orm.sql.{Expr, ResultColumn, Table}
+import io.github.yuemenglong.orm.sql.{ResultColumn, Table}
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 trait Cascade extends Table {
   val meta: EntityMeta
@@ -98,8 +99,8 @@ trait Cascade extends Table {
 }
 
 trait SelectFieldCascade extends Cascade {
-  private[orm] var _selects = List[(String, SelectFieldCascade)]()
-  private[orm] var _fields = List[String]()
+  private[orm] var _selects = new ArrayBuffer[(String, SelectFieldCascade)]()
+  private[orm] var _fields = Array[String]()
   private[orm] var _ignores = Set[String]()
 
   def select(field: String): SelectFieldCascade = {
@@ -114,7 +115,7 @@ trait SelectFieldCascade extends Cascade {
           override private[orm] val children = j.children
           override val meta = j.meta
         }
-        _selects ::= (field, ret)
+        _selects += ((field, ret))
         ret
     }
   }
@@ -128,7 +129,7 @@ trait SelectFieldCascade extends Cascade {
         throw new RuntimeException(s"Not Normal Field $f In ${this.getMeta.entity}")
       }
     })
-    _fields = this.getMeta.pkey.name :: fields.toList
+    _fields = Array(this.getMeta.pkey.name) ++ fields
     this
   }
 
@@ -147,9 +148,9 @@ trait SelectFieldCascade extends Cascade {
     this
   }
 
-  private[orm] def validFields(): List[String] = {
-    val fs: List[String] = _fields.isEmpty match {
-      case true => getMeta.fieldVec.filter(_.isNormalOrPkey).map(_.name).toList
+  private[orm] def validFields(): Array[String] = {
+    val fs: Array[String] = _fields.isEmpty match {
+      case true => getMeta.fieldVec.filter(_.isNormalOrPkey).map(_.name).toArray
       case false => _fields
     }
     fs.filter(!_ignores.contains(_))
@@ -263,13 +264,17 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
     ret
   }
 
-  override def getColumns: List[ResultColumn] = {
-    def go(cascade: SelectFieldCascade): List[ResultColumn] = {
+  override def getColumns: Array[ResultColumn] = {
+    val ab = new ArrayBuffer[ResultColumn]()
+
+    def go(cascade: SelectFieldCascade): Unit = {
       val self = cascade.validFields().map(cascade.get)
-      self ::: cascade._selects.flatMap(s => go(s._2))
+      ab ++= self
+      cascade._selects.foreach(s => go(s._2))
     }
 
     go(this)
+    ab.toArray
   }
 
   def select[R](fn: T => R): TypedSelectableCascade[R] = {

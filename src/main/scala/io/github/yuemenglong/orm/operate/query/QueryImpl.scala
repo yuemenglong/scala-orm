@@ -190,7 +190,7 @@ import scala.reflect.ClassTag
 //
 //  override def getType: Class[T] = st.getType
 //}
-//
+
 
 //class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Selectable[T] {
 //  val selects: Array[Selectable[_]] = ss.toArray

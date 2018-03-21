@@ -66,9 +66,7 @@ trait SelectableField[T] extends Field with Selectable[T] {
     case _ => value.toString
   }
 
-  override def getColumns: List[ResultColumn] = {
-    List(this)
-  }
+  override def getColumns: Array[ResultColumn] = Array(this)
 }
 
 //trait Field extends FieldExpr with CondOp with AssignOp with Alias {

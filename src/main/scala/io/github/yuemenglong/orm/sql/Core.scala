@@ -14,13 +14,13 @@ trait SelectStatement[S] extends SelectStmt {
     this.asInstanceOf[S]
   }
 
-  def select(cs: List[ResultColumn]): S = {
+  def select(cs: Array[ResultColumn]): S = {
     core._columns = cs
     this.asInstanceOf[S]
   }
 
   def from(ts: Table*): S = {
-    core._from = ts.toList
+    core._from = ts.toArray
     this.asInstanceOf[S]
   }
 
@@ -30,7 +30,7 @@ trait SelectStatement[S] extends SelectStmt {
   }
 
   def groupBy(es: Expr*): S = {
-    core._groupBy = es.toList
+    core._groupBy = es.toArray
     this.asInstanceOf[S]
   }
 
@@ -40,7 +40,7 @@ trait SelectStatement[S] extends SelectStmt {
   }
 
   def orderBy(e: Expr, t: String): S = {
-    core._orderBy ::= (e, t)
+    core._orderBy += ((e, t))
     this.asInstanceOf[S]
   }
 
@@ -55,7 +55,7 @@ trait SelectStatement[S] extends SelectStmt {
   }
 
   def union(stmt: SelectStatement[_]): S = {
-    comps ::= ("UNION", stmt.core)
+    comps += (("UNION", stmt.core))
     this.asInstanceOf[S]
   }
 }
@@ -67,7 +67,7 @@ object SelectStatement {
     val ret = new SelectStatement[SelectT] {
       override private[orm] val core = new SelectCore
     }
-    ret.select(columns.toList)
+    ret.select(columns.toArray)
   }
 }
 
@@ -78,15 +78,15 @@ trait Table extends TableSource {
     val jp: JoinPart = children(0) match {
       case ((name, uid), null, null) => new JoinPart {
         override val table = Table(name, uid)
-        override val joins = List((joinType, t, c))
+        override val joins = Array((joinType, t, c))
       }
       case (null, (stmt, uid), null) => new JoinPart {
         override val table = Table(stmt, uid)
-        override val joins = List((joinType, t, c))
+        override val joins = Array((joinType, t, c))
       }
       case (null, null, j) => new JoinPart {
         override private[orm] val table = j.table
-        override private[orm] val joins = j.joins ::: List((joinType, t, c))
+        override private[orm] val joins = j.joins ++ Array((joinType, t, c))
       }
       case _ => throw new UnreachableException
     }

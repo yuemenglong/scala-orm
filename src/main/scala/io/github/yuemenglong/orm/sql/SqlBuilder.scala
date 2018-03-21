@@ -12,7 +12,7 @@ trait SqlItem {
 
   def genParams(ab: ArrayBuffer[Object])
 
-  def bufferMkString(sb: StringBuffer, list: List[SqlItem], gap: String): Unit = {
+  def bufferMkString(sb: StringBuffer, list: Seq[SqlItem], gap: String): Unit = {
     list.zipWithIndex.foreach { case (e, i) =>
       e.genSql(sb)
       if (i != list.length - 1) {
@@ -21,12 +21,12 @@ trait SqlItem {
     }
   }
 
-  def nonEmpty(list: List[_]): Boolean = list != null && list.nonEmpty
+  def nonEmpty(list: Seq[_]): Boolean = list != null && list.nonEmpty
 }
 
 trait SelectStmt extends SqlItem {
   private[orm] val core: SelectCore
-  private[orm] var comps: List[(String, SelectCore)] = List()
+  private[orm] var comps = new ArrayBuffer[(String, SelectCore)]()
 
   override def genSql(sb: StringBuffer): Unit = {
     core.genSql(sb)
@@ -46,14 +46,14 @@ trait SelectStmt extends SqlItem {
   }
 }
 
-class SelectCore(cs: List[ResultColumn] = List()) extends SqlItem {
+class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   private[orm] var _distinct: Boolean = _
-  private[orm] var _columns: List[ResultColumn] = cs
-  private[orm] var _from: List[TableSource] = _
+  private[orm] var _columns: Array[ResultColumn] = cs
+  private[orm] var _from: Array[TableSource] = _
   private[orm] var _where: Expr = _
-  private[orm] var _groupBy: List[Expr] = _
+  private[orm] var _groupBy: Array[Expr] = _
   private[orm] var _having: Expr = _
-  private[orm] var _orderBy: List[(Expr, String)] = _
+  private[orm] var _orderBy: ArrayBuffer[(Expr, String)] = new ArrayBuffer[(Expr, String)]()
   private[orm] var _limit: Integer = _
   private[orm] var _offset: Integer = _
 
@@ -131,7 +131,7 @@ trait Expr extends SqlItem with ExprOp {
       (Expr, String, Expr), // A AND B, A IN (1,2,3)
       (Expr, Expr, Expr), // BETWEEN AND
       (Expr, String, SelectStmt), // IN (SUBQUERY)
-      List[Expr], // (A, B)
+      Array[Expr], // (A, B)
     )
 
   override def genSql(sb: StringBuffer): Unit = children match {
@@ -213,7 +213,7 @@ object Expr {
     override val children = (null, tc, null, null, null, null, null, null, null)
   }
 
-  def func(f: String, d: Boolean, p: List[Expr]): Expr = new Expr {
+  def func(f: String, d: Boolean, p: Array[Expr]): Expr = new Expr {
     val fc = new FunctionCall {
       override val fn = f
       override val distinct = d
@@ -243,7 +243,7 @@ object Expr {
   }
 
   def apply(es: Expr*): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, null, es.toList)
+    override val children = (null, null, null, null, null, null, null, null, es.toArray)
   }
 
 }
@@ -270,7 +270,7 @@ trait TableColumn extends SqlItem {
 trait FunctionCall extends SqlItem {
   private[orm] val fn: String // Include COUNT(*)
   private[orm] val distinct: Boolean
-  private[orm] val params: List[Expr]
+  private[orm] val params: Array[Expr]
 
   override def genSql(sb: StringBuffer): Unit = fn match {
     case "COUNT(*)" => sb.append("COUNT(*)")
@@ -329,7 +329,7 @@ trait TableSource extends SqlItem {
 
 trait JoinPart extends SqlItem {
   private[orm] val table: TableSource
-  private[orm] val joins: List[(String, TableSource, Expr)] // JoinType
+  private[orm] val joins: Array[(String, TableSource, Expr)] // JoinType
 
   override def genSql(sb: StringBuffer): Unit = {
     table.genSql(sb)

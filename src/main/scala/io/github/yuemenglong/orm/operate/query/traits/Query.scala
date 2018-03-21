@@ -22,7 +22,7 @@ trait Queryable[T] {
 }
 
 trait Selectable[T] {
-  def getColumns: List[ResultColumn]
+  def getColumns: Array[ResultColumn]
 
   def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T
 
@@ -115,7 +115,7 @@ trait QueryBase[S] extends SelectStatement[S] {
       ab.toArray
     }
     session.query(sql, params, rs => {
-      var list = List[Array[Any]]()
+      var ab = new ArrayBuffer[Array[Any]]()
       val filterMap = mutable.Map[String, Entity]()
       while (rs.next()) {
         val row = targets.map(s => {
@@ -125,11 +125,11 @@ trait QueryBase[S] extends SelectStatement[S] {
         })
         val key = row.map(_._2).mkString("$")
         if (!filterSet.contains(key)) {
-          list = list ::: List(row.map(_._1))
+          ab += row.map(_._1)
         }
         filterSet += key
       }
-      list.toArray
+      ab.toArray
     })
   }
 }
