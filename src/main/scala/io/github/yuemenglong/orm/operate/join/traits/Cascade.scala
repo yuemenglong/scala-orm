@@ -25,8 +25,8 @@ trait Cascade extends Table {
     if (!getMeta.fieldMap.contains(field) || getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
     }
-    val alias = s"${getAlias}$$${field}"
-    val column = getColumn(getMeta.fieldMap(field).column, alias)
+    //    val alias = s"${getAlias}$$${field}"
+    val column = getColumn(getMeta.fieldMap(field).column)
     new Field {
       override private[orm] val uid = column.uid
       override private[orm] val expr = column.expr

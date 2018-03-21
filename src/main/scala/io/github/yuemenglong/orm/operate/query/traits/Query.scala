@@ -121,7 +121,7 @@ trait QueryBase[S] extends SelectStatement[S] {
         })
         val key = row.map(_._2).mkString("$")
         if (!filterSet.contains(key)) {
-          list ::= row.map(_._1)
+          list = list ::: List(row.map(_._1))
         }
         filterSet += key
       }
@@ -133,8 +133,7 @@ trait QueryBase[S] extends SelectStatement[S] {
 class Query[T: ClassTag](s: Selectable[T]) extends QueryBase[Query[T]] with Queryable[T] {
 
   override def query(session: Session): Array[T] = {
-    val res = query0(session).map(r => r(0).asInstanceOf[T])
-    Array[T](res: _*)
+    Array[T](query0(session).map(r => r(0).asInstanceOf[T]): _*)
   }
 
   override val targets = Array(s)

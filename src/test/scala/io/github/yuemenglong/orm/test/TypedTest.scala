@@ -88,7 +88,6 @@ class TypedTest {
       session.execute(ex)
     })
     val root = Orm.root(classOf[Obj])
-    root.get(_.id).lt(2)
     val cond = Expr(root.get(_.id).lt(2)
       .or(root.get(_.id).gt(9)))
       .and(root.selects(_.om).get(_.id).gt(2))
