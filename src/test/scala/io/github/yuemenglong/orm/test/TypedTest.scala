@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.types.Types._
+import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
 
@@ -88,13 +89,13 @@ class TypedTest {
     })
     val root = Orm.root(classOf[Obj])
     root.get(_.id).lt(2)
-    val cond = root.get(_.id).lt(2)
-      .or(root.get(_.id).gt(9))
+    val cond = Expr(root.get(_.id).lt(2)
+      .or(root.get(_.id).gt(9)))
       .and(root.selects(_.om).get(_.id).gt(2))
     val objs = session.query(Orm.selectFrom(root).where(cond))
-//    Assert.assertEquals(objs.length, 2)
-//    Assert.assertEquals(objs(0).om.length, 1)
-//    Assert.assertEquals(objs(1).om.length, 3)
+    Assert.assertEquals(objs.length, 2)
+    //    Assert.assertEquals(objs(0).om.length, 1)
+    //    Assert.assertEquals(objs(1).om.length, 3)
   })
 
   //

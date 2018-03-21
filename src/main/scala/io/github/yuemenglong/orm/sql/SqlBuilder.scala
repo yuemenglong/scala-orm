@@ -58,23 +58,23 @@ class SelectCore(cs: List[ResultColumn] = List()) extends SqlItem {
 
   override def genSql(sb: StringBuffer): Unit = {
     _distinct match {
-      case true => sb.append("SELECT DISTINCT ")
-      case false => sb.append("SELECT ")
+      case true => sb.append("SELECT DISTINCT\n")
+      case false => sb.append("SELECT\n")
     }
-    bufferMkString(sb, _columns, ", ")
+    bufferMkString(sb, _columns, ",\n")
     if (nonEmpty(_from)) {
-      sb.append(" FROM ")
-      bufferMkString(sb, _from, ", ")
+      sb.append("\nFROM\n")
+      bufferMkString(sb, _from, ",\n")
     }
     if (_where != null) {
-      sb.append(" WHERE ")
+      sb.append("\nWHERE\n")
       _where.genSql(sb)
     }
     if (nonEmpty(_groupBy)) {
-      sb.append(" GROUP BY ")
+      sb.append("\nGROUP BY\n")
       bufferMkString(sb, _groupBy, ", ")
       if (_having != null) {
-        sb.append(" HAVING ")
+        sb.append("\nHAVING\n")
         _having.genSql(sb)
       }
     }
@@ -306,11 +306,11 @@ trait TableSource extends SqlItem {
     )]
 
   override def genSql(sb: StringBuffer): Unit = children(0) match {
-    case ((table, uid), null, null) => sb.append(s"${table} AS ${uid}")
+    case ((table, uid), null, null) => sb.append(s"`${table}` AS `${uid}`")
     case (null, (s, uid), null) =>
       sb.append("(")
       s.genSql(sb)
-      sb.append(s") AS ${uid}")
+      sb.append(s") AS `${uid}`")
     case (null, null, j) => j.genSql(sb)
     case _ => throw new UnreachableException
   }
@@ -329,8 +329,8 @@ trait JoinPart extends SqlItem {
 
   override def genSql(sb: StringBuffer): Unit = {
     table.genSql(sb)
-    joins.foreach { case (joinType, t, e) =>
-      sb.append(s" ${joinType} JOIN ")
+    joins.zipWithIndex.foreach { case ((joinType, t, e), i) =>
+      sb.append(s"\n${joinType} JOIN ")
       t.genSql(sb)
       sb.append(" ON ")
       e.genSql(sb)
