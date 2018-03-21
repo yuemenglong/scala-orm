@@ -5,8 +5,9 @@ import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.field.traits.{Field}
+import io.github.yuemenglong.orm.operate.field.traits.Field
 import io.github.yuemenglong.orm.operate.query.traits._
+import io.github.yuemenglong.orm.sql.{Expr, ResultColumn, SelectStatement}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -190,6 +191,7 @@ import scala.reflect.ClassTag
 //  override def getType: Class[T] = st.getType
 //}
 //
+
 //class SelectableTupleImpl[T](clazz: Class[T], ss: Selectable[_]*) extends Selectable[T] {
 //  val selects: Array[Selectable[_]] = ss.toArray
 //  val tuple2Class: Class[(_, _)] = classOf[(_, _)]
@@ -205,7 +207,7 @@ import scala.reflect.ClassTag
 //    arrayToTuple(row)
 //  }
 //
-//  override def getColumnWithAs: String = selects.map(_.getColumnWithAs).mkString(",\n")
+//  //  override def getColumnWithAs: String = selects.map(_.getColumnWithAs).mkString(",\n")
 //
 //  override def getType: Class[T] = clazz
 //
@@ -241,6 +243,7 @@ import scala.reflect.ClassTag
 //    }
 //  }
 //}
+
 //
 //class Count_ extends Selectable[java.lang.Long] {
 //  def getAlias: String = "$count$"

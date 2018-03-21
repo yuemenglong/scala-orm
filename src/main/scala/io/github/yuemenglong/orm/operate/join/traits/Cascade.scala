@@ -11,7 +11,7 @@ import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.JoinType
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
-import io.github.yuemenglong.orm.sql.Table
+import io.github.yuemenglong.orm.sql.{Expr, ResultColumn, Table}
 
 import scala.collection.mutable
 
@@ -190,7 +190,7 @@ trait TypedCascade[T] extends Cascade {
     fn(marker)
     val field = get(marker.toString)
     new SelectableField[R] {
-      override val clazz = getMeta.fieldMap(marker.toString).clazz
+      override val clazz = getMeta.fieldMap(marker.toString).clazz.asInstanceOf[Class[R]]
       override private[orm] val expr = field.expr
       override private[orm] val uid = field.uid
     }
@@ -254,6 +254,21 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
       override private[orm] val children = j.children
     }
     ret
+  }
+
+  override def getColumns: List[ResultColumn] = {
+    def go(cascade: SelectFieldCascade): List[ResultColumn] = {
+      val self = cascade._fields.map(f => {
+        val column = cascade.getMeta.fieldMap(f).column
+        new ResultColumn {
+          override private[orm] val uid = s"${cascade.getAlias}$$${Kit.lowerCaseFirst(f)}"
+          override private[orm] val expr = Expr.column(cascade.getAlias, column)
+        }
+      })
+      self ::: cascade._selects.flatMap(s => go(s._2))
+    }
+
+    go(this)
   }
 
   def select[R](fn: T => R): TypedSelectableCascade[R] = {

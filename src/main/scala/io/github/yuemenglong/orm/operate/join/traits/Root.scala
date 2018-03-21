@@ -1,5 +1,10 @@
-//
-//package io.github.yuemenglong.orm.operate.join.traits
+
+package io.github.yuemenglong.orm.operate.join.traits
+
+import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.meta.OrmMeta
+import io.github.yuemenglong.orm.sql.Table
+
 //
 //import io.github.yuemenglong.orm.meta.OrmMeta
 //import io.github.yuemenglong.orm.operate.core.traits.JoinInner
@@ -57,15 +62,19 @@
 ////  }
 //}
 //
-////object Root {
-////  def apply[T](clazz: Class[T]): Root[T] = {
-////    val meta = OrmMeta.entityMap.get(clazz) match {
-////      case Some(m) => m
-////      case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
-////    }
-////    val inn = new JoinInner(meta)
-////    new Root[T] {
-////      override private[orm] val inner = inn
-////    }
-////  }
-////}
+
+trait Root[T] extends TypedSelectableCascade[T]
+
+object Root {
+  def apply[T](clazz: Class[T]): Root[T] = {
+    val rootMeta = OrmMeta.entityMap.get(clazz) match {
+      case Some(m) => m
+      case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
+    }
+    val table = Table(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
+    new Root[T] {
+      override val meta = rootMeta
+      override private[orm] val children = table.children
+    }
+  }
+}

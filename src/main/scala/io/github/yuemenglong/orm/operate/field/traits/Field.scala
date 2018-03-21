@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.operate.core.traits.{Alias, Expr2}
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp}
-import io.github.yuemenglong.orm.operate.query.traits.{Selectable, SubQuery}
+import io.github.yuemenglong.orm.operate.query.traits.{Selectable}
 import io.github.yuemenglong.orm.sql.ResultColumn
 
 import scala.collection.mutable
@@ -62,6 +62,10 @@ trait SelectableField[T] extends Field with Selectable[T] {
   override def getKey(value: Object): String = value match {
     case null => ""
     case _ => value.toString
+  }
+
+  override def getColumns: List[ResultColumn] = {
+    List(this)
   }
 }
 

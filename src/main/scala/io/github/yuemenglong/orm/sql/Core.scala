@@ -6,55 +6,55 @@ import io.github.yuemenglong.orm.kit.UnreachableException
   * Created by <yuemenglong@126.com> on 2018/3/19.
   */
 
-trait Select extends SelectStmt {
-  def distinct(): Select = {
+trait SelectStatement extends SelectStmt {
+  def distinct(): SelectStatement = {
     core._distinct = true
     this
   }
 
-  def from(ts: Table*): Select = {
+  def from(ts: Table*): SelectStatement = {
     core._from = ts.toList
     this
   }
 
-  def where(expr: Expr): Select = {
+  def where(expr: Expr): SelectStatement = {
     core._where = expr
     this
   }
 
-  def groupBy(es: Expr*): Select = {
+  def groupBy(es: Expr*): SelectStatement = {
     core._groupBy = es.toList
     this
   }
 
-  def having(e: Expr): Select = {
+  def having(e: Expr): SelectStatement = {
     core._having = e
     this
   }
 
-  def orderBy(e: Expr, t: String): Select = {
+  def orderBy(e: Expr, t: String): SelectStatement = {
     core._orderBy ::= (e, t)
     this
   }
 
-  def limit(l: Integer): Select = {
+  def limit(l: Integer): SelectStatement = {
     core._limit = l
     this
   }
 
-  def offset(o: Integer): Select = {
+  def offset(o: Integer): SelectStatement = {
     core._offset = o
     this
   }
 
-  def union(stmt: Select): Select = {
+  def union(stmt: SelectStatement): SelectStatement = {
     comps ::= ("UNION", stmt.core)
     this
   }
 }
 
-object Select {
-  def apply(columns: ResultColumn*): Select = new Select {
+object SelectStatement {
+  def apply(columns: ResultColumn*): SelectStatement = new SelectStatement {
     override private[orm] val core = new SelectCore(columns: _*)
   }
 }
@@ -125,7 +125,7 @@ object Core {
 
     obj.join(ptr, "LEFT", "ptr_id", "id")
 
-    val select = Select(obj.getColumn("id"), obj.getColumn("name")).from(obj, ptr)
+    val select = SelectStatement(obj.getColumn("id"), obj.getColumn("name")).from(obj, ptr)
       .where(Expr(obj.getColumn("id").expr, "=", Expr.const(1)))
 
     val sb = new StringBuffer()
