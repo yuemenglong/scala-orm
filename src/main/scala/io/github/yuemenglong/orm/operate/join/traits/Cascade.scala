@@ -50,11 +50,13 @@ trait Cascade extends Table {
         val leftColumn = getMeta.fieldMap(referMeta.left).column
         val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
         val table = Table(tableName, alias)
-        val j = join(table, joinType.toString, leftColumn, rightColumn)
-        new Cascade {
-          override private[orm] val children = j.children
+        join(table, joinType.toString, leftColumn, rightColumn)
+        val ret = new Cascade {
+          override private[orm] val children = table.children
           override val meta = referMeta.refer
         }
+        joins += (field -> (joinType, ret))
+        ret
     }
   }
 
@@ -82,10 +84,10 @@ trait Cascade extends Table {
     val rightColumn = referMeta.fieldMap(right).column
     val alias = s"${getAlias}_${joinName}"
     val table = Table(tableName, alias)
-    val j = join(table, joinType.toString, leftColumn, rightColumn)
+    join(table, joinType.toString, leftColumn, rightColumn)
     new TypedSelectableCascade[T] {
       override val meta = referMeta
-      override private[orm] val children = j.children
+      override private[orm] val children = table.children
     }
   }
 
@@ -111,7 +113,7 @@ trait SelectFieldCascade extends Cascade {
           override private[orm] val children = j.children
           override val meta = j.meta
         }
-        _selects ::= ((field, ret))
+        _selects ::= (field, ret)
         ret
     }
   }
@@ -145,7 +147,11 @@ trait SelectFieldCascade extends Cascade {
   }
 
   private[orm] def validFields(): List[String] = {
-    _fields.filter(!_ignores.contains(_))
+    val fs: List[String] = _fields.isEmpty match {
+      case true => getMeta.fieldVec.filter(_.isNormalOrPkey).map(_.name).toList
+      case false => _fields
+    }
+    fs.filter(!_ignores.contains(_))
   }
 
   private[orm] def getFilterKey(core: EntityCore): String = {
@@ -258,13 +264,7 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
 
   override def getColumns: List[ResultColumn] = {
     def go(cascade: SelectFieldCascade): List[ResultColumn] = {
-      val self = cascade._fields.map(f => {
-        val column = cascade.getMeta.fieldMap(f).column
-        new ResultColumn {
-          override private[orm] val uid = s"${cascade.getAlias}$$${Kit.lowerCaseFirst(f)}"
-          override private[orm] val expr = Expr.column(cascade.getAlias, column)
-        }
-      })
+      val self = cascade.validFields().map(cascade.get)
       self ::: cascade._selects.flatMap(s => go(s._2))
     }
 
@@ -320,7 +320,7 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
 
   private def pickRefer(selfSelect: SelectFieldCascade, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
     val aCore = EntityManager.core(a)
-    _selects.foreach { case (field, select) =>
+    selfSelect._selects.foreach { case (field, select) =>
       val fieldMeta = getMeta.fieldMap(field)
       val b = pickSelfAndRefer(select, resultSet, filterMap)
       fieldMeta match {

@@ -135,7 +135,7 @@ class Session(private val conn: Connection) {
   }
 
   def query(sql: String, params: Array[Object],
-            fn: (ResultSet) => Array[_]): Array[_] = {
+            fn: (ResultSet) => Array[Array[Any]]): Array[Array[Any]] = {
     record(sql, params)
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>

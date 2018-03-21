@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.core.traits.Expr2
 import io.github.yuemenglong.orm.operate.field.traits.Field
 import io.github.yuemenglong.orm.operate.join.traits.Cond
-import io.github.yuemenglong.orm.sql.{ResultColumn, SelectStatement}
+import io.github.yuemenglong.orm.sql.{ResultColumn, SelectCore, SelectStatement}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -19,8 +19,6 @@ import scala.reflect.ClassTag
   */
 trait Queryable[T] {
   def query(session: Session): Array[T]
-
-  //  def getType: Class[T]
 }
 
 trait Selectable[T] {
@@ -104,7 +102,7 @@ trait Selectable[T] {
 trait QueryBase[S] extends SelectStatement[S] {
   val targets: Array[Selectable[_]]
 
-  def query0(session: Session): Array[_] = {
+  def query0(session: Session): Array[Array[Any]] = {
     var filterSet = Set[String]()
     val sql = {
       val sb = new StringBuffer()
@@ -113,7 +111,7 @@ trait QueryBase[S] extends SelectStatement[S] {
     }
     val params = getParams.toArray
     session.query(sql, params, rs => {
-      var list = List[Any]()
+      var list = List[Array[Any]]()
       val filterMap = mutable.Map[String, Entity]()
       while (rs.next()) {
         val row = targets.map(s => {
@@ -132,10 +130,13 @@ trait QueryBase[S] extends SelectStatement[S] {
   }
 }
 
-trait Query[T] extends QueryBase[Query[T]] with Queryable[T] {
+class Query[T: ClassTag](s: Selectable[T]) extends QueryBase[Query[T]] with Queryable[T] {
 
-  //noinspection ScalaRedundantCast
   override def query(session: Session): Array[T] = {
-    query0(session).map(_.asInstanceOf[T]).asInstanceOf[Array[T]]
+    val res = query0(session).map(r => r(0).asInstanceOf[T])
+    Array[T](res: _*)
   }
+
+  override val targets = Array(s)
+  override private[orm] val core = new SelectCore(s.getColumns)
 }

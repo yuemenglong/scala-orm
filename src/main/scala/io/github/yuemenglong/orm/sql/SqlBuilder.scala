@@ -45,9 +45,9 @@ trait SelectStmt extends SqlItem {
   }
 }
 
-class SelectCore extends SqlItem {
+class SelectCore(cs: List[ResultColumn] = List()) extends SqlItem {
   private[orm] var _distinct: Boolean = _
-  private[orm] var _columns: List[ResultColumn] = _
+  private[orm] var _columns: List[ResultColumn] = cs
   private[orm] var _from: List[TableSource] = _
   private[orm] var _where: Expr = _
   private[orm] var _groupBy: List[Expr] = _
@@ -61,10 +61,10 @@ class SelectCore extends SqlItem {
       case true => sb.append("SELECT DISTINCT ")
       case false => sb.append("SELECT ")
     }
-    bufferMkString(sb, _columns, ",")
+    bufferMkString(sb, _columns, ", ")
     if (nonEmpty(_from)) {
       sb.append(" FROM ")
-      bufferMkString(sb, _from, ",")
+      bufferMkString(sb, _from, ", ")
     }
     if (_where != null) {
       sb.append(" WHERE ")
@@ -72,7 +72,7 @@ class SelectCore extends SqlItem {
     }
     if (nonEmpty(_groupBy)) {
       sb.append(" GROUP BY ")
-      bufferMkString(sb, _groupBy, ",")
+      bufferMkString(sb, _groupBy, ", ")
       if (_having != null) {
         sb.append(" HAVING ")
         _having.genSql(sb)
@@ -163,7 +163,7 @@ trait Expr extends SqlItem with ExprOp {
       s.genSql(sb)
     case (null, null, null, null, null, null, null, null, list) =>
       sb.append("(")
-      bufferMkString(sb, list, ",")
+      bufferMkString(sb, list, ", ")
       sb.append(")")
     case _ => throw new UnreachableException
   }
@@ -238,8 +238,8 @@ object Expr {
     override val children = (null, null, null, null, null, null, null, (e, op, stmt), null)
   }
 
-  def apply(list: List[Expr]): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, null, list)
+  def apply(es: Expr*): Expr = new Expr {
+    override val children = (null, null, null, null, null, null, null, null, es.toList)
   }
 
 }
@@ -275,7 +275,7 @@ trait FunctionCall extends SqlItem {
       if (distinct) {
         sb.append("DISTINCT ")
       }
-      bufferMkString(sb, params, ",")
+      bufferMkString(sb, params, ", ")
       sb.append(")")
   }
 
