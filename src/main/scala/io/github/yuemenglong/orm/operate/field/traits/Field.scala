@@ -8,8 +8,8 @@ import io.github.yuemenglong.orm.operate.core.traits.{Alias, Expr2}
 import io.github.yuemenglong.orm.operate.field._
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp}
-import io.github.yuemenglong.orm.operate.query.traits.{Selectable}
-import io.github.yuemenglong.orm.sql.ResultColumn
+import io.github.yuemenglong.orm.operate.query.traits.Selectable
+import io.github.yuemenglong.orm.sql.{ExprOp, ResultColumn, ToExpr}
 
 import scala.collection.mutable
 
@@ -46,8 +46,10 @@ case class FieldExpr2FV[V](f1: FieldExpr2, v: V, op: String) extends FieldExpr2 
   override def getParams: Array[Object] = f1.getParams ++ Array(v.asInstanceOf[Object])
 }
 
-trait Field extends ResultColumn {
+trait Field extends ResultColumn with ExprOp {
   def getAlias: String = uid
+
+  override def toExpr = expr
 }
 
 trait SelectableField[T] extends Field with Selectable[T] {

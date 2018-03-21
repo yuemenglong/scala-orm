@@ -6,50 +6,53 @@ import io.github.yuemenglong.orm.kit.UnreachableException
   * Created by <yuemenglong@126.com> on 2018/3/19.
   */
 
+//noinspection ScalaRedundantCast
 trait SelectStatement extends SelectStmt {
-  def distinct(): SelectStatement = {
+  type Self = this.type
+
+  def distinct(): Self = {
     core._distinct = true
-    this
+    this.asInstanceOf[Self]
   }
 
-  def from(ts: Table*): SelectStatement = {
+  def from(ts: Table*): Self = {
     core._from = ts.toList
-    this
+    this.asInstanceOf[Self]
   }
 
-  def where(expr: Expr): SelectStatement = {
+  def where(expr: Expr): Self = {
     core._where = expr
-    this
+    this.asInstanceOf[Self]
   }
 
-  def groupBy(es: Expr*): SelectStatement = {
+  def groupBy(es: Expr*): Self = {
     core._groupBy = es.toList
-    this
+    this.asInstanceOf[Self]
   }
 
-  def having(e: Expr): SelectStatement = {
+  def having(e: Expr): Self = {
     core._having = e
-    this
+    this.asInstanceOf[Self]
   }
 
-  def orderBy(e: Expr, t: String): SelectStatement = {
+  def orderBy(e: Expr, t: String): Self = {
     core._orderBy ::= (e, t)
-    this
+    this.asInstanceOf[Self]
   }
 
-  def limit(l: Integer): SelectStatement = {
+  def limit(l: Integer): Self = {
     core._limit = l
-    this
+    this.asInstanceOf[Self]
   }
 
-  def offset(o: Integer): SelectStatement = {
+  def offset(o: Integer): Self = {
     core._offset = o
-    this
+    this.asInstanceOf[Self]
   }
 
-  def union(stmt: SelectStatement): SelectStatement = {
+  def union(stmt: SelectStatement): Self = {
     comps ::= ("UNION", stmt.core)
-    this
+    this.asInstanceOf[Self]
   }
 }
 
@@ -134,3 +137,37 @@ object Core {
   }
 }
 
+trait ToExpr {
+  def toExpr: Expr
+}
+
+trait ExprOp extends ToExpr {
+  def eql(e: ToExpr): Expr = Expr(this.toExpr, "=", e.toExpr)
+
+  def eql[T](t: T): Expr = Expr(this.toExpr, "=", Expr.const(t))
+
+  def neq(e: ToExpr): Expr = Expr(this.toExpr, "<>", e.toExpr)
+
+  def neq[T](t: T): Expr = Expr(this.toExpr, "<>", Expr.const(t))
+
+  def gt(e: ToExpr): Expr = Expr(this.toExpr, ">", e.toExpr)
+
+  def gt[T](t: T): Expr = Expr(this.toExpr, ">", Expr.const(t))
+
+  def gte(e: ToExpr): Expr = Expr(this.toExpr, ">=", e.toExpr)
+
+  def gte[T](t: T): Expr = Expr(this.toExpr, ">=", Expr.const(t))
+
+  def lt(e: ToExpr): Expr = Expr(this.toExpr, "<", e.toExpr)
+
+  def lt[T](t: T): Expr = Expr(this.toExpr, "<", Expr.const(t))
+
+  def lte(e: ToExpr): Expr = Expr(this.toExpr, "<=", e.toExpr)
+
+  def lte[T](t: T): Expr = Expr(this.toExpr, "<=", Expr.const(t))
+
+  def and(e: ToExpr): Expr = Expr(this.toExpr, "AND", e.toExpr)
+
+  def or(e: ToExpr): Expr = Expr(this.toExpr, "OR", e.toExpr)
+
+}

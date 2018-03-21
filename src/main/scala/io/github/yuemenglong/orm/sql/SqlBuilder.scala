@@ -121,7 +121,7 @@ class SelectCore(cs: ResultColumn*) extends SqlItem {
   }
 }
 
-trait Expr extends SqlItem {
+trait Expr extends SqlItem with ExprOp {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -189,6 +189,8 @@ trait Expr extends SqlItem {
       list.flatMap(_.getParams)
     case _ => throw new UnreachableException
   }
+
+  override def toExpr = this
 }
 
 object Expr {
@@ -339,3 +341,4 @@ trait JoinPart extends SqlItem {
     table.getParams ::: joins.flatMap { case (_, t, e) => t.getParams ::: e.getParams }
   }
 }
+

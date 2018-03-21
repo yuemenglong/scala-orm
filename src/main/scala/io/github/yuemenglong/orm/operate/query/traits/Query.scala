@@ -133,6 +133,8 @@ trait QueryBase extends SelectStatement {
 }
 
 trait Query[T] extends QueryBase with Queryable[T] {
+  override type Self = this.type
+
   //noinspection ScalaRedundantCast
   override def query(session: Session): Array[T] = {
     query0(session).map(_.asInstanceOf[T]).asInstanceOf[Array[T]]
