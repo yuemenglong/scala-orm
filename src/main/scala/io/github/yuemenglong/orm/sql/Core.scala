@@ -94,11 +94,15 @@ trait Table extends TableSource {
     this
   }
 
-  def getColumn(c: String): ResultColumn = {
-    val col = Expr.column(getAlias, c)
+  def getColumn(column: String, alias: String = null): ResultColumn = {
+    val col = Expr.column(getAlias, column)
+    val ali = alias match {
+      case null => s"${getAlias}$$${column}"
+      case _ => alias
+    }
     new ResultColumn {
       override private[orm] val expr = col
-      override private[orm] val uid = s"${getAlias}$$${c}"
+      override private[orm] val uid = ali
     }
   }
 

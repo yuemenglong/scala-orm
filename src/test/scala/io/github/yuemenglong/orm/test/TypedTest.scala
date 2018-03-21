@@ -94,8 +94,8 @@ class TypedTest {
       .and(root.selects(_.om).get(_.id).gt(2))
     val objs = session.query(Orm.selectFrom(root).where(cond))
     Assert.assertEquals(objs.length, 2)
-    //    Assert.assertEquals(objs(0).om.length, 1)
-    //    Assert.assertEquals(objs(1).om.length, 3)
+    Assert.assertEquals(objs(0).om.length, 1)
+    Assert.assertEquals(objs(1).om.length, 3)
   })
 
   //
