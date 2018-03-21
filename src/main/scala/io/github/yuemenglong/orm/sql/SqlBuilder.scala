@@ -45,9 +45,9 @@ trait SelectStmt extends SqlItem {
   }
 }
 
-class SelectCore(cs: ResultColumn*) extends SqlItem {
+class SelectCore extends SqlItem {
   private[orm] var _distinct: Boolean = _
-  private[orm] var _columns: List[ResultColumn] = cs.toList
+  private[orm] var _columns: List[ResultColumn] = _
   private[orm] var _from: List[TableSource] = _
   private[orm] var _where: Expr = _
   private[orm] var _groupBy: List[Expr] = _

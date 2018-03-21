@@ -87,9 +87,12 @@ object Orm {
 
   def root[T](clazz: Class[T]): Root[T] = Root[T](clazz)
 
-  def select[T](c: Selectable[T]): Query[T] = new Query[T] {
-    override val targets = Array(c)
-    override private[orm] val core = new SelectCore(c.getColumns: _*)
+  def select[T](c: Selectable[T]): Query[T] = {
+    val ret = new Query[T] {
+      override val targets = Array(c)
+      override private[orm] val core = new SelectCore()
+    }
+    ret.select(c.getColumns)
   }
 
   def selectFrom[T](r: TypedSelectableCascade[T]): Query[T] = select(r).from(r)

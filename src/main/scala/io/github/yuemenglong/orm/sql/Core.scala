@@ -14,6 +14,11 @@ trait SelectStatement[S] extends SelectStmt {
     this.asInstanceOf[S]
   }
 
+  def select(cs: List[ResultColumn]): S = {
+    core._columns = cs
+    this.asInstanceOf[S]
+  }
+
   def from(ts: Table*): S = {
     core._from = ts.toList
     this.asInstanceOf[S]
@@ -58,8 +63,11 @@ trait SelectStatement[S] extends SelectStmt {
 trait SelectT extends SelectStatement[SelectT]
 
 object SelectStatement {
-  def apply(columns: ResultColumn*): SelectStatement[SelectT] = new SelectStatement[SelectT] {
-    override private[orm] val core = new SelectCore(columns: _*)
+  def apply(columns: ResultColumn*): SelectStatement[SelectT] = {
+    val ret = new SelectStatement[SelectT] {
+      override private[orm] val core = new SelectCore
+    }
+    ret.select(columns.toList)
   }
 }
 
