@@ -27,12 +27,28 @@ trait FnOp {
     override val clazz = classOf[Long]
   }
 
-  def count(c: ResultColumn): FnT[Long] = {
-    new FnT[Long] {
-      override val clazz = classOf[Long]
-      override private[orm] val uid = s"$$count$$${c.uid}"
-      override private[orm] val expr = Expr.func("COUNT", d = false, Array(c.toExpr))
-    }
+  def count(c: ResultColumn): FnT[Long] = new FnT[Long] {
+    override val clazz = classOf[Long]
+    override private[orm] val uid = s"$$count$$${c.uid}"
+    override private[orm] val expr = Expr.func("COUNT", d = false, Array(c.toExpr))
+  }
+
+  def sum[T](f: SelectableField[T]): FnT[T] = new FnT[T] {
+    override val clazz = f.getType
+    override private[orm] val uid = s"$$sum$$${f.uid}"
+    override private[orm] val expr = Expr.func("SUM", d = false, Array(f.toExpr))
+  }
+
+  def min[T](f: SelectableField[T]): FnT[T] = new FnT[T] {
+    override val clazz = f.getType
+    override private[orm] val uid = s"$$min$$${f.uid}"
+    override private[orm] val expr = Expr.func("MIN", d = false, Array(f.toExpr))
+  }
+
+  def max[T](f: SelectableField[T]): FnT[T] = new FnT[T] {
+    override val clazz = f.getType
+    override private[orm] val uid = s"$$max$$${f.uid}"
+    override private[orm] val expr = Expr.func("MAX", d = false, Array(f.toExpr))
   }
 }
 

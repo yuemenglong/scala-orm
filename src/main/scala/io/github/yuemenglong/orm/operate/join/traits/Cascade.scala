@@ -213,6 +213,8 @@ trait TypedCascade[T] extends Cascade {
 
   def join[R](fn: (T => R)): TypedCascade[R] = join(fn, JoinType.INNER)
 
+  def joinAs[R](fn: (T => R)): TypedCascade[R] = joins(fn, JoinType.INNER)
+
   def leftJoin[R](fn: (T => R)): TypedCascade[R] = join(fn, JoinType.LEFT)
 
   def leftJoinAs[R](fn: (T => R)): TypedCascade[R] = join(fn, JoinType.LEFT)
@@ -225,6 +227,7 @@ trait TypedCascade[T] extends Cascade {
   }
 
   def joins[R](fn: (T => Array[R])): TypedCascade[R] = joins(fn, JoinType.INNER)
+
 
   def leftJoins[R](fn: (T => Array[R])): TypedCascade[R] = joins(fn, JoinType.LEFT)
 

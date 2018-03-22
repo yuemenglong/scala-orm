@@ -484,6 +484,14 @@ trait ExprOp[S] extends ExprT[S] {
   def isNull: S = fromExpr(Expr(this.toExpr, "IS NULL"))
 
   def notNull: S = fromExpr(Expr(this.toExpr, "IS NOT NULL"))
+
+  def in(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "IN", e.toExpr))
+
+  def in[T](arr: Array[T]): S = in(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
+
+  def nin(e: Expr): S = fromExpr(Expr(this.toExpr, "NOT IN", e.toExpr))
+
+  def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
 }
 
 trait ExprOp2[S] extends ExprT[S] {
