@@ -127,5 +127,3 @@ trait UpdateStatement extends UpdateStmt
 
 trait DeleteStatement extends DeleteStmt
 
-trait FnColumn extends ResultColumn {
-}

@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.types.Types._
+import io.github.yuemenglong.orm.operate.field.{Fn, FnT}
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
@@ -135,26 +136,27 @@ class TypedTest {
     Assert.assertEquals(ret, 7)
 
     val root = Orm.root(classOf[OM])
-    val c = session.first(Orm.select(root.count()).from(root))
+    val c = session.first(Orm.select(Fn.count()).from(root))
     Assert.assertEquals(c.longValue(), 6)
   })
 
-  //
-  //  @Test
-  //  def testSelectField(): Unit = db.beginTransaction(session => {
-  //    val obj = new Obj
-  //    obj.name = ""
-  //    obj.om = Array(new OM, new OM, new OM, new OM, new OM, new OM)
-  //
-  //    val ex = Orm.insert(obj)
-  //    ex.insert(_.om)
-  //    session.execute(ex)
-  //
-  //    val root = Orm.root(classOf[Obj])
-  //    val c = session.first(Orm.select(root.joins(_.om).get(_.id))
-  //      .from(root).limit(1).offset(5))
-  //    Assert.assertEquals(c.intValue(), 6)
-  //  })
+
+  @Test
+  def testSelectField(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.om = Array(new OM, new OM, new OM, new OM, new OM, new OM)
+
+    val ex = Orm.insert(obj)
+    ex.insert(_.om)
+    session.execute(ex)
+
+    val root = Orm.root(classOf[Obj])
+    val c = session.first(Orm.select(root.joins(_.om).get(_.id))
+      .from(root).limit(1).offset(5))
+    Assert.assertEquals(c.intValue(), 6)
+  })
+
   //
   //  @Test
   //  def testMultiTarget(): Unit = db.beginTransaction(session => {

@@ -215,11 +215,11 @@ object Expr {
     override val children = (null, tc, null, null, null, null, null, null, null)
   }
 
-  def func(f: String, d: Boolean, p: Array[ExprT[_]]): Expr = new Expr {
+  def func(f: String, d: Boolean, p: Array[Expr]): Expr = new Expr {
     val fc = new FunctionCall {
       override val fn = f
       override val distinct = d
-      override val params = p.map(_.toExpr)
+      override val params = p
     }
     override val children = (null, null, fc, null, null, null, null, null, null)
   }
@@ -251,6 +251,11 @@ object Expr {
   def asTableColumn(e: Expr): TableColumn = e.children match {
     case (null, c, null, null, null, null, null, null, null) => c
     case _ => throw new RuntimeException("Not TableColumn Expr")
+  }
+
+  def asFunctionCall(e: Expr): FunctionCall = e.children match {
+    case (null, null, fn, null, null, null, null, null, null) => fn
+    case _ => throw new RuntimeException("Not FunctionCall Expr")
   }
 }
 
