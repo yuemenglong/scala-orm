@@ -75,6 +75,7 @@ object Root {
     new Root[T] {
       override val meta = rootMeta
       override private[orm] val children = table.children
+      override val root = this
     }
   }
 }

@@ -11,7 +11,7 @@ import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, Execu
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.join.traits.{Cascade, Cond, Root, TypedSelectableCascade}
 import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.query.traits.{Query, Selectable}
+import io.github.yuemenglong.orm.operate.query.traits._
 import io.github.yuemenglong.orm.sql.SelectCore
 
 import scala.reflect.ClassTag
@@ -87,9 +87,13 @@ object Orm {
 
   def root[T](clazz: Class[T]): Root[T] = Root[T](clazz)
 
-  def select[T: ClassTag](c: Selectable[T]): Query[T] = new Query[T](c)
+  def select[T: ClassTag](c: Selectable[T]): Query1[T] = new Query1[T](c)
 
-  def selectFrom[T: ClassTag](r: TypedSelectableCascade[T]): Query[T] = select(r).from(r)
+  def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1] = new Query2[T0, T1](s0, s1)
+
+  def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2] = new Query3[T0, T1, T2](s0, s1, s2)
+
+  def selectFrom[T: ClassTag](r: TypedSelectableCascade[T]): Query1[T] = select(r).from(r)
 
   //
   //  def cond(): Cond = new CondHolder

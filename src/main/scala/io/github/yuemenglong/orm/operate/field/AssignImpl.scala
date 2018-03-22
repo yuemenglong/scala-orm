@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.field
 
 import io.github.yuemenglong.orm.operate.core.traits.Expr2
-import io.github.yuemenglong.orm.operate.field.traits.{Assign, Field}
+import io.github.yuemenglong.orm.operate.field.traits.Field
 
 /**
   * Created by <yuemenglong@126.com> on 2017/7/16.

@@ -6,6 +6,7 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.operate.field.{Fn, FnT}
+import io.github.yuemenglong.orm.operate.join.traits.TypedSelectableCascade
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
@@ -157,65 +158,67 @@ class TypedTest {
     Assert.assertEquals(c.intValue(), 6)
   })
 
-  //
-  //  @Test
-  //  def testMultiTarget(): Unit = db.beginTransaction(session => {
-  //    val obj = new Obj
-  //    obj.name = "name"
-  //    obj.ptr = new Ptr
-  //    obj.oo = new OO
-  //    obj.om = Array(new OM, new OM)
-  //    val ex = Orm.insert(obj)
-  //    ex.insert(_.ptr)
-  //    ex.insert(_.oo)
-  //    ex.insert(_.om)
-  //    session.execute(ex)
-  //
-  //    val root = Orm.root(classOf[Obj])
-  //    val s1 = root.joins(_.om).as()
-  //    val res = session.query(Orm.select(root, s1).from(root))
-  //    Assert.assertEquals(res.length, 2)
-  //    Assert.assertEquals(res(0)._1.name, "name")
-  //    Assert.assertEquals(res(0)._1.id.longValue(), 1)
-  //    Assert.assertEquals(res(1)._1.id.longValue(), 1)
-  //    Assert.assertEquals(res(0)._2.id.longValue(), 1)
-  //    Assert.assertEquals(res(1)._2.id.longValue(), 2)
-  //  })
-  //
-  //  @Test
-  //  def testJoin(): Unit = db.beginTransaction(session => {
-  //    val obj = new Obj
-  //    obj.name = "name"
-  //    obj.ptr = new Ptr
-  //    obj.oo = new OO
-  //    obj.om = Array(new OM, new OM)
-  //    obj.om(0).mo = new MO
-  //    obj.om(0).mo.value = 100
-  //    val ex = Orm.insert(obj)
-  //    ex.insert(_.ptr)
-  //    ex.insert(_.oo)
-  //    ex.inserts(_.om).insert(_.mo)
-  //    val ret = session.execute(ex)
-  //    Assert.assertEquals(ret, 6)
-  //
-  //    {
-  //      val root = Orm.root(classOf[Obj])
-  //      val mo = root.joins(_.om).leftJoin(_.mo).as()
-  //      val res = session.query(Orm.select(root, mo).from(root))
-  //      Assert.assertEquals(res.length, 2)
-  //      Assert.assertEquals(res(0)._1.om, null)
-  //      Assert.assertEquals(res(0)._2.value.intValue(), 100)
-  //      Assert.assertEquals(res(1)._2, null)
-  //    }
-  //    {
-  //      val root = Orm.root(classOf[OM])
-  //      root.select(_.mo).on(root.leftJoin(_.mo).get(_.value).eql(100))
-  //      val res = session.query(Orm.selectFrom(root))
-  //      Assert.assertEquals(res.length, 2)
-  //      Assert.assertEquals(res(0).mo.value.longValue(), 100)
-  //      Assert.assertEquals(res(1).mo, null)
-  //    }
-  //  })
+
+  @Test
+  def testMultiTarget(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = "name"
+    obj.ptr = new Ptr
+    obj.oo = new OO
+    obj.om = Array(new OM, new OM)
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    ex.insert(_.oo)
+    ex.insert(_.om)
+    session.execute(ex)
+
+    val root = Orm.root(classOf[Obj])
+    val s1 = root.joinsAs(_.om)
+    val res = session.query(Orm.select(root, s1).from(root))
+    Assert.assertEquals(res.length, 2)
+    Assert.assertEquals(res(0)._1.name, "name")
+    Assert.assertEquals(res(0)._1.id.longValue(), 1)
+    Assert.assertEquals(res(1)._1.id.longValue(), 1)
+    Assert.assertEquals(res(0)._2.id.longValue(), 1)
+    Assert.assertEquals(res(1)._2.id.longValue(), 2)
+  })
+
+  @Test
+  def testJoin(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = "name"
+    obj.ptr = new Ptr
+    obj.oo = new OO
+    obj.om = Array(new OM, new OM)
+    obj.om(0).mo = new MO
+    obj.om(0).mo.value = 100
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    ex.insert(_.oo)
+    ex.inserts(_.om).insert(_.mo)
+    val ret = session.execute(ex)
+    Assert.assertEquals(ret, 6)
+
+    {
+      val root = Orm.root(classOf[Obj])
+      val mo: TypedSelectableCascade[MO] = root.joins(_.om).leftJoinAs(_.mo)
+      println(root)
+      val res = session.query(Orm.select(root, mo).from(root))
+      Assert.assertEquals(res.length, 2)
+      Assert.assertEquals(res(0)._1.om, null)
+      Assert.assertEquals(res(0)._2.value.intValue(), 100)
+      Assert.assertEquals(res(1)._2, null)
+    }
+    {
+      val root = Orm.root(classOf[OM])
+      root.select(_.mo).on(root.leftJoin(_.mo).get(_.value).eql(100))
+      val res = session.query(Orm.selectFrom(root))
+      Assert.assertEquals(res.length, 2)
+      Assert.assertEquals(res(0).mo.value.longValue(), 100)
+      Assert.assertEquals(res(1).mo, null)
+    }
+  })
+
   //
   //  @Test
   //  def testSelectOOWithNull(): Unit = db.beginTransaction(session => {

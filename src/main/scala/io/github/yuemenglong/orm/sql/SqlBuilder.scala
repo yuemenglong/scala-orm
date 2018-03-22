@@ -8,6 +8,12 @@ import scala.collection.mutable.ArrayBuffer
   * Created by <yuemenglong@126.com> on 2018/3/17.
   */
 trait SqlItem {
+  override def toString: String = {
+    val sb = new StringBuffer()
+    genSql(sb)
+    sb.toString
+  }
+
   def genSql(sb: StringBuffer)
 
   def genParams(ab: ArrayBuffer[Object])
@@ -345,6 +351,13 @@ trait TableSource extends SqlItem {
     case (null, (s, _), null) => s.genParams(ab)
     case (null, null, j) => j.genParams(ab)
     case _ => throw new UnreachableException
+  }
+}
+
+object TableSource {
+  def asJoinPart(t: TableSource): JoinPart = t.children(0) match {
+    case (null, null, j) => j
+    case _ => throw new RuntimeException("Not JoinPart")
   }
 }
 
