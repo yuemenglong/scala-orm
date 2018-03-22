@@ -97,46 +97,48 @@ class TypedTest {
     Assert.assertEquals(objs(1).om.length, 3)
   })
 
-  //
-  //  @Test
-  //  def testNotNull(): Unit = db.beginTransaction(session => {
-  //    var obj = new Obj
-  //    obj.name = "name"
-  //    session.execute(Orm.insert(Orm.convert(obj)))
-  //
-  //    obj = new Obj
-  //    obj.name = "name2"
-  //    obj.age = 10
-  //    session.execute(Orm.insert(Orm.convert(obj)))
-  //
-  //    val root = Orm.root(classOf[Obj])
-  //    var res = session.query(Orm.selectFrom(root).where(root.get(_.age).isNull))
-  //    Assert.assertEquals(res.length, 1)
-  //    Assert.assertEquals(res(0).id.longValue(), 1)
-  //    Assert.assertEquals(res(0).age, null)
-  //
-  //    res = session.query(Orm.selectFrom(root).where(root.get(_.age).notNull()))
-  //    Assert.assertEquals(res.length, 1)
-  //    Assert.assertEquals(res(0).id.longValue(), 2)
-  //    Assert.assertEquals(res(0).age, 10)
-  //  })
-  //
-  //  @Test
-  //  def testCount(): Unit = db.beginTransaction(session => {
-  //    val obj = new Obj
-  //    obj.name = ""
-  //    obj.om = Array(new OM, new OM, new OM, new OM, new OM, new OM)
-  //    val ex = Orm.insert(Orm.convert(obj))
-  //    ex.insert(_.ptr)
-  //    ex.insert(_.oo)
-  //    ex.inserts(_.om)
-  //    val ret = session.execute(ex)
-  //    Assert.assertEquals(ret, 7)
-  //
-  //    val root = Orm.root(classOf[OM])
-  //    val c = session.first(Orm.select(root.count()).from(root))
-  //    Assert.assertEquals(c.longValue(), 6)
-  //  })
+
+  @Test
+  def testNotNull(): Unit = db.beginTransaction(session => {
+    var obj = new Obj
+    obj.name = "name"
+    session.execute(Orm.insert(Orm.convert(obj)))
+
+    obj = new Obj
+    obj.name = "name2"
+    obj.age = 10
+    session.execute(Orm.insert(Orm.convert(obj)))
+
+    val root = Orm.root(classOf[Obj])
+    var res = session.query(Orm.selectFrom(root).where(root.get(_.age).isNull))
+    Assert.assertEquals(res.length, 1)
+    Assert.assertEquals(res(0).id.longValue(), 1)
+    Assert.assertEquals(res(0).age, null)
+
+    res = session.query(Orm.selectFrom(root).where(root.get(_.age).notNull))
+    Assert.assertEquals(res.length, 1)
+    Assert.assertEquals(res(0).id.longValue(), 2)
+    Assert.assertEquals(res(0).age, 10)
+  })
+
+
+  @Test
+  def testCount(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.om = Array(new OM, new OM, new OM, new OM, new OM, new OM)
+    val ex = Orm.insert(Orm.convert(obj))
+    ex.insert(_.ptr)
+    ex.insert(_.oo)
+    ex.inserts(_.om)
+    val ret = session.execute(ex)
+    Assert.assertEquals(ret, 7)
+
+    val root = Orm.root(classOf[OM])
+    val c = session.first(Orm.select(root.count()).from(root))
+    Assert.assertEquals(c.longValue(), 6)
+  })
+
   //
   //  @Test
   //  def testSelectField(): Unit = db.beginTransaction(session => {

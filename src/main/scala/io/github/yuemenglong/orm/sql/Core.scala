@@ -24,8 +24,8 @@ trait SelectStatement[S] extends SelectStmt {
     this.asInstanceOf[S]
   }
 
-  def where(expr: Expr): S = {
-    core._where = expr
+  def where(expr: ExprT[_]): S = {
+    core._where = expr.toExpr
     this.asInstanceOf[S]
   }
 
@@ -57,17 +57,6 @@ trait SelectStatement[S] extends SelectStmt {
   def union(stmt: SelectStatement[_]): S = {
     comps += (("UNION", stmt.core))
     this.asInstanceOf[S]
-  }
-}
-
-trait SelectT extends SelectStatement[SelectT]
-
-object SelectStatement {
-  def apply(columns: ResultColumn*): SelectStatement[SelectT] = {
-    val ret = new SelectStatement[SelectT] {
-      override private[orm] val core = new SelectCore
-    }
-    ret.select(columns.toArray)
   }
 }
 
@@ -134,58 +123,9 @@ object Table {
   def apply(stmt: SelectStmt, uid: String): Table = Table((null, (stmt, uid), null))
 }
 
-object Core {
-  def main(args: Array[String]): Unit = {
-    val obj = Table("obj", "obj")
-    val ptr = Table("ptr", "obj_ptr")
-
-    obj.join(ptr, "LEFT", "ptr_id", "id")
-
-    val select = SelectStatement(obj.getColumn("id"), obj.getColumn("name")).from(obj, ptr)
-      .where(Expr(obj.getColumn("id").expr, "=", Expr.const(1)))
-
-    val sb = new StringBuffer()
-    select.genSql(sb)
-    println(sb.toString)
-  }
-}
-
-trait ToExpr {
-  def toExpr: Expr
-}
-
-trait ExprOp extends ToExpr {
-  def eql(e: ToExpr): Expr = Expr(this.toExpr, "=", e.toExpr)
-
-  def eql[T](t: T): Expr = Expr(this.toExpr, "=", Expr.const(t))
-
-  def neq(e: ToExpr): Expr = Expr(this.toExpr, "<>", e.toExpr)
-
-  def neq[T](t: T): Expr = Expr(this.toExpr, "<>", Expr.const(t))
-
-  def gt(e: ToExpr): Expr = Expr(this.toExpr, ">", e.toExpr)
-
-  def gt[T](t: T): Expr = Expr(this.toExpr, ">", Expr.const(t))
-
-  def gte(e: ToExpr): Expr = Expr(this.toExpr, ">=", e.toExpr)
-
-  def gte[T](t: T): Expr = Expr(this.toExpr, ">=", Expr.const(t))
-
-  def lt(e: ToExpr): Expr = Expr(this.toExpr, "<", e.toExpr)
-
-  def lt[T](t: T): Expr = Expr(this.toExpr, "<", Expr.const(t))
-
-  def lte(e: ToExpr): Expr = Expr(this.toExpr, "<=", e.toExpr)
-
-  def lte[T](t: T): Expr = Expr(this.toExpr, "<=", Expr.const(t))
-
-  def and(e: ToExpr): Expr = Expr(this.toExpr, "AND", e.toExpr)
-
-  def or(e: ToExpr): Expr = Expr(this.toExpr, "OR", e.toExpr)
-
-}
-
 trait UpdateStatement extends UpdateStmt
 
 trait DeleteStatement extends DeleteStmt
 
+trait FnColumn extends ResultColumn {
+}

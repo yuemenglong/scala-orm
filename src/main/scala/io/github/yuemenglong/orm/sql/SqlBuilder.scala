@@ -121,7 +121,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   }
 }
 
-trait Expr extends SqlItem with ExprOp {
+trait Expr extends SqlItem with ExprOp[Expr] {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -195,6 +195,8 @@ trait Expr extends SqlItem with ExprOp {
   }
 
   override def toExpr = this
+
+  override def fromExpr(e: Expr) = e
 }
 
 object Expr {
@@ -213,37 +215,37 @@ object Expr {
     override val children = (null, tc, null, null, null, null, null, null, null)
   }
 
-  def func(f: String, d: Boolean, p: Array[Expr]): Expr = new Expr {
+  def func(f: String, d: Boolean, p: Array[ExprT[_]]): Expr = new Expr {
     val fc = new FunctionCall {
       override val fn = f
       override val distinct = d
-      override val params = p
+      override val params = p.map(_.toExpr)
     }
     override val children = (null, null, fc, null, null, null, null, null, null)
   }
 
-  def apply(op: String, e: Expr): Expr = new Expr {
-    override val children = (null, null, null, (op, e), null, null, null, null, null)
+  def apply(op: String, e: ExprT[_]): Expr = new Expr {
+    override val children = (null, null, null, (op, e.toExpr), null, null, null, null, null)
   }
 
-  def apply(e: Expr, op: String): Expr = new Expr {
-    override val children = (null, null, null, null, (e, op), null, null, null, null)
+  def apply(e: ExprT[_], op: String): Expr = new Expr {
+    override val children = (null, null, null, null, (e.toExpr, op), null, null, null, null)
   }
 
-  def apply(l: Expr, op: String, r: Expr): Expr = new Expr {
-    override val children = (null, null, null, null, null, (l, op, r), null, null, null)
+  def apply(l: ExprT[_], op: String, r: ExprT[_]): Expr = new Expr {
+    override val children = (null, null, null, null, null, (l.toExpr, op, r.toExpr), null, null, null)
   }
 
-  def apply(e: Expr, l: Expr, r: Expr): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, (e, l, r), null, null)
+  def apply(e: ExprT[_], l: ExprT[_], r: ExprT[_]): Expr = new Expr {
+    override val children = (null, null, null, null, null, null, (e.toExpr, l.toExpr, r.toExpr), null, null)
   }
 
-  def apply(e: Expr, op: String, stmt: SelectStmt): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, (e, op, stmt), null)
+  def apply(e: ExprT[_], op: String, stmt: SelectStmt): Expr = new Expr {
+    override val children = (null, null, null, null, null, null, null, (e.toExpr, op, stmt), null)
   }
 
-  def apply(es: Expr*): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, null, es.toArray)
+  def apply(es: ExprT[_]*): Expr = new Expr {
+    override val children = (null, null, null, null, null, null, null, null, es.map(_.toExpr).toArray)
   }
 
   def asTableColumn(e: Expr): TableColumn = e.children match {
@@ -292,7 +294,7 @@ trait FunctionCall extends SqlItem {
   }
 }
 
-trait ResultColumn extends SqlItem {
+trait ResultColumn extends SqlItem with ExprOp[ResultColumn] {
   private[orm] val expr: Expr
   private[orm] val uid: String
 
@@ -303,6 +305,16 @@ trait ResultColumn extends SqlItem {
 
   override def genParams(ab: ArrayBuffer[Object]): Unit = {
     expr.genParams(ab)
+  }
+
+  override def toExpr = expr
+
+  override def fromExpr(e: Expr) = {
+    val that = this
+    new ResultColumn {
+      override private[orm] val uid = that.uid
+      override private[orm] val expr = e
+    }
   }
 }
 
@@ -428,3 +440,54 @@ trait DeleteStmt extends SqlItem {
     }
   }
 }
+
+trait ExprT[T] {
+  def toExpr: Expr
+
+  def fromExpr(e: Expr): T
+}
+
+trait ExprOp[S] extends ExprT[S] {
+  def eql(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
+
+  def eql[T](t: T): S = eql(Expr.const(t))
+
+  def neq(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "<>", e.toExpr))
+
+  def neq[T](t: T): S = neq(Expr.const(t))
+
+  def gt(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, ">", e.toExpr))
+
+  def gt[T](t: T): S = gt(Expr.const(t))
+
+  def gte(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, ">=", e.toExpr))
+
+  def gte[T](t: T): S = gte(Expr.const(t))
+
+  def lt(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "<", e.toExpr))
+
+  def lt[T](t: T): S = lt(Expr.const(t))
+
+  def lte(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "<=", e.toExpr))
+
+  def lte[T](t: T): S = lte(Expr.const(t))
+
+  def and(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "AND", e.toExpr))
+
+  def or(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "OR", e.toExpr))
+
+  def isNull: S = fromExpr(Expr(this.toExpr, "IS NULL"))
+
+  def notNull: S = fromExpr(Expr(this.toExpr, "IS NOT NULL"))
+}
+
+trait ExprOp2[S] extends ExprT[S] {
+  def add(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "+", e.toExpr))
+
+  def add[T](v: T): S = add(Expr.const(v))
+
+  def sub(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "-", e.toExpr))
+
+  def sub[T](v: T): S = add(Expr.const(v))
+}
+

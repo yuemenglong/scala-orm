@@ -46,10 +46,8 @@ case class FieldExpr2FV[V](f1: FieldExpr2, v: V, op: String) extends FieldExpr2 
   override def getParams: Array[Object] = f1.getParams ++ Array(v.asInstanceOf[Object])
 }
 
-trait Field extends ResultColumn with ExprOp with AssignOp {
+trait Field extends ResultColumn with AssignOp {
   def getAlias: String = uid
-
-  override def toExpr = expr
 
   override def assign(e: Expr) = Assign(Expr.asTableColumn(expr), e)
 }
