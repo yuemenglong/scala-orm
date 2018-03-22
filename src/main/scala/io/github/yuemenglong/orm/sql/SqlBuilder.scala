@@ -246,6 +246,10 @@ object Expr {
     override val children = (null, null, null, null, null, null, null, null, es.toArray)
   }
 
+  def asTableColumn(e: Expr): TableColumn = e.children match {
+    case (null, c, null, null, null, null, null, null, null) => c
+    case _ => throw new RuntimeException("Not TableColumn Expr")
+  }
 }
 
 trait Constant extends SqlItem {
@@ -350,3 +354,77 @@ trait JoinPart extends SqlItem {
   }
 }
 
+trait UpdateStmt extends SqlItem {
+  val _table: Table
+  var _sets: Array[Assign] = Array() // Table,Column,Expr
+  var _where: Expr = _
+
+  override def genSql(sb: StringBuffer): Unit = {
+    sb.append("UPDATE\n")
+    _table.genSql(sb)
+    sb.append("\nSET")
+    _sets.foreach { a =>
+      sb.append(s"\n")
+      a.genSql(sb)
+    }
+    if (_where != null) {
+      sb.append("\nWHERE\n")
+      _where.genSql(sb)
+    }
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    _table.genParams(ab)
+    _sets.foreach(_.genParams(ab))
+    if (_where != null) {
+      _where.genParams(ab)
+    }
+  }
+}
+
+trait Assign extends SqlItem {
+  val column: TableColumn
+  val expr: Expr
+
+  override def genSql(sb: StringBuffer): Unit = {
+    column.genSql(sb)
+    sb.append(s" = ")
+    expr.genSql(sb)
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    column.genParams(ab)
+    expr.genParams(ab)
+  }
+}
+
+object Assign {
+  def apply(c: TableColumn, e: Expr): Assign = new Assign {
+    override val column = c
+    override val expr = e
+  }
+}
+
+trait DeleteStmt extends SqlItem {
+  val _targets: Array[Table]
+  var _table: Table = _
+  var _where: Expr = _
+
+  override def genSql(sb: StringBuffer): Unit = {
+    sb.append("DELETE\n")
+    _targets.foreach(_.genSql(sb))
+    sb.append("\nFROM\n")
+    _table.genSql(sb)
+    if (_where != null) {
+      sb.append("\nWHERE\n")
+      _where.genSql(sb)
+    }
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    _table.genParams(ab)
+    if (_where != null) {
+      _where.genParams(ab)
+    }
+  }
+}

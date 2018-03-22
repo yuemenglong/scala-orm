@@ -146,7 +146,6 @@ abstract class ExecuteCascadeImpl(meta: EntityMeta) extends ExecuteJoin {
       } else if (meta.fieldMap(field).isNormalOrPkey) {
         ignoreFields += field
       } else {
-        //        cascades.remove(cascades.indexWhere(_._1 == field))
         throw new RuntimeException(s"""Not Normal Field: $field""")
       }
     })
@@ -209,27 +208,6 @@ class InsertJoin(meta: EntityMeta) extends ExecuteCascadeImpl(meta) {
         rs.close()
       }
     })
-
-    //    Kit.logSql(sql, params)
-    //
-    //    val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
-    //    validFields.zipWithIndex.foreach {
-    //      case (field, i) => stmt.setObject(i + 1, core.get(field.name))
-    //    }
-    //
-    //    val affected = stmt.executeUpdate()
-    //    if (!core.meta.pkey.isAuto) {
-    //      stmt.close()
-    //      return affected
-    //    }
-    //    val rs = stmt.getGeneratedKeys
-    //    if (rs.next()) {
-    //      val id = rs.getObject(1)
-    //      core.fieldMap += (core.meta.pkey.name -> id)
-    //    }
-    //    rs.close()
-    //    stmt.close()
-    //    affected
   }
 }
 

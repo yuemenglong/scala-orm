@@ -184,3 +184,8 @@ trait ExprOp extends ToExpr {
   def or(e: ToExpr): Expr = Expr(this.toExpr, "OR", e.toExpr)
 
 }
+
+trait UpdateStatement extends UpdateStmt
+
+trait DeleteStatement extends DeleteStmt
+
