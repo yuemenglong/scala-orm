@@ -503,7 +503,7 @@ trait ExprOpMath[S] extends ExprT[S] {
 
   def sub(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "-", e.toExpr))
 
-  def sub[T](v: T): S = add(Expr.const(v))
+  def sub[T](v: T): S = sub(Expr.const(v))
 
   def +(e: ExprT[_]): S = add(e)
 

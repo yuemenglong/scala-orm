@@ -53,6 +53,16 @@ trait Field extends ResultColumn with AssignOp {
     case null => Assign(Expr.asTableColumn(expr), null)
     case _ => Assign(Expr.asTableColumn(expr), e.toExpr)
   }
+
+  def as[T](clazz: Class[T]) = {
+    val that = this
+    val thatClazz = clazz
+    new SelectableField[T] {
+      override val clazz = thatClazz
+      override private[orm] val expr = that.expr
+      override private[orm] val uid = that.uid
+    }
+  }
 }
 
 trait SelectableField[T] extends Field with Selectable[T] {
