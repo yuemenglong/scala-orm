@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm.sql
 
 import io.github.yuemenglong.orm.kit.UnreachableException
+import io.github.yuemenglong.orm.operate.field.traits.Field
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -137,7 +138,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   }
 }
 
-trait Expr extends SqlItem with ExprOp[Expr] {
+trait Expr extends SqlItem with ExprOp[Expr] with ExprOpMath[Expr] with ExprOpAs[Expr] {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -494,6 +495,13 @@ trait ExprOp[S] extends ExprT[S] {
   def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
 
   def like(s: String): S = fromExpr(Expr(this.toExpr, "LIKE", Expr.const(s)))
+}
+
+trait ExprOpAs[T] extends ExprT[T] {
+  def as(alias: String): Field = new Field {
+    override private[orm] val uid = alias
+    override private[orm] val expr = this.toExpr
+  }
 }
 
 trait ExprOpMath[S] extends ExprT[S] {

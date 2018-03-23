@@ -4,10 +4,7 @@ import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Long, String}
-import io.github.yuemenglong.orm.operate.core.traits.{Alias, Expr2}
-import io.github.yuemenglong.orm.operate.field._
-import io.github.yuemenglong.orm.operate.join._
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, CondOp}
+import io.github.yuemenglong.orm.operate.core.traits.Expr2
 import io.github.yuemenglong.orm.operate.query.traits.Selectable
 import io.github.yuemenglong.orm.sql._
 
@@ -63,6 +60,16 @@ trait Field extends ResultColumn with AssignOp {
       override private[orm] val uid = that.uid
     }
   }
+
+  def asInt(): SelectableField[Integer] = as(classOf[Integer])
+
+  def asLong(): SelectableField[Long] = as(classOf[Long])
+
+  def asDouble(): SelectableField[Double] = as(classOf[Double])
+
+  def asStr(): SelectableField[String] = as(classOf[String])
+
+  def asBool(): SelectableField[Boolean] = as(classOf[Boolean])
 }
 
 trait SelectableField[T] extends Field with Selectable[T] {
