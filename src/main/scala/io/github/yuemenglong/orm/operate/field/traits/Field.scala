@@ -49,7 +49,10 @@ case class FieldExpr2FV[V](f1: FieldExpr2, v: V, op: String) extends FieldExpr2 
 trait Field extends ResultColumn with AssignOp {
   def getAlias: String = uid
 
-  override def assign(e: ExprT[_]) = Assign(Expr.asTableColumn(expr), e.toExpr)
+  override def assign(e: ExprT[_]) = e match {
+    case null => Assign(Expr.asTableColumn(expr), null)
+    case _ => Assign(Expr.asTableColumn(expr), e.toExpr)
+  }
 }
 
 trait SelectableField[T] extends Field with Selectable[T] {

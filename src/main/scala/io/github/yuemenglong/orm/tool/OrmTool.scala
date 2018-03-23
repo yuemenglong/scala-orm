@@ -201,7 +201,7 @@ object OrmTool {
 
   def attach[T](obj: T, field: String, session: Session,
                 joinFn: SelectFieldCascade => Unit,
-                queryFn: Query1[T] => Unit
+                queryFn: Query1[_] => Unit
                ): T = {
     if (obj.getClass.isArray) {
       return attachArray(obj.asInstanceOf[Array[_]], field, session, joinFn, queryFn.asInstanceOf[Query1[_] => Unit])
@@ -224,10 +224,15 @@ object OrmTool {
 
     val query = Orm.selectFrom(root)
     if (queryFn != null) queryFn(query.asInstanceOf[Query1[T]])
-    query.where(query.core._where.and(root.get(rightField).eql(leftValue)))
+    val cond = root.get(rightField).eql(leftValue)
+    val where = query.core._where match {
+      case null => cond
+      case w => w.and(cond)
+    }
+    query.where(where)
 
     val res = refer.isOneMany match {
-      case true => session.query(query).asInstanceOf[Object]
+      case true => session.query(query).toArray(ClassTag(refer.refer.clazz)).asInstanceOf[Object]
       case false => session.first(query).asInstanceOf[Object]
     }
 
@@ -260,11 +265,16 @@ object OrmTool {
 
     val query = Orm.selectFrom(root)
     if (queryFn != null) queryFn(query)
-    query.where(query.core._where.and(root.get(rightField).in(leftValues)))
+    val cond = root.get(rightField).in(leftValues)
+    val where = query.core._where match {
+      case null => cond
+      case w => w.and(cond)
+    }
+    query.where(where)
 
     val res: Map[Object, Object] = refer.isOneMany match {
       case true => session.query(query).map(_.asInstanceOf[Entity])
-        .groupBy(_.$$core().get(rightField))
+        .groupBy(_.$$core().get(rightField)).mapValues(_.toArray(ClassTag(refer.refer.clazz)))
       case false => session.query(query).map(_.asInstanceOf[Entity])
         .map(e => (e.$$core().get(rightField), e)).toMap
     }
