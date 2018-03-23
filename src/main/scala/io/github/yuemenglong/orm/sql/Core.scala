@@ -2,6 +2,8 @@ package io.github.yuemenglong.orm.sql
 
 import io.github.yuemenglong.orm.kit.UnreachableException
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by <yuemenglong@126.com> on 2018/3/19.
   */
@@ -60,27 +62,11 @@ trait SelectStatement[S] extends SelectStmt {
   }
 }
 
-trait Table extends TableSource {
-  def join(t: Table, joinType: String, leftColunm: String, rightColumn: String): Table = {
-    val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
-
-    val jp: JoinPart = children(0) match {
-      case ((name, uid), null, null) => new JoinPart {
-        override val table = Table(name, uid)
-        override val joins = Array((joinType, t, c))
-      }
-      case (null, (stmt, uid), null) => new JoinPart {
-        override val table = Table(stmt, uid)
-        override val joins = Array((joinType, t, c))
-      }
-      case (null, null, j) => new JoinPart {
-        override private[orm] val table = j.table
-        override private[orm] val joins = j.joins ++ Array((joinType, t, c))
-      }
-      case _ => throw new UnreachableException
-    }
-    children(0) = (null, null, jp)
-    this
+trait Table extends TableOrSubQuery {
+  def join(t: Table, joinType: String, leftColunm: String, rightColumn: String): Var[Expr] = {
+    val c = Var(Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr))
+    _joins += ((joinType, t, c))
+    c
   }
 
   def getColumn(column: String, alias: String = null): ResultColumn = {
@@ -95,32 +81,23 @@ trait Table extends TableSource {
     }
   }
 
-  def getUid(children: (
-    (String, String), // tableName, uid
-      (SelectStmt, String), // (Select xx) AS
-      JoinPart, // JoinPart
-    )): String = children match {
-    case ((_, uid), null, null) => uid
-    case (null, (_, uid), null) => uid
-    case (null, null, j) => getUid(j.table.children(0))
+  def getAlias: String = _table match {
+    case ((_, alias), null) => alias
+    case (null, (_, alias)) => alias
     case _ => throw new UnreachableException
   }
-
-  def getAlias: String = getUid(children(0))
 }
 
 object Table {
-  def apply(c: (
-    (String, String), // tableName, uid
-      (SelectStmt, String), // (Select xx) AS
-      JoinPart, // JoinPart
-    )): Table = new Table {
-    override private[orm] val children = Array(c)
+  def apply(name: String, uid: String): Table = new Table {
+    override private[orm] val _table = ((name, uid), null)
+    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
   }
 
-  def apply(table: String, uid: String): Table = Table(((table, uid), null, null))
-
-  def apply(stmt: SelectStmt, uid: String): Table = Table((null, (stmt, uid), null))
+  def apply(stmt: SelectStmt, uid: String): Table = new Table {
+    override private[orm] val _table = (null, (stmt, uid))
+    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
+  }
 }
 
 trait UpdateStatement extends UpdateStmt

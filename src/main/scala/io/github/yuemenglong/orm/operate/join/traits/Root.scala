@@ -74,8 +74,9 @@ object Root {
     val table = Table(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
     new Root[T] {
       override val meta = rootMeta
-      override private[orm] val children = table.children
-      override val root = this
+      override val on = null
+      override private[orm] val _table = table._table
+      override private[orm] val _joins = table._joins
     }
   }
 }

@@ -7,6 +7,16 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by <yuemenglong@126.com> on 2018/3/17.
   */
+class Var[T](private var v: T) {
+  def get: T = v
+
+  def set(v: T): Unit = this.v = v
+}
+
+object Var {
+  def apply[T](v: T) = new Var(v)
+}
+
 trait SqlItem {
   override def toString: String = {
     val sb = new StringBuffer()
@@ -55,7 +65,7 @@ trait SelectStmt extends SqlItem {
 class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   private[orm] var _distinct: Boolean = _
   private[orm] var _columns: Array[ResultColumn] = cs
-  private[orm] var _from: Array[TableSource] = _
+  private[orm] var _from: Array[TableOrSubQuery] = _
   private[orm] var _where: Expr = _
   private[orm] var _groupBy: Array[Expr] = _
   private[orm] var _having: Expr = _
@@ -329,61 +339,6 @@ trait ResultColumn extends SqlItem with ExprOp[ResultColumn] {
   }
 }
 
-trait TableSource extends SqlItem {
-  private[orm] val children: Array[(
-    (String, String), // tableName, uid
-      (SelectStmt, String), // (Select xx) AS
-      JoinPart // JoinPart
-    )]
-
-  override def genSql(sb: StringBuffer): Unit = children(0) match {
-    case ((table, uid), null, null) => sb.append(s"`${table}` AS `${uid}`")
-    case (null, (s, uid), null) =>
-      sb.append("(")
-      s.genSql(sb)
-      sb.append(s") AS `${uid}`")
-    case (null, null, j) => j.genSql(sb)
-    case _ => throw new UnreachableException
-  }
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = children(0) match {
-    case (_, null, null) =>
-    case (null, (s, _), null) => s.genParams(ab)
-    case (null, null, j) => j.genParams(ab)
-    case _ => throw new UnreachableException
-  }
-}
-
-object TableSource {
-  def asJoinPart(t: TableSource): JoinPart = t.children(0) match {
-    case (null, null, j) => j
-    case _ => throw new RuntimeException("Not JoinPart")
-  }
-}
-
-trait JoinPart extends SqlItem {
-  private[orm] val table: TableSource
-  private[orm] val joins: Array[(String, TableSource, Expr)] // JoinType
-
-  override def genSql(sb: StringBuffer): Unit = {
-    table.genSql(sb)
-    joins.foreach { case (joinType, t, e) =>
-      sb.append(s"\n${joinType} JOIN ")
-      t.genSql(sb)
-      sb.append(" ON ")
-      e.genSql(sb)
-    }
-  }
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = {
-    table.genParams(ab)
-    joins.foreach { case (_, t, e) =>
-      t.genParams(ab)
-      e.genParams(ab)
-    }
-  }
-}
-
 trait UpdateStmt extends SqlItem {
   val _table: Table
   var _sets: Array[Assign] = Array() // Table,Column,Expr
@@ -459,10 +414,10 @@ trait DeleteStmt extends SqlItem {
   }
 }
 
-trait ExprT[T] {
+trait ExprT[S] {
   def toExpr: Expr
 
-  def fromExpr(e: Expr): T
+  def fromExpr(e: Expr): S
 }
 
 trait ExprOp[S] extends ExprT[S] {
@@ -507,7 +462,7 @@ trait ExprOp[S] extends ExprT[S] {
   def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
 }
 
-trait ExprOp2[S] extends ExprT[S] {
+trait ExprOpMath[S] extends ExprT[S] {
   def add(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "+", e.toExpr))
 
   def add[T](v: T): S = add(Expr.const(v))
@@ -516,4 +471,47 @@ trait ExprOp2[S] extends ExprT[S] {
 
   def sub[T](v: T): S = add(Expr.const(v))
 }
+
+trait TableOrSubQuery extends SqlItem {
+  private[orm] val _table: (
+    (String, String),
+      (SelectStmt, String),
+    )
+  private[orm] val _joins: ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]
+
+  def genSql(sb: StringBuffer, on: Expr): Unit = {
+    _table match {
+      case ((name, alias), null) => sb.append(s"`${name}` AS `${alias}`")
+      case (null, (stmt, alias)) => sb.append(s"(${stmt}) AS `${alias}`")
+      case _ => throw new UnreachableException
+    }
+    if (on != null) {
+      sb.append(" ON ")
+      on.genSql(sb)
+    }
+    _joins.foreach { case (joinType, t, expr) =>
+      sb.append(s"\n${joinType} JOIN ")
+      t.genSql(sb, expr.get)
+    }
+  }
+
+  override def genSql(sb: StringBuffer): Unit = genSql(sb, null)
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = genParams(ab, null)
+
+  def genParams(ab: ArrayBuffer[Object], on: Expr): Unit = {
+    _table match {
+      case (_, null) =>
+      case (null, (stmt, _)) => stmt.genParams(ab)
+      case _ => throw new UnreachableException
+    }
+    if (on != null) {
+      on.genParams(ab)
+    }
+    _joins.foreach { case (_, t, expr) =>
+      t.genParams(ab, expr.get)
+    }
+  }
+}
+
 

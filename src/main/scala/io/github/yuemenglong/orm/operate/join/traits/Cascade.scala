@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.operate.join.traits
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
-import io.github.yuemenglong.orm.kit.{Kit, UnreachableException}
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta._
@@ -17,9 +17,9 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 trait Cascade extends Table {
-  val root: Cascade
   val meta: EntityMeta
   var joins: Map[String, (JoinType, Cascade)] = Map()
+  val on: Var[Expr]
 
   def getMeta: EntityMeta = meta
 
@@ -53,12 +53,12 @@ trait Cascade extends Table {
         val leftColumn = getMeta.fieldMap(referMeta.left).column
         val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
         val table = Table(tableName, alias)
-        val that = this
-        join(table, joinType.toString, leftColumn, rightColumn)
+        val cond = join(table, joinType.toString, leftColumn, rightColumn)
         val ret = new Cascade {
-          override private[orm] val children = table.children
           override val meta = referMeta.refer
-          override val root = that.root
+          override val on = cond
+          override private[orm] val _table = table._table
+          override private[orm] val _joins = table._joins
         }
         joins += (field -> (joinType, ret))
         ret
@@ -89,12 +89,12 @@ trait Cascade extends Table {
     val rightColumn = referMeta.fieldMap(right).column
     val alias = s"${getAlias}__${joinName}"
     val table = Table(tableName, alias)
-    join(table, joinType.toString, leftColumn, rightColumn)
-    val that = this
+    val cond = join(table, joinType.toString, leftColumn, rightColumn)
     new TypedSelectableCascade[T] {
       override val meta = referMeta
-      override private[orm] val children = table.children
-      override val root = that.root
+      override val on = cond
+      override private[orm] val _table = table._table
+      override private[orm] val _joins = table._joins
     }
   }
 
@@ -103,13 +103,7 @@ trait Cascade extends Table {
   def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
 
   protected def on[T](e: ExprT[_], ret: T): T = {
-    // 从根节点找到自己对应的join数据结构，改掉
-    val jp = TableSource.asJoinPart(root)
-    jp.joins.zipWithIndex.find(_._1._2.children sameElements this.children) match {
-      case None => throw new UnreachableException
-      case Some(((joinType, table, expr), idx)) =>
-        jp.joins(idx) = (joinType, table, expr.and(e))
-    }
+    on.set(on.get.and(e))
     ret
   }
 
@@ -132,9 +126,10 @@ trait SelectFieldCascade extends Cascade {
       case None =>
         val j = leftJoin(field)
         val ret = new SelectFieldCascade {
-          override private[orm] val children = j.children
           override val meta = j.meta
-          override val root = j.root
+          override val on = j.on
+          override private[orm] val _table = j._table
+          override private[orm] val _joins = j._joins
         }
         _selects += ((field, ret))
         ret
@@ -209,8 +204,9 @@ trait TypedCascade[T] extends Cascade {
     val j: Cascade = this.join(field, joinType)
     new TypedCascade[R] {
       override val meta = j.meta
-      override private[orm] val children = j.children
-      override val root = j.root
+      override val on = j.on
+      override private[orm] val _table = j._table
+      override private[orm] val _joins = j._joins
     }
   }
 
@@ -291,8 +287,9 @@ trait TypedCascade[T] extends Cascade {
     val j = this.joinAs(left, right, clazz)
     new TypedSelectableCascade[R] {
       override val meta = j.meta
-      override private[orm] val children = j.children
-      override val root = j.root
+      override val on = j.on
+      override private[orm] val _table = j._table
+      override private[orm] val _joins = j._joins
     }
   }
 
@@ -310,8 +307,9 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
     val j = this.select(field)
     val ret = new TypedSelectableCascade[R] {
       override val meta = j.meta
-      override private[orm] val children = j.children
-      override val root = j.root
+      override val on = j.on
+      override private[orm] val _table = j._table
+      override private[orm] val _joins = j._joins
     }
     ret
   }
