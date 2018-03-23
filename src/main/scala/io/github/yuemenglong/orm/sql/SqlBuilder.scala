@@ -315,7 +315,7 @@ trait FunctionCall extends SqlItem {
   }
 }
 
-trait ResultColumn extends SqlItem with ExprOp[ResultColumn] {
+trait ResultColumn extends SqlItem with ExprOp[ResultColumn] with ExprOpMath[ResultColumn] {
   private[orm] val expr: Expr
   private[orm] val uid: String
 
@@ -348,7 +348,10 @@ trait UpdateStmt extends SqlItem {
     sb.append("UPDATE\n")
     _table.genSql(sb)
     sb.append("\nSET")
-    _sets.foreach { a =>
+    _sets.zipWithIndex.foreach { case (a, i) =>
+      if (i > 0) {
+        sb.append(",")
+      }
       sb.append(s"\n")
       a.genSql(sb)
     }
@@ -374,12 +377,17 @@ trait Assign extends SqlItem {
   override def genSql(sb: StringBuffer): Unit = {
     column.genSql(sb)
     sb.append(s" = ")
-    expr.genSql(sb)
+    expr match {
+      case null => sb.append("NULL")
+      case _ => expr.genSql(sb)
+    }
   }
 
   override def genParams(ab: ArrayBuffer[Object]): Unit = {
     column.genParams(ab)
-    expr.genParams(ab)
+    if (expr != null) {
+      expr.genParams(ab)
+    }
   }
 }
 
@@ -397,7 +405,7 @@ trait DeleteStmt extends SqlItem {
 
   override def genSql(sb: StringBuffer): Unit = {
     sb.append("DELETE\n")
-    _targets.foreach(_.genSql(sb))
+    sb.append(_targets.map(t => s"`${t.getAlias}`").mkString(", "))
     sb.append("\nFROM\n")
     _table.genSql(sb)
     if (_where != null) {
@@ -445,6 +453,30 @@ trait ExprOp[S] extends ExprT[S] {
 
   def lte[T](t: T): S = lte(Expr.const(t))
 
+  def ===(e: ExprT[_]): S = eql(e)
+
+  def ===[T](t: T): S = eql(t)
+
+  def !==(e: ExprT[_]): S = neq(e)
+
+  def !==[T](t: T): S = neq(t)
+
+  def >(e: ExprT[_]): S = gt(e)
+
+  def >[T](t: T): S = gt(t)
+
+  def >=(e: ExprT[_]): S = gte(e)
+
+  def >=[T](t: T): S = gte(t)
+
+  def <(e: ExprT[_]): S = lt(e)
+
+  def <[T](t: T): S = lt(t)
+
+  def <=(e: ExprT[_]): S = lte(e)
+
+  def <=[T](t: T): S = lte(t)
+
   def and(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "AND", e.toExpr))
 
   def or(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "OR", e.toExpr))
@@ -460,6 +492,8 @@ trait ExprOp[S] extends ExprT[S] {
   def nin(e: Expr): S = fromExpr(Expr(this.toExpr, "NOT IN", e.toExpr))
 
   def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
+
+  def like(s: String): S = fromExpr(Expr(this.toExpr, "LIKE", Expr.const(s)))
 }
 
 trait ExprOpMath[S] extends ExprT[S] {
@@ -470,6 +504,14 @@ trait ExprOpMath[S] extends ExprT[S] {
   def sub(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "-", e.toExpr))
 
   def sub[T](v: T): S = add(Expr.const(v))
+
+  def +(e: ExprT[_]): S = add(e)
+
+  def +[T](v: T): S = add(v)
+
+  def -(e: ExprT[_]): S = sub(e)
+
+  def -[T](v: T): S = sub(v)
 }
 
 trait TableOrSubQuery extends SqlItem {

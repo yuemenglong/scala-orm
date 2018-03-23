@@ -31,18 +31,23 @@ trait SelectStatement[S] extends SelectStmt {
     this.asInstanceOf[S]
   }
 
-  def groupBy(es: Expr*): S = {
-    core._groupBy = es.toArray
+  def groupBy(es: ExprT[_]*): S = {
+    core._groupBy = es.map(_.toExpr).toArray
     this.asInstanceOf[S]
   }
 
-  def having(e: Expr): S = {
-    core._having = e
+  def having(e: ExprT[_]): S = {
+    core._having = e.toExpr
     this.asInstanceOf[S]
   }
 
-  def orderBy(e: Expr, t: String): S = {
-    core._orderBy += ((e, t))
+  def asc(e: ExprT[_]): S = {
+    core._orderBy += ((e.toExpr, "ASC"))
+    this.asInstanceOf[S]
+  }
+
+  def desc(e: ExprT[_]): S = {
+    core._orderBy += ((e.toExpr, "DESC"))
     this.asInstanceOf[S]
   }
 

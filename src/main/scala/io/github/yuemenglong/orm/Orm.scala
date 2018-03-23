@@ -95,79 +95,34 @@ object Orm {
 
   def selectFrom[T: ClassTag](r: TypedSelectableCascade[T]): Query1[T] = select(r).from(r)
 
-  //
   //  def cond(): Cond = new CondHolder
-  //
-  //  def select[T](s: Selectable[T]): QueryBuilder[T] = {
-  //    new QueryBuilderImpl[T] {
-  //      override val st = new SelectableTupleImpl[T](s.getType, s)
-  //    }
-  //  }
-  //
-  //  def select[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): QueryBuilder[(T1, T2)] = {
-  //    new QueryBuilderImpl[(T1, T2)] {
-  //      override val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
-  //    }
-  //  }
-  //
-  //  def select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): QueryBuilder[(T1, T2, T3)] = {
-  //    new QueryBuilderImpl[(T1, T2, T3)] {
-  //      override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
-  //    }
-  //  }
-  //
-  //  def subSelect[T](s: Selectable[T]): SubQueryBuilder[T] = {
-  //    new SubQueryBuilderImpl[T] {
-  //      override val st = new SelectableTupleImpl[T](s.getType, s)
-  //    }
-  //  }
-  //
-  //  def subSelect[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): SubQueryBuilder[(T1, T2)] = {
-  //    new SubQueryBuilderImpl[(T1, T2)] {
-  //      override val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
-  //    }
-  //  }
-  //
-  //  def subSelect[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): SubQueryBuilder[(T1, T2, T3)] = {
-  //    new SubQueryBuilderImpl[(T1, T2, T3)] {
-  //      override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
-  //    }
-  //  }
-  //
-  //  def selectFrom[T](root: Root[T]): Query[T, T] = {
-  //    val pRoot = root
-  //    new QueryImpl[T, T] with QueryBuilderImpl[T] {
-  //      override val root = pRoot
-  //      override val st = new SelectableTupleImpl[T](root.getType, root)
-  //    }
-  //  }
-  //
-  //  @Deprecated
-  //  def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
-  //
-  //  def inserts[T](arr: Array[T]): ExecutableInsert[T] = {
-  //    arr.isEmpty match {
-  //      case true => throw new RuntimeException("Batch Insert But Array Is Empty")
-  //      case false => {
-  //        val entityArr = Orm.convert(arr)
-  //        val clazz = entityArr(0).asInstanceOf[Entity].$$core()
-  //          .meta.clazz.asInstanceOf[Class[T]]
-  //        new InsertImpl[T](clazz).values(entityArr)
-  //      }
-  //    }
-  //  }
-  //
-  //  def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
-  //
-  //  def delete(joins: Cascade*): ExecutableDelete = new DeleteImpl(joins: _*)
-  //
-  //  def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
-  //
-  //  def set[V](obj: Object, field: String, value: V): Unit = obj.asInstanceOf[Entity].$$core().set(field, value.asInstanceOf[Object])
-  //
-  //  def get(obj: Object, field: String): Object = obj.asInstanceOf[Entity].$$core().get(field)
-  //
-  //  def clear(obj: Object, field: String): Unit = EntityManager.clear(obj, field)
-  //
-  //  def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
+
+  @Deprecated
+  def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
+
+  def inserts[T](arr: Array[T]): ExecutableInsert[T] = {
+    arr.isEmpty match {
+      case true => throw new RuntimeException("Batch Insert But Array Is Empty")
+      case false => {
+        val entityArr = Orm.convert(arr)
+        val clazz = entityArr(0).asInstanceOf[Entity].$$core()
+          .meta.clazz.asInstanceOf[Class[T]]
+        new InsertImpl[T](clazz).values(entityArr)
+      }
+    }
+  }
+
+  def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
+
+  def delete(joins: Cascade*): ExecutableDelete = new DeleteImpl(joins: _*)
+
+  def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
+
+  def set[V](obj: Object, field: String, value: V): Unit = obj.asInstanceOf[Entity].$$core().set(field, value.asInstanceOf[Object])
+
+  def get(obj: Object, field: String): Object = obj.asInstanceOf[Entity].$$core().get(field)
+
+  def clear(obj: Object, field: String): Unit = EntityManager.clear(obj, field)
+
+  def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
 }
