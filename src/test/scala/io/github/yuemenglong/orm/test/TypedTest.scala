@@ -795,16 +795,16 @@ class TypedTest {
       session.execute(ex)
     }
 
-    //    {
-    //      val r = Orm.root(classOf[Obj])
-    //      r.fields(_.name)
-    //      val sr = r.subRoot(classOf[OM])
-    //      val query = Orm.selectFrom(r).where(r(_.id).in(
-    //        Orm.subSelect(sr(_.id)).from(sr)
-    //      ))
-    //      val res = session.query(query)
-    //      Assert.assertEquals(res.length, 1)
-    //    }
+    {
+      val r = Orm.root(classOf[Obj])
+      r.fields(_.name)
+      val sr = Orm.root(classOf[OM])
+      val query = Orm.selectFrom(r).where(r(_.id).in(
+        Orm.select(sr(_.id)).from(sr)
+      ))
+      val res = session.query(query)
+      Assert.assertEquals(res.length, 1)
+    }
     //    {
     //      val r = Orm.root(classOf[OM])
     //      val sr = r.subRoot(classOf[Obj])

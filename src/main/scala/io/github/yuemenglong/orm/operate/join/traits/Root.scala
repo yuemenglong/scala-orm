@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.operate.join.traits
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
-import io.github.yuemenglong.orm.sql.Table
+import io.github.yuemenglong.orm.sql.{SelectStatement, Table}
 
 //
 //import io.github.yuemenglong.orm.meta.OrmMeta
@@ -63,7 +63,14 @@ import io.github.yuemenglong.orm.sql.Table
 //}
 //
 
-trait Root[T] extends TypedSelectableCascade[T]
+trait Root[T] extends TypedSelectableCascade[T] {
+  private var idx = 0
+
+  def subQuery(stmt: SelectStatement[_]): Table = {
+    idx += 1
+    Table(stmt, s"$$${idx}")
+  }
+}
 
 object Root {
   def apply[T](clazz: Class[T]): Root[T] = {
