@@ -143,13 +143,14 @@ trait Expr extends SqlItem with ExprOp[Expr] with ExprOpMath[Expr] with ExprOpAs
     Constant,
       TableColumn,
       FunctionCall,
+      SelectStmt, // (SUBQUERY)
       (String, Expr),
       (Expr, String),
       (Expr, String, Expr), // A AND B, A IN (1,2,3)
       (Expr, Expr, Expr), // BETWEEN AND
-      (Expr, String, SelectStmt), // IN (SUBQUERY)
       Array[Expr], // (A, B)
     )
+  //      (Expr, String, SelectStmt), // IN (SUBQUERY)
 
   override def genSql(sb: StringBuffer): Unit = children match {
     case (c, null, null, null, null, null, null, null, null) =>
@@ -158,26 +159,26 @@ trait Expr extends SqlItem with ExprOp[Expr] with ExprOpMath[Expr] with ExprOpAs
       t.genSql(sb)
     case (null, null, f, null, null, null, null, null, null) =>
       f.genSql(sb)
-    case (null, null, null, (op, e), null, null, null, null, null) =>
+    case (null, null, null, s, null, null, null, null, null) =>
+      sb.append("(")
+      s.genSql(sb)
+      sb.append(")")
+    case (null, null, null, null, (op, e), null, null, null, null) =>
       sb.append(s"${op} ")
       e.genSql(sb)
-    case (null, null, null, null, (e, op), null, null, null, null) =>
+    case (null, null, null, null, null, (e, op), null, null, null) =>
       e.genSql(sb)
       sb.append(s" ${op}")
-    case (null, null, null, null, null, (l, op, r), null, null, null) =>
+    case (null, null, null, null, null, null, (l, op, r), null, null) =>
       l.genSql(sb)
       sb.append(s" ${op} ")
       r.genSql(sb)
-    case (null, null, null, null, null, null, (e, l, r), null, null) =>
+    case (null, null, null, null, null, null, null, (e, l, r), null) =>
       e.genSql(sb)
       sb.append(" BETWEEN ")
       l.genSql(sb)
       sb.append(" AND ")
       r.genSql(sb)
-    case (null, null, null, null, null, null, null, (e, op, s), null) =>
-      e.genSql(sb)
-      sb.append(s" ${op}")
-      s.genSql(sb)
     case (null, null, null, null, null, null, null, null, list) =>
       sb.append("(")
       bufferMkString(sb, list, ", ")
@@ -192,20 +193,19 @@ trait Expr extends SqlItem with ExprOp[Expr] with ExprOpMath[Expr] with ExprOpAs
       t.genParams(ab)
     case (null, null, f, null, null, null, null, null, null) =>
       f.genParams(ab)
-    case (null, null, null, (_, e), null, null, null, null, null) =>
-      e.genParams(ab)
-    case (null, null, null, null, (e, _), null, null, null, null) =>
-      e.genParams(ab)
-    case (null, null, null, null, null, (l, _, r), null, null, null) =>
-      l.genParams(ab)
-      r.genParams(ab)
-    case (null, null, null, null, null, null, (e, l, r), null, null) =>
-      e.genParams(ab)
-      l.genParams(ab)
-      r.genParams(ab)
-    case (null, null, null, null, null, null, null, (e, _, s), null) =>
-      e.genParams(ab)
+    case (null, null, null, s, null, null, null, null, null) =>
       s.genParams(ab)
+    case (null, null, null, null, (_, e), null, null, null, null) =>
+      e.genParams(ab)
+    case (null, null, null, null, null, (e, _), null, null, null) =>
+      e.genParams(ab)
+    case (null, null, null, null, null, null, (l, _, r), null, null) =>
+      l.genParams(ab)
+      r.genParams(ab)
+    case (null, null, null, null, null, null, null, (e, l, r), null) =>
+      e.genParams(ab)
+      l.genParams(ab)
+      r.genParams(ab)
     case (null, null, null, null, null, null, null, null, list) =>
       list.foreach(_.genParams(ab))
     case _ => throw new UnreachableException
@@ -241,24 +241,24 @@ object Expr {
     override val children = (null, null, fc, null, null, null, null, null, null)
   }
 
+  def stmt(s: SelectStmt): Expr = new Expr {
+    override val children = (null, null, null, s, null, null, null, null, null)
+  }
+
   def apply(op: String, e: ExprT[_]): Expr = new Expr {
-    override val children = (null, null, null, (op, e.toExpr), null, null, null, null, null)
+    override val children = (null, null, null, null, (op, e.toExpr), null, null, null, null)
   }
 
   def apply(e: ExprT[_], op: String): Expr = new Expr {
-    override val children = (null, null, null, null, (e.toExpr, op), null, null, null, null)
+    override val children = (null, null, null, null, null, (e.toExpr, op), null, null, null)
   }
 
   def apply(l: ExprT[_], op: String, r: ExprT[_]): Expr = new Expr {
-    override val children = (null, null, null, null, null, (l.toExpr, op, r.toExpr), null, null, null)
+    override val children = (null, null, null, null, null, null, (l.toExpr, op, r.toExpr), null, null)
   }
 
   def apply(e: ExprT[_], l: ExprT[_], r: ExprT[_]): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, (e.toExpr, l.toExpr, r.toExpr), null, null)
-  }
-
-  def apply(e: ExprT[_], op: String, stmt: SelectStmt): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, (e.toExpr, op, stmt), null)
+    override val children = (null, null, null, null, null, null, null, (e.toExpr, l.toExpr, r.toExpr), null)
   }
 
   def apply(es: ExprT[_]*): Expr = new Expr {
@@ -273,6 +273,11 @@ object Expr {
   def asFunctionCall(e: Expr): FunctionCall = e.children match {
     case (null, null, fn, null, null, null, null, null, null) => fn
     case _ => throw new RuntimeException("Not FunctionCall Expr")
+  }
+
+  def asSelectStmt(e: Expr): SelectStmt = e.children match {
+    case (null, null, null, s, null, null, null, null, null) => s
+    case _ => throw new RuntimeException("Not SelectStmt Expr")
   }
 }
 

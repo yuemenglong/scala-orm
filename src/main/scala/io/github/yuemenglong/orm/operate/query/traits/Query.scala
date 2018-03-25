@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.core.traits.Expr2
 import io.github.yuemenglong.orm.operate.field.traits.Field
 import io.github.yuemenglong.orm.operate.join.traits.Cond
-import io.github.yuemenglong.orm.sql.{ResultColumn, SelectCore, SelectStatement}
+import io.github.yuemenglong.orm.sql._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -132,6 +132,10 @@ trait QueryBase[S] extends SelectStatement[S] {
       ab.toArray
     })
   }
+
+  def all: ExprT[_] = Expr.apply("ALL", this)
+
+  def any: ExprT[_] = Expr.apply("ANY", this)
 }
 
 class Query1[T: ClassTag](s: Selectable[T]) extends QueryBase[Query1[T]] with Queryable[T] {

@@ -9,7 +9,11 @@ import scala.collection.mutable.ArrayBuffer
   */
 
 //noinspection ScalaRedundantCast
-trait SelectStatement[S] extends SelectStmt {
+trait SelectStatement[S] extends SelectStmt with ExprT[S] {
+
+  override def fromExpr(e: Expr): S = Expr.asSelectStmt(e).asInstanceOf[S]
+
+  override def toExpr: Expr = Expr.stmt(this)
 
   def distinct(): S = {
     core._distinct = true

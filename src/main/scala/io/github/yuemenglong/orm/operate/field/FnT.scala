@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.field
 
 import io.github.yuemenglong.orm.operate.field.traits.SelectableField
-import io.github.yuemenglong.orm.sql.{Expr, ResultColumn}
+import io.github.yuemenglong.orm.sql.{Expr, ExprT, ResultColumn}
 
 /**
   * Created by <yuemenglong@126.com> on 2018/3/22.
@@ -50,6 +50,8 @@ trait FnOp {
     override private[orm] val uid = s"$$max$$${f.uid}"
     override private[orm] val expr = Expr.func("MAX", d = false, Array(f.toExpr))
   }
+
+  def exists(e: ExprT[_]): ExprT[_] = Expr("EXISTS", e)
 }
 
 object Fn extends FnOp
