@@ -102,6 +102,19 @@ trait Cascade extends Table[Cascade] {
   def joinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.INNER)
 
   def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
+
+  def as[T](clazz: Class[T]) = {
+    if (!OrmMeta.entityMap.contains(clazz)) {
+      throw new RuntimeException(s"$clazz Is Not Entity")
+    }
+    val that = this
+    new TypedSelectableCascade[T] {
+      override val meta = that.meta
+      override private[orm] val _table = that._table
+      override private[orm] val _joins = that._joins
+      override private[orm] val _on = that._on
+    }
+  }
 }
 
 trait SelectFieldCascade extends Cascade {
