@@ -6,6 +6,7 @@ import java.util.Date
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.operate.field.Fn
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
@@ -143,8 +144,8 @@ class ScalaTest {
         session.execute(Orm.insert(Orm.convert(obj)))
       })
       val root = Orm.root(classOf[Obj])
-      val query = Orm.select(root.max(root.get("id"), classOf[java.lang.Long]),
-        root.min(root.get("id"), classOf[java.lang.Long])).from(root)
+      val query = Orm.select(Fn.max(root.get("id").as(classOf[java.lang.Long])),
+        Fn.min(root.get("id").as(classOf[java.lang.Long]))).from(root)
       val (max, min) = session.first(query)
       Assert.assertEquals(max.intValue(), 10)
       Assert.assertEquals(min.intValue(), 1)
@@ -250,7 +251,7 @@ class ScalaTest {
         val root = Orm.root(classOf[Obj])
         root.select("oo")
         root.select("om").select("mo")
-        val query = Orm.select(root.count()).from(root)
+        val query = Orm.select(Fn.count()).from(root)
         val ret = session.first(query)
         Assert.assertEquals(ret.longValue(), 0)
       }

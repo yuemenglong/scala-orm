@@ -26,7 +26,7 @@ object PerformanceTest {
       //    root.selects(_.om).select(_.mo)
       val query = Orm.selectFrom(root).where(root.get(_.id).===(1).and(root.get(_.age) >= 10))
       val res = (1 to 100000).map(_ => {
-        query.getSql
+        query.toString
         //        session.query(query)
       })
       val end = System.currentTimeMillis()

@@ -5,6 +5,9 @@ import java.text.SimpleDateFormat
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.types.Types._
+import io.github.yuemenglong.orm.operate.field.Fn
+import io.github.yuemenglong.orm.operate.join.TypedSelectableCascade
+import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
@@ -88,14 +91,15 @@ class TypedTest {
       session.execute(ex)
     })
     val root = Orm.root(classOf[Obj])
-    val cond = root.get(_.id).lt(2)
-      .or(root.get(_.id).gt(9))
+    val cond = Expr(root.get(_.id).lt(2)
+      .or(root.get(_.id).gt(9)))
       .and(root.selects(_.om).get(_.id).gt(2))
     val objs = session.query(Orm.selectFrom(root).where(cond))
     Assert.assertEquals(objs.length, 2)
     Assert.assertEquals(objs(0).om.length, 1)
     Assert.assertEquals(objs(1).om.length, 3)
   })
+
 
   @Test
   def testNotNull(): Unit = db.beginTransaction(session => {
@@ -114,11 +118,12 @@ class TypedTest {
     Assert.assertEquals(res(0).id.longValue(), 1)
     Assert.assertEquals(res(0).age, null)
 
-    res = session.query(Orm.selectFrom(root).where(root.get(_.age).notNull()))
+    res = session.query(Orm.selectFrom(root).where(root.get(_.age).notNull))
     Assert.assertEquals(res.length, 1)
     Assert.assertEquals(res(0).id.longValue(), 2)
     Assert.assertEquals(res(0).age, 10)
   })
+
 
   @Test
   def testCount(): Unit = db.beginTransaction(session => {
@@ -133,9 +138,10 @@ class TypedTest {
     Assert.assertEquals(ret, 7)
 
     val root = Orm.root(classOf[OM])
-    val c = session.first(Orm.select(root.count()).from(root))
+    val c = session.first(Orm.select(Fn.count()).from(root))
     Assert.assertEquals(c.longValue(), 6)
   })
+
 
   @Test
   def testSelectField(): Unit = db.beginTransaction(session => {
@@ -153,6 +159,7 @@ class TypedTest {
     Assert.assertEquals(c.intValue(), 6)
   })
 
+
   @Test
   def testMultiTarget(): Unit = db.beginTransaction(session => {
     val obj = new Obj
@@ -167,7 +174,7 @@ class TypedTest {
     session.execute(ex)
 
     val root = Orm.root(classOf[Obj])
-    val s1 = root.joins(_.om).as()
+    val s1 = root.joinsAs(_.om)
     val res = session.query(Orm.select(root, s1).from(root))
     Assert.assertEquals(res.length, 2)
     Assert.assertEquals(res(0)._1.name, "name")
@@ -195,7 +202,8 @@ class TypedTest {
 
     {
       val root = Orm.root(classOf[Obj])
-      val mo = root.joins(_.om).leftJoin(_.mo).as()
+      val mo: TypedSelectableCascade[MO] = root.joins(_.om).leftJoinAs(_.mo)
+      println(root)
       val res = session.query(Orm.select(root, mo).from(root))
       Assert.assertEquals(res.length, 2)
       Assert.assertEquals(res(0)._1.om, null)
@@ -211,6 +219,7 @@ class TypedTest {
       Assert.assertEquals(res(1).mo, null)
     }
   })
+
 
   @Test
   def testSelectOOWithNull(): Unit = db.beginTransaction(session => {
@@ -245,22 +254,22 @@ class TypedTest {
 
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(root.count(root.get(_.objId))).from(root))
+      val res = session.first(Orm.select(Fn.count(root.get(_.objId))).from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(root.count(root.get(_.objId))).distinct.from(root))
+      val res = session.first(Orm.select(Fn.count(root.get(_.objId))).distinct().from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(root.count(root.get(_.objId)).distinct).from(root))
+      val res = session.first(Orm.select(Fn.count(root.get(_.objId)).distinct).from(root))
       Assert.assertEquals(res.longValue(), 1)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(root.count()).from(root))
+      val res = session.first(Orm.select(Fn.count()).from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
   })
@@ -307,7 +316,7 @@ class TypedTest {
     }
     {
       val root = Orm.root(classOf[Obj])
-      val res = session.first(Orm.select(root.sum(root.joins(_.om).get(_.id))).from(root))
+      val res = session.first(Orm.select(Fn.sum(root.joins(_.om).get(_.id))).from(root))
       Assert.assertEquals(res.longValue(), 6)
     }
     {
@@ -315,8 +324,8 @@ class TypedTest {
       val om = root.joins(_.om)
       val res = session.query(Orm.select(
         root.get(_.id),
-        root.sum(om.get(_.id)),
-        root.count(om.get(_.id))
+        Fn.sum(om.get(_.id)),
+        Fn.count(om.get(_.id))
       ).from(root).groupBy(root.get(_.id)))
       Assert.assertEquals(res.length, 2)
       Assert.assertEquals(res(0)._1.longValue(), 1)
@@ -330,11 +339,11 @@ class TypedTest {
       val root = Orm.root(classOf[Obj])
       val res = session.query(Orm.select(
         root.get(_.id),
-        root.sum(root.joins(_.om).get(_.id)),
-        root.count(root.joins(_.om).get(_.id))
+        Fn.sum(root.joins(_.om).get(_.id)),
+        Fn.count(root.joins(_.om).get(_.id))
       ).from(root)
         .groupBy(root.get(_.id))
-        .having(root.count(root(_.id)).gt(1)))
+        .having(Fn.count(root(_.id)).gt(1)))
       Assert.assertEquals(res.length, 1)
       Assert.assertEquals(res(0)._1.longValue(), 2)
       Assert.assertEquals(res(0)._2.longValue(), 5)
@@ -738,7 +747,7 @@ class TypedTest {
       })
       Assert.assertNull(res)
       val root = Orm.root(classOf[OM])
-      val count = session.first(Orm.select(root.count()).from(root))
+      val count = session.first(Orm.select(Fn.count()).from(root))
       Assert.assertEquals(count.intValue(), 0)
     }
   })
@@ -789,27 +798,27 @@ class TypedTest {
     {
       val r = Orm.root(classOf[Obj])
       r.fields(_.name)
-      val sr = r.subRoot(classOf[OM])
+      val sr = Orm.root(classOf[OM])
       val query = Orm.selectFrom(r).where(r(_.id).in(
-        Orm.subSelect(sr(_.id)).from(sr)
+        Orm.select(sr(_.id)).from(sr)
       ))
       val res = session.query(query)
       Assert.assertEquals(res.length, 1)
     }
     {
       val r = Orm.root(classOf[OM])
-      val sr = r.subRoot(classOf[Obj])
+      val sr = Orm.root(classOf[Obj])
       val query = Orm.selectFrom(r).where(r(_.objId).===(
-        Orm.subSelect(sr(_.id)).from(sr).where(sr.get(_.id).===(1))
+        Orm.select(sr(_.id)).from(sr).where(sr.get(_.id).===(1))
       ))
       val res = session.query(query)
       Assert.assertEquals(res.length, 3)
     }
     {
       val r = Orm.root(classOf[OM])
-      val sr = r.subRoot(classOf[Obj])
+      val sr = Orm.root(classOf[Obj])
       val query = Orm.selectFrom(r).where(r.get(_.id).>(
-        Orm.subSelect(sr.get(_.id)).from(sr).all
+        Orm.select(sr.get(_.id)).from(sr).all
       ))
       val res = session.query(query)
       Assert.assertEquals(res(0).id.intValue(), 2)
@@ -817,9 +826,9 @@ class TypedTest {
     }
     {
       val r = Orm.root(classOf[OM])
-      val sr = r.subRoot(classOf[Obj])
-      val query = Orm.selectFrom(r).where(r.exists(
-        Orm.subSelect(sr.get(_.id)).from(sr).where(sr.get(_.id).eql(r.get(_.objId)))
+      val sr = Orm.root(classOf[Obj])
+      val query = Orm.selectFrom(r).where(Fn.exists(
+        Orm.select(sr.get(_.id)).from(sr).where(sr.get(_.id).eql(r.get(_.objId)))
       ))
       val res = session.query(query)
       Assert.assertEquals(res.length, 3)
@@ -838,5 +847,37 @@ class TypedTest {
 
     val res = session.first(Orm.select(root(_.age)).from(root))
     Assert.assertEquals(res.intValue(), 20)
+  })
+
+  @Test
+  def testResultColumn(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.ptr = new Ptr
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    session.execute(ex)
+
+    {
+      val res = session.first(Orm.select(Expr.const(1).as("$1").asInt()))
+      Assert.assertEquals(res.intValue(), 1)
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val t = Orm.select(root.get(_.id).as("id"), root.get(_.ptrId).as("ptrId")).from(root).asTable("$1")
+      val t2 = Orm.table(classOf[Ptr])
+      t.join(t2).on(t.get("ptrId").eql(t2.get(_.id)))
+      val s = Orm.select(t.get("id").asLong()).from(t)
+      val res = session.first(s)
+      Assert.assertEquals(res.longValue(), 1)
+    }
+    {
+      val s = Orm.select(Expr.const(1).as("id").asLong(), Expr.const("").as("name").asStr())
+      val root = Orm.table(classOf[Obj])
+      val q = Orm.select(root.get(_.id)).from(root).where(Expr(root.get(_.id), root.get(_.name)).in(s))
+      val res = session.first(q)
+      Assert.assertEquals(res.longValue(), 1)
+    }
+
   })
 }

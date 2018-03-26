@@ -5,14 +5,11 @@ import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
+import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
-import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.join._
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Join, Root}
 import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.query.traits.{Query, QueryBuilder, Selectable, SubQueryBuilder}
 
 import scala.reflect.ClassTag
 
@@ -22,12 +19,12 @@ object Orm {
     Scanner.scan(paths)
   }
 
-  private[orm] def init(path: String): Unit = {
-    Scanner.scan(path)
+  def init(clazzs: Array[Class[_]]): Unit = {
+    Scanner.scan(clazzs)
   }
 
-  private def init(clazzs: Array[Class[_]]): Unit = {
-    Scanner.scan(clazzs)
+  private[orm] def init(path: String): Unit = {
+    Scanner.scan(path)
   }
 
   def reset(): Unit = {
@@ -44,6 +41,7 @@ object Orm {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
     new Db(host, port, user, pwd, db, 5, 30, 3)
   }
+
 
   def create[T](clazz: Class[T]): T = {
     EntityManager.create(clazz)
@@ -84,71 +82,19 @@ object Orm {
 
   def delete[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.delete(convert(obj))
 
-  def root[T](clazz: Class[T]): Root[T] = {
-    OrmMeta.entityMap.get(clazz) match {
-      case None => throw new RuntimeException("Not Entity Class")
-      case Some(m) =>
-        val rootInner = new JoinInner {
-          override val meta: EntityMeta = m
-          override val parent: Join = null
-          override val joinName: String = null
-          override val right: String = null
-          override val left: String = null
-          override val joinType: JoinType = null
-        }
-        val root = new RootImpl[T] with TypedSelectJoinImpl[T] with TypedJoinImpl[T]
-          with SelectableImpl[T] with SelectFieldJoinImpl with JoinImpl {
-          override val inner: JoinInner = rootInner
-        }
-        root
-    }
-  }
+  def root[T](clazz: Class[T]): Root[T] = Root[T](clazz)
 
-  def cond(): Cond = new CondHolder
+  def table[T](clazz: Class[T]): Root[T] = Root[T](clazz)
 
-  def select[T](s: Selectable[T]): QueryBuilder[T] = {
-    new QueryBuilderImpl[T] {
-      override val st = new SelectableTupleImpl[T](s.getType, s)
-    }
-  }
+  def select[T: ClassTag](c: Selectable[T]): Query1[T] = new Query1[T](c)
 
-  def select[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): QueryBuilder[(T1, T2)] = {
-    new QueryBuilderImpl[(T1, T2)] {
-      override val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
-    }
-  }
+  def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1] = new Query2[T0, T1](s0, s1)
 
-  def select[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): QueryBuilder[(T1, T2, T3)] = {
-    new QueryBuilderImpl[(T1, T2, T3)] {
-      override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
-    }
-  }
+  def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2] = new Query3[T0, T1, T2](s0, s1, s2)
 
-  def subSelect[T](s: Selectable[T]): SubQueryBuilder[T] = {
-    new SubQueryBuilderImpl[T] {
-      override val st = new SelectableTupleImpl[T](s.getType, s)
-    }
-  }
+  def selectFrom[T: ClassTag](r: TypedSelectableCascade[T]): Query1[T] = select(r).from(r)
 
-  def subSelect[T1, T2](s1: Selectable[T1], s2: Selectable[T2]): SubQueryBuilder[(T1, T2)] = {
-    new SubQueryBuilderImpl[(T1, T2)] {
-      override val st = new SelectableTupleImpl[(T1, T2)](classOf[(T1, T2)], s1, s2)
-    }
-  }
-
-  def subSelect[T1, T2, T3](s1: Selectable[T1], s2: Selectable[T2], s3: Selectable[T3]): SubQueryBuilder[(T1, T2, T3)] = {
-    new SubQueryBuilderImpl[(T1, T2, T3)] {
-      override val st = new SelectableTupleImpl[(T1, T2, T3)](classOf[(T1, T2, T3)], s1, s2, s3)
-    }
-  }
-
-  def selectFrom[T](root: Root[T]): Query[T, T] = {
-    val pRoot = root
-    new QueryImpl[T, T] with QueryBuilderImpl[T] {
-      override val root = pRoot
-      override val st = new SelectableTupleImpl[T](root.getType, root)
-    }
-  }
+  //  def cond(): Cond = new CondHolder
 
   @Deprecated
   def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
@@ -167,7 +113,7 @@ object Orm {
 
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
-  def delete(joins: Join*): ExecutableDelete = new DeleteImpl(joins: _*)
+  def delete(joins: Cascade*): ExecutableDelete = new DeleteImpl(joins: _*)
 
   def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
 

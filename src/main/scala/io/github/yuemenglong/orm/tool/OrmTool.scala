@@ -10,12 +10,12 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.join.traits.{Join, Root, SelectFieldJoin, TypedSelectJoin}
-import io.github.yuemenglong.orm.operate.query.QueryImpl
-import io.github.yuemenglong.orm.operate.query.traits.Query
+import io.github.yuemenglong.orm.operate.join.{Cascade, Root, SelectFieldCascade, TypedSelectableCascade}
+import io.github.yuemenglong.orm.operate.query.Query1
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 /**
   * Created by <yuemenglong@126.com> on 2017/10/10.
@@ -107,8 +107,8 @@ object OrmTool {
 
   def attachx[T, R](orig: T, session: Session)
                    (fn: T => R)
-                   (joinFn: TypedSelectJoin[R] => Unit,
-                    queryFn: Query[R, R] => Unit
+                   (joinFn: TypedSelectableCascade[R] => Unit,
+                    queryFn: Query1[R] => Unit
                    ): T = {
     val obj = Orm.convert(orig)
     val entity = obj.asInstanceOf[Entity]
@@ -117,19 +117,19 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectableCascade[R]])
     }
     val qf = queryFn match {
       case null => null
-      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+      case _ => (query: Query1[R]) => queryFn(query)
     }
-    attach(obj, field, session, jf, qf)
+    attach(obj, field, session, jf, qf.asInstanceOf[Query1[_] => Unit])
   }
 
   def attachsx[T, R](orig: T, session: Session)
                     (fn: T => Array[R])
-                    (joinFn: TypedSelectJoin[R] => Unit,
-                     queryFn: Query[R, R] => Unit
+                    (joinFn: TypedSelectableCascade[R] => Unit,
+                     queryFn: Query1[R] => Unit
                     ): T = {
     val obj = Orm.convert(orig)
     val entity = obj.asInstanceOf[Entity]
@@ -138,19 +138,19 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectableCascade[R]])
     }
     val qf = queryFn match {
       case null => null
-      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+      case _ => (query: Query1[R]) => queryFn(query)
     }
-    attach(obj, field, session, jf, qf)
+    attach(obj, field, session, jf, qf.asInstanceOf[Query1[_] => Unit])
   }
 
   def sattachx[T, R](orig: Array[T], session: Session)
                     (fn: T => R)
-                    (joinFn: TypedSelectJoin[R] => Unit,
-                     queryFn: Query[R, R] => Unit
+                    (joinFn: TypedSelectableCascade[R] => Unit,
+                     queryFn: Query1[R] => Unit
                     ): Array[T] = {
     if (orig.isEmpty) {
       return orig
@@ -163,19 +163,19 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectableCascade[R]])
     }
     val qf = queryFn match {
       case null => null
-      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+      case _ => (query: Query1[_]) => queryFn(query.asInstanceOf[Query1[R]])
     }
     attach(arr, field, session, jf, qf)
   }
 
   def sattachsx[T, R](orig: Array[T], session: Session)
                      (fn: T => Array[R])
-                     (joinFn: TypedSelectJoin[R] => Unit,
-                      queryFn: Query[R, R] => Unit
+                     (joinFn: TypedSelectableCascade[R] => Unit,
+                      queryFn: Query1[R] => Unit
                      ): Array[T] = {
     if (orig.isEmpty) {
       return orig
@@ -188,11 +188,11 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldJoin) => joinFn(join.asInstanceOf[TypedSelectJoin[R]])
+      case _ => (join: SelectFieldCascade) => joinFn(join.asInstanceOf[TypedSelectableCascade[R]])
     }
     val qf = queryFn match {
       case null => null
-      case _ => (query: Query[_, _]) => queryFn(query.asInstanceOf[Query[R, R]])
+      case _ => (query: Query1[_]) => queryFn(query.asInstanceOf[Query1[R]])
     }
     attach(arr, field, session, jf, qf)
   }
@@ -200,11 +200,11 @@ object OrmTool {
   def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
 
   def attach[T](obj: T, field: String, session: Session,
-                joinFn: SelectFieldJoin => Unit,
-                queryFn: Query[_, _] => Unit
+                joinFn: SelectFieldCascade => Unit,
+                queryFn: Query1[_] => Unit
                ): T = {
     if (obj.getClass.isArray) {
-      return attachArray(obj.asInstanceOf[Array[_]], field, session, joinFn, queryFn)
+      return attachArray(obj.asInstanceOf[Array[_]], field, session, joinFn, queryFn.asInstanceOf[Query1[_] => Unit])
         .asInstanceOf[T]
     }
     if (!obj.isInstanceOf[Entity]) {
@@ -222,12 +222,17 @@ object OrmTool {
     val rightField = refer.right
     if (joinFn != null) joinFn(root)
 
-    val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[_, _]]
-    if (queryFn != null) queryFn(query)
-    query.where(query.cond.and(root.get(rightField).eql(leftValue)))
+    val query = Orm.selectFrom(root)
+    if (queryFn != null) queryFn(query.asInstanceOf[Query1[T]])
+    val cond = root.get(rightField).eql(leftValue)
+    val where = query.core._where match {
+      case null => cond
+      case w => w.and(cond)
+    }
+    query.where(where)
 
     val res = refer.isOneMany match {
-      case true => session.query(query).asInstanceOf[Object]
+      case true => session.query(query).toArray(ClassTag(refer.refer.clazz)).asInstanceOf[Object]
       case false => session.first(query).asInstanceOf[Object]
     }
 
@@ -235,10 +240,9 @@ object OrmTool {
     obj
   }
 
-
   private def attachArray(arr: Array[_], field: String, session: Session,
-                          joinFn: SelectFieldJoin => Unit = null,
-                          queryFn: Query[_, _] => Unit = null
+                          joinFn: SelectFieldCascade => Unit = null,
+                          queryFn: Query1[_] => Unit = null
                          ): Array[_] = {
     if (arr.exists(!_.isInstanceOf[Entity])) {
       throw new RuntimeException("Array Has Item Not Entity")
@@ -259,13 +263,18 @@ object OrmTool {
 
     if (joinFn != null) joinFn(root)
 
-    val query = Orm.selectFrom(root).asInstanceOf[QueryImpl[_, _]]
+    val query = Orm.selectFrom(root)
     if (queryFn != null) queryFn(query)
-    query.where(query.cond.and(root.get(rightField).in(leftValues)))
+    val cond = root.get(rightField).in(leftValues)
+    val where = query.core._where match {
+      case null => cond
+      case w => w.and(cond)
+    }
+    query.where(where)
 
     val res: Map[Object, Object] = refer.isOneMany match {
       case true => session.query(query).map(_.asInstanceOf[Entity])
-        .groupBy(_.$$core().get(rightField))
+        .groupBy(_.$$core().get(rightField)).mapValues(_.toArray(ClassTag(refer.refer.clazz)))
       case false => session.query(query).map(_.asInstanceOf[Entity])
         .map(e => (e.$$core().get(rightField), e)).toMap
     }
@@ -308,19 +317,19 @@ object OrmTool {
     }
   }
 
-  def selectById[T, V](clazz: Class[T], id: V, session: Session)
-                      (rootFn: (Root[T]) => Unit = null): T = {
+  def selectById[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
+                                (rootFn: (Root[T]) => Unit = null): T = {
     val root = Orm.root(clazz)
     if (rootFn != null) rootFn(root)
     val pkey = root.getMeta.pkey.name
     session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
   }
 
-  def deleteById[T, V](clazz: Class[T], id: V, session: Session)
-                      (rootFn: (Root[T]) => Array[Join] = (_: Root[T]) => Array[Join]()): Int = {
+  def deleteById[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
+                                (rootFn: (Root[T]) => Array[Cascade] = (_: Root[T]) => Array[Cascade]()): Int = {
     val root = Orm.root(clazz)
     val cascade = rootFn(root)
-    val all: Array[Join] = Array(root) ++ cascade
+    val all: Array[Cascade] = Array(root) ++ cascade
     val pkey = root.getMeta.pkey.name
     val ex = Orm.delete(all: _*).from(root).where(root.get(pkey).eql(id))
     session.execute(ex)

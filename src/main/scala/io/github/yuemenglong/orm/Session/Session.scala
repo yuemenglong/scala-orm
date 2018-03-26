@@ -4,10 +4,9 @@ import java.sql.{Connection, ResultSet, Statement}
 
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.execute.traits.Executable
-import io.github.yuemenglong.orm.operate.query.traits.Queryable
+import io.github.yuemenglong.orm.operate.query.Queryable
 
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 /**
   * Created by Administrator on 2017/5/24.
@@ -53,7 +52,7 @@ class Session(private val conn: Connection) {
   }
 
   def query[T](query: Queryable[T]): Array[T] = {
-    query.query(this).toArray(ClassTag(query.getType))
+    query.query(this)
   }
 
   def first[T](q: Queryable[T]): T = {
@@ -134,8 +133,8 @@ class Session(private val conn: Connection) {
     }
   }
 
-  def query[T](sql: String, params: Array[Object],
-               fn: (ResultSet) => Array[T]): Array[T] = {
+  def query(sql: String, params: Array[Object],
+            fn: (ResultSet) => Array[Array[Any]]): Array[Array[Any]] = {
     record(sql, params)
     val stmt = conn.prepareStatement(sql)
     params.zipWithIndex.foreach { case (param, i) =>
