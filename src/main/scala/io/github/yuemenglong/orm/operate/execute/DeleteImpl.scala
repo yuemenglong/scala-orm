@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.operate.execute.traits.ExecutableDelete
-import io.github.yuemenglong.orm.operate.join.traits.{Cascade, Cond, Root}
+import io.github.yuemenglong.orm.operate.join.Cascade
 
 import scala.collection.mutable.ArrayBuffer
 

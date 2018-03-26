@@ -9,10 +9,7 @@ import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.operate.join._
-import io.github.yuemenglong.orm.operate.join.traits.{Cascade, Cond, Root, TypedSelectableCascade}
 import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.query.traits._
-import io.github.yuemenglong.orm.sql.SelectCore
 
 import scala.reflect.ClassTag
 
@@ -22,12 +19,12 @@ object Orm {
     Scanner.scan(paths)
   }
 
-  private[orm] def init(path: String): Unit = {
-    Scanner.scan(path)
+  def init(clazzs: Array[Class[_]]): Unit = {
+    Scanner.scan(clazzs)
   }
 
-  private def init(clazzs: Array[Class[_]]): Unit = {
-    Scanner.scan(clazzs)
+  private[orm] def init(path: String): Unit = {
+    Scanner.scan(path)
   }
 
   def reset(): Unit = {

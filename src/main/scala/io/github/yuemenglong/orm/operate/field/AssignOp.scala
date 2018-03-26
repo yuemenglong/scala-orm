@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.operate.field.traits
+package io.github.yuemenglong.orm.operate.field
 
 import io.github.yuemenglong.orm.sql.{Assign, Expr, ExprT}
 
@@ -15,4 +15,3 @@ trait AssignOp {
 
   def :=[T](v: T): Assign = assign(v)
 }
-

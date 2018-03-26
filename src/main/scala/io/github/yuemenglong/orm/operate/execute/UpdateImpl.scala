@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.operate.execute.traits.ExecutableUpdate
-import io.github.yuemenglong.orm.operate.join.traits.Root
+import io.github.yuemenglong.orm.operate.join.Root
 
 import scala.collection.mutable.ArrayBuffer
 

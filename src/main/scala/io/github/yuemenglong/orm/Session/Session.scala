@@ -4,7 +4,7 @@ import java.sql.{Connection, ResultSet, Statement}
 
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.operate.execute.traits.Executable
-import io.github.yuemenglong.orm.operate.query.traits.Queryable
+import io.github.yuemenglong.orm.operate.query.Queryable
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -52,8 +52,7 @@ class Session(private val conn: Connection) {
   }
 
   def query[T](query: Queryable[T]): Array[T] = {
-    //    query.query(this).toArray(ClassTag(query.getType))
-    query.query(this) //.toArray(ClassTag(query.getType))
+    query.query(this)
   }
 
   def first[T](q: Queryable[T]): T = {

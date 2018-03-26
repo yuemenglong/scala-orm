@@ -1,11 +1,11 @@
-package io.github.yuemenglong.orm.operate.query.traits
+package io.github.yuemenglong.orm.operate.query
 
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
-import io.github.yuemenglong.orm.operate.join.traits.SubQuery
+import io.github.yuemenglong.orm.operate.join.SubQuery
 import io.github.yuemenglong.orm.sql._
 
 import scala.collection.mutable

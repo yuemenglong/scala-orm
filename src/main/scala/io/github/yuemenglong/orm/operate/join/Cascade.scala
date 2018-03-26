@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.operate.join.traits
+package io.github.yuemenglong.orm.operate.join
 
 import java.sql.ResultSet
 
@@ -7,14 +7,18 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.field.traits.{Field, SelectableField}
-import io.github.yuemenglong.orm.operate.join.JoinType
+import io.github.yuemenglong.orm.operate.field.{Field, SelectableField}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
-import io.github.yuemenglong.orm.operate.query.traits.Selectable
+import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.sql._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+
+object JoinType extends Enumeration {
+  type JoinType = Value
+  val INNER, LEFT, RIGHT, OUTER = Value
+}
 
 trait Cascade extends Table[Cascade] {
   val meta: EntityMeta

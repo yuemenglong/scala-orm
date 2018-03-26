@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
-import io.github.yuemenglong.orm.operate.join.traits.{Cond, Root}
+import io.github.yuemenglong.orm.operate.join.Root
 import io.github.yuemenglong.orm.sql.{DeleteStatement, Expr, ExprT}
 
 /**

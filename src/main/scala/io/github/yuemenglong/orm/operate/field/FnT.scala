@@ -1,6 +1,5 @@
 package io.github.yuemenglong.orm.operate.field
 
-import io.github.yuemenglong.orm.operate.field.traits.SelectableField
 import io.github.yuemenglong.orm.sql.{Expr, ExprT, ResultColumn}
 
 /**

@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.operate.field.Fn
-import io.github.yuemenglong.orm.operate.join.traits.TypedSelectableCascade
+import io.github.yuemenglong.orm.operate.join.TypedSelectableCascade
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool

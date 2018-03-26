@@ -10,8 +10,8 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.join.traits.{Cascade, Root, SelectFieldCascade, TypedSelectableCascade}
-import io.github.yuemenglong.orm.operate.query.traits.Query1
+import io.github.yuemenglong.orm.operate.join.{Cascade, Root, SelectFieldCascade, TypedSelectableCascade}
+import io.github.yuemenglong.orm.operate.query.Query1
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
