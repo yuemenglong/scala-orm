@@ -51,7 +51,7 @@ trait Field extends ResultColumn with AssignOp {
     case _ => Assign(Expr.asTableColumn(expr), e.toExpr)
   }
 
-  def as[T](clazz: Class[T]) = {
+  def as[T](clazz: Class[T]): SelectableField[T] = {
     val that = this
     val thatClazz = clazz
     new SelectableField[T] {
@@ -87,6 +87,15 @@ trait SelectableField[T] extends Field with Selectable[T] {
   }
 
   override def getColumns: Array[ResultColumn] = Array(this)
+
+  def as(alias: String) = {
+    val that = this
+    new SelectableField[T] {
+      override val clazz = that.clazz
+      override private[orm] val expr = that.expr
+      override private[orm] val uid = alias
+    }
+  }
 }
 
 //trait Field extends FieldExpr with CondOp with AssignOp with Alias {

@@ -34,6 +34,10 @@ trait Cascade extends Table[Cascade] {
     }
   }
 
+  def join(t: Table[_], joinType: JoinType): Table[_] = super.join(t, joinType.toString)
+
+  def join(t: Table[_]): Table[_] = join(t, JoinType.INNER)
+
   def join(field: String, joinType: JoinType): Cascade = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
@@ -400,4 +404,16 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
   override def getType: Class[T] = getMeta.clazz.asInstanceOf[Class[T]]
 }
 
+trait SubQuery extends Table[SubQuery] {
+  def get(alias: String): Field = {
+    val that = this
+    new Field {
+      override private[orm] val uid = alias
+      override private[orm] val expr = Expr.column(that.getAlias, alias)
+    }
+  }
 
+  def join(t: Table[_], joinType: JoinType): Table[_] = super.join(t, joinType.toString)
+
+  def join(t: Table[_]): Table[_] = join(t, JoinType.INNER)
+}

@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.operate.join.traits
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
-import io.github.yuemenglong.orm.sql.{SelectStatement, Table}
+import io.github.yuemenglong.orm.sql.{Expr, SelectStatement, Table, Var}
 
 //
 //import io.github.yuemenglong.orm.meta.OrmMeta
@@ -76,7 +76,7 @@ object Root {
       override val meta = rootMeta
       override private[orm] val _table = table._table
       override private[orm] val _joins = table._joins
-      override private[orm] val _on = null
+      override private[orm] val _on = Var[Expr](null)
     }
   }
 }

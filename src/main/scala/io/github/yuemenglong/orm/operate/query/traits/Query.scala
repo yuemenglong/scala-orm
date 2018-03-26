@@ -5,9 +5,7 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
-import io.github.yuemenglong.orm.operate.core.traits.Expr2
-import io.github.yuemenglong.orm.operate.field.traits.Field
-import io.github.yuemenglong.orm.operate.join.traits.Cond
+import io.github.yuemenglong.orm.operate.join.traits.SubQuery
 import io.github.yuemenglong.orm.sql._
 
 import scala.collection.mutable
@@ -136,6 +134,15 @@ trait QueryBase[S] extends SelectStatement[S] {
   def all: ExprT[_] = Expr.apply("ALL", this)
 
   def any: ExprT[_] = Expr.apply("ANY", this)
+
+  def asTable(alias: String) = {
+    val that = this
+    new SubQuery {
+      override private[orm] val _on = Var[Expr](null)
+      override private[orm] val _table = Table(that, alias)._table
+      override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
+    }
+  }
 }
 
 class Query1[T: ClassTag](s: Selectable[T]) extends QueryBase[Query1[T]] with Queryable[T] {

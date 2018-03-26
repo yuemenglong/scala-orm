@@ -87,6 +87,8 @@ object Orm {
 
   def root[T](clazz: Class[T]): Root[T] = Root[T](clazz)
 
+  def table[T](clazz: Class[T]): Root[T] = Root[T](clazz)
+
   def select[T: ClassTag](c: Selectable[T]): Query1[T] = new Query1[T](c)
 
   def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1] = new Query2[T0, T1](s0, s1)

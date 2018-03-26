@@ -12,6 +12,13 @@ class Var[T](private var v: T) {
   def get: T = v
 
   def set(v: T): Unit = this.v = v
+
+  override def toString: String = {
+    v match {
+      case null => "NULL"
+      case _ => v.toString
+    }
+  }
 }
 
 object Var {
@@ -138,7 +145,10 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   }
 }
 
-trait Expr extends SqlItem with ExprOp[Expr] with ExprOpMath[Expr] with ExprOpAs[Expr] {
+trait Expr extends SqlItem
+  with ExprOp[Expr]
+  with ExprOpMath[Expr]
+  with ExprOpCol[Expr] {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -321,7 +331,9 @@ trait FunctionCall extends SqlItem {
   }
 }
 
-trait ResultColumn extends SqlItem with ExprOp[ResultColumn] with ExprOpMath[ResultColumn] {
+trait ResultColumn extends SqlItem
+  with ExprOp[ResultColumn]
+  with ExprOpMath[ResultColumn] {
   private[orm] val expr: Expr
   private[orm] val uid: String
 
@@ -502,10 +514,13 @@ trait ExprOp[S] extends ExprT[S] {
   def like(s: String): S = fromExpr(Expr(this.toExpr, "LIKE", Expr.const(s)))
 }
 
-trait ExprOpAs[T] extends ExprT[T] {
-  def as(alias: String): Field = new Field {
-    override private[orm] val uid = alias
-    override private[orm] val expr = this.toExpr
+trait ExprOpCol[S] extends ExprT[S] {
+  def as(alias: String): Field = {
+    val that = this
+    new Field {
+      override private[orm] val uid = alias
+      override private[orm] val expr = that.toExpr
+    }
   }
 }
 

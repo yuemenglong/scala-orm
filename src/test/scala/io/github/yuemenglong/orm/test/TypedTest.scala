@@ -848,4 +848,36 @@ class TypedTest {
     val res = session.first(Orm.select(root(_.age)).from(root))
     Assert.assertEquals(res.intValue(), 20)
   })
+
+  @Test
+  def testResultColumn(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.ptr = new Ptr
+    val ex = Orm.insert(obj)
+    ex.insert(_.ptr)
+    session.execute(ex)
+
+    {
+      val res = session.first(Orm.select(Expr.const(1).as("$1").asInt()))
+      Assert.assertEquals(res.intValue(), 1)
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val t = Orm.select(root.get(_.id).as("id"), root.get(_.ptrId).as("ptrId")).from(root).asTable("$1")
+      val t2 = Orm.table(classOf[Ptr])
+      t.join(t2).on(t.get("ptrId").eql(t2.get(_.id)))
+      val s = Orm.select(t.get("id").asLong()).from(t)
+      val res = session.first(s)
+      Assert.assertEquals(res.longValue(), 1)
+    }
+    {
+      val s = Orm.select(Expr.const(1).as("id").asLong(), Expr.const("").as("name").asStr())
+      val root = Orm.table(classOf[Obj])
+      val q = Orm.select(root.get(_.id)).from(root).where(Expr(root.get(_.id), root.get(_.name)).in(s))
+      val res = session.first(q)
+      Assert.assertEquals(res.longValue(), 1)
+    }
+
+  })
 }
