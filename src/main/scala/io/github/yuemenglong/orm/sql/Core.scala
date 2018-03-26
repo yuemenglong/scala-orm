@@ -69,6 +69,11 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
     comps += (("UNION", stmt.core))
     this.asInstanceOf[S]
   }
+
+  def unionAll(stmt: SelectStatement[_]): S = {
+    comps += (("UNION ALL", stmt.core))
+    this.asInstanceOf[S]
+  }
 }
 
 trait Table[S] extends TableOrSubQuery {

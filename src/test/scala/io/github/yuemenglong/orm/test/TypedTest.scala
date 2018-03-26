@@ -880,4 +880,25 @@ class TypedTest {
     }
 
   })
+
+  @Test
+  def testUnion(): Unit = {
+    db.beginTransaction(session => {
+      val obj = new Obj
+      obj.name = ""
+      obj.ptr = new Ptr
+      obj.ptr.id = 2L
+      val ex = Orm.insert(obj)
+      ex.insert(_.ptr)
+      session.execute(ex)
+
+      {
+        val o = Orm.table(classOf[Obj])
+        val p = Orm.table(classOf[Ptr])
+        val s = Orm.select(o.get(_.id)).from(o).unionAll(Orm.select(p.get(_.id)).from(p))
+        val res = session.query(s)
+        Assert.assertArrayEquals(res.map(_.toInt), Array(1, 2))
+      }
+    })
+  }
 }
