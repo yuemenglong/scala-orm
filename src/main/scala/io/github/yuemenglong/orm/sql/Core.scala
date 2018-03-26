@@ -25,7 +25,7 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
     this.asInstanceOf[S]
   }
 
-  def from(ts: Table*): S = {
+  def from(ts: Table[_]*): S = {
     core._from = ts.toArray
     this.asInstanceOf[S]
   }
@@ -71,11 +71,30 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
   }
 }
 
-trait Table extends TableOrSubQuery {
-  def join(t: Table, joinType: String, leftColunm: String, rightColumn: String): Var[Expr] = {
-    val c = Var(Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr))
-    _joins += ((joinType, t, c))
-    c
+trait Table[S] extends TableOrSubQuery {
+  private[orm] val _on: Var[Expr]
+
+  def join(t: Table[_], joinType: String): Table[_] = {
+    _joins += ((joinType, t, t._on))
+    t
+  }
+
+  def join(t: Table[_], joinType: String, leftColunm: String, rightColumn: String): Table[_] = {
+    val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
+    t.on(c)
+    _joins += ((joinType, t, t._on))
+    t
+  }
+
+  def on(e: ExprT[_]): S = {
+    if (_on == null) {
+      throw new RuntimeException("Root Table Has No On[Expr]")
+    }
+    _on.get match {
+      case null => _on.set(e.toExpr)
+      case _ => _on.set(_on.get.and(e))
+    }
+    this.asInstanceOf[S]
   }
 
   def getColumn(column: String, alias: String = null): ResultColumn = {
@@ -97,15 +116,19 @@ trait Table extends TableOrSubQuery {
   }
 }
 
+trait TableT extends Table[TableT]
+
 object Table {
-  def apply(name: String, uid: String): Table = new Table {
+  def apply(name: String, uid: String): Table[TableT] = new Table[TableT] {
     override private[orm] val _table = ((name, uid), null)
     override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
+    override private[orm] val _on = Var[Expr](null)
   }
 
-  def apply(stmt: SelectStmt, uid: String): Table = new Table {
+  def apply(stmt: SelectStmt, uid: String): Table[TableT] = new Table[TableT] {
     override private[orm] val _table = (null, (stmt, uid))
     override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
+    override private[orm] val _on = Var[Expr](null)
   }
 }
 

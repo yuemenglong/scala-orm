@@ -16,10 +16,9 @@ import io.github.yuemenglong.orm.sql._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-trait Cascade extends Table {
+trait Cascade extends Table[Cascade] {
   val meta: EntityMeta
   var joins: Map[String, (JoinType, Cascade)] = Map()
-  val on: Var[Expr]
 
   def getMeta: EntityMeta = meta
 
@@ -52,13 +51,12 @@ trait Cascade extends Table {
         val alias = s"${getAlias}_${Kit.lowerCaseFirst(field)}"
         val leftColumn = getMeta.fieldMap(referMeta.left).column
         val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
-        val table = Table(tableName, alias)
-        val cond = join(table, joinType.toString, leftColumn, rightColumn)
+        val table = join(Table(tableName, alias), joinType.toString, leftColumn, rightColumn)
         val ret = new Cascade {
           override val meta = referMeta.refer
-          override val on = cond
           override private[orm] val _table = table._table
           override private[orm] val _joins = table._joins
+          override private[orm] val _on = table._on
         }
         joins += (field -> (joinType, ret))
         ret
@@ -88,34 +86,24 @@ trait Cascade extends Table {
     val leftColumn = getMeta.fieldMap(left).column
     val rightColumn = referMeta.fieldMap(right).column
     val alias = s"${getAlias}__${joinName}"
-    val table = Table(tableName, alias)
-    val cond = join(table, joinType.toString, leftColumn, rightColumn)
+    val table = join(Table(tableName, alias), joinType.toString, leftColumn, rightColumn)
     new TypedSelectableCascade[T] {
       override val meta = referMeta
-      override val on = cond
       override private[orm] val _table = table._table
       override private[orm] val _joins = table._joins
+      override private[orm] val _on = table._on
     }
   }
 
   def joinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.INNER)
 
   def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedSelectableCascade[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
-
-  protected def on[T](e: ExprT[_], ret: T): T = {
-    on.set(on.get.and(e))
-    ret
-  }
-
-  def on(e: ExprT[_]): Cascade = on(e, this)
 }
 
 trait SelectFieldCascade extends Cascade {
   private[orm] var _selects = new ArrayBuffer[(String, SelectFieldCascade)]()
   private[orm] var _fields = Array[String]()
   private[orm] var _ignores = Set[String]()
-
-  override def on(e: ExprT[_]): SelectFieldCascade = on(e, this)
 
   def select(field: String): SelectFieldCascade = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
@@ -127,9 +115,9 @@ trait SelectFieldCascade extends Cascade {
         val j = leftJoin(field)
         val ret = new SelectFieldCascade {
           override val meta = j.meta
-          override val on = j.on
           override private[orm] val _table = j._table
           override private[orm] val _joins = j._joins
+          override private[orm] val _on = j._on
         }
         _selects += ((field, ret))
         ret
@@ -198,15 +186,13 @@ trait SelectFieldCascade extends Cascade {
 }
 
 trait TypedCascade[T] extends Cascade {
-  override def on(e: ExprT[_]): TypedCascade[T] = on(e, this)
-
   private def typedCascade[R](field: String, joinType: JoinType) = {
     val j: Cascade = this.join(field, joinType)
     new TypedCascade[R] {
       override val meta = j.meta
-      override val on = j.on
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
+      override private[orm] val _on = j._on
     }
   }
 
@@ -287,9 +273,9 @@ trait TypedCascade[T] extends Cascade {
     val j = this.joinAs(left, right, clazz)
     new TypedSelectableCascade[R] {
       override val meta = j.meta
-      override val on = j.on
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
+      override private[orm] val _on = j._on
     }
   }
 
@@ -301,15 +287,14 @@ trait TypedCascade[T] extends Cascade {
 
 trait TypedSelectableCascade[T] extends TypedCascade[T]
   with SelectFieldCascade with Selectable[T] {
-  override def on(e: ExprT[_]): TypedSelectableCascade[T] = on(e, this)
 
   private def typedSelect[R](field: String) = {
     val j = this.select(field)
     val ret = new TypedSelectableCascade[R] {
       override val meta = j.meta
-      override val on = j.on
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
+      override private[orm] val _on = j._on
     }
     ret
   }

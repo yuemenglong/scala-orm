@@ -63,14 +63,7 @@ import io.github.yuemenglong.orm.sql.{SelectStatement, Table}
 //}
 //
 
-trait Root[T] extends TypedSelectableCascade[T] {
-  private var idx = 0
-
-  def subQuery(stmt: SelectStatement[_]): Table = {
-    idx += 1
-    Table(stmt, s"$$${idx}")
-  }
-}
+trait Root[T] extends TypedSelectableCascade[T] {}
 
 object Root {
   def apply[T](clazz: Class[T]): Root[T] = {
@@ -81,9 +74,9 @@ object Root {
     val table = Table(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
     new Root[T] {
       override val meta = rootMeta
-      override val on = null
       override private[orm] val _table = table._table
       override private[orm] val _joins = table._joins
+      override private[orm] val _on = null
     }
   }
 }
