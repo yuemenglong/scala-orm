@@ -1,9 +1,6 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
-import io.github.yuemenglong.orm.operate.join.traits.Cond
-import io.github.yuemenglong.orm.sql.{Assign, Expr, ExprT, UpdateStatement}
-
-import scala.annotation.varargs
+import io.github.yuemenglong.orm.sql.{Assign, ExprT, UpdateStatement}
 
 /**
   * Created by yml on 2017/7/15.
