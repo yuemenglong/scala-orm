@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.field.{Field, SelectableField}
+import io.github.yuemenglong.orm.operate.field.{Field, FieldT, SelectableField, SelectableFieldT}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.sql._
@@ -26,13 +26,13 @@ trait Cascade extends Table[Cascade] {
 
   def getMeta: EntityMeta = meta
 
-  def get(field: String): Field = {
+  def get(field: String): FieldT = {
     if (!getMeta.fieldMap.contains(field) || getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
     }
     val alias = s"${getAlias}$$${field}"
     val column = getColumn(getMeta.fieldMap(field).column, alias)
-    new Field {
+    new FieldT {
       override private[orm] val uid = column.uid
       override private[orm] val expr = column.expr
     }
@@ -217,13 +217,13 @@ trait TypedCascade[T] extends Cascade {
     }
   }
 
-  def apply[R](fn: T => R): SelectableField[R] = get(fn)
+  def apply[R](fn: T => R): SelectableFieldT[R] = get(fn)
 
-  def get[R](fn: (T => R)): SelectableField[R] = {
+  def get[R](fn: (T => R)): SelectableFieldT[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = get(marker.toString)
-    new SelectableField[R] {
+    new SelectableFieldT[R] {
       override val clazz = getMeta.fieldMap(marker.toString).clazz.asInstanceOf[Class[R]]
       override private[orm] val expr = field.expr
       override private[orm] val uid = field.uid
@@ -422,9 +422,9 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
 }
 
 trait SubQuery extends Table[SubQuery] {
-  def get(alias: String): Field = {
+  def get(alias: String): FieldT = {
     val that = this
-    new Field {
+    new FieldT {
       override private[orm] val uid = alias
       override private[orm] val expr = Expr.column(that.getAlias, alias)
     }

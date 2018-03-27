@@ -144,8 +144,8 @@ class ScalaTest {
         session.execute(Orm.insert(Orm.convert(obj)))
       })
       val root = Orm.root(classOf[Obj])
-      val query = Orm.select(Fn.max(root.get("id").as(classOf[java.lang.Long])),
-        Fn.min(root.get("id").as(classOf[java.lang.Long]))).from(root)
+      val query = Orm.select(Fn.max(root.get("id").to(classOf[java.lang.Long])),
+        Fn.min(root.get("id").to(classOf[java.lang.Long]))).from(root)
       val (max, min) = session.first(query)
       Assert.assertEquals(max.intValue(), 10)
       Assert.assertEquals(min.intValue(), 1)

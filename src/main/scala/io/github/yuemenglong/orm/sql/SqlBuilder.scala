@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm.sql
 
 import io.github.yuemenglong.orm.kit.UnreachableException
+import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.field.Field
 
 import scala.collection.mutable.ArrayBuffer
@@ -147,8 +148,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
 
 trait Expr extends SqlItem
   with ExprOp[Expr]
-  with ExprOpMath[Expr]
-  with ExprOpCol[Expr] {
+  with ExprOpMath[Expr] {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -224,6 +224,14 @@ trait Expr extends SqlItem
   override def toExpr = this
 
   override def fromExpr(e: Expr) = e
+
+  def as(alias: String): Field = {
+    val that = this
+    new Field {
+      override private[orm] val uid = alias
+      override private[orm] val expr = that
+    }
+  }
 }
 
 object Expr {
@@ -331,9 +339,21 @@ trait FunctionCall extends SqlItem {
   }
 }
 
-trait ResultColumn extends SqlItem
-  with ExprOp[ResultColumn]
-  with ExprOpMath[ResultColumn] {
+trait ResultColumnT extends ResultColumn
+  with ExprOp[ResultColumnT]
+  with ExprOpMath[ResultColumnT] {
+  override def toExpr = expr
+
+  override def fromExpr(e: Expr) = {
+    val that = this
+    new ResultColumnT {
+      override private[orm] val uid = that.uid
+      override private[orm] val expr = e
+    }
+  }
+}
+
+trait ResultColumn extends SqlItem {
   private[orm] val expr: Expr
   private[orm] val uid: String
 
@@ -346,13 +366,11 @@ trait ResultColumn extends SqlItem
     expr.genParams(ab)
   }
 
-  override def toExpr = expr
-
-  override def fromExpr(e: Expr) = {
+  def as(alias: String): ResultColumn = {
     val that = this
     new ResultColumn {
-      override private[orm] val uid = that.uid
-      override private[orm] val expr = e
+      override private[orm] val uid = alias
+      override private[orm] val expr = that.expr
     }
   }
 }
@@ -446,6 +464,8 @@ trait ExprT[S] {
   def fromExpr(e: Expr): S
 }
 
+trait ExprOps[S] extends ExprOp[S] with ExprOpMath[S]
+
 trait ExprOp[S] extends ExprT[S] {
   def eql(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
 
@@ -512,16 +532,6 @@ trait ExprOp[S] extends ExprT[S] {
   def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
 
   def like(s: String): S = fromExpr(Expr(this.toExpr, "LIKE", Expr.const(s)))
-}
-
-trait ExprOpCol[S] extends ExprT[S] {
-  def as(alias: String): Field = {
-    val that = this
-    new Field {
-      override private[orm] val uid = alias
-      override private[orm] val expr = that.toExpr
-    }
-  }
 }
 
 trait ExprOpMath[S] extends ExprT[S] {
