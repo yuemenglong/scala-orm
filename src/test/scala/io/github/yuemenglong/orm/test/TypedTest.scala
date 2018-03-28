@@ -878,7 +878,12 @@ class TypedTest {
       val res = session.first(q)
       Assert.assertEquals(res.longValue(), 1)
     }
-
+    {
+      val t = Orm.table(classOf[Obj])
+      val res = session.query(Orm.select(t.get(_.id) + 1).from(t))
+      Assert.assertEquals(res.length, 1)
+      Assert.assertEquals(res(0).intValue(), 2)
+    }
   })
 
   @Test
