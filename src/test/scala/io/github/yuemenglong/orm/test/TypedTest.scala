@@ -887,6 +887,32 @@ class TypedTest {
   })
 
   @Test
+  def testGroupByOrder(): Unit = db.beginTransaction(session => {
+    (1 to 2).foreach(i => {
+      val obj = new Obj
+      obj.name = ""
+      obj.om = (1 to i + 1).map(_ => new OM).toArray
+      val ex = Orm.insert(obj)
+      ex.insert(_.om)
+      session.execute(ex)
+    })
+
+    {
+      val t = Orm.table(classOf[Obj])
+      t.leftJoin(_.om)
+      val c = Fn.count(t.get(_.id))
+      val q = Orm.select(t.get(_.id), c).from(t)
+        .groupBy(t.get(_.id)).asc(c)
+      val res = session.query(q)
+      Assert.assertEquals(res(0)._1.intValue(), 1)
+      Assert.assertEquals(res(0)._2.intValue(), 2)
+      Assert.assertEquals(res(1)._1.intValue(), 2)
+      Assert.assertEquals(res(1)._2.intValue(), 3)
+    }
+
+  })
+
+  @Test
   def testUnion(): Unit = {
     db.beginTransaction(session => {
       val obj = new Obj
