@@ -100,7 +100,6 @@ class TypedTest {
     Assert.assertEquals(objs(1).om.length, 3)
   })
 
-
   @Test
   def testNotNull(): Unit = db.beginTransaction(session => {
     var obj = new Obj
@@ -124,7 +123,6 @@ class TypedTest {
     Assert.assertEquals(res(0).age, 10)
   })
 
-
   @Test
   def testCount(): Unit = db.beginTransaction(session => {
     val obj = new Obj
@@ -142,7 +140,6 @@ class TypedTest {
     Assert.assertEquals(c.longValue(), 6)
   })
 
-
   @Test
   def testSelectField(): Unit = db.beginTransaction(session => {
     val obj = new Obj
@@ -158,7 +155,6 @@ class TypedTest {
       .from(root).limit(1).offset(5))
     Assert.assertEquals(c.intValue(), 6)
   })
-
 
   @Test
   def testMultiTarget(): Unit = db.beginTransaction(session => {
@@ -219,7 +215,6 @@ class TypedTest {
       Assert.assertEquals(res(1).mo, null)
     }
   })
-
 
   @Test
   def testSelectOOWithNull(): Unit = db.beginTransaction(session => {
@@ -932,4 +927,30 @@ class TypedTest {
       }
     })
   }
+
+  @Test
+  def testCondHolder(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+    obj.name = ""
+    obj.om = Array(new OM, new OM, new OM)
+    val ex = Orm.insert(obj)
+    ex.insert(_.om)
+    session.execute(ex)
+
+    {
+      val c = Orm.cond()
+      val res = session.query(Orm.selectFrom(Orm.table(classOf[OM])).where(c))
+      Assert.assertEquals(res.length, 3)
+    }
+
+    {
+      var c = Orm.cond()
+      val t = Orm.table(classOf[OM])
+      c = c.and(t.get(_.id) >= 2)
+      val res = session.query(Orm.selectFrom(t).where(c))
+      Assert.assertEquals(res.length, 2)
+      Assert.assertEquals(res(0).id.intValue(), 2)
+      Assert.assertEquals(res(1).id.intValue(), 3)
+    }
+  })
 }

@@ -10,6 +10,7 @@ import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.query._
+import io.github.yuemenglong.orm.sql.Expr
 
 import scala.reflect.ClassTag
 
@@ -94,7 +95,7 @@ object Orm {
 
   def selectFrom[T: ClassTag](r: TypedSelectableCascade[T]): Query1[T] = select(r).from(r)
 
-  //  def cond(): Cond = new CondHolder
+  def cond(): Expr = Expr("1 = 1")
 
   @Deprecated
   def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
