@@ -159,7 +159,7 @@ trait Expr extends SqlItem
       (Expr, String, Expr), // A AND B, A IN (1,2,3)
       (Expr, Expr, Expr), // BETWEEN AND
       Array[Expr], // (A, B)
-      String, // literal
+      (String, Array[Object]), // (sql, params) For Extend
     )
   //      (Expr, String, SelectStmt), // IN (SUBQUERY)
 
@@ -194,7 +194,7 @@ trait Expr extends SqlItem
       sb.append("(")
       bufferMkString(sb, list, ", ")
       sb.append(")")
-    case (null, null, null, null, null, null, null, null, null, s) =>
+    case (null, null, null, null, null, null, null, null, null, (s, p)) =>
       sb.append(s"${s}")
     case _ => throw new UnreachableException
   }
@@ -221,7 +221,8 @@ trait Expr extends SqlItem
       r.genParams(ab)
     case (null, null, null, null, null, null, null, null, list, null) =>
       list.foreach(_.genParams(ab))
-    case (null, null, null, null, null, null, null, null, null, _) =>
+    case (null, null, null, null, null, null, null, null, null, (_, p)) =>
+      ab.append(p: _*)
     case _ => throw new UnreachableException
   }
 
@@ -267,8 +268,8 @@ object Expr {
     override val children = (null, null, null, s, null, null, null, null, null, null)
   }
 
-  def apply(lit: String): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, null, null, lit)
+  def apply(sql: String, params: Array[Object] = Array()): Expr = new Expr {
+    override val children = (null, null, null, null, null, null, null, null, null, (sql, params))
   }
 
   def apply(op: String, e: ExprT[_]): Expr = new Expr {
