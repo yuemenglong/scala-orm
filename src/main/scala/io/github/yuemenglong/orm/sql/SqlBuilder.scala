@@ -159,7 +159,7 @@ trait Expr extends SqlItem
       (Expr, String, Expr), // A AND B, A IN (1,2,3)
       (Expr, Expr, Expr), // BETWEEN AND
       Array[Expr], // (A, B)
-      (String, Array[Object]), // (sql, params) For Extend
+      (String, Array[Object]) // (sql, params) For Extend
     )
   //      (Expr, String, SelectStmt), // IN (SUBQUERY)
 
@@ -564,7 +564,7 @@ trait ExprOpMath[S] extends ExprT[S] {
 trait TableOrSubQuery extends SqlItem {
   private[orm] val _table: (
     (String, String),
-      (SelectStmt, String),
+      (SelectStmt, String)
     )
   private[orm] val _joins: ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]
 

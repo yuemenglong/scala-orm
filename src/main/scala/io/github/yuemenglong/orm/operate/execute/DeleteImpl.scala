@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.execute
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.operate.execute.traits.ExecutableDelete
 import io.github.yuemenglong.orm.operate.join.Cascade
+import io.github.yuemenglong.orm.sql.Table
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -11,7 +12,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 
 class DeleteImpl(deletes: Cascade*) extends ExecutableDelete {
-  override val _targets = deletes.toArray
+  override val _targets: Array[Table[_]] = deletes.toArray
 
   override def execute(session: Session): Int = {
     if (_table == null) {

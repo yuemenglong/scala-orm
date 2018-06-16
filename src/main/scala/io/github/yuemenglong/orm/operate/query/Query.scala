@@ -151,7 +151,7 @@ class Query1[T: ClassTag](s: Selectable[T]) extends QueryBase[Query1[T]] with Qu
     Array[T](query0(session).map(r => r(0).asInstanceOf[T]): _*)
   }
 
-  override val targets = Array(s)
+  override val targets: Array[Selectable[_]] = Array(s)
   override private[orm] val core = new SelectCore(s.getColumns)
 }
 
@@ -162,17 +162,17 @@ class Query2[T0: ClassTag, T1: ClassTag](s0: Selectable[T0],
   override def query(session: Session): Array[(T0, T1)] = {
     Array[(T0, T1)](query0(session).map(r => (
       r(0).asInstanceOf[T0],
-      r(1).asInstanceOf[T1],
+      r(1).asInstanceOf[T1]
     )): _*)
   }
 
-  override val targets = Array(s0, s1)
+  override val targets: Array[Selectable[_]] = Array(s0, s1)
   override private[orm] val core = new SelectCore(s0.getColumns ++ s1.getColumns)
 }
 
 class Query3[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0],
                                                        s1: Selectable[T1],
-                                                       s2: Selectable[T2],
+                                                       s2: Selectable[T2]
                                                       )
   extends QueryBase[Query3[T0, T1, T2]] with Queryable[(T0, T1, T2)] {
 
@@ -180,10 +180,10 @@ class Query3[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0],
     Array[(T0, T1, T2)](query0(session).map(r => (
       r(0).asInstanceOf[T0],
       r(1).asInstanceOf[T1],
-      r(2).asInstanceOf[T2],
+      r(2).asInstanceOf[T2]
     )): _*)
   }
 
-  override val targets = Array(s0, s1, s2)
+  override val targets: Array[Selectable[_]] = Array(s0, s1, s2)
   override private[orm] val core = new SelectCore(s0.getColumns ++ s1.getColumns ++ s2.getColumns)
 }
