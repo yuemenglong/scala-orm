@@ -67,17 +67,17 @@ object Checker {
     val needDrops: Array[String] = if (ignoreUnused) {
       Array()
     } else {
-      dbTableSet.diff(entityTableSet).map(table => {
+      dbTableSet.diff(entityTableSet).toArray.map(table => {
         Table.getDropSql(table)
-      }).toArray
+      })
     }
-    val needCreates = entityTableSet.diff(dbTableSet).map(table => {
+    val needCreates = entityTableSet.diff(dbTableSet).toArray.map(table => {
       Table.getCreateSql(entityMap(table))
-    }).toArray
-    val needUpdates = dbTableSet.intersect(entityTableSet).flatMap(table => {
+    })
+    val needUpdates = dbTableSet.intersect(entityTableSet).toArray.flatMap(table => {
       val meta = entityMap(table)
       checkEntity(conn, meta, ignoreUnused)
-    }).toArray
+    })
     val tips = (needDrops ++ needCreates ++ needUpdates).sorted.mkString("\n")
     if (tips.nonEmpty) {
       val useDb = s"USE $db;\n"
@@ -137,16 +137,16 @@ object Checker {
     //1. 表里有实体没有
     val needDrop = ignoreUnused match {
       case true => Array[String]()
-      case false => columnMap.keySet.diff(fieldMap.keySet).map(c => {
+      case false => columnMap.keySet.diff(fieldMap.keySet).toArray.map(c => {
         Column.getDropSql(meta.table, c)
-      }).toArray
+      })
     }
     //2. 实体里面有，表没有
-    val needAdd = fieldMap.keySet.diff(columnMap.keySet).map(c => {
+    val needAdd = fieldMap.keySet.diff(columnMap.keySet).toArray.map(c => {
       Column.getAddSql(fieldMap(c))
     })
     //3. 都有的字段，但是类型不一致，需要alter
-    val needAlter = columnMap.keySet.intersect(fieldMap.keySet).map(c => {
+    val needAlter = columnMap.keySet.intersect(fieldMap.keySet).toArray.map(c => {
       val fieldMeta = fieldMap(c)
       val columnInfo = columnMap(c)
       if (columnInfo.matchs(fieldMeta)) {
@@ -164,11 +164,11 @@ object Checker {
       })
       val alreadyMulIndex = columnMap.filter(p => p._2.key == "MUL")
       val needMulIndex = meta.indexVec.filter(!_._2).map(p => (p._1.column, p._1)).toMap
-      val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).map(c => {
+      val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).toArray.map(c => {
         Column.getCreateIndex(meta.table, c)
       })
       uni ++ idx
-    }
+    }.toArray
     needDrop ++ needAdd ++ needAlter ++ needCreateIndex
   }
 }

@@ -68,7 +68,7 @@ class Session(private val conn: Connection) {
       case v => v.toString
     }.mkString(", ")
     val record = s"\n$sql\n[$paramsSql]"
-    Logger.debug(record)
+    Logger.info(record)
     records += record
   }
 
@@ -81,7 +81,7 @@ class Session(private val conn: Connection) {
       s"[$content]"
     }).mkString("\n")
     val record = s"\n$sql\n$paramsSql"
-    Logger.debug(record)
+    Logger.info(record)
     records += record
   }
 
