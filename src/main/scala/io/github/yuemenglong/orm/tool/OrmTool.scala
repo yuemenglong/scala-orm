@@ -7,6 +7,7 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.lang.anno.ExportTS
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
@@ -45,7 +46,7 @@ object OrmTool {
   // relateMap保存所有与之相关的类型
   private def stringifyTsClass(clazz: Class[_], relateMap: mutable.Map[String, Set[String]], init: Boolean): String = {
     val className = clazz.getSimpleName
-    val newFields = new ArrayBuffer[Field]()
+    val newFields = new ArrayBuffer[Field]() // 需要new的field
     val content = Kit.getDeclaredFields(clazz).map(f => {
       val name = f.getName
       val typeName = f.getType.getSimpleName
@@ -65,16 +66,21 @@ object OrmTool {
             init match {
               case false => s"$typeName = undefined"
               case true => //需要初始化
-                relateMap.contains(typeName) match {
-                  case false => // 该类型还没有导出过，安全的
-                    newFields += f
-                    s"$typeName = new $typeName()"
-                  case true => relateMap(typeName).contains(className) match { // 导出过
-                    case false => // 该类型与自己没有关系，安全的
-                      newFields += f
-                      s"$typeName = new $typeName()"
-                    case true => s"$typeName = undefined" // 自己已经被该类型导出过，避免循环引用
-                  }
+                f.getDeclaredAnnotation(classOf[ExportTS]) match {
+                  case a if a != null && !a.init() => s"$typeName = undefined"
+                  case _ => // 没有配置禁止init的注解
+                    relateMap.contains(typeName) match {
+                      case false => // 该类型还没有导出过，安全的
+                        newFields += f
+                        s"$typeName = new $typeName()"
+                      case true => // 已经被导出过，看看关系种有没有自己
+                        relateMap(typeName).contains(className) match { // 导出过
+                          case false => // 该类型与自己没有关系，安全的
+                            newFields += f
+                            s"$typeName = new $typeName()"
+                          case true => s"$typeName = undefined" // 自己已经被该类型导出过，避免循环引用
+                        }
+                    }
                 }
             }
         }
