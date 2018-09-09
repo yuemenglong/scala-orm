@@ -58,6 +58,13 @@
             <artifactId>hsqldb</artifactId>
             <version>2.4.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.23.1</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.jolbox/bonecp -->
         <dependency>
             <groupId>com.jolbox</groupId>

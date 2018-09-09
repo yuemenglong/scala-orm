@@ -7,51 +7,18 @@ import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 
-/**
-  * Created by Administrator on 2017/5/16.
-  */
+object Db {
+  private var context: DbContext = new MysqlContext
 
-trait DbConfig {
-  def initPool(): BoneCP = {
-    val config = new BoneCPConfig
-    config.setJdbcUrl(url)
-    config.setUsername(username)
-    config.setPassword(password)
-    config.setMinConnectionsPerPartition(min)
-    config.setMaxConnectionsPerPartition(max)
-    config.setPartitionCount(partition)
-    new BoneCP(config)
+  private def setContext(ctx: DbContext): Unit = {
+    this.context = ctx
   }
 
-  def username: String
-
-  def password: String
-
-  def db: String
-
-  def url: String
-
-  def min: Int
-
-  def max: Int
-
-  def partition: Int
-}
-
-case class MysqlConfig(host: String, port: Int,
-                       username: String, password: String, db: String,
-                       min: Int = 5, max: Int = 30, partition: Int = 3) extends DbConfig {
-  override def url: String = {
-    s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8"
-  }
-}
-
-case class HsqldbConfig(username: String, password: String, db: String,
-                        min: Int = 5, max: Int = 30, partition: Int = 3) extends DbConfig {
-  override def url: String = s"jdbc:hsqldb:file:${db}"
+  def getContext: DbContext = context
 }
 
 class Db(config: DbConfig) {
+  Db.setContext(config.context)
 
   def this(host: String, port: Int, username: String, password: String, db: String) = {
     this(MysqlConfig(host, port, username, password, db))
@@ -63,12 +30,12 @@ class Db(config: DbConfig) {
   }
 
   def this(username: String, password: String, db: String) = {
-    this(HsqldbConfig(username, password, db))
+    this(SqliteConfig(username, password, db))
   }
 
   def this(username: String, password: String, db: String,
            min: Int, max: Int, partition: Int) = {
-    this(HsqldbConfig(username, password, db, min, max, partition))
+    this(SqliteConfig(username, password, db, min, max, partition))
   }
 
   val pool: BoneCP = config.initPool()

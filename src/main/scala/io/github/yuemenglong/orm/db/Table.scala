@@ -18,7 +18,7 @@ object Table {
       case "" => ""
       case s => s", $s"
     }
-    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns$uniques$indexes) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+    val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns$uniques$indexes)${Db.getContext.createTablePostfix};"
     sql
   }
 

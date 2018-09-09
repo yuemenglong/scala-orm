@@ -43,6 +43,17 @@ object Orm {
     new Db(host, port, user, pwd, db, 5, 30, 3)
   }
 
+  def openDb(user: String, pwd: String, db: String,
+             minConn: Int, maxConn: Int, partition: Int): Db = {
+    if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
+    new Db(user, pwd, db, minConn, maxConn, partition)
+  }
+
+  def openDb(user: String, pwd: String, db: String): Db = {
+    if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
+    new Db(user, pwd, db, 5, 30, 3)
+  }
+
 
   def create[T](clazz: Class[T]): T = {
     EntityManager.create(clazz)

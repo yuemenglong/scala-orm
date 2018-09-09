@@ -14,6 +14,7 @@ case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean
 
   def matchs(field: FieldMeta): Boolean = {
     val tyEq = (field, ty) match {
+      case (_: FieldMetaInteger, "INT") => true
       case (_: FieldMetaBoolean, "TINYINT") => length == 1
       case (_: FieldMetaString, "CHAR") => true
       case (f: FieldMetaString, "VARCHAR") => f.length == length
@@ -67,18 +68,18 @@ object Checker {
     val needDrops: Array[String] = if (ignoreUnused) {
       Array()
     } else {
-      dbTableSet.diff(entityTableSet).toArray.map(table => {
+      dbTableSet.diff(entityTableSet).toArray.sorted.map(table => {
         Table.getDropSql(table)
       })
     }
-    val needCreates = entityTableSet.diff(dbTableSet).toArray.map(table => {
+    val needCreates = entityTableSet.diff(dbTableSet).toArray.sorted.map(table => {
       Table.getCreateSql(entityMap(table))
     })
-    val needUpdates = dbTableSet.intersect(entityTableSet).toArray.flatMap(table => {
+    val needUpdates = dbTableSet.intersect(entityTableSet).toArray.sorted.flatMap(table => {
       val meta = entityMap(table)
       checkEntity(conn, meta, ignoreUnused)
     })
-    val tips = (needDrops ++ needCreates ++ needUpdates).sorted.mkString("\n")
+    val tips = (needDrops ++ needCreates ++ needUpdates).mkString("\n")
     if (tips.nonEmpty) {
       val useDb = s"USE $db;\n"
       val info = s"Table Schema Not Match Entity Meta, You May Need To\n$useDb$tips"
@@ -139,12 +140,12 @@ object Checker {
       case true => Array[String]()
       case false => columnMap.keySet.diff(fieldMap.keySet).toArray.map(c => {
         Column.getDropSql(meta.table, c)
-      })
+      }).sorted
     }
     //2. 实体里面有，表没有
     val needAdd = fieldMap.keySet.diff(columnMap.keySet).toArray.map(c => {
       Column.getAddSql(fieldMap(c))
-    })
+    }).sorted
     //3. 都有的字段，但是类型不一致，需要alter
     val needAlter = columnMap.keySet.intersect(fieldMap.keySet).toArray.map(c => {
       val fieldMeta = fieldMap(c)
@@ -154,7 +155,7 @@ object Checker {
       } else {
         Column.getModifySql(fieldMeta)
       }
-    }).filter(_ != null)
+    }).filter(_ != null).sorted
     //4. 没有加的索引
     val needCreateIndex = {
       val alreadyUniIndex = columnMap.filter(p => p._2.key == "UNI")
@@ -168,7 +169,7 @@ object Checker {
         Column.getCreateIndex(meta.table, c)
       })
       uni ++ idx
-    }.toArray
+    }.toArray.sorted
     needDrop ++ needAdd ++ needAlter ++ needCreateIndex
   }
 }

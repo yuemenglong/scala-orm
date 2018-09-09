@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.meta
 
 import java.lang.reflect.Field
 
+import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.lang.anno._
@@ -36,7 +37,7 @@ trait FieldMeta {
     val pkey = (isPkey, isAuto) match {
       case (false, _) => ""
       case (true, false) => " PRIMARY KEY"
-      case (true, true) => " PRIMARY KEY AUTO_INCREMENT"
+      case (true, true) => s" PRIMARY KEY ${Db.getContext.autoIncrement}"
     }
     val dft = defaultValue match {
       case null => ""
@@ -110,7 +111,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
 
 class FieldMetaInteger(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
   require(field.getType == classOf[java.lang.Integer])
-  override val dbType: String = "INT"
+  override val dbType: String = "INTEGER"
 }
 
 class FieldMetaTinyInt(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
