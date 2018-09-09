@@ -1,34 +1,83 @@
 package io.github.yuemenglong.orm.db
 
-import java.sql.{Connection, DriverManager}
+import java.sql.Connection
 
+import com.jolbox.bonecp.{BoneCP, BoneCPConfig}
 import io.github.yuemenglong.orm.Session.Session
-import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
-import com.jolbox.bonecp.BoneCP
-import com.jolbox.bonecp.BoneCPConfig
 import io.github.yuemenglong.orm.logger.Logger
+import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 
 /**
   * Created by Administrator on 2017/5/16.
   */
-class Db(val host: String, val port: Int,
-         val username: String, val password: String, val db: String,
-         val min: Int = 5, val max: Int = 30, val partition: Int = 3) {
-  val driver = "com.mysql.jdbc.Driver"
-  val url = s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8"
-  Class.forName(driver)
 
-  val config = new BoneCPConfig
-  config.setJdbcUrl(url)
-  config.setUsername(username)
-  config.setPassword(password)
-  config.setMinConnectionsPerPartition(min)
-  config.setMaxConnectionsPerPartition(max)
-  config.setPartitionCount(3)
-  val pool = new BoneCP(config)
+trait DbConfig {
+  def initPool(): BoneCP = {
+    val config = new BoneCPConfig
+    config.setJdbcUrl(url)
+    config.setUsername(username)
+    config.setPassword(password)
+    config.setMinConnectionsPerPartition(min)
+    config.setMaxConnectionsPerPartition(max)
+    config.setPartitionCount(partition)
+    new BoneCP(config)
+  }
+
+  def username: String
+
+  def password: String
+
+  def db: String
+
+  def url: String
+
+  def min: Int
+
+  def max: Int
+
+  def partition: Int
+}
+
+case class MysqlConfig(host: String, port: Int,
+                       username: String, password: String, db: String,
+                       min: Int = 5, max: Int = 30, partition: Int = 3) extends DbConfig {
+  override def url: String = {
+    s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8"
+  }
+}
+
+case class HsqldbConfig(username: String, password: String, db: String,
+                        min: Int = 5, max: Int = 30, partition: Int = 3) extends DbConfig {
+  override def url: String = s"jdbc:hsqldb:file:${db}"
+}
+
+class Db(config: DbConfig) {
+
+  def this(host: String, port: Int, username: String, password: String, db: String) = {
+    this(MysqlConfig(host, port, username, password, db))
+  }
+
+  def this(host: String, port: Int, username: String, password: String, db: String,
+           min: Int, max: Int, partition: Int) = {
+    this(MysqlConfig(host, port, username, password, db, min, max, partition))
+  }
+
+  def this(username: String, password: String, db: String) = {
+    this(HsqldbConfig(username, password, db))
+  }
+
+  def this(username: String, password: String, db: String,
+           min: Int, max: Int, partition: Int) = {
+    this(HsqldbConfig(username, password, db, min, max, partition))
+  }
+
+  val pool: BoneCP = config.initPool()
+  val db: String = config.db
 
   def openConnection(): Connection = {
     try {
+      //      val driver = "com.mysql.jdbc.Driver"
+      //      Class.forName(driver)
       //      DriverManager.getConnection(url, username, password)
       pool.getConnection
     } catch {
@@ -36,7 +85,7 @@ class Db(val host: String, val port: Int,
     }
   }
 
-  def openConnection[T](fn: (Connection) => T): T = {
+  def openConnection[T](fn: Connection => T): T = {
     val conn = openConnection()
     try {
       fn(conn)
@@ -59,7 +108,7 @@ class Db(val host: String, val port: Int,
   }
 
   def check(ignoreUnused: Boolean = false): Unit = {
-    openConnection((conn) => {
+    openConnection(conn => {
       Checker.checkEntities(conn, db, entities(), ignoreUnused)
     })
   }
@@ -92,14 +141,14 @@ class Db(val host: String, val port: Int,
   def execute(sql: String): Int = execute(sql, Array())
 
   def execute(sql: String, params: Array[Object]): Int = {
-    this.openConnection((conn) => {
+    this.openConnection(conn => {
       val stmt = conn.prepareStatement(sql)
       params.zipWithIndex.foreach { case (p, i) => stmt.setObject(i + 1, p) }
       stmt.executeUpdate()
     })
   }
 
-  def beginTransaction[T](fn: (Session) => T): T = {
+  def beginTransaction[T](fn: Session => T): T = {
     val session = openSession()
     val tx = session.beginTransaction()
     try {
