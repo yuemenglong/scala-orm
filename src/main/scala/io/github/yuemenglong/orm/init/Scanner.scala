@@ -165,7 +165,7 @@ object Scanner {
     metas.foreach(meta => {
       meta.indexVec = meta.fieldVec.filter(_.isInstanceOf[FieldMetaDeclared])
         .map(_.asInstanceOf[FieldMetaDeclared]).filter(_.annoIndex != null)
-        .map(f => (f, f.annoIndex.unique()))
+        .map(f => IndexInfo(f, f.annoIndex.unique()))
     })
     val map = metas.flatMap(meta => {
       meta.fieldVec.flatMap(f => {
@@ -180,8 +180,8 @@ object Scanner {
     metas.foreach(meta => {
       if (map.contains(meta.entity)) {
         val set = map(meta.entity)
-        meta.indexVec ++= set.map(f => (meta.fieldMap(f), false))
-        meta.indexVec.foreach(p => Logger.info(s"Entity: ${meta.entity}, Index: ${p._1.column}"))
+        meta.indexVec ++= set.map(f => IndexInfo(meta.fieldMap(f), false))
+        meta.indexVec.foreach(p => Logger.info(s"Entity: ${meta.entity}, Index: ${p.field.column}"))
       }
     })
   }

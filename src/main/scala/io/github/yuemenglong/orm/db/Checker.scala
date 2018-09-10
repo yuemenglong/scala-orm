@@ -54,10 +54,11 @@ case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean
 }
 
 object Checker {
-  def checkEntities(conn: Connection, db: String, metas: Array[EntityMeta], ignoreUnused: Boolean = false): Unit = {
+  def checkEntities(conn: Connection, db: Db, metas: Array[EntityMeta], ignoreUnused: Boolean = false): Unit = {
     //1. 先获取所有表结构
+    val dbName = db.db
     val sql =
-      s"""SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='$db'"""
+      s"""SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='$dbName'"""
     val stmt = conn.createStatement()
     val rs = stmt.executeQuery(sql)
     val dbTableSet: Set[String] = Stream.continually({
@@ -69,11 +70,11 @@ object Checker {
       Array()
     } else {
       dbTableSet.diff(entityTableSet).toArray.sorted.map(table => {
-        Table.getDropSql(table)
+        db.context.getDropTableSql(table)
       })
     }
     val needCreates = entityTableSet.diff(dbTableSet).toArray.sorted.map(table => {
-      Table.getCreateSql(entityMap(table))
+      db.context.getCreateTableSql(entityMap(table))
     })
     val needUpdates = dbTableSet.intersect(entityTableSet).toArray.sorted.flatMap(table => {
       val meta = entityMap(table)
@@ -81,7 +82,7 @@ object Checker {
     })
     val tips = (needDrops ++ needCreates ++ needUpdates).mkString("\n")
     if (tips.nonEmpty) {
-      val useDb = s"USE $db;\n"
+      val useDb = s"USE $dbName;\n"
       val info = s"Table Schema Not Match Entity Meta, You May Need To\n$useDb$tips"
       throw new RuntimeException(info)
     }
@@ -159,12 +160,12 @@ object Checker {
     //4. 没有加的索引
     val needCreateIndex = {
       val alreadyUniIndex = columnMap.filter(p => p._2.key == "UNI")
-      val needUniIndex = meta.indexVec.filter(_._2).map(p => (p._1.column, p._1)).toMap
+      val needUniIndex = meta.indexVec.filter(_.unique).map(p => (p.field.column, p.field)).toMap
       val uni = needUniIndex.keySet.diff(alreadyUniIndex.keySet).map(c => {
         Column.getCreateUnique(meta.table, c)
       })
       val alreadyMulIndex = columnMap.filter(p => p._2.key == "MUL")
-      val needMulIndex = meta.indexVec.filter(!_._2).map(p => (p._1.column, p._1)).toMap
+      val needMulIndex = meta.indexVec.filter(!_.unique).map(p => (p.field.column, p.field)).toMap
       val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).toArray.map(c => {
         Column.getCreateIndex(meta.table, c)
       })

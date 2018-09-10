@@ -10,6 +10,8 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by Administrator on 2017/5/16.
   */
+case class IndexInfo(field: FieldMeta, unique: Boolean)
+
 class EntityMeta(val clazz: Class[_]) {
   val db: String = EntityMeta.pickDb(clazz)
   val entity: String = clazz.getSimpleName
@@ -19,7 +21,7 @@ class EntityMeta(val clazz: Class[_]) {
   var fieldMap: Map[String, FieldMeta] = Map()
 
   // <组合索引,是否唯一>
-  var indexVec: ArrayBuffer[(FieldMeta, Boolean)] = ArrayBuffer()
+  var indexVec: ArrayBuffer[IndexInfo] = ArrayBuffer()
 
   var getterMap: Map[Method, FieldMeta] = Map()
   var setterMap: Map[Method, FieldMeta] = Map()

@@ -66,8 +66,11 @@ class Session(private val conn: Connection) {
     val paramsSql = params.map {
       case null => "null"
       case v => v.toString
-    }.mkString(", ")
-    val record = s"\n$sql\n[$paramsSql]"
+    }.mkString(", ") match {
+      case "" => ""
+      case s => s"\n[${s}]"
+    }
+    val record = s"\n$sql$paramsSql"
     Logger.info(record)
     records += record
   }
@@ -91,7 +94,8 @@ class Session(private val conn: Connection) {
     })
   }
 
-  def execute(sql: String, params: Array[Object],
+  def execute(sql: String,
+              params: Array[Object] = Array(),
               postStmt: Statement => Unit = null): Int = {
     record(sql, params)
     val stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)

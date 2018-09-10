@@ -67,6 +67,8 @@ class Db(config: DbConfig) {
     pool.shutdown()
   }
 
+  def context: DbContext = config.context
+
   def entities(): Array[EntityMeta] = {
     OrmMeta.dbVec.length match {
       case 0 => OrmMeta.entityVec.toArray
@@ -76,7 +78,7 @@ class Db(config: DbConfig) {
 
   def check(ignoreUnused: Boolean = false): Unit = {
     openConnection(conn => {
-      Checker.checkEntities(conn, db, entities(), ignoreUnused)
+      Checker.checkEntities(conn, this, entities(), ignoreUnused)
     })
   }
 
@@ -87,17 +89,26 @@ class Db(config: DbConfig) {
 
   def drop(): Unit = {
     entities().foreach(entity => {
-      val sql = Table.getDropSql(entity)
-      Logger.info(sql)
-      this.execute(sql)
+      beginTransaction(session => {
+        session.execute(context.getDropTableSql(entity))
+      })
+      //      val sql = Table.getDropSql(entity)
+      //      Logger.info(sql)
+      //      this.execute(sql)
     })
   }
 
   def create(): Unit = {
     entities().foreach(entity => {
-      val sql = Table.getCreateSql(entity)
-      Logger.info(sql)
-      this.execute(sql)
+      beginTransaction(session => {
+        session.execute(context.getCreateTableSql(entity))
+        entity.indexVec.foreach(idx => {
+          session.execute(context.getCreateIndexSql(idx))
+        })
+      })
+      //      val sql = Table.getCreateSql(entity)
+      //      Logger.info(sql)
+      //      this.execute(sql)
     })
   }
 

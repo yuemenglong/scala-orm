@@ -27,6 +27,7 @@ trait FieldMeta {
   val defaultValue: String
   val isPkey: Boolean
   val isAuto: Boolean
+  val checkCond: String
 
   val dbType: String
 
@@ -43,7 +44,11 @@ trait FieldMeta {
       case null => ""
       case _ => s" DEFAULT '$defaultValue'"
     }
-    s"`$column` $getDbTypeSql$notnull$dft$pkey"
+    val check = checkCond match {
+      case null => ""
+      case _ => s" CHECK (${column} IN ${checkCond})"
+    }
+    s"`$column` $getDbTypeSql$notnull$dft$pkey$check"
   }
 
   def isNormalOrPkey: Boolean = !isRefer
@@ -71,6 +76,7 @@ class FieldMetaFkey(override val name: String,
   override val dbType: String = "BIGINT"
   override val clazz: Class[_] = classOf[java.lang.Long]
   override val defaultValue: String = null
+  override val checkCond: String = null
 }
 
 abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) extends FieldMeta {
@@ -83,6 +89,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   val annoOneOne: OneToOne = field.getAnnotation(classOf[OneToOne])
   val annoOneMany: OneToMany = field.getAnnotation(classOf[OneToMany])
   val annoIndex: Index = field.getAnnotation(classOf[Index])
+  val annoCheck: Check = field.getAnnotation(classOf[Check])
 
   override val name: String = field.getName
   override val clazz: Class[_] = field.getType
@@ -107,6 +114,11 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   }
   override val isPkey: Boolean = annoId != null
   override val isAuto: Boolean = isPkey && annoId.auto()
+  override val checkCond: String = if (annoCheck != null && annoCheck.in() != null && annoCheck.in().nonEmpty) {
+    "(" + annoCheck.in().map("\"" + _ + "\"").mkString(",") + ")"
+  } else {
+    null
+  }
 }
 
 class FieldMetaInteger(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
