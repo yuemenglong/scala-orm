@@ -216,7 +216,33 @@ class SqliteChecker(db: Db, ignoreUnused: Boolean = false) {
     })
     // need update
     tableInDb.intersect(tableInDef).foreach(t => {
-      //共同的部分
+      val ctips = new ArrayBuffer[String]()
+      case class ColumnInfo(name: String, ty: String, notnull: Boolean, dftValue: String, pk: Boolean)
+      val cinfos: Array[ColumnInfo] = db.query(s"PRAGMA table_info(${t})", Array(), rs => {
+        Stream.continually({
+          if (rs.next()) {
+            val name = rs.getString("name")
+            val ty = rs.getString("type")
+            val notnull = rs.getInt("notnull") == 1
+            val dftValue = rs.getString("dft_value")
+            val pk = rs.getInt("pk") == 1
+            ColumnInfo(name, ty, notnull, dftValue, pk)
+          } else {
+            null
+          }
+        }).takeWhile(_ != null).toArray
+      })
+      val columnInDb = cinfos.map(_.name).toSet
+      val columnInDef = entityMap(t).fieldVec.map(_.column).toSet
+      // need drop
+      if (!ignoreUnused) {
+        columnInDb.diff(columnInDef).toArray.sorted.foreach(c => {
+          ctips += db.context.getDropColumnSql(t, c)
+        })
+      }
+      // need add
+      // need mod
+      // 最后对craetetable做一次判断
       val sqlInDb = infoNameMap(t).sql + ";"
       val sqlInDef = db.context.getCreateTableSql(entityMap(t))
         .replace(" IF NOT EXISTS", "")
