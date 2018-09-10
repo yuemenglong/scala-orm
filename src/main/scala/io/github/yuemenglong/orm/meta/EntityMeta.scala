@@ -10,7 +10,13 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by Administrator on 2017/5/16.
   */
-case class IndexInfo(field: FieldMeta, unique: Boolean)
+case class IndexInfo(field: FieldMeta, unique: Boolean) {
+  def name: String = {
+    val column = field.column
+    val table = field.entity.table
+    s"idx_${table}_${column}"
+  }
+}
 
 class EntityMeta(val clazz: Class[_]) {
   val db: String = EntityMeta.pickDb(clazz)

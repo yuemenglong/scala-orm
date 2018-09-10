@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.db
 
-import java.sql.Connection
+import java.sql.{Connection, ResultSet}
 
 import com.jolbox.bonecp.{BoneCP, BoneCPConfig}
 import io.github.yuemenglong.orm.Session.Session
@@ -77,9 +77,7 @@ class Db(config: DbConfig) {
   }
 
   def check(ignoreUnused: Boolean = false): Unit = {
-    openConnection(conn => {
-      Checker.checkEntities(conn, this, entities(), ignoreUnused)
-    })
+    context.check(this, ignoreUnused)
   }
 
   def rebuild(): Unit = {
@@ -116,13 +114,27 @@ class Db(config: DbConfig) {
     new Session(openConnection())
   }
 
-  def execute(sql: String): Int = execute(sql, Array())
-
-  def execute(sql: String, params: Array[Object]): Int = {
+  def execute(sql: String, params: Array[Object] = Array()): Int = {
     this.openConnection(conn => {
       val stmt = conn.prepareStatement(sql)
       params.zipWithIndex.foreach { case (p, i) => stmt.setObject(i + 1, p) }
-      stmt.executeUpdate()
+      val ret = stmt.executeUpdate()
+      stmt.close()
+      ret
+    })
+  }
+
+  def query[T](sql: String,
+               params: Array[Object],
+               fn: ResultSet => T): T = {
+    this.openConnection(conn => {
+      val stmt = conn.prepareStatement(sql)
+      params.zipWithIndex.foreach { case (p, i) => stmt.setObject(i + 1, p) }
+      val rs = stmt.executeQuery()
+      val ret = fn(rs)
+      stmt.close()
+      rs.close()
+      ret
     })
   }
 

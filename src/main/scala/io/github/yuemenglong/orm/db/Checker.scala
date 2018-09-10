@@ -5,6 +5,8 @@ import java.sql.{Connection, ResultSet}
 import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.meta._
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by <yuemenglong@126.com> on 2017/8/2.
   */
@@ -53,41 +55,44 @@ case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean
   }
 }
 
-object Checker {
-  def checkEntities(conn: Connection, db: Db, metas: Array[EntityMeta], ignoreUnused: Boolean = false): Unit = {
-    //1. 先获取所有表结构
+class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
+  def check(): Unit = {
     val dbName = db.db
-    val sql =
-      s"""SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='$dbName'"""
-    val stmt = conn.createStatement()
-    val rs = stmt.executeQuery(sql)
-    val dbTableSet: Set[String] = Stream.continually({
-      if (rs.next()) (true, rs.getString(1)) else (false, null)
-    }).takeWhile(_._1).map(_._2)(collection.breakOut)
-    val entityTableSet: Set[String] = metas.map(_.table)(collection.breakOut)
-    val entityMap: Map[String, EntityMeta] = metas.map(p => (p.table, p))(collection.breakOut)
-    val needDrops: Array[String] = if (ignoreUnused) {
-      Array()
-    } else {
-      dbTableSet.diff(entityTableSet).toArray.sorted.map(table => {
-        db.context.getDropTableSql(table)
+    val metas = db.entities()
+    db.openConnection(conn => {
+      //1. 先获取所有表结构
+      val sql =
+        s"""SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='$dbName'"""
+      val stmt = conn.createStatement()
+      val rs = stmt.executeQuery(sql)
+      val dbTableSet: Set[String] = Stream.continually({
+        if (rs.next()) (true, rs.getString(1)) else (false, null)
+      }).takeWhile(_._1).map(_._2)(collection.breakOut)
+      val entityTableSet: Set[String] = metas.map(_.table)(collection.breakOut)
+      val entityMap: Map[String, EntityMeta] = metas.map(p => (p.table, p))(collection.breakOut)
+      val needDrops: Array[String] = if (ignoreUnused) {
+        Array()
+      } else {
+        dbTableSet.diff(entityTableSet).toArray.sorted.map(table => {
+          db.context.getDropTableSql(table)
+        })
+      }
+      val needCreates = entityTableSet.diff(dbTableSet).toArray.sorted.map(table => {
+        db.context.getCreateTableSql(entityMap(table))
       })
-    }
-    val needCreates = entityTableSet.diff(dbTableSet).toArray.sorted.map(table => {
-      db.context.getCreateTableSql(entityMap(table))
+      val needUpdates = dbTableSet.intersect(entityTableSet).toArray.sorted.flatMap(table => {
+        val meta = entityMap(table)
+        checkEntity(conn, meta, ignoreUnused)
+      })
+      val tips = (needDrops ++ needCreates ++ needUpdates).mkString("\n")
+      if (tips.nonEmpty) {
+        val useDb = s"USE $dbName;\n"
+        val info = s"Table Schema Not Match Entity Meta, You May Need To\n$useDb$tips"
+        throw new RuntimeException(info)
+      }
+      rs.close()
+      stmt.close()
     })
-    val needUpdates = dbTableSet.intersect(entityTableSet).toArray.sorted.flatMap(table => {
-      val meta = entityMap(table)
-      checkEntity(conn, meta, ignoreUnused)
-    })
-    val tips = (needDrops ++ needCreates ++ needUpdates).mkString("\n")
-    if (tips.nonEmpty) {
-      val useDb = s"USE $dbName;\n"
-      val info = s"Table Schema Not Match Entity Meta, You May Need To\n$useDb$tips"
-      throw new RuntimeException(info)
-    }
-    rs.close()
-    stmt.close()
   }
 
   def parseColumnInfo(rs: ResultSet): ColumnInfo = {
@@ -140,12 +145,12 @@ object Checker {
     val needDrop = ignoreUnused match {
       case true => Array[String]()
       case false => columnMap.keySet.diff(fieldMap.keySet).toArray.map(c => {
-        Column.getDropSql(meta.table, c)
+        db.context.getDropColumnSql(meta.table, c)
       }).sorted
     }
     //2. 实体里面有，表没有
     val needAdd = fieldMap.keySet.diff(columnMap.keySet).toArray.map(c => {
-      Column.getAddSql(fieldMap(c))
+      db.context.getAddColumnSql(fieldMap(c))
     }).sorted
     //3. 都有的字段，但是类型不一致，需要alter
     val needAlter = columnMap.keySet.intersect(fieldMap.keySet).toArray.map(c => {
@@ -154,7 +159,7 @@ object Checker {
       if (columnInfo.matchs(fieldMeta)) {
         null
       } else {
-        Column.getModifySql(fieldMeta)
+        db.context.getModifyColumnSql(fieldMeta)
       }
     }).filter(_ != null).sorted
     //4. 没有加的索引
@@ -162,15 +167,75 @@ object Checker {
       val alreadyUniIndex = columnMap.filter(p => p._2.key == "UNI")
       val needUniIndex = meta.indexVec.filter(_.unique).map(p => (p.field.column, p.field)).toMap
       val uni = needUniIndex.keySet.diff(alreadyUniIndex.keySet).map(c => {
-        Column.getCreateUnique(meta.table, c)
+        db.context.getCreateIndexSql(meta.table, c, true)
       })
       val alreadyMulIndex = columnMap.filter(p => p._2.key == "MUL")
       val needMulIndex = meta.indexVec.filter(!_.unique).map(p => (p.field.column, p.field)).toMap
       val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).toArray.map(c => {
-        Column.getCreateIndex(meta.table, c)
+        db.context.getCreateIndexSql(meta.table, c)
       })
       uni ++ idx
     }.toArray.sorted
     needDrop ++ needAdd ++ needAlter ++ needCreateIndex
+  }
+}
+
+class SqliteChecker(db: Db, ignoreUnused: Boolean = false) {
+
+  case class SchemeInfo(ty: String, name: String, sql: String)
+
+  def check(): Unit = {
+    // 获取已经存在的表
+    // 与现有的表比较
+    val tips = new ArrayBuffer[String]()
+    val infos = db.query("select * from sqlite_master", Array(), rs => {
+      Stream.continually({
+        if (rs.next()) {
+          val ty = rs.getString("type")
+          val name = rs.getString("name")
+          val sql = rs.getString("sql")
+          SchemeInfo(ty, name, sql)
+        } else {
+          null
+        }
+      }).takeWhile(_ != null).filter(_.name != "sqlite_sequence").toArray
+    })
+    val infoNameMap = infos.map(info => (info.name, info)).toMap
+    val entityMap = db.entities().map(e => (e.table, e)).toMap
+    val tableInDb = infos.filter(_.ty == "table").map(_.name).toSet
+    val tableInDef = db.entities().map(_.table).toSet
+    // need drop
+    if (!ignoreUnused) {
+      tableInDb.diff(tableInDef).toArray.sorted.foreach(t => {
+        tips += db.context.getDropTableSql(t)
+      })
+    }
+    // need create
+    tableInDef.diff(tableInDb).toArray.sorted.foreach(t => {
+      tips += db.context.getCreateTableSql(entityMap(t))
+    })
+    // need update
+    tableInDb.intersect(tableInDef).foreach(t => {
+      //共同的部分
+      val sqlInDb = infoNameMap(t).sql + ";"
+      val sqlInDef = db.context.getCreateTableSql(entityMap(t))
+        .replace(" IF NOT EXISTS", "")
+      if (sqlInDb != sqlInDef) {
+        tips += s"Table Define Not Match\nIn DB:\n${sqlInDb}\nYour Define:\n${sqlInDef}"
+      }
+    })
+    // check index
+    val idxInDb = infos.filter(_.ty == "index").map(_.name).toSet
+    val idxInDefMap = db.entities().flatMap(e => {
+      e.indexVec.map(idx => (idx.name, idx))
+    }).toMap
+    // 缺失的索引
+    idxInDefMap.keySet.diff(idxInDb).foreach(idx => {
+      tips += db.context.getCreateIndexSql(idxInDefMap(idx))
+    })
+    if (tips.nonEmpty) {
+      val info = "\n" + tips.mkString("\n")
+      throw new RuntimeException(info)
+    }
   }
 }

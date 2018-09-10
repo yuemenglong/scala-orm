@@ -17,7 +17,7 @@ class SqliteTest {
     Orm.init("io.github.yuemenglong.orm.test.lite")
     db = openDb()
     db.rebuild()
-    //    db.check()
+    db.check()
   }
 
   @After def after(): Unit = {
