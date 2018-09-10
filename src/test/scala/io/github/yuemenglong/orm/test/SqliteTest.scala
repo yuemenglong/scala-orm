@@ -25,7 +25,7 @@ class SqliteTest {
 //    Orm.init(Array(classOf[SqliteObj].asInstanceOf[Class[_]]))
     Orm.init(Array("io.github.yuemenglong.orm.test.lite.LiteObj"))
     db = openDb()
-    db.create()
+    db.rebuild()
     //    db.check()
   }
 
