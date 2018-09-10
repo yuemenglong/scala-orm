@@ -57,7 +57,7 @@ class Obj {
   @Pointer
   @ExportTS(init = false)
   var ptr: Ptr = _
-  var ptrId: Long = _
+  var ptrId: Integer = _
 
   @OneToOne
   var oo: OO = _
@@ -84,7 +84,7 @@ class OO {
 
   var value: Integer = _
 
-  var objId: Long = _
+  var objId: Integer = _
 }
 
 @Entity(db = "test.db")
@@ -96,14 +96,14 @@ class OM {
 
   @Pointer
   var mo: MO = _
-  var moId: Long = _
+  var moId: Integer = _
 
   @Pointer
   var obj: Obj = _
 
-  var objId: Long = _
+  var objId: Integer = _
 
-  var subId: Long = _
+  var subId: Integer = _
 }
 
 @Entity(db = "test.db")
