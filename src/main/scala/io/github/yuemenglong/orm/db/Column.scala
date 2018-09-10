@@ -27,10 +27,10 @@ object Column {
   }
 
   def getCreateIndex(table: String, column: String): String = {
-    s"ALTER TABLE `$table` ADD INDEX(`$column`);"
+    s"ALTER TABLE `$table` ADD INDEX idx_${column}(`$column`);"
   }
 
   def getCreateUnique(table: String, column: String): String = {
-    s"ALTER TABLE `$table` ADD UNIQUE(`$column`);"
+    s"ALTER TABLE `$table` ADD UNIQUE uni_${column}(`$column`);"
   }
 }

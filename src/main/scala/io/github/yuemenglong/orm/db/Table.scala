@@ -10,11 +10,11 @@ object Table {
     val columns = meta.fields().filter(field => field.isNormalOrPkey).map((field) => {
       field.getDbSql
     }).mkString(", ")
-    val uniques = meta.indexVec.filter(_._2).map(i => s"UNIQUE INDEX(${i._1.column})").mkString(", ") match {
+    val uniques = meta.indexVec.filter(_._2).map(i => s"UNIQUE INDEX uni_${i._1.column}(${i._1.column})").mkString(", ") match {
       case "" => ""
       case s => s", $s"
     }
-    val indexes = meta.indexVec.filter(!_._2).map(i => s"INDEX(${i._1.column})").mkString(", ") match {
+    val indexes = meta.indexVec.filter(!_._2).map(i => s"INDEX idx_${i._1.column}(${i._1.column})").mkString(", ") match {
       case "" => ""
       case s => s", $s"
     }
