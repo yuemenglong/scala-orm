@@ -29,7 +29,7 @@ trait DbContext {
       case true => "UNIQUE "
       case false => ""
     }
-    s"CREATE ${uni}INDEX idx_${table}_${column} ON `${table}`(${column})"
+    s"CREATE ${uni}INDEX idx_${table}_${column} ON `${table}`(${column});"
   }
 
   def getCreateIndexSql(info: IndexInfo): String = {
@@ -40,7 +40,7 @@ trait DbContext {
   }
 
   def getDropIndexSql(info: IndexInfo): String = {
-    s"DROP INDEX idx_${info.field.column} ON `${info.field.entity.table}`"
+    s"DROP INDEX idx_${info.field.column} ON `${info.field.entity.table}`;"
   }
 
   def getAddColumnSql(field: FieldMeta): String = {
@@ -59,7 +59,7 @@ trait DbContext {
     getDropColumnSql(field.entity.table, field.column)
   }
 
-  def createTablePostfix: String = " ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+  def createTablePostfix: String = " ENGINE=InnoDB DEFAULT CHARSET=utf8"
 
   def autoIncrement: String = "AUTO_INCREMENT"
 
