@@ -10,52 +10,54 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by <yuemenglong@126.com> on 2017/8/2.
   */
-case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean,
-                      defaultValue: String, key: String, auto: Boolean,
-                      set: Set[String], precision: Int, scale: Int) {
-
-  def matchs(field: FieldMeta): Boolean = {
-    val tyEq = (field, ty) match {
-      case (_: FieldMetaInteger, "INT") => true
-      case (_: FieldMetaBoolean, "TINYINT") => length == 1
-      case (_: FieldMetaString, "CHAR") => true
-      case (f: FieldMetaString, "VARCHAR") => f.length == length
-      case (_: FieldMetaText, "VARCHAR") => true
-      case (_: FieldMetaLongText, "VARCHAR") => true
-      case (f: FieldMetaEnum, "ENUM") => f.values.toSet == set
-      case (_, _) => field.dbType == ty
-    }
-
-    val defaultValueEq = field.defaultValue match {
-      case null => defaultValue == null
-      case Def.NONE_DEFAULT_VALUE => defaultValue == null
-      case s => s == defaultValue
-    }
-    val columnEq = field.column == column
-    val nullableEq = field.nullable == nullable
-    val pkeyEq = field.isPkey == (key == "PRI")
-    val autoEql = field.isAuto == auto
-    val decimalEq = field match {
-      case f: FieldMetaDecimal => f.precision == precision && f.scale == scale
-      case _ => true
-    }
-
-    if (!tyEq ||
-      !defaultValueEq ||
-      !columnEq ||
-      !nullableEq ||
-      !pkeyEq ||
-      !autoEql ||
-      !decimalEq
-    ) {
-      false
-    } else {
-      true
-    }
-  }
-}
 
 class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
+
+  case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean,
+                        defaultValue: String, key: String, auto: Boolean,
+                        set: Set[String], precision: Int, scale: Int) {
+
+    def matchs(field: FieldMeta): Boolean = {
+      val tyEq = (field, ty) match {
+        case (_: FieldMetaInteger, "INT") => true
+        case (_: FieldMetaBoolean, "TINYINT") => length == 1
+        case (_: FieldMetaString, "CHAR") => true
+        case (f: FieldMetaString, "VARCHAR") => f.length == length
+        case (_: FieldMetaText, "VARCHAR") => true
+        case (_: FieldMetaLongText, "VARCHAR") => true
+        case (f: FieldMetaEnum, "ENUM") => f.values.toSet == set
+        case (_, _) => field.dbType == ty
+      }
+
+      val defaultValueEq = field.defaultValue match {
+        case null => defaultValue == null
+        case Def.NONE_DEFAULT_VALUE => defaultValue == null
+        case s => s == defaultValue
+      }
+      val columnEq = field.column == column
+      val nullableEq = field.nullable == nullable
+      val pkeyEq = field.isPkey == (key == "PRI")
+      val autoEql = field.isAuto == auto
+      val decimalEq = field match {
+        case f: FieldMetaDecimal => f.precision == precision && f.scale == scale
+        case _ => true
+      }
+
+      if (!tyEq ||
+        !defaultValueEq ||
+        !columnEq ||
+        !nullableEq ||
+        !pkeyEq ||
+        !autoEql ||
+        !decimalEq
+      ) {
+        false
+      } else {
+        true
+      }
+    }
+  }
+
   def check(): Unit = {
     val dbName = db.db
     val metas = db.entities()
@@ -218,13 +220,13 @@ class SqliteChecker(db: Db, ignoreUnused: Boolean = false) {
     tableInDb.intersect(tableInDef).foreach(t => {
       val ctips = new ArrayBuffer[String]()
       case class ColumnInfo(name: String, ty: String, notnull: Boolean, dftValue: String, pk: Boolean)
-      val cinfos: Array[ColumnInfo] = db.query(s"PRAGMA table_info(${t})", Array(), rs => {
+      val cinfos: Array[ColumnInfo] = db.query(s"PRAGMA table_info(`${t}`)", Array(), rs => {
         Stream.continually({
           if (rs.next()) {
             val name = rs.getString("name")
             val ty = rs.getString("type")
             val notnull = rs.getInt("notnull") == 1
-            val dftValue = rs.getString("dft_value")
+            val dftValue = rs.getString("dflt_value")
             val pk = rs.getInt("pk") == 1
             ColumnInfo(name, ty, notnull, dftValue, pk)
           } else {
@@ -233,21 +235,27 @@ class SqliteChecker(db: Db, ignoreUnused: Boolean = false) {
         }).takeWhile(_ != null).toArray
       })
       val columnInDb = cinfos.map(_.name).toSet
-      val columnInDef = entityMap(t).fieldVec.map(_.column).toSet
+      val columnInDefMap = entityMap(t).fieldVec.filter(_.isNormalOrPkey).map(f => (f.column, f)).toMap
       // need drop
       if (!ignoreUnused) {
-        columnInDb.diff(columnInDef).toArray.sorted.foreach(c => {
+        columnInDb.diff(columnInDefMap.keySet).toArray.sorted.foreach(c => {
           ctips += db.context.getDropColumnSql(t, c)
         })
       }
       // need add
-      // need mod
-      // 最后对craetetable做一次判断
-      val sqlInDb = infoNameMap(t).sql + ";"
-      val sqlInDef = db.context.getCreateTableSql(entityMap(t))
-        .replace(" IF NOT EXISTS", "")
-      if (sqlInDb != sqlInDef) {
-        tips += s"Table Define Not Match\nIn DB:\n${sqlInDb}\nYour Define:\n${sqlInDef}"
+      columnInDefMap.keySet.diff(columnInDb).toArray.sorted.foreach(c => {
+        ctips += db.context.getAddColumnSql(columnInDefMap(c))
+      })
+      if (ctips.nonEmpty) {
+        tips ++= ctips
+      } else {
+        // 最后对craetetable做一次判断
+        val sqlInDb = infoNameMap(t).sql + ";"
+        val sqlInDef = db.context.getCreateTableSql(entityMap(t))
+          .replace(" IF NOT EXISTS", "")
+        if (sqlInDb != sqlInDef) {
+          tips += s"Table Define Not Match\nIn DB:\n${sqlInDb}\nYour Define:\n${sqlInDef}"
+        }
       }
     })
     // check index

@@ -117,11 +117,3 @@ class MO {
 class Ign {
   var id: Integer = _
 }
-
-@Entity(db = "test.db")
-class _ScalaObj {
-  @Id
-  var id: Integer = _
-  var isTrue: Boolean = _
-  var name: String = _
-}
