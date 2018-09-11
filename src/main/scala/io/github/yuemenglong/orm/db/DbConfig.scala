@@ -50,10 +50,13 @@ case class HsqldbConfig(username: String, password: String, db: String,
   override val context = new HsqldbContext
 }
 
-case class SqliteConfig(username: String, password: String, db: String,
-                        min: Int = 5, max: Int = 30, partition: Int = 3) extends DbConfig {
+case class SqliteConfig(db: String, min: Int = 5, max: Int = 30, partition: Int = 3) extends DbConfig {
   override def url: String = s"jdbc:sqlite:${db}"
 
   override val context = new SqliteContext
+
+  override def username: String = ""
+
+  override def password: String = ""
 }
 

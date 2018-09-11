@@ -43,15 +43,14 @@ object Orm {
     new Db(host, port, user, pwd, db, 5, 30, 3)
   }
 
-  def openDb(user: String, pwd: String, db: String,
-             minConn: Int, maxConn: Int, partition: Int): Db = {
+  def openDb(db: String, minConn: Int, maxConn: Int, partition: Int): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(user, pwd, db, minConn, maxConn, partition)
+    new Db(db, minConn, maxConn, partition)
   }
 
-  def openDb(user: String, pwd: String, db: String): Db = {
+  def openDb(db: String): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(user, pwd, db, 5, 30, 3)
+    new Db(db, 5, 30, 3)
   }
 
 

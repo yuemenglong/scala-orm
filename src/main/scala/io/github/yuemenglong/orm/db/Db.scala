@@ -29,13 +29,12 @@ class Db(config: DbConfig) {
     this(MysqlConfig(host, port, username, password, db, min, max, partition))
   }
 
-  def this(username: String, password: String, db: String) = {
-    this(SqliteConfig(username, password, db))
+  def this(db: String) = {
+    this(SqliteConfig(db))
   }
 
-  def this(username: String, password: String, db: String,
-           min: Int, max: Int, partition: Int) = {
-    this(SqliteConfig(username, password, db, min, max, partition))
+  def this(db: String, min: Int, max: Int, partition: Int) = {
+    this(SqliteConfig(db, min, max, partition))
   }
 
   val pool: BoneCP = config.initPool()
