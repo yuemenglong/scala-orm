@@ -81,7 +81,13 @@ trait SelectableField[T] extends Field with Selectable[T] {
   override def getType = clazz
 
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
-    resultSet.getObject(getAlias, getType)
+    // 适配sqlite的情况
+    try {
+      resultSet.getObject(getAlias, getType)
+    } catch {
+      case _: Throwable =>
+        resultSet.getObject(getAlias).asInstanceOf[T]
+    }
   }
 
   override def getKey(value: Object): String = value match {

@@ -58,5 +58,16 @@ class SqliteTest {
       session.execute(ex)
       Assert.assertEquals(r.om(2).objId, r.id)
     }
+    {
+      val root = Orm.root(classOf[Obj])
+      val q = Orm.selectFrom(root)
+      session.query(q)
+    }
+
+    {
+      val root = Orm.root(classOf[Obj])
+      val q = Orm.select(root.get(_.id)).from(root)
+      session.query(q)
+    }
   })
 }
