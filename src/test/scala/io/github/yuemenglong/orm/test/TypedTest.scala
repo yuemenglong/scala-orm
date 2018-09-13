@@ -725,7 +725,7 @@ class TypedTest {
     }
     {
       val obj = ex.root()
-      val res = OrmTool.selectById(classOf[Obj], obj.id, session)(root => {
+      val res = OrmTool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
         root.select(_.om)
       })
       Assert.assertEquals(res.om.length, 3)
@@ -734,10 +734,10 @@ class TypedTest {
     }
     {
       val obj = ex.root()
-      OrmTool.deleteById(classOf[Obj], obj.id, session)(root => {
+      OrmTool.deleteByIdEx(classOf[Obj], obj.id, session)(root => {
         Array(root.leftJoin(_.om))
       })
-      val res = OrmTool.selectById(classOf[Obj], obj.id, session)(root => {
+      val res = OrmTool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
         root.select(_.om)
       })
       Assert.assertNull(res)

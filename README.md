@@ -192,7 +192,7 @@ db.beginTransaction(session => {
 ```jsx
 //更新部门id为0.29005326502737394的(number:10,computers:20),同时更新该部门下的职员id为0.7013507943626212的(name:小明，age:20)
 db.beginTransaction(session => {
-  val department = OrmTool.selectById(classOf[Department], "0.29005326502737394", session)()
+  val department = OrmTool.selectByIdEx(classOf[Department], "0.29005326502737394", session)()
   department.numbers = 10
   department.computers = 20
   val stuffs = session.query(Orm.selectFrom(Orm.root(classOf[Stuff])))
@@ -505,5 +505,5 @@ lodashCase, lowerCaseFirst, upperCaseFirst, getDeclaredFields, getDeclaredMethod
 trace, debug, info, warn, error, setEnable
 
 # Tool
-getEmptyConstructorMap, exportTsClass, exportTsClass, attach, attachs, sattach, sattachs, attachx, attachsx, sattachx, sattachsx, updateById, selectById, deleteById
+getEmptyConstructorMap, exportTsClass, exportTsClass, attach, attachs, sattach, sattachs, attachx, attachsx, sattachx, sattachsx, updateById, selectByIdEx, deleteByIdEx
 

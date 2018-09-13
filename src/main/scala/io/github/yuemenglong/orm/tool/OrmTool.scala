@@ -323,21 +323,34 @@ object OrmTool {
     }
   }
 
-  def selectById[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
-                                (rootFn: (Root[T]) => Unit = null): T = {
+  def selectByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
+                                  (rootFn: (Root[T]) => Unit = null): T = {
     val root = Orm.root(clazz)
     if (rootFn != null) rootFn(root)
     val pkey = root.getMeta.pkey.name
     session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
   }
 
-  def deleteById[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
-                                (rootFn: (Root[T]) => Array[Cascade] = (_: Root[T]) => Array[Cascade]()): Int = {
+  def selectById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): T = {
+    selectByIdEx(clazz, id, session)()
+  }
+
+  def deleteByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
+                                  (rootFn: (Root[T]) => Array[Cascade] = (_: Root[T]) => Array[Cascade]()
+                                  ): Int = {
     val root = Orm.root(clazz)
     val cascade = rootFn(root)
     val all: Array[Cascade] = Array(root) ++ cascade
     val pkey = root.getMeta.pkey.name
     val ex = Orm.delete(all: _*).from(root).where(root.get(pkey).eql(id))
     session.execute(ex)
+  }
+
+  def deleteById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): Int = {
+    val entity = OrmMeta.entityMap(clazz)
+    val table = entity.table
+    val pkey = entity.pkey.column
+    val sql = s"DELETE FROM `${table}` WHERE `${pkey}` = ?"
+    session.execute(sql, Array(id.asInstanceOf[Object]))
   }
 }

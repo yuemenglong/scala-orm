@@ -429,15 +429,15 @@ class ScalaTest {
       session.execute(ex)
 
       {
-        val o = OrmTool.selectById(classOf[Obj], 1, session)(root => {
+        val o = OrmTool.selectByIdEx(classOf[Obj], 1, session)(root => {
           root.select("oo")
         })
         Assert.assertEquals(o.name, "name")
         Assert.assertEquals(o.oo.id.longValue(), 1)
       }
       {
-        OrmTool.deleteById(classOf[Obj], 1, session)()
-        val o = OrmTool.selectById(classOf[Obj], 1, session)()
+        OrmTool.deleteByIdEx(classOf[Obj], 1, session)()
+        val o = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
         Assert.assertNull(o)
       }
     })
@@ -455,25 +455,25 @@ class ScalaTest {
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("doubleValue").add(1.2))))
-        val o = OrmTool.selectById(classOf[Obj], 1, session)()
+        val o = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 2.7, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("doubleValue").sub(1.5))))
-        val o = OrmTool.selectById(classOf[Obj], 1, session)()
+        val o = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 1.2, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("age").add(1.2))))
-        val o = OrmTool.selectById(classOf[Obj], 1, session)()
+        val o = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 11.2, 0.00001)
       }
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(root.get("doubleValue").assign(root.get("age").sub(1.5))))
-        val o = OrmTool.selectById(classOf[Obj], 1, session)()
+        val o = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
         Assert.assertEquals(o.doubleValue.doubleValue(), 8.5, 0.00001)
       }
     })
@@ -502,7 +502,7 @@ class ScalaTest {
     } catch {
       case _: Throwable =>
         db.beginTransaction(session => {
-          val obj = OrmTool.selectById(classOf[Obj], 1, session)()
+          val obj = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
           Assert.assertNull(obj)
         })
     }
@@ -521,7 +521,7 @@ class ScalaTest {
     } catch {
       case _: Throwable =>
         db.beginTransaction(session => {
-          val obj = OrmTool.selectById(classOf[Obj], 1, session)()
+          val obj = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
           Assert.assertNull(obj)
         })
     }
@@ -548,7 +548,7 @@ class ScalaTest {
       val obj = Orm.empty(classOf[Obj])
       obj.name = "dft"
       session.execute(Orm.insert(obj))
-      val res = OrmTool.selectById(classOf[Obj], 1, session)()
+      val res = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
       Assert.assertEquals(res.dftValue.intValue(), 10)
     })
   }
@@ -560,7 +560,7 @@ class ScalaTest {
       obj.name = "update"
       session.execute(Orm.insert(obj))
       OrmTool.updateById(classOf[Obj], 1, session, ("name", "update2"), ("age", 10))
-      val res = OrmTool.selectById(classOf[Obj], 1, session)()
+      val res = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
       Assert.assertEquals(res.age.intValue(), 10)
       Assert.assertEquals(res.name, "update2")
     })
