@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.field
 
 import java.sql.ResultSet
 
+import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Long, String}
 import io.github.yuemenglong.orm.operate.query.Selectable
@@ -82,12 +83,7 @@ trait SelectableField[T] extends Field with Selectable[T] {
 
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
     // 适配sqlite的情况
-    try {
-      resultSet.getObject(getAlias, getType)
-    } catch {
-      case _: Throwable =>
-        resultSet.getObject(getAlias).asInstanceOf[T]
-    }
+    Kit.getObjectFromResultSet(resultSet, getAlias, getType)
   }
 
   override def getKey(value: Object): String = value match {

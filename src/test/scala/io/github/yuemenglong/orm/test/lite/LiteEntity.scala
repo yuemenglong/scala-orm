@@ -19,6 +19,8 @@ class Obj {
   @TinyInt
   var tinyAge: Integer = _
 
+  var boolValue: Boolean = _
+
   var doubleValue: Double = _
 
   @Column(precision = 5, scale = 2)

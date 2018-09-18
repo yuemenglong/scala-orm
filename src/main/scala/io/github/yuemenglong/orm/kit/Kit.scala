@@ -1,8 +1,10 @@
 package io.github.yuemenglong.orm.kit
 
 import java.lang.reflect.{Field, Method}
+import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.lang.types.Types._
 
 import scala.reflect.ClassTag
 
@@ -53,5 +55,29 @@ object Kit {
     }
     val name = clazz.getName.replaceAll("(^\\[L)|(;$)", "")
     Class.forName(name)
+  }
+
+  def getObjectFromResultSet[T](resultSet: ResultSet, alias: String, clazz: Class[T]): T = {
+    val obj = resultSet.getObject(alias)
+    val intClass = classOf[Integer]
+    val longClass = classOf[Long]
+    val boolClass = classOf[Boolean]
+    val bdClass = classOf[BigDecimal]
+    if (obj == null) {
+      null.asInstanceOf[T]
+    } else if (obj.getClass == clazz) {
+      obj.asInstanceOf[T]
+    } else (obj, clazz) match {
+      case (n: Integer, `longClass`) => n.toLong.asInstanceOf[T]
+      case (n: Integer, `boolClass`) => (n != 0).asInstanceOf[T]
+      case (n: Integer, `bdClass`) => new BigDecimal(n).asInstanceOf[T]
+      case (n: Long, `intClass`) => n.toInt.asInstanceOf[T]
+      case (n: Long, `boolClass`) => (n != 0).asInstanceOf[T]
+      case (n: Long, `bdClass`) => new BigDecimal(n).asInstanceOf[T]
+      case (n: BigDecimal, `intClass`) => n.intValue().asInstanceOf[T]
+      case (n: BigDecimal, `longClass`) => n.longValue().asInstanceOf[T]
+      case (n: BigDecimal, `boolClass`) => throw new RuntimeException("Unreachable")
+      case _ => obj.asInstanceOf[T]
+    }
   }
 }

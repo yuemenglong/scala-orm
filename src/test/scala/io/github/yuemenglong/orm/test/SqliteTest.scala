@@ -31,6 +31,7 @@ class SqliteTest {
   def testInsert(): Unit = db.beginTransaction(session => {
     val obj = new Obj
     obj.name = ""
+    obj.boolValue = true
     obj.ptr = new Ptr
     obj.oo = new OO
     obj.om = Array(new OM, new OM)
@@ -61,7 +62,8 @@ class SqliteTest {
     {
       val root = Orm.root(classOf[Obj])
       val q = Orm.selectFrom(root)
-      session.query(q)
+      val res = session.query(q)
+      Assert.assertEquals(res(0).boolValue, true)
     }
 
     {

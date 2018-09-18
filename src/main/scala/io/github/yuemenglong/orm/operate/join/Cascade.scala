@@ -188,8 +188,11 @@ trait SelectFieldCascade extends Cascade {
   def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
     val map: Map[String, Object] = validFields().map(f => {
       val field = get(f)
+      val fieldMeta = getMeta.fieldMap(f)
       val alias = field.getAlias
-      val value = resultSet.getObject(alias)
+      //      val value = resultSet.getObject(alias)
+      // 适配sqlite
+      val value = Kit.getObjectFromResultSet(resultSet, alias, fieldMeta.clazz).asInstanceOf[Object]
       (f, value)
     })(collection.breakOut)
     val core = new EntityCore(getMeta, map)
