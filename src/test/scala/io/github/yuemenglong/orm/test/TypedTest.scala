@@ -1,16 +1,19 @@
 package io.github.yuemenglong.orm.test
 
+import java.sql
+import java.sql.Timestamp
 import java.text.SimpleDateFormat
+import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.operate.field.Fn
 import io.github.yuemenglong.orm.operate.join.TypedSelectableCascade
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
+import io.github.yuemenglong.orm.lang.types.Impl._
 
 /**
   * Created by <yuemenglong@126.com> on 2018/1/31.
@@ -353,9 +356,9 @@ class TypedTest {
 
     obj.age = 10
     obj.name = "/TOM"
-    obj.nowTime = new Date
+    obj.datetimeValue = new Date()
     obj.doubleValue = 1.2
-    obj.price = new BigDecimal(123.45)
+    obj.price = new java.math.BigDecimal(123.45)
     obj.longText = longText
 
     obj.ptr = new Ptr
@@ -641,14 +644,14 @@ class TypedTest {
   def dateTimeTest(): Unit = db.beginTransaction(session => {
     val obj = new Obj
     obj.name = ""
-    obj.nowTime = new SimpleDateFormat("yyyy-MM-dd").parse("2017-12-12")
+    obj.datetimeValue = new SimpleDateFormat("yyyy-MM-dd").parse("2017-12-12")
     session.execute(Orm.insert(obj))
 
     {
       val root = Orm.root(classOf[Obj])
       val obj = session.first(Orm.selectFrom(root).where(root.get(_.id).eql(1)))
-      Assert.assertEquals(new SimpleDateFormat("yyyy-MM-dd").format(obj.nowTime), "2017-12-12")
-      Assert.assertEquals(obj.nowTime.getClass.getName, "java.sql.Timestamp")
+      Assert.assertEquals(new SimpleDateFormat("yyyy-MM-dd").format(obj.datetimeValue), "2017-12-12")
+      Assert.assertEquals(obj.datetimeValue.getClass.getName, "java.sql.Timestamp")
     }
   })
 
@@ -951,6 +954,28 @@ class TypedTest {
       Assert.assertEquals(res.length, 2)
       Assert.assertEquals(res(0).id.intValue(), 2)
       Assert.assertEquals(res(1).id.intValue(), 3)
+    }
+  })
+
+  @Test
+  //noinspection ScalaDeprecation
+  def testDate(): Unit = db.beginTransaction(session => {
+    val obj = new Obj
+
+    obj.name = "name"
+    obj.birthday = new sql.Date(2020, 10, 20)
+    obj.datetimeValue = new Timestamp(2020, 10, 20, 5, 30, 55, 0)
+
+    {
+      val ex = Orm.insert(obj)
+      session.execute(ex)
+    }
+
+    {
+      val root = Orm.root(classOf[Obj])
+      val obj2 = session.first(Orm.selectFrom(root))
+      Assert.assertEquals(obj.datetimeValue, obj2.datetimeValue)
+      Assert.assertEquals(obj.birthday, obj2.birthday)
     }
   })
 }

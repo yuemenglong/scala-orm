@@ -82,7 +82,6 @@ class FieldMetaFkey(override val name: String,
 abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) extends FieldMeta {
   val annoColumn: Column = field.getAnnotation(classOf[Column])
   val annoId: Id = field.getAnnotation(classOf[Id])
-  val annoDateTime: DateTime = field.getAnnotation(classOf[DateTime])
   val annoLongText: LongText = field.getAnnotation(classOf[LongText])
   val annoEnum: Enum = field.getAnnotation(classOf[Enum])
   val annoPointer: Pointer = field.getAnnotation(classOf[Pointer])
@@ -207,14 +206,12 @@ class FieldMetaLongText(field: Field, entity: EntityMeta) extends FieldMetaDecla
 }
 
 class FieldMetaDate(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
-  require(field.getType == classOf[java.util.Date])
-  require(annoDateTime == null)
+  require(field.getType == classOf[java.sql.Date])
   override val dbType: String = "DATE"
 }
 
 class FieldMetaDateTime(field: Field, entity: EntityMeta) extends FieldMetaDeclared(field, entity) with FieldMetaBuildIn {
-  require(field.getType == classOf[java.util.Date])
-  require(annoDateTime != null)
+  require(field.getType == classOf[java.sql.Timestamp])
   override val dbType: String = "DATETIME"
 }
 

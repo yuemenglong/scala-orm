@@ -32,7 +32,6 @@ class Session(private val conn: Connection) {
     tx = null
   }
 
-
   def isClosed: Boolean = {
     closed
   }
@@ -158,4 +157,8 @@ class Session(private val conn: Connection) {
       stmt.close()
     }
   }
+
+  def commit(): Unit = getConnection.commit()
+
+  def rollback(): Unit = getConnection.rollback()
 }

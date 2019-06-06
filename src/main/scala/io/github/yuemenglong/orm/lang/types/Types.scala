@@ -11,7 +11,8 @@ object Types {
   type Double = java.lang.Double
   type Boolean = java.lang.Boolean
   type String = java.lang.String
-  type Date = java.util.Date
+  type Date = java.sql.Date
+  type DateTime = java.sql.Timestamp
   type BigDecimal = java.math.BigDecimal
 
   val IntegerClass: Class[Integer] = classOf[Integer]
@@ -21,6 +22,7 @@ object Types {
   val BooleanClass: Class[Boolean] = classOf[Boolean]
   val StringClass: Class[String] = classOf[String]
   val DateClass: Class[Date] = classOf[Date]
+  val DateTimeClass: Class[DateTime] = classOf[DateTime]
   val BigDecimalClass: Class[BigDecimal] = classOf[BigDecimal]
 
   def newInstance(clazz: Class[_]): Object = {
@@ -31,7 +33,8 @@ object Types {
       case DoubleClass => new Double(0)
       case BooleanClass => new Boolean(false)
       case StringClass => new String("")
-      case DateClass => new Date()
+      case DateClass => new Date(new java.util.Date().getTime)
+      case DateTimeClass => new DateTime(new java.util.Date().getTime)
       case BigDecimalClass => new BigDecimal(0)
     }
   }

@@ -103,10 +103,8 @@ object Scanner {
           } else {
             new FieldMetaString(field, entityMeta)
           }
-        case Types.DateClass =>
-          val annoDateTime = field.getAnnotation(classOf[DateTime])
-          if (annoDateTime == null) new FieldMetaDate(field, entityMeta)
-          else new FieldMetaDateTime(field, entityMeta)
+        case Types.DateClass => new FieldMetaDate(field, entityMeta)
+        case Types.DateTimeClass => new FieldMetaDateTime(field, entityMeta)
         case _ => throw new RuntimeException(s"No Refer Annotation In Field: ${field.getName}")
       }
       entityMeta.fieldVec += fieldMeta

@@ -10,6 +10,7 @@ import io.github.yuemenglong.orm.operate.field.Fn
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
+import io.github.yuemenglong.orm.lang.types.Impl._
 
 /**
   * Created by <yuemenglong@126.com> on 2017/10/19.

@@ -1,7 +1,5 @@
 package io.github.yuemenglong.orm.test.lite
 
-import java.util.Date
-
 import io.github.yuemenglong.orm.lang.anno._
 import io.github.yuemenglong.orm.lang.types.Types._
 
@@ -38,8 +36,7 @@ class Obj {
 
   var birthday: Date = _
 
-  @DateTime
-  var nowTime: Date = _
+  var datetimeValue: DateTime = _
 
   @Check(in = Array("succ", "fail"))
   var status: String = _
