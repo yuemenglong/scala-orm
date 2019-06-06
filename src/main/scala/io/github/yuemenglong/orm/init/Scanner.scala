@@ -37,7 +37,7 @@ object Scanner {
     scan(paths.map(Class.forName))
   }
 
-  def scan(clazzs: Array[Class[_]]): Unit = {
+  def scan(clazzs: Array[_ <: Class[_]]): Unit = {
     val metas = clazzs.filter(clazz => {
       // 不是entity的过滤掉
       val anno = clazz.getDeclaredAnnotation(classOf[Entity])

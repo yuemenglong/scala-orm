@@ -20,7 +20,7 @@ object Orm {
     Scanner.scan(paths)
   }
 
-  def init(clazzs: Array[Class[_]]): Unit = {
+  def init(clazzs: Array[_ <: Class[_]]): Unit = {
     Scanner.scan(clazzs)
   }
 
