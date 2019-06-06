@@ -15,7 +15,12 @@ class Obj {
   var age: Integer = _
 
   @TinyInt
-  var tinyAge: Integer = _
+  var tinyIntValue: Integer = _
+
+  @SmallInt
+  var smallIntValue: Integer = _
+
+  var longValue: Long = _
 
   var doubleValue: Double = _
 

@@ -963,6 +963,9 @@ class TypedTest {
     val obj = new Obj
 
     obj.name = "name"
+    obj.tinyIntValue = 100
+    obj.smallIntValue = 10000
+    obj.longValue = Long.MaxValue
     obj.birthday = new sql.Date(2020, 10, 20)
     obj.datetimeValue = new Timestamp(2020, 10, 20, 5, 30, 55, 0)
 
