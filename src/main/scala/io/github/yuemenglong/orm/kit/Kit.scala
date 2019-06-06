@@ -76,7 +76,7 @@ object Kit {
       case (n: Long, `bdClass`) => new BigDecimal(n).asInstanceOf[T]
       case (n: BigDecimal, `intClass`) => n.intValue().asInstanceOf[T]
       case (n: BigDecimal, `longClass`) => n.longValue().asInstanceOf[T]
-      case (n: BigDecimal, `boolClass`) => throw new RuntimeException("Unreachable")
+      case (n: BigDecimal, `boolClass`) => (n.signum() != 0).asInstanceOf[T]
       case _ => obj.asInstanceOf[T]
     }
   }
