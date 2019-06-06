@@ -2,49 +2,37 @@ package io.github.yuemenglong.orm.db
 
 import java.sql.{Connection, ResultSet}
 
-import com.jolbox.bonecp.{BoneCP, BoneCPConfig}
+import com.jolbox.bonecp.BoneCP
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 
 object Db {
-  private var context: DbContext = new MysqlContext
 
-  private def setContext(ctx: DbContext): Unit = {
-    this.context = ctx
+  def mysql(host: String, port: Int, username: String, password: String, db: String): Db = {
+    new Db(MysqlConfig(host, port, username, password, db))
   }
 
-  def getContext: DbContext = context
+  def mysql(host: String, port: Int, username: String, password: String, db: String,
+            min: Int, max: Int, partition: Int): Db = {
+    new Db(MysqlConfig(host, port, username, password, db, min, max, partition))
+  }
+
+  def sqlite(db: String): Db = {
+    new Db(SqliteConfig(db))
+  }
+
+  def sqlite(db: String, min: Int, max: Int, partition: Int): Db = {
+    new Db(SqliteConfig(db, min, max, partition))
+  }
 }
 
 class Db(config: DbConfig) {
-  Db.setContext(config.context)
-
-  def this(host: String, port: Int, username: String, password: String, db: String) = {
-    this(MysqlConfig(host, port, username, password, db))
-  }
-
-  def this(host: String, port: Int, username: String, password: String, db: String,
-           min: Int, max: Int, partition: Int) = {
-    this(MysqlConfig(host, port, username, password, db, min, max, partition))
-  }
-
-  def this(db: String) = {
-    this(SqliteConfig(db))
-  }
-
-  def this(db: String, min: Int, max: Int, partition: Int) = {
-    this(SqliteConfig(db, min, max, partition))
-  }
-
   val pool: BoneCP = config.initPool()
   val db: String = config.db
 
   def openConnection(): Connection = {
     try {
-      //      val driver = "com.mysql.jdbc.Driver"
-      //      Class.forName(driver)
-      //      DriverManager.getConnection(url, username, password)
       pool.getConnection
     } catch {
       case e: Throwable => throw new RuntimeException(s"[Open Connection Error] ${e.getMessage}")
@@ -89,9 +77,6 @@ class Db(config: DbConfig) {
       beginTransaction(session => {
         session.execute(context.getDropTableSql(entity))
       })
-      //      val sql = Table.getDropSql(entity)
-      //      Logger.info(sql)
-      //      this.execute(sql)
     })
   }
 
@@ -103,9 +88,6 @@ class Db(config: DbConfig) {
           session.execute(context.getCreateIndexSql(idx))
         })
       })
-      //      val sql = Table.getCreateSql(entity)
-      //      Logger.info(sql)
-      //      this.execute(sql)
     })
   }
 

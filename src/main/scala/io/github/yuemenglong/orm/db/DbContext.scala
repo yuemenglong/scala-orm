@@ -9,7 +9,7 @@ import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta, IndexInfo}
 trait DbContext {
   def getCreateTableSql(meta: EntityMeta): String = {
     val columns = meta.fields().filter(field => field.isNormalOrPkey).map(field => {
-      field.getDbSql
+      field.getDbSql(this)
     }).mkString(", ")
     val sql = s"CREATE TABLE IF NOT EXISTS `${meta.table}`($columns)$createTablePostfix;"
     sql
@@ -44,11 +44,11 @@ trait DbContext {
   }
 
   def getAddColumnSql(field: FieldMeta): String = {
-    s"ALTER TABLE `${field.entity.table}` ADD ${field.getDbSql};"
+    s"ALTER TABLE `${field.entity.table}` ADD ${field.getDbSql(this)};"
   }
 
   def getModifyColumnSql(field: FieldMeta): String = {
-    s"ALTER TABLE `${field.entity.table}` MODIFY ${field.getDbSql};"
+    s"ALTER TABLE `${field.entity.table}` MODIFY ${field.getDbSql(this)};"
   }
 
   def getDropColumnSql(table: String, column: String): String = {

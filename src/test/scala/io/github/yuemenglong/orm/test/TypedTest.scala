@@ -41,9 +41,9 @@ class TypedTest {
     db2.shutdown()
   }
 
-  def openDb(): Db = Orm.openDb("localhost", 3306, "root", "root", "test")
+  def openDb(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "test")
 
-  def openDb2(): Db = Orm.openDb("localhost", 3306, "root", "root", "test2")
+  def openDb2(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "test2")
 
   @Test
   def testInsert(): Unit = db.beginTransaction(session => {

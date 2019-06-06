@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.test.entity.Obj
   * Created by <yuemenglong@126.com> on 2018/3/14.
   */
 object PerformanceTest {
-  def openDb(): Db = Orm.openDb("localhost", 3306, "root", "root", "test")
+  def openDb(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "test")
 
   def main(args: Array[String]): Unit = {
     Orm.init("io.github.yuemenglong.orm.test.entity")

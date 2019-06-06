@@ -25,7 +25,7 @@ class SqliteTest {
     db.shutdown()
   }
 
-  def openDb(): Db = Orm.openDb("test.db")
+  def openDb(): Db = Orm.openSqliteDb("test.db")
 
   @Test
   def testInsert(): Unit = db.beginTransaction(session => {

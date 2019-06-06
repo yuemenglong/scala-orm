@@ -32,25 +32,25 @@ object Orm {
     OrmMeta.reset()
   }
 
-  def openDb(host: String, port: Int, user: String, pwd: String, db: String,
-             minConn: Int, maxConn: Int, partition: Int): Db = {
+  def openMysqlDb(host: String, port: Int, user: String, pwd: String, db: String,
+                  minConn: Int, maxConn: Int, partition: Int): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(host, port, user, pwd, db, minConn, maxConn, partition)
+    Db.mysql(host, port, user, pwd, db, minConn, maxConn, partition)
   }
 
-  def openDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
+  def openMysqlDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(host, port, user, pwd, db, 5, 30, 3)
+    Db.mysql(host, port, user, pwd, db, 5, 30, 3)
   }
 
-  def openDb(db: String, minConn: Int, maxConn: Int, partition: Int): Db = {
+  def openSqliteDb(db: String, minConn: Int, maxConn: Int, partition: Int): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(db, minConn, maxConn, partition)
+    Db.sqlite(db, minConn, maxConn, partition)
   }
 
-  def openDb(db: String): Db = {
+  def openSqliteDb(db: String): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(db, 5, 30, 3)
+    Db.sqlite(db, 5, 30, 3)
   }
 
 

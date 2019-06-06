@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.meta
 
 import java.lang.reflect.Field
 
-import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.db.{Db, DbContext}
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.lang.anno._
@@ -33,12 +33,12 @@ trait FieldMeta {
 
   def getDbTypeSql: String = dbType
 
-  def getDbSql: String = {
+  def getDbSql(ctx: DbContext): String = {
     val notnull = if (nullable) "" else " NOT NULL"
     val pkey = (isPkey, isAuto) match {
       case (false, _) => ""
       case (true, false) => " PRIMARY KEY"
-      case (true, true) => s" PRIMARY KEY ${Db.getContext.autoIncrement}"
+      case (true, true) => s" PRIMARY KEY ${ctx.autoIncrement}"
     }
     val dft = defaultValue match {
       case null => ""
