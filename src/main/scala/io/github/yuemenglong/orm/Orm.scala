@@ -83,8 +83,12 @@ object Orm {
     arr.map(convert).toArray(ClassTag(arr(0).getClass))
   }
 
-  def setLogger(b: Boolean): Unit = {
-    Logger.setEnable(b)
+  def setLogger(enable: Boolean): Unit = {
+    Logger.setEnable(enable)
+  }
+
+  def setLoggerLevel(level: String = "DEBUG"): Unit = {
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", level)
   }
 
   def insert[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.insert(convert(obj))

@@ -28,21 +28,21 @@ object Logger {
   }
 
   def warn(msg: String, params: Object*): Unit = {
-    if (enable) {
-      logger.warn(msg, params)
-    }
+    //    if (enable) {
+    logger.warn(msg, params)
+    //    }
   }
 
   def error(msg: String, params: Object*): Unit = {
-    if (enable) {
-      logger.error(msg, params)
-    }
+    //    if (enable) {
+    logger.error(msg, params)
+    //    }
   }
 
   def error(msg: String, e: Throwable): Unit = {
-    if (enable) {
-      logger.error(msg, e)
-    }
+    //    if (enable) {
+    logger.error(msg, e)
+    //    }
   }
 
   def setEnable(b: Boolean): Unit = {
