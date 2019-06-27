@@ -32,53 +32,69 @@ object OrmTool {
   }
 
   def exportTsClass(path: String): Unit = {
-    exportTsClass(path, init = false)
+    exportTsClass(path, "", init = false)
+  }
+
+  def exportTsClass(path: String, prefix: String): Unit = {
+    exportTsClass(path, prefix, init = false)
   }
 
   def exportTsClass(path: String, init: Boolean): Unit = {
+    exportTsClass(path, "", init)
+  }
+
+
+  def exportTsClass(path: String, prefix: String, init: Boolean): Unit = {
     val relateMap = mutable.Map[String, Set[String]]()
-    val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, relateMap, init)).mkString("\n\n")
+    val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, relateMap, prefix, init)).mkString("\n\n")
     val fs = new FileOutputStream(path)
     fs.write(classes.getBytes())
     fs.close()
   }
 
   // relateMap保存所有与之相关的类型
-  private def stringifyTsClass(clazz: Class[_], relateMap: mutable.Map[String, Set[String]], init: Boolean): String = {
+  private def stringifyTsClass(clazz: Class[_], relateMap: mutable.Map[String, Set[String]], prefix: String, init: Boolean): String = {
+    val pfx = prefix match {
+      case null | "" => ""
+      case s => s"${s} "
+    }
     val className = clazz.getSimpleName
     val newFields = new ArrayBuffer[Field]() // 需要new的field
     val content = Kit.getDeclaredFields(clazz).map(f => {
       val name = f.getName
       val typeName = f.getType.getSimpleName
       val ty = f.getType match {
-        case Types.IntegerClass => "number = undefined"
-        case Types.LongClass => "number = undefined"
-        case Types.FloatClass => "number = undefined"
-        case Types.DoubleClass => "number = undefined"
-        case Types.BooleanClass => "boolean = undefined"
-        case Types.StringClass => "string = undefined"
-        case Types.DateClass => "string = undefined"
-        case Types.BigDecimalClass => "number = undefined"
-        case `clazz` => s"$typeName = undefined" // 自己引用自己
+        case Types.IntegerClass => s"${pfx}number = undefined"
+        case Types.LongClass => s"${pfx}number = undefined"
+        case Types.FloatClass => s"${pfx}number = undefined"
+        case Types.DoubleClass => s"${pfx}number = undefined"
+        case Types.BooleanClass => s"${pfx}boolean = undefined"
+        case Types.StringClass => s"${pfx}string = undefined"
+        case Types.DateClass => s"${pfx}string = undefined"
+        case Types.BigDecimalClass => s"${pfx}number = undefined"
+        case `clazz` => s"${pfx}$typeName = undefined" // 自己引用自己
         case _ => f.getType.isArray match {
-          case true => s"$typeName = []" // 数组
+          case true => s"${pfx}$typeName = []" // 数组
           case false => // 非数组
             init match {
-              case false => s"$typeName = undefined"
+              case false =>
+                s"${pfx}$typeName = undefined"
               case true => //需要初始化
                 f.getDeclaredAnnotation(classOf[ExportTS]) match {
-                  case a if a != null && !a.init() => s"$typeName = undefined"
+                  case a if a != null && !a.init() =>
+                    s"${pfx}$typeName = undefined"
                   case _ => // 没有配置禁止init的注解
                     relateMap.contains(typeName) match {
                       case false => // 该类型还没有导出过，安全的
                         newFields += f
-                        s"$typeName = new $typeName()"
+                        s"${pfx}$typeName = new $typeName()"
                       case true => // 已经被导出过，看看关系种有没有自己
                         relateMap(typeName).contains(className) match { // 导出过
                           case false => // 该类型与自己没有关系，安全的
                             newFields += f
-                            s"$typeName = new $typeName()"
-                          case true => s"$typeName = undefined" // 自己已经被该类型导出过，避免循环引用
+                            s"${pfx}$typeName = new $typeName()"
+                          case true =>
+                            s"${pfx}$typeName = undefined" // 自己已经被该类型导出过，避免循环引用
                         }
                     }
                 }
