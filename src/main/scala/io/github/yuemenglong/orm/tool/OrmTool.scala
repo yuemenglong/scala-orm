@@ -32,89 +32,51 @@ object OrmTool {
   }
 
   def exportTsClass(path: String): Unit = {
-    exportTsClass(path, "", init = false)
+    exportTsClass(path, "")
   }
 
   def exportTsClass(path: String, prefix: String): Unit = {
-    exportTsClass(path, prefix, init = false)
-  }
-
-  def exportTsClass(path: String, init: Boolean): Unit = {
-    exportTsClass(path, "", init)
-  }
-
-
-  def exportTsClass(path: String, prefix: String, init: Boolean): Unit = {
-    val relateMap = mutable.Map[String, Set[String]]()
-    val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, relateMap, prefix, init)).mkString("\n\n")
+    val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, prefix)).mkString("\n\n")
     val fs = new FileOutputStream(path)
     fs.write(classes.getBytes())
     fs.close()
   }
 
   // relateMap保存所有与之相关的类型
-  private def stringifyTsClass(clazz: Class[_], relateMap: mutable.Map[String, Set[String]], prefix: String, init: Boolean): String = {
+  private def stringifyTsClass(clazz: Class[_], prefix: String): String = {
     val pfx = prefix match {
       case null | "" => ""
       case s => s"${s} "
     }
     val className = clazz.getSimpleName
-    val newFields = new ArrayBuffer[Field]() // 需要new的field
-    val content = Kit.getDeclaredFields(clazz).map(f => {
+    val content = Kit.getDeclaredFields(clazz).filter(p = f => {
+      f.getDeclaredAnnotation(classOf[ExportTS]) match {
+        case anno if anno != null && anno.ignore() => false
+        case _ => true
+      }
+    }).map(f => {
       val name = f.getName
       val typeName = f.getType.getSimpleName
       val ty = f.getType match {
-        case Types.IntegerClass => s"${pfx}number = undefined"
-        case Types.LongClass => s"${pfx}number = undefined"
-        case Types.FloatClass => s"${pfx}number = undefined"
-        case Types.DoubleClass => s"${pfx}number = undefined"
-        case Types.BooleanClass => s"${pfx}boolean = undefined"
-        case Types.StringClass => s"${pfx}string = undefined"
-        case Types.DateClass => s"${pfx}string = undefined"
-        case Types.BigDecimalClass => s"${pfx}number = undefined"
-        case `clazz` => s"${pfx}$typeName = undefined" // 自己引用自己
+        case Types.IntegerClass => s"number = undefined"
+        case Types.LongClass => s"number = undefined"
+        case Types.FloatClass => s"number = undefined"
+        case Types.DoubleClass => s"number = undefined"
+        case Types.BooleanClass => s"boolean = undefined"
+        case Types.StringClass => s"string = undefined"
+        case Types.DateClass => s"string = undefined"
+        case Types.BigDecimalClass => s"number = undefined"
+        case `clazz` => s"$typeName = undefined" // 自己引用自己
         case _ => f.getType.isArray match {
-          case true => s"${pfx}$typeName = []" // 数组
-          case false => // 非数组
-            init match {
-              case false =>
-                s"${pfx}$typeName = undefined"
-              case true => //需要初始化
-                f.getDeclaredAnnotation(classOf[ExportTS]) match {
-                  case a if a != null && !a.init() =>
-                    s"${pfx}$typeName = undefined"
-                  case _ => // 没有配置禁止init的注解
-                    relateMap.contains(typeName) match {
-                      case false => // 该类型还没有导出过，安全的
-                        newFields += f
-                        s"${pfx}$typeName = new $typeName()"
-                      case true => // 已经被导出过，看看关系种有没有自己
-                        relateMap(typeName).contains(className) match { // 导出过
-                          case false => // 该类型与自己没有关系，安全的
-                            newFields += f
-                            s"${pfx}$typeName = new $typeName()"
-                          case true =>
-                            s"${pfx}$typeName = undefined" // 自己已经被该类型导出过，避免循环引用
-                        }
-                    }
-                }
-            }
+          case true => s"$typeName = []" // 数组
+          case false => f.getDeclaredAnnotation(classOf[ExportTS]) match {
+            case anno if anno != null && anno.init() => s"$typeName = new $typeName()"
+            case _ => s"$typeName = undefined"
+          }
         }
       }
-      s"\t$name: $ty;"
+      s"\t${pfx}$name: $ty;"
     }).mkString("\n")
-    // 与自己有关系的类型
-    val relateSet = newFields.flatMap(f => {
-      val name = f.getType.getSimpleName
-      relateMap.get(name).orElse(Some(Set[String]())).get ++ Set(name)
-    }).toSet ++ Set(className)
-    relateMap += (className -> relateSet)
-    // 包含自己的类型把这部分并进去
-    relateMap.foreach { case (n, s) =>
-      if (s.contains(className)) {
-        relateMap += (n -> (s ++ relateSet))
-      }
-    }
     val ret = s"export class $className {\n$content\n}"
     ret
   }
@@ -340,7 +302,7 @@ object OrmTool {
   }
 
   def selectByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
-                                  (rootFn: (Root[T]) => Unit = null): T = {
+                                  (rootFn: Root[T] => Unit = null): T = {
     val root = Orm.root(clazz)
     if (rootFn != null) rootFn(root)
     val pkey = root.getMeta.pkey.name
@@ -352,7 +314,7 @@ object OrmTool {
   }
 
   def deleteByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
-                                  (rootFn: (Root[T]) => Array[Cascade] = (_: Root[T]) => Array[Cascade]()
+                                  (rootFn: Root[T] => Array[Cascade] = (_: Root[T]) => Array[Cascade]()
                                   ): Int = {
     val root = Orm.root(clazz)
     val cascade = rootFn(root)

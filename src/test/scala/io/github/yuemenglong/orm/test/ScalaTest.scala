@@ -335,8 +335,10 @@ class ScalaTest {
 
   @Test
   def testExport(): Unit = {
-    OrmTool.exportTsClass("export2.ts", true)
+    OrmTool.exportTsClass("export2.ts")
+    OrmTool.exportTsClass("export3.ts", "@observable")
     new File("export2.ts").deleteOnExit()
+    new File("export3.ts").deleteOnExit()
   }
 
   @Test

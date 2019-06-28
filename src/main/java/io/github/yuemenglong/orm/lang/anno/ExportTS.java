@@ -8,5 +8,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ExportTS {
-    boolean init() default true;
+    boolean init() default false;
+
+    boolean ignore() default false;
 }
