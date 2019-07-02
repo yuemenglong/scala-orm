@@ -38,7 +38,7 @@ trait DbConfig {
 case class MysqlConfig(host: String, port: Int,
                        username: String, password: String, db: String,
                        min: Int = 5, max: Int = 30, partition: Int = 3) extends DbConfig {
-  override def url: String = s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8"
+  override def url: String = s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"
 
   override val context = new MysqlContext
 }
