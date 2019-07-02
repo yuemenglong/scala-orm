@@ -65,6 +65,7 @@ object OrmTool {
         case Types.BooleanClass => s"boolean = undefined"
         case Types.StringClass => s"string = undefined"
         case Types.DateClass => s"string = undefined"
+        case Types.DateTimeClass => s"string = undefined"
         case Types.BigDecimalClass => s"number = undefined"
         case `clazz` => s"$typeName = undefined" // 自己引用自己
         case _ => f.getType.isArray match {
