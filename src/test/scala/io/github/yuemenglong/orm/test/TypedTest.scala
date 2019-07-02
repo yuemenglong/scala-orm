@@ -702,7 +702,7 @@ class TypedTest {
     {
       val obj = ex.root()
       obj.om = Array()
-      OrmTool.attachsx(obj, session)(_.om)(j => {
+      OrmTool.attachOneManyX(obj, session)(_.om)(j => {
         j.select(_.mo)
       }, null)
       Assert.assertEquals(obj.om.length, 3)
@@ -717,7 +717,7 @@ class TypedTest {
         Assert.assertNull(om.mo)
       })
 
-      OrmTool.sattach(obj.om, session)(_.mo)
+      OrmTool.attachArray(obj.om, session)(_.mo)
       Assert.assertEquals(obj.om(0).mo.id.intValue(), 1)
       Assert.assertEquals(obj.om(1).mo.id.intValue(), 2)
       Assert.assertEquals(obj.om(2).mo.id.intValue(), 3)

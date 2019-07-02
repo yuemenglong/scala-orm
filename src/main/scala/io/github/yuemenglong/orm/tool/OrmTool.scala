@@ -81,15 +81,15 @@ object OrmTool {
     ret
   }
 
-  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachx(orig, session)(fn)(null, null)
+  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachX(orig, session)(fn)(null, null)
 
-  def attachs[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachsx(orig, session)(fn)(null, null)
+  def attachOneMany[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachOneManyX(orig, session)(fn)(null, null)
 
-  def sattach[T, R](orig: Array[T], session: Session)(fn: T => R): Array[T] = sattachx(orig, session)(fn)(null, null)
+  def attachArray[T, R](orig: Array[T], session: Session)(fn: T => R): Array[T] = attachArrayX(orig, session)(fn)(null, null)
 
-  def sattachs[T, R](orig: Array[T], session: Session)(fn: T => Array[R]): Array[T] = sattachsx(orig, session)(fn)(null, null)
+  def attachArrayOneMany[T, R](orig: Array[T], session: Session)(fn: T => Array[R]): Array[T] = attachArrayOneManyX(orig, session)(fn)(null, null)
 
-  def attachx[T, R](orig: T, session: Session)
+  def attachX[T, R](orig: T, session: Session)
                    (fn: T => R)
                    (joinFn: TypedSelectableCascade[R] => Unit,
                     queryFn: Query1[R] => Unit
@@ -110,11 +110,11 @@ object OrmTool {
     attach(obj, field, session, jf, qf.asInstanceOf[Query1[_] => Unit])
   }
 
-  def attachsx[T, R](orig: T, session: Session)
-                    (fn: T => Array[R])
-                    (joinFn: TypedSelectableCascade[R] => Unit,
-                     queryFn: Query1[R] => Unit
-                    ): T = {
+  def attachOneManyX[T, R](orig: T, session: Session)
+                          (fn: T => Array[R])
+                          (joinFn: TypedSelectableCascade[R] => Unit,
+                           queryFn: Query1[R] => Unit
+                          ): T = {
     val obj = Orm.convert(orig)
     val entity = obj.asInstanceOf[Entity]
     val marker = EntityManager.createMarker[T](entity.$$core().meta)
@@ -131,11 +131,11 @@ object OrmTool {
     attach(obj, field, session, jf, qf.asInstanceOf[Query1[_] => Unit])
   }
 
-  def sattachx[T, R](orig: Array[T], session: Session)
-                    (fn: T => R)
-                    (joinFn: TypedSelectableCascade[R] => Unit,
-                     queryFn: Query1[R] => Unit
-                    ): Array[T] = {
+  def attachArrayX[T, R](orig: Array[T], session: Session)
+                        (fn: T => R)
+                        (joinFn: TypedSelectableCascade[R] => Unit,
+                         queryFn: Query1[R] => Unit
+                        ): Array[T] = {
     if (orig.isEmpty) {
       return orig
     }
@@ -156,11 +156,11 @@ object OrmTool {
     attach(arr, field, session, jf, qf)
   }
 
-  def sattachsx[T, R](orig: Array[T], session: Session)
-                     (fn: T => Array[R])
-                     (joinFn: TypedSelectableCascade[R] => Unit,
-                      queryFn: Query1[R] => Unit
-                     ): Array[T] = {
+  def attachArrayOneManyX[T, R](orig: Array[T], session: Session)
+                               (fn: T => Array[R])
+                               (joinFn: TypedSelectableCascade[R] => Unit,
+                                queryFn: Query1[R] => Unit
+                               ): Array[T] = {
     if (orig.isEmpty) {
       return orig
     }
