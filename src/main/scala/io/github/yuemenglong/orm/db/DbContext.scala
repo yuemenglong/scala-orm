@@ -29,7 +29,7 @@ trait DbContext {
       case true => "UNIQUE "
       case false => ""
     }
-    s"CREATE ${uni}INDEX idx_${table}_${column} ON `${table}`(${column});"
+    s"CREATE ${uni}INDEX idx_${table}_${column} ON `${table}`(`${column}`);"
   }
 
   def getCreateIndexSql(info: IndexInfo): String = {

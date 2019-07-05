@@ -39,7 +39,8 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
       val pkeyEq = field.isPkey == (key == "PRI")
       val autoEql = field.isAuto == auto
       val decimalEq = field match {
-        case f: FieldMetaDecimal => f.precision == precision && f.scale == scale
+        case f: FieldMetaDecimal if f.precision != 0 && f.scale != 0 =>
+          f.precision == precision && f.scale == scale
         case _ => true
       }
 
