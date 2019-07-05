@@ -1,7 +1,6 @@
 package io.github.yuemenglong.orm.tool
 
 import java.io.FileOutputStream
-import java.lang.reflect.Field
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
@@ -14,8 +13,6 @@ import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.join.{Cascade, Root, SelectFieldCascade, TypedSelectableCascade}
 import io.github.yuemenglong.orm.operate.query.Query1
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -32,13 +29,14 @@ object OrmTool {
   }
 
   def exportTsClass(path: String): Unit = {
-    exportTsClass(path, "")
+    exportTsClass(path, "", "")
   }
 
-  def exportTsClass(path: String, prefix: String): Unit = {
+  def exportTsClass(path: String, prefix: String, imports: String): Unit = {
     val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, prefix)).mkString("\n\n")
+    val content = s"${imports}\r\n\r\n${classes}"
     val fs = new FileOutputStream(path)
-    fs.write(classes.getBytes())
+    fs.write(content.getBytes())
     fs.close()
   }
 
