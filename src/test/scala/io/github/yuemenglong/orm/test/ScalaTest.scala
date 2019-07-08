@@ -638,4 +638,49 @@ class ScalaTest {
       }
     })
   }
+
+  @Test
+  def testUpdateArray(): Unit = {
+    db.beginTransaction(session => {
+      val obj = Orm.convert(new Obj)
+      obj.name = "name"
+      obj.om = Orm.convert(Array(new OM, new OM, new OM))
+      obj.om(0).value = 10 // delete
+      obj.om(1).value = 20 // same
+      obj.om(2).value = 30 // update
+
+      {
+        val ex = Orm.insert(obj)
+        ex.insertArray(_.om)
+        session.execute(ex)
+      }
+
+      {
+        val oms = Array(new OM, new OM, new OM)
+        oms(0).id = 2L
+        oms(0).value = 20 // same
+        oms(0).objId = obj.id
+
+        oms(1).id = 3L
+        oms(1).value = 300 // update
+        oms(1).objId = obj.id
+
+        oms(2).value = 40 // insert
+        oms(2).objId = obj.id
+
+        OrmTool.updateArray(Orm.root(classOf[OM]), obj.om, oms, session)
+      }
+
+      {
+        val obj2 = OrmTool.selectByIdEx(classOf[Obj], obj.id, session)(root => root.select(_.om))
+        Assert.assertEquals(obj2.om(0).id, 2L)
+        Assert.assertEquals(obj2.om(1).id, 3L)
+        Assert.assertEquals(obj2.om(2).id, 4L)
+
+        Assert.assertEquals(obj2.om(0).value, 20)
+        Assert.assertEquals(obj2.om(1).value, 300)
+        Assert.assertEquals(obj2.om(2).value, 40)
+      }
+    })
+  }
 }

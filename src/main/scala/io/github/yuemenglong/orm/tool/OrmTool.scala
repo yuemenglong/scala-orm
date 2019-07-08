@@ -302,6 +302,33 @@ object OrmTool {
     }
   }
 
+  def updateArray[T <: Object](root: Root[T], oldValues: Array[T], newValues: Array[T], session: Session): Unit = {
+    val meta = root.meta
+    val oldvs = Orm.convert(oldValues)
+    val newvs = Orm.convert(newValues)
+    val oldMap = oldvs.map(v => (v.asInstanceOf[Entity].$$core().getPkey, v)).toMap
+    val newMap = newvs.map(v => (v.asInstanceOf[Entity].$$core().getPkey, v)).filter(_._1 != null).toMap
+
+    val toInsert = newvs.filter(_.asInstanceOf[Entity].$$core().getPkey == null)
+    if (toInsert.nonEmpty) {
+      session.execute(Orm.insertArray(toInsert))
+    }
+
+    oldMap.keySet.intersect(newMap.keySet).foreach(key => {
+      val ov = oldMap(key).asInstanceOf[Entity].$$core()
+      val nv = newMap(key).asInstanceOf[Entity].$$core()
+      if (!EntityCore.shallowEqual(ov, nv)) {
+        val obj: T = newMap(key)
+        session.execute(Orm.update(obj))
+      }
+    })
+
+    val toDelete = oldMap.keySet.diff(newMap.keySet).toArray
+    if (toDelete.nonEmpty) {
+      session.execute(Orm.deleteFrom(root).where(root.get(meta.pkey.name).in(toDelete)))
+    }
+  }
+
   def selectByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
                                   (rootFn: Root[T] => Unit = null): T = {
     val root = Orm.root(clazz)
