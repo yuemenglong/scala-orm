@@ -1,11 +1,12 @@
 package io.github.yuemenglong.orm.entity
 
 import java.lang.reflect.Method
+import java.text.SimpleDateFormat
 
-import net.sf.cglib.proxy.MethodProxy
-import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.lang.types.Types.{BigDecimal, Date, DateTime}
 import io.github.yuemenglong.orm.meta._
+import net.sf.cglib.proxy.MethodProxy
 
 /**
   * Created by Administrator on 2017/5/18.
@@ -183,6 +184,47 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       // 交给对象自己处理
       proxy.invokeSuper(obj, args)
     }
+  }
+
+  def shallowEqual(core: EntityCore): Boolean = {
+    if (this.meta != core.meta) {
+      return false
+    }
+    this.meta.fieldVec.filter(_.isNormal).foreach(fieldMeta => {
+      val name = fieldMeta.name
+      val leftVal = this.fieldMap.getOrElse(name, null)
+      val rightVal = core.fieldMap.getOrElse(name, null)
+      if ((leftVal != null && rightVal == null) ||
+        (leftVal == null && rightVal != null)) {
+        return false
+      }
+      // 都为null也认为相等
+      val eq = if (leftVal == rightVal) {
+        true
+      } else (leftVal, rightVal) match {
+        // boolean int long float double bigint date datetime string
+        // timestamp bigint 特殊处理
+        case (t1: Date, t2: Date) =>
+          val sdf = new SimpleDateFormat("yyyyMMdd")
+          sdf.format(t1) == sdf.format(t2)
+        case (t1: DateTime, t2: DateTime) =>
+          val t1t = t1.getTime % 1000 match {
+            case n if n >= 500 => t1.getTime / 1000 + 1
+            case n if n < 500 => t1.getTime / 1000
+          }
+          val t2t = t2.getTime % 1000 match {
+            case n if n >= 500 => t2.getTime / 1000 + 1
+            case n if n < 500 => t2.getTime / 1000
+          }
+          t1t == t2t
+        case (t1: BigDecimal, t2: BigDecimal) => t1.doubleValue() == t2.doubleValue()
+        case _ => false
+      }
+      if (!eq) {
+        return false
+      }
+    })
+    true
   }
 }
 

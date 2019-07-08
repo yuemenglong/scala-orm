@@ -5,25 +5,25 @@ package io.github.yuemenglong.orm.lang.types
   */
 
 object Types {
+  type Boolean = java.lang.Boolean
   type Integer = java.lang.Integer
   type Long = java.lang.Long
   type Float = java.lang.Float
   type Double = java.lang.Double
-  type Boolean = java.lang.Boolean
+  type BigDecimal = java.math.BigDecimal
   type String = java.lang.String
   type Date = java.sql.Date
   type DateTime = java.sql.Timestamp
-  type BigDecimal = java.math.BigDecimal
 
+  val BooleanClass: Class[Boolean] = classOf[Boolean]
   val IntegerClass: Class[Integer] = classOf[Integer]
   val LongClass: Class[Long] = classOf[Long]
   val FloatClass: Class[Float] = classOf[Float]
   val DoubleClass: Class[Double] = classOf[Double]
-  val BooleanClass: Class[Boolean] = classOf[Boolean]
+  val BigDecimalClass: Class[BigDecimal] = classOf[BigDecimal]
   val StringClass: Class[String] = classOf[String]
   val DateClass: Class[Date] = classOf[Date]
   val DateTimeClass: Class[DateTime] = classOf[DateTime]
-  val BigDecimalClass: Class[BigDecimal] = classOf[BigDecimal]
 
   def newInstance(clazz: Class[_]): Object = {
     clazz match {

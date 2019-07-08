@@ -5,12 +5,15 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.field.Fn
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
 import io.github.yuemenglong.orm.lang.types.Impl._
+import io.github.yuemenglong.orm.lang.types.Types
+import io.github.yuemenglong.orm.lang.types.Types.DateTime
 
 /**
   * Created by <yuemenglong@126.com> on 2017/10/19.
@@ -606,6 +609,33 @@ class ScalaTest {
       val root = Orm.root(classOf[Obj])
       val o2 = session.first(Orm.selectFrom(root).where(root.get("id").eql(1)))
       Assert.assertEquals(o2.text, s)
+    })
+  }
+
+  @Test
+  def testShallowEqual(): Unit = {
+    db.beginTransaction(session => {
+      val now = new Date().getTime
+      val obj = new Obj
+      obj.name = "name"
+      obj.smallIntValue = 100
+      obj.tinyIntValue = 10
+      obj.longValue = 1000L
+      obj.age = 20
+      obj.price = java.math.BigDecimal.valueOf(1.5)
+      obj.datetimeValue = new DateTime(now)
+      obj.birthday = new java.sql.Date(now)
+      val obj2 = Orm.convert(obj)
+      session.execute(Orm.insert(obj2))
+      session.commit()
+      val obj3 = OrmTool.selectById(classOf[Obj], obj2.id, session)
+      val core2 = EntityManager.core(obj2)
+      val core3 = EntityManager.core(obj3)
+
+      {
+        val ret = core2.shallowEqual(core3)
+        Assert.assertTrue(ret)
+      }
     })
   }
 }
