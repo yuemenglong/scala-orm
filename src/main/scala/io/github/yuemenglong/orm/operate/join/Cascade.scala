@@ -350,6 +350,8 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
     typedSelect[R](field)
   }
 
+  def selectArray[R](fn: T => Array[R]): TypedSelectableCascade[R] = selects(fn)
+
   def fields(fns: (T => Object)*): TypedSelectableCascade[T] = {
     val fields = fns.map(fn => {
       val marker = EntityManager.createMarker[T](getMeta)
