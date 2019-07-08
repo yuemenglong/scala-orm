@@ -309,7 +309,11 @@ object OrmTool {
     val oldMap = oldvs.map(v => (v.asInstanceOf[Entity].$$core().getPkey, v)).toMap
     val newMap = newvs.map(v => (v.asInstanceOf[Entity].$$core().getPkey, v)).filter(_._1 != null).toMap
 
-    val toInsert = newvs.filter(_.asInstanceOf[Entity].$$core().getPkey == null)
+    // 没有id或者id不在老数据内 说明是新增的
+    val toInsert = newvs.filter(obj => {
+      val id = obj.asInstanceOf[Entity].$$core().getPkey
+      id == null || !oldMap.keySet.contains(id)
+    })
     if (toInsert.nonEmpty) {
       session.execute(Orm.insertArray(toInsert))
     }
