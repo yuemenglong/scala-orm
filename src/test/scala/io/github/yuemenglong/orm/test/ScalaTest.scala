@@ -627,7 +627,6 @@ class ScalaTest {
       obj.birthday = new java.sql.Date(now)
       val obj2 = Orm.convert(obj)
       session.execute(Orm.insert(obj2))
-      session.commit()
       val obj3 = OrmTool.selectById(classOf[Obj], obj2.id, session)
       val core2 = EntityManager.core(obj2)
       val core3 = EntityManager.core(obj3)

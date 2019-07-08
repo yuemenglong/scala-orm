@@ -369,6 +369,9 @@ class TypedTest {
     obj.om(0).value = 1000
     obj.om(1).value = 2000
 
+    obj.om(0).mo = new MO()
+    obj.om(0).mo.value = 9999
+
     obj.ignValue = 0
     obj.ign = new Ign
 
@@ -376,9 +379,9 @@ class TypedTest {
       val ex = Orm.insert(obj)
       ex.insert(_.ptr)
       ex.insert(_.oo)
-      ex.insert(_.om)
+      ex.insertArray(_.om).insert(_.mo)
       val ret = session.execute(ex)
-      Assert.assertEquals(ret, 5)
+      Assert.assertEquals(ret, 6)
       Assert.assertEquals(ex.root().id.longValue(), 1)
       obj.id = ex.root().id
     }
@@ -395,7 +398,7 @@ class TypedTest {
       val root = Orm.root(classOf[Obj])
       root.select(_.ptr)
       root.select(_.oo)
-      root.select(_.om)
+      root.selectArray(_.om).select(_.mo)
 
       val res = session.query(Orm.selectFrom(root).where(root.get(_.id).in(Array(1, 2))))
       Assert.assertEquals(res.length, 1)
@@ -407,6 +410,8 @@ class TypedTest {
       Assert.assertEquals(res(0).oo.value.intValue(), 100)
       Assert.assertEquals(res(0).om(0).value.intValue(), 1000)
       Assert.assertEquals(res(0).om(1).value.intValue(), 2000)
+      Assert.assertEquals(res(0).om(0).mo.value.intValue(), 9999)
+      Assert.assertEquals(res(0).om(1).mo, null)
     }
 
     {

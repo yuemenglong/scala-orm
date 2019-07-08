@@ -122,7 +122,7 @@ trait Cascade extends Table[Cascade] {
 }
 
 trait SelectFieldCascade extends Cascade {
-  private[orm] var _selects = new ArrayBuffer[(String, SelectFieldCascade)]()
+  private[orm] val _selects = new ArrayBuffer[(String, SelectFieldCascade)]()
   private[orm] var _fields = Array[String]()
   private[orm] var _ignores = Set[String]()
 
@@ -318,6 +318,7 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
       override val meta = j.meta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
+      override private[orm] val _selects = j._selects
       override private[orm] val _on = j._on
     }
     ret
@@ -388,7 +389,7 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
   private def pickRefer(selfSelect: SelectFieldCascade, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
     val aCore = EntityManager.core(a)
     selfSelect._selects.foreach { case (field, select) =>
-      val fieldMeta = getMeta.fieldMap(field)
+      val fieldMeta = selfSelect.meta.fieldMap(field)
       val b = pickSelfAndRefer(select, resultSet, filterMap)
       fieldMeta match {
         case _: FieldMetaPointer => aCore.fieldMap += (field -> b)
