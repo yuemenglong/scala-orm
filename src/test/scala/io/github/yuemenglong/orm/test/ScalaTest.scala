@@ -5,7 +5,7 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.entity.EntityManager
+import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.operate.field.Fn
 import io.github.yuemenglong.orm.test.entity._
@@ -633,7 +633,7 @@ class ScalaTest {
       val core3 = EntityManager.core(obj3)
 
       {
-        val ret = core2.shallowEqual(core3)
+        val ret = EntityCore.shallowEqual(core2, core3)
         Assert.assertTrue(ret)
       }
     })

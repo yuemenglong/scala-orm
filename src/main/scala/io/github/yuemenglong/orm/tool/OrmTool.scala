@@ -4,7 +4,7 @@ import java.io.FileOutputStream
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
-import io.github.yuemenglong.orm.entity.EntityManager
+import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.anno.ExportTS
 import io.github.yuemenglong.orm.lang.interfaces.Entity
@@ -219,7 +219,8 @@ object OrmTool {
       case false => session.first(query).asInstanceOf[Object]
     }
 
-    entity.$$core().setRefer(field, res)
+    EntityCore.setWithRefer(entity.$$core(), field, res)
+    //    entity.$$core().setRefer(field, res)
     obj
   }
 
@@ -264,7 +265,8 @@ object OrmTool {
     entities.foreach(e => {
       val leftValue = e.$$core().get(refer.left)
       if (res.contains(leftValue)) {
-        e.$$core().setRefer(field, res(leftValue))
+        EntityCore.setWithRefer(e.$$core(), field, res(leftValue))
+        //        e.$$core().setRefer(field, res(leftValue))
       }
     })
     arr
