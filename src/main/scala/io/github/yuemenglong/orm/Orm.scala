@@ -111,9 +111,6 @@ object Orm {
 
   def cond(): Expr = Expr("1 = 1")
 
-  @Deprecated
-  def insert[T](clazz: Class[T]): ExecutableInsert[T] = new InsertImpl(clazz)
-
   def inserts[T](arr: Array[T]): ExecutableInsert[T] = {
     arr.isEmpty match {
       case true => throw new RuntimeException("Batch Insert But Array Is Empty")
@@ -125,6 +122,8 @@ object Orm {
       }
     }
   }
+
+  def insertArray[T](arr: Array[T]): ExecutableInsert[T] = inserts(arr)
 
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
