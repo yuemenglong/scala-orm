@@ -42,7 +42,7 @@ trait FieldMeta {
     }
     val dft = defaultValue match {
       case null => ""
-      case _ => s" DEFAULT '$defaultValue'"
+      case _ => s" DEFAULT $defaultValue"
     }
     val check = checkCond match {
       case null => ""
