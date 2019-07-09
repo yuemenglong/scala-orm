@@ -52,7 +52,7 @@ trait DbContext {
   }
 
   def getDropColumnSql(table: String, column: String): String = {
-    s"ALTER TABLE `$table` DROP $column;"
+    s"ALTER TABLE `$table` DROP `$column`;"
   }
 
   def getDropColumnSql(field: FieldMeta): String = {
