@@ -32,7 +32,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
       val defaultValueEq = field.defaultValue match {
         case null => defaultValue == null
         case Def.NONE_DEFAULT_VALUE => defaultValue == null
-        case "now()" => defaultValue.startsWith("CURRENT_")
+        case "now()" => defaultValue != null && defaultValue.startsWith("CURRENT_")
         case s => s == defaultValue
       }
       val columnEq = field.column == column
