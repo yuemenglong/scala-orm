@@ -163,9 +163,10 @@ object Scanner {
     metas.foreach(meta => {
       meta.indexVec = meta.fieldVec.filter(_.isInstanceOf[FieldMetaDeclared])
         .map(_.asInstanceOf[FieldMetaDeclared]).filter(_.annoIndex != null)
-        .map(f => IndexInfo(f, f.annoIndex.unique()))
+        .map(f => IndexInfo(meta, Array(f), f.annoIndex.unique()))
     })
-    val map = metas.flatMap(meta => {
+    // 获得反向建立索引的部分
+    val map: Map[String, Set[String]] = metas.flatMap(meta => {
       meta.fieldVec.flatMap(f => {
         f match {
           case r: FieldMetaRefer => Array((meta, r.left), (r.refer, r.right))
@@ -178,9 +179,11 @@ object Scanner {
     metas.foreach(meta => {
       if (map.contains(meta.entity)) {
         val set = map(meta.entity)
-        meta.indexVec ++= set.map(f => IndexInfo(meta.fieldMap(f), false))
-        meta.indexVec.foreach(p => Logger.info(s"Entity: ${meta.entity}, Index: ${p.field.column}"))
+        meta.indexVec ++= set.map(f => IndexInfo(meta, Array(meta.fieldMap(f)), false))
       }
+    })
+    metas.foreach(meta => {
+      meta.indexVec.foreach(p => Logger.info(s"Entity: ${meta.entity}, Index: ${p.fields.map(_.column).mkString(",")}"))
     })
   }
 

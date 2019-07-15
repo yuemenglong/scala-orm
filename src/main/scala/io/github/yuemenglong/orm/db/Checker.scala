@@ -168,17 +168,18 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
     }).filter(_ != null).sorted
     //4. 没有加的索引
     val needCreateIndex = {
-      val alreadyUniIndex = columnMap.filter(p => p._2.key == "UNI")
-      val needUniIndex = meta.indexVec.filter(_.unique).map(p => (p.field.column, p.field)).toMap
-      val uni = needUniIndex.keySet.diff(alreadyUniIndex.keySet).map(c => {
-        db.context.getCreateIndexSql(meta.table, c, true)
-      })
-      val alreadyMulIndex = columnMap.filter(p => p._2.key == "MUL")
-      val needMulIndex = meta.indexVec.filter(!_.unique).map(p => (p.field.column, p.field)).toMap
-      val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).toArray.map(c => {
-        db.context.getCreateIndexSql(meta.table, c)
-      })
-      uni ++ idx
+      //      val alreadyUniIndex = columnMap.filter(p => p._2.key == "UNI")
+      //      val needUniIndex = meta.indexVec.filter(_.unique).map(p => (p.field.column, p.field)).toMap
+      //      val uni = needUniIndex.keySet.diff(alreadyUniIndex.keySet).map(c => {
+      //        db.context.getCreateIndexSql(meta.table, c, true)
+      //      })
+      //      val alreadyMulIndex = columnMap.filter(p => p._2.key == "MUL")
+      //      val needMulIndex = meta.indexVec.filter(!_.unique).map(p => (p.field.column, p.field)).toMap
+      //      val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).toArray.map(c => {
+      //        db.context.getCreateIndexSql(meta.table, c)
+      //      })
+      //      uni ++ idx
+      Array[String]()
     }.toArray.sorted
     needDrop ++ needAdd ++ needAlter ++ needCreateIndex
   }

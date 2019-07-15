@@ -24,23 +24,16 @@ trait DbContext {
     getDropTableSql(meta.table)
   }
 
-  def getCreateIndexSql(table: String, column: String, unique: Boolean = false): String = {
-    val uni = unique match {
+  def getCreateIndexSql(info: IndexInfo): String = {
+    val uni = info.unique match {
       case true => "UNIQUE "
       case false => ""
     }
-    s"CREATE ${uni}INDEX idx_${table}_${column} ON `${table}`(`${column}`);"
-  }
-
-  def getCreateIndexSql(info: IndexInfo): String = {
-    val unique = info.unique
-    val column = info.field.column
-    val table = info.field.entity.table
-    getCreateIndexSql(table, column, unique)
+    s"CREATE ${uni}INDEX ${info.name} ON `${info.meta.table}`(${info.columns});"
   }
 
   def getDropIndexSql(info: IndexInfo): String = {
-    s"DROP INDEX idx_${info.field.column} ON `${info.field.entity.table}`;"
+    s"DROP INDEX ${info.name} ON `${info.meta.table}`;"
   }
 
   def getAddColumnSql(field: FieldMeta): String = {
