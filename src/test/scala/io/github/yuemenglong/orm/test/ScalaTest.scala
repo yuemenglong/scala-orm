@@ -12,7 +12,6 @@ import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
 import io.github.yuemenglong.orm.lang.types.Impl._
-import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.lang.types.Types.DateTime
 
 /**

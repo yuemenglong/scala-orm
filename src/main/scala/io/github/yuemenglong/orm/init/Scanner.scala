@@ -182,6 +182,19 @@ object Scanner {
         meta.indexVec ++= set.map(f => IndexInfo(meta, Array(meta.fieldMap(f)), false))
       }
     })
+    // 添加组合索引
+    metas.foreach(meta => {
+      val anno = meta.clazz.getDeclaredAnnotation(classOf[Index])
+      if (anno != null) {
+        anno.fields().split("\\|").foreach(s => {
+          val columns = s.split(",").map(f => {
+            meta.fieldMap(f)
+          })
+          meta.indexVec += IndexInfo(meta, columns, anno.unique())
+        })
+      }
+    })
+    // 输出日志信息
     metas.foreach(meta => {
       meta.indexVec.foreach(p => Logger.info(s"Entity: ${meta.entity}, Index: ${p.fields.map(_.column).mkString(",")}"))
     })

@@ -134,6 +134,35 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
     ColumnInfo(field, ty, length, nullable, defaultValue, key, auto, set, precision, scale)
   }
 
+  def checkIndex(conn: Connection, meta: EntityMeta): Array[String] = {
+    val sql = s"SHOW INDEX FROM ${meta.table}"
+    val resultSet = conn.prepareStatement(sql).executeQuery()
+    val onlineMap = Stream.continually({
+      resultSet.next() match {
+        case true =>
+          val unique = resultSet.getInt("Non_unique") == 0
+          val name = resultSet.getString("Key_name")
+          (name, unique)
+        case false => null
+      }
+    }).takeWhile(_ != null).filter { case (name, _) => name != "PRIMARY" }.toMap
+    val defMap = meta.indexVec.map(idx => (idx.name, idx)).toMap
+    // unique 性质对不上的
+    val needUpdate = onlineMap.keySet.intersect(defMap.keySet).filter(name => {
+      onlineMap(name) != defMap(name).unique
+    })
+
+    val needInsert = defMap.keySet.diff(onlineMap.keySet)
+    // 暂时不考虑删除，只考虑同名情况下的更新
+
+    needUpdate.toArray.sorted.map(name => {
+      db.context.getDropIndexSql(name, meta.table)
+    }) ++ (needInsert ++ needUpdate).toArray.sorted.map(name => {
+      val info = defMap(name)
+      db.context.getCreateIndexSql(info)
+    })
+  }
+
   def checkEntity(conn: Connection, meta: EntityMeta, ignoreUnused: Boolean = false): Array[String] = {
     val sql = s"SHOW COLUMNS FROM ${meta.table}"
     val resultSet = conn.prepareStatement(sql).executeQuery()
@@ -166,22 +195,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
         db.context.getModifyColumnSql(fieldMeta)
       }
     }).filter(_ != null).sorted
-    //4. 没有加的索引
-    val needCreateIndex = {
-      //      val alreadyUniIndex = columnMap.filter(p => p._2.key == "UNI")
-      //      val needUniIndex = meta.indexVec.filter(_.unique).map(p => (p.field.column, p.field)).toMap
-      //      val uni = needUniIndex.keySet.diff(alreadyUniIndex.keySet).map(c => {
-      //        db.context.getCreateIndexSql(meta.table, c, true)
-      //      })
-      //      val alreadyMulIndex = columnMap.filter(p => p._2.key == "MUL")
-      //      val needMulIndex = meta.indexVec.filter(!_.unique).map(p => (p.field.column, p.field)).toMap
-      //      val idx = needMulIndex.keySet.diff(alreadyMulIndex.keySet).toArray.map(c => {
-      //        db.context.getCreateIndexSql(meta.table, c)
-      //      })
-      //      uni ++ idx
-      Array[String]()
-    }.toArray.sorted
-    needDrop ++ needAdd ++ needAlter ++ needCreateIndex
+    needDrop ++ needAdd ++ needAlter ++ checkIndex(conn, meta)
   }
 }
 

@@ -33,7 +33,12 @@ trait DbContext {
   }
 
   def getDropIndexSql(info: IndexInfo): String = {
-    s"DROP INDEX ${info.name} ON `${info.meta.table}`;"
+    getDropIndexSql(info.name, info.meta.table)
+    //    s"DROP INDEX ${info.name} ON `${info.meta.table}`;"
+  }
+
+  def getDropIndexSql(name: String, table: String): String = {
+    s"DROP INDEX ${name} ON `${table}`;"
   }
 
   def getAddColumnSql(field: FieldMeta): String = {
