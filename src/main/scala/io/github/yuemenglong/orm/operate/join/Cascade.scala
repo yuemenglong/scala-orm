@@ -281,7 +281,11 @@ trait TypedCascade[T] extends Cascade {
 
   def joins[R](fn: (T => Array[R])): TypedCascade[R] = joins(fn, JoinType.INNER)
 
+  def joinArray[R](fn: (T => Array[R])): TypedCascade[R] = joins(fn)
+
   def leftJoins[R](fn: (T => Array[R])): TypedCascade[R] = joins(fn, JoinType.LEFT)
+
+  def leftJoinArray[R](fn: (T => Array[R])): TypedCascade[R] = leftJoins(fn)
 
   def joinAs[R](clazz: Class[R], joinType: JoinType)(leftFn: T => Object, rightFn: R => Object): TypedCascade[R] = {
     if (!OrmMeta.entityMap.contains(clazz)) {
