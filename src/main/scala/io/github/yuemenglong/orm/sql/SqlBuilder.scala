@@ -268,10 +268,6 @@ object Expr {
     override val children = (null, null, null, s, null, null, null, null, null, null)
   }
 
-  def apply(sql: String, params: Array[Object] = Array()): Expr = new Expr {
-    override val children = (null, null, null, null, null, null, null, null, null, (sql, params))
-  }
-
   def apply(op: String, e: ExprT[_]): Expr = new Expr {
     override val children = (null, null, null, null, (op, e.toExpr), null, null, null, null, null)
   }
@@ -290,6 +286,10 @@ object Expr {
 
   def apply(es: ExprT[_]*): Expr = new Expr {
     override val children = (null, null, null, null, null, null, null, null, es.map(_.toExpr).toArray, null)
+  }
+
+  def apply(sql: String, params: Array[Object] = Array()): Expr = new Expr {
+    override val children = (null, null, null, null, null, null, null, null, null, (sql, params))
   }
 
   def asTableColumn(e: Expr): TableColumn = e.children match {
@@ -499,6 +499,10 @@ trait ExprOp[S] extends ExprT[S] {
   def lte(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "<=", e.toExpr))
 
   def lte[T](t: T): S = lte(Expr.const(t))
+
+  def between(l: ExprT[_], r: ExprT[_]): S = fromExpr(Expr(this.toExpr, l.toExpr, r.toExpr))
+
+  def between[T](l: T, r: T): S = between(Expr.const(l), Expr.const(r))
 
   def ===(e: ExprT[_]): S = eql(e)
 

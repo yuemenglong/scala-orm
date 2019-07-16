@@ -986,4 +986,21 @@ class TypedTest {
       Assert.assertEquals(obj.birthday, obj2.birthday)
     }
   })
+
+  @Test
+  def testBetween(): Unit = db.beginTransaction(session => {
+    val objs = (1 to 10).map(i => {
+      val obj = new Obj
+      obj.name = i.toString
+      obj
+    }).toArray
+    session.execute(Orm.insertArray(objs))
+
+    val root = Orm.root(classOf[Obj])
+    val query = Orm.selectFrom(root).where(root.get(_.id).between(3, 7))
+    val res = session.query(query)
+    (3 to 7).zip(res).foreach { case (i, obj) =>
+      Assert.assertEquals(i.intValue(), obj.id.intValue())
+    }
+  })
 }
