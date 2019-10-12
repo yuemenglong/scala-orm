@@ -87,6 +87,8 @@ class Session(private val conn: Connection) {
     records += record
   }
 
+  def debugInfo: Array[String] = records.toArray
+
   def errorTrace(): Unit = {
     records.foreach(r => {
       Logger.error(r.replace("\n", " "))
