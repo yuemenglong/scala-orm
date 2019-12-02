@@ -7,26 +7,6 @@ import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 
-object Db {
-
-  def mysql(host: String, port: Int, username: String, password: String, db: String): Db = {
-    new Db(MysqlConfig(host, port, username, password, db))
-  }
-
-  def mysql(host: String, port: Int, username: String, password: String, db: String,
-            min: Int, max: Int, partition: Int): Db = {
-    new Db(MysqlConfig(host, port, username, password, db, min, max, partition))
-  }
-
-  def sqlite(db: String): Db = {
-    new Db(SqliteConfig(db))
-  }
-
-  def sqlite(db: String, min: Int, max: Int, partition: Int): Db = {
-    new Db(SqliteConfig(db, min, max, partition))
-  }
-}
-
 class Db(config: DbConfig) {
   val pool: BoneCP = config.initPool()
   val db: String = config.db

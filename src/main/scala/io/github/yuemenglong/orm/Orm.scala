@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm
 
-import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.db.{Db, DbConfig, MysqlConfig, SqliteConfig}
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.lang.interfaces.Entity
@@ -32,27 +32,20 @@ object Orm {
     OrmMeta.reset()
   }
 
-  def openMysqlDb(host: String, port: Int, user: String, pwd: String, db: String,
-                  minConn: Int, maxConn: Int, partition: Int): Db = {
+  def open(config: DbConfig): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    Db.mysql(host, port, user, pwd, db, minConn, maxConn, partition)
+    new Db(config)
   }
 
   def openMysqlDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    Db.mysql(host, port, user, pwd, db, 5, 30, 3)
-  }
-
-  def openSqliteDb(db: String, minConn: Int, maxConn: Int, partition: Int): Db = {
-    if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    Db.sqlite(db, minConn, maxConn, partition)
+    new Db(new MysqlConfig(host, port, user, pwd, db))
   }
 
   def openSqliteDb(db: String): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    Db.sqlite(db, 5, 30, 3)
+    new Db(new SqliteConfig(db))
   }
-
 
   def create[T](clazz: Class[T]): T = {
     EntityManager.create(clazz)
