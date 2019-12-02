@@ -1,0 +1,2 @@
+mvn deploy -P release
+https://oss.sonatype.org/
