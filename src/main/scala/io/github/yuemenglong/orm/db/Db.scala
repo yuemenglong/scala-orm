@@ -109,7 +109,9 @@ class Db(config: DbConfig) {
     } catch {
       case e: Throwable =>
         try {
-          session.errorTrace()
+          session.statements()
+            .map(_.toString.replace("\n", " "))
+            .foreach(Logger.error(_))
           tx.rollback()
         } catch {
           case e2: Throwable => Logger.error("Roll Back Error", e2)

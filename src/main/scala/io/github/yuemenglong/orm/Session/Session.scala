@@ -12,10 +12,38 @@ import scala.collection.mutable.ArrayBuffer
   * Created by Administrator on 2017/5/24.
   */
 
+class Stmt {}
+
+case class SimpleStmt(sql: String, params: Array[Object]) extends Stmt {
+  override def toString: String = {
+    val paramsSql = params.map {
+      case null => "null"
+      case v => v.toString
+    }.mkString(", ") match {
+      case "" => ""
+      case s => s"\n[${s}]"
+    }
+    s"$sql$paramsSql"
+  }
+}
+
+case class BatchStmt(sql: String, params: Array[Array[Object]]) extends Stmt {
+  override def toString: String = {
+    val paramsSql = params.map(row => {
+      val content = row.map {
+        case null => "null"
+        case v => v.toString
+      }.mkString(", ")
+      s"[$content]"
+    }).mkString("\n")
+    s"$sql\n$paramsSql"
+  }
+}
+
 class Session(private val conn: Connection) {
   private var closed = false
   private var tx: Transaction = _
-  private var records = new ArrayBuffer[String]()
+  private var stmts = new ArrayBuffer[Stmt]()
 
   def inTransaction(): Boolean = {
     tx != null
@@ -61,39 +89,37 @@ class Session(private val conn: Connection) {
     }
   }
 
-  def record(sql: String, params: Array[Object]): Unit = {
-    val paramsSql = params.map {
-      case null => "null"
-      case v => v.toString
-    }.mkString(", ") match {
-      case "" => ""
-      case s => s"\n[${s}]"
-    }
-    val record = s"\n$sql$paramsSql"
-    Logger.info(record)
-    records += record
+  private def record(sql: String, params: Array[Object]): Unit = {
+    stmts += SimpleStmt(sql, params)
+    Logger.info(stmts.last.toString)
+    //    val paramsSql = params.map {
+    //      case null => "null"
+    //      case v => v.toString
+    //    }.mkString(", ") match {
+    //      case "" => ""
+    //      case s => s"\n[${s}]"
+    //    }
+    //    val record = s"\n$sql$paramsSql"
+    //    Logger.info(record)
+    //    stmts += record
   }
 
-  def record(sql: String, params: Array[Array[Object]]): Unit = {
-    val paramsSql = params.map(row => {
-      val content = row.map {
-        case null => "null"
-        case v => v.toString
-      }.mkString(", ")
-      s"[$content]"
-    }).mkString("\n")
-    val record = s"\n$sql\n$paramsSql"
-    Logger.info(record)
-    records += record
+  private def record(sql: String, params: Array[Array[Object]]): Unit = {
+    stmts += BatchStmt(sql, params)
+    Logger.info(stmts.last.toString)
+    //    val paramsSql = params.map(row => {
+    //      val content = row.map {
+    //        case null => "null"
+    //        case v => v.toString
+    //      }.mkString(", ")
+    //      s"[$content]"
+    //    }).mkString("\n")
+    //    val record = s"\n$sql\n$paramsSql"
+    //    Logger.info(record)
+    //    stmts += record
   }
 
-  def debugInfo: Array[String] = records.toArray
-
-  def errorTrace(): Unit = {
-    records.foreach(r => {
-      Logger.error(r.replace("\n", " "))
-    })
-  }
+  def statements(): Array[Stmt] = stmts.toArray
 
   def execute(sql: String,
               params: Array[Object] = Array(),
