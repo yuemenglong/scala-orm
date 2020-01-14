@@ -6,8 +6,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
+import io.github.yuemenglong.orm.Orm.Fn
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.operate.field.Fn
 import io.github.yuemenglong.orm.operate.join.TypedSelectableCascade
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._

@@ -8,6 +8,7 @@ import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
+import io.github.yuemenglong.orm.operate.field.FnOp
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.query._
 import io.github.yuemenglong.orm.sql.Expr
@@ -131,4 +132,7 @@ object Orm {
   def clear(obj: Object, field: String): Unit = EntityManager.clear(obj, field)
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
+
+  object Fn extends FnOp
+
 }

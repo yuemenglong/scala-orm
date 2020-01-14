@@ -4,10 +4,10 @@ import java.io.File
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
+import io.github.yuemenglong.orm.Orm.Fn
 import io.github.yuemenglong.orm.db.Db
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.operate.field.Fn
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
