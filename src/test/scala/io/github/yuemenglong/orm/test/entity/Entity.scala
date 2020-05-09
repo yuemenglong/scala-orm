@@ -6,7 +6,7 @@ import io.github.yuemenglong.orm.lang.types.Types._
 /**
   * Created by <yuemenglong@126.com> on 2018/1/31.
   */
-@Entity(db = "test")
+@Entity(db = "orm_test")
 class Obj {
   @Id(auto = true)
   var id: Long = _
@@ -68,7 +68,7 @@ class Obj {
   var om: Array[OM] = Array()
 }
 
-@Entity(db = "test")
+@Entity(db = "orm_test")
 class Ptr {
   @Id(auto = true)
   var id: Long = _
@@ -79,7 +79,7 @@ class Ptr {
   var obj: Obj = _
 }
 
-@Entity(db = "test")
+@Entity(db = "orm_test")
 class OO {
   @Id(auto = true)
   var id: Long = _
@@ -89,7 +89,7 @@ class OO {
   var objId: Long = _
 }
 
-@Entity(db = "test")
+@Entity(db = "orm_test")
 class OM {
   @Id(auto = true)
   var id: Long = _
@@ -111,7 +111,7 @@ class OM {
   var subId: Long = _
 }
 
-@Entity(db = "test")
+@Entity(db = "orm_test")
 class MO {
   @Id(auto = true)
   var id: Long = _
@@ -123,10 +123,10 @@ class Ign {
   var id: Integer = _
 }
 
-@Entity(db = "test2")
+@Entity(db = "orm_test2")
 class Sub extends Obj {}
 
-@Entity(db = "test")
+@Entity(db = "orm_test")
 class _ScalaObj {
   @Id
   var id: Long = _
