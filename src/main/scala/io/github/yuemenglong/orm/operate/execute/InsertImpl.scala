@@ -6,8 +6,8 @@ import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.execute.traits.ExecutableInsert
 
 /**
-  * Created by <yuemenglong@126.com> on 2017/7/16.
-  */
+ * Created by <yuemenglong@126.com> on 2017/7/16.
+ */
 
 class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
   if (!OrmMeta.entityMap.contains(clazz)) {
@@ -27,7 +27,7 @@ class InsertImpl[T](clazz: Class[T]) extends ExecutableInsert[T] {
     if (entities.length == 0) return 0
 
     val fields = meta.fields().filter(_.isNormalOrPkey)
-    val columns = fields.map(_.column).mkString(", ")
+    val columns = fields.map(f => s"`${f.column}`").mkString(", ")
     val holders = fields.map(_ => "?").mkString(", ")
     val sql = s"INSERT INTO `${meta.table}`($columns) VALUES ($holders)"
     val params = entities.map(entity => {
