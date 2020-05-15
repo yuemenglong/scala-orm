@@ -10,8 +10,8 @@ import io.github.yuemenglong.orm.operate.execute.traits.{ExecuteJoin, ExecuteRoo
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by yml on 2017/7/15.
-  */
+ * Created by yml on 2017/7/15.
+ */
 abstract class ExecuteCascadeImpl(meta: EntityMeta) extends ExecuteJoin {
   protected var fields: Array[FieldMeta] = meta.fields().filter(_.isNormalOrPkey).toArray
   protected var cascades = new ArrayBuffer[(String, ExecuteJoin)]()
@@ -364,10 +364,10 @@ trait TypedExecuteCascadeImpl[T] extends TypedExecuteJoin[T] {
       fn(marker)
       marker.toString
     })
-    val invalid = fields.map(getMeta.fieldMap(_)).filter(_.isNormalOrPkey).map(_.name).mkString(",")
-    if (invalid.nonEmpty) {
-      throw new RuntimeException(s"Not Normal Fields: [$invalid]")
-    }
+    //    val invalid = fields.map(getMeta.fieldMap(_)).filter(_.isNormalOrPkey).map(_.name).mkString(",")
+    //    if (invalid.nonEmpty) {
+    //      throw new RuntimeException(s"Not Normal Fields: [$invalid]")
+    //    }
     this.ignore(fields: _*)
     this
   }

@@ -16,8 +16,8 @@ import org.junit.{After, Assert, Before, Test}
 import io.github.yuemenglong.orm.lang.types.Impl._
 
 /**
-  * Created by <yuemenglong@126.com> on 2018/1/31.
-  */
+ * Created by <yuemenglong@126.com> on 2018/1/31.
+ */
 class TypedTest {
   private var db: Db = _
   private var db2: Db = _
@@ -1001,6 +1001,53 @@ class TypedTest {
     val res = session.query(query)
     (3 to 7).zip(res).foreach { case (i, obj) =>
       Assert.assertEquals(i.intValue(), obj.id.intValue())
+    }
+  })
+
+  @Test
+  def testAssignArray(): Unit = db.beginTransaction(session => {
+    {
+      val om = (1 to 3).map(_ => new OM).toArray
+      val obj = new Obj
+      obj.name = "name"
+      obj.om = om
+      val ex = Orm.insert(obj)
+      ex.insert(_.om)
+      session.execute(ex)
+    }
+    {
+      val root = Orm.root(classOf[Obj])
+      val obj = session.first(Orm.selectFrom(root))
+      obj.om = Array(new OM)
+      Assert.assertEquals(obj.om.length, 1)
+    }
+  })
+
+
+  @Test
+  def testUpdateIgnore(): Unit = db.beginTransaction(session => {
+    {
+      val obj = new Obj
+      obj.name = "name"
+      obj.age = 10
+      session.execute(Orm.insert(obj))
+
+    }
+    {
+      val obj = new Obj
+      obj.id = 1L
+      obj.name = "name2"
+      obj.age = 20
+      obj.longValue = 100.toLong
+      val ex = Orm.update(obj)
+      ex.ignore(_.age)
+      session.execute(ex)
+    }
+    {
+      val obj = session.first(Orm.selectFrom(Orm.root(classOf[Obj])))
+      Assert.assertEquals(obj.name, "name2")
+      Assert.assertEquals(obj.age, 10)
+      Assert.assertEquals(obj.longValue, 100L)
     }
   })
 }
