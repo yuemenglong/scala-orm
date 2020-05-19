@@ -8,8 +8,8 @@ import io.github.yuemenglong.orm.lang.anno.Entity
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by Administrator on 2017/5/16.
-  */
+ * Created by Administrator on 2017/5/16.
+ */
 case class IndexInfo(meta: EntityMeta, fields: Array[FieldMeta], unique: Boolean) {
   def name: String = {
     val column = fields.map(_.column).mkString("_")
@@ -30,11 +30,15 @@ class EntityMeta(val clazz: Class[_]) {
   var fieldVec: ArrayBuffer[FieldMeta] = ArrayBuffer()
   var fieldMap: Map[String, FieldMeta] = Map()
 
+  var getterMap: Map[Method, FieldMeta] = Map()
+  var setterMap: Map[Method, FieldMeta] = Map()
+
   // <组合索引,是否唯一>
   var indexVec: ArrayBuffer[IndexInfo] = ArrayBuffer()
 
-  var getterMap: Map[Method, FieldMeta] = Map()
-  var setterMap: Map[Method, FieldMeta] = Map()
+  var ignoreFieldVec: ArrayBuffer[FieldMetaIgnore] = ArrayBuffer()
+  var ignoreGetterMap: Map[Method, FieldMetaIgnore] = Map()
+  var ignoreSetterMap: Map[Method, FieldMetaIgnore] = Map()
 
   def fields(): ArrayBuffer[FieldMeta] = {
     fieldVec

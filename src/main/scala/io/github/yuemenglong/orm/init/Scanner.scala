@@ -11,8 +11,8 @@ import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
 
 /**
-  * Created by Administrator on 2017/5/16.
-  */
+ * Created by Administrator on 2017/5/16.
+ */
 object Scanner {
   def scan(path: String): Unit = {
     val loader = Thread.currentThread().getContextClassLoader
@@ -48,8 +48,13 @@ object Scanner {
       OrmMeta.entityMap += (entityMeta.clazz -> entityMeta)
       entityMeta
     })
-    metas.map(firstScan).map(checkPkey).map(secondScan)
-      .map(genGetterSetter).foreach(trace)
+    metas.map(firstScan)
+      .map(checkPkey)
+      .map(secondScan)
+      .map(thirdScan)
+      .map(genGetterSetter)
+      .map(genIgnoreGetterSetter)
+      .foreach(trace)
     indexScan(metas)
     OrmMeta.dbVec = metas.map(_.db).filter(_ != null)
     if (OrmMeta.dbVec.length > 0 && metas.exists(_.db == null)) {
@@ -65,6 +70,9 @@ object Scanner {
         case _ => s"Column: ${field.column}, DbType: ${field.dbType}"
       }
       Logger.info(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, Field: ${field.name}, $post")
+    })
+    meta.ignoreFieldVec.foreach(field => {
+      Logger.info(s"Entity: ${field.entity.entity}, Table: ${field.entity.table}, Field: ${field.name}, IGNORED")
     })
   }
 
@@ -158,6 +166,17 @@ object Scanner {
     entityMeta
   }
 
+  def thirdScan(entityMeta: EntityMeta): EntityMeta = {
+    // 第三轮遍历只处理ignore的情况
+    Kit.getDeclaredFields(entityMeta.clazz).filter(field => {
+      field.getAnnotation(classOf[Ignore]) != null
+    }).foreach(field => {
+      val fieldMeta = new FieldMetaIgnore(field, entityMeta)
+      entityMeta.ignoreFieldVec += fieldMeta
+    })
+    entityMeta
+  }
+
   def indexScan(metas: Array[EntityMeta]): Unit = {
     // 收集索引信息
     metas.foreach(meta => {
@@ -201,7 +220,8 @@ object Scanner {
   }
 
   def genGetterSetter(entityMeta: EntityMeta): EntityMeta = {
-    val methodMap: Map[String, Method] = Kit.getDeclaredMethods(entityMeta.clazz).map(m => (m.getName, m))(collection.breakOut)
+    val methodMap: Map[String, Method] = Kit.getDeclaredMethods(entityMeta.clazz)
+      .map(m => (m.getName, m)).toMap
     entityMeta.fieldVec.foreach(fieldMeta => {
       val getterJ = s"get${Kit.upperCaseFirst(fieldMeta.name)}"
       val getterS = fieldMeta.name
@@ -229,6 +249,38 @@ object Scanner {
     })
     entityMeta
   }
+
+  def genIgnoreGetterSetter(entityMeta: EntityMeta): EntityMeta = {
+    val methodMap: Map[String, Method] = Kit.getDeclaredMethods(entityMeta.clazz)
+      .map(m => (m.getName, m)).toMap
+    entityMeta.ignoreFieldVec.foreach(fieldMeta => {
+      val getterJ = s"get${Kit.upperCaseFirst(fieldMeta.name)}"
+      val getterS = fieldMeta.name
+
+      val getterMethod = if (methodMap.contains(getterJ)) methodMap(getterJ)
+      else if (methodMap.contains(getterS)) methodMap(getterS)
+      else null
+
+      if (getterMethod != null && getterMethod.getParameterCount == 0
+        && getterMethod.getReturnType == fieldMeta.clazz) {
+        entityMeta.ignoreGetterMap += (getterMethod -> fieldMeta)
+      }
+
+      val setterJ = s"set${Kit.upperCaseFirst(fieldMeta.name)}"
+      val setterS = s"${fieldMeta.name}_$$eq"
+
+      val setterMethod = if (methodMap.contains(setterJ)) methodMap(setterJ)
+      else if (methodMap.contains(setterS)) methodMap(setterS)
+      else null
+
+      if (setterMethod != null && setterMethod.getParameterCount == 1
+        && setterMethod.getParameterTypes()(0) == fieldMeta.clazz) {
+        entityMeta.ignoreSetterMap += (setterMethod -> fieldMeta)
+      }
+    })
+    entityMeta
+  }
+
 
   def checkPkey(meta: EntityMeta): EntityMeta = {
     // 检查pkey是否存在或出现多个

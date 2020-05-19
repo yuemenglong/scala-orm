@@ -9,8 +9,8 @@ import io.github.yuemenglong.orm.meta._
 import net.sf.cglib.proxy.MethodProxy
 
 /**
-  * Created by Administrator on 2017/5/18.
-  */
+ * Created by Administrator on 2017/5/18.
+ */
 class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
   private val coreFn = "$$core"
 
@@ -25,16 +25,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     fieldMap += (meta.pkey.name -> id)
   }
 
-  //  def check(field: String, value: Object): Unit = {
-  //    val fieldMeta = this.meta.fieldMap(field)
-  //    if ((fieldMeta.isPointer || fieldMeta.isOneOne) && value != null && !EntityManager.isEntity(value)) {
-  //      throw new RuntimeException(s"Can't Set Non Entity Value To Entity Field")
-  //    }
-  //    if (fieldMeta.isOneMany && value.asInstanceOf[Array[Object]].exists(!EntityManager.isEntity(_))) {
-  //      throw new RuntimeException(s"Can't Set Non Entity Value To Entity Field")
-  //    }
-  //  }
-
   def get(field: String): Object = {
     this.getValue(field)
   }
@@ -43,7 +33,6 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
     this.setValue(field, value)
     null
   }
-
 
   def getValue(field: String): Object = this.fieldMap.get(field) match {
     case Some(v) => v
@@ -91,6 +80,12 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
       this.get(fieldMeta.name)
     } else if (meta.setterMap.contains(method)) {
       val fieldMeta = meta.setterMap(method)
+      this.set(fieldMeta.name, args(0))
+    } else if (meta.ignoreGetterMap.contains(method)) {
+      val fieldMeta = meta.ignoreGetterMap(method)
+      this.get(fieldMeta.name)
+    } else if (meta.ignoreSetterMap.contains(method)) {
+      val fieldMeta = meta.ignoreSetterMap(method)
       this.set(fieldMeta.name, args(0))
     } else {
       // 交给对象自己处理

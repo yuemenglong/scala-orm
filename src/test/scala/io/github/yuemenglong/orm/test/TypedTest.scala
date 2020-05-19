@@ -1005,12 +1005,13 @@ class TypedTest {
   })
 
   @Test
-  def testAssignArray(): Unit = db.beginTransaction(session => {
+  def testAssignIgnore(): Unit = db.beginTransaction(session => {
     {
       val om = (1 to 3).map(_ => new OM).toArray
       val obj = new Obj
       obj.name = "name"
       obj.om = om
+      obj.ignValue = 1
       val ex = Orm.insert(obj)
       ex.insert(_.om)
       session.execute(ex)
@@ -1019,7 +1020,10 @@ class TypedTest {
       val root = Orm.root(classOf[Obj])
       val obj = session.first(Orm.selectFrom(root))
       obj.om = Array(new OM)
+      Assert.assertEquals(obj.ignValue, null)
       Assert.assertEquals(obj.om.length, 1)
+      obj.ignValue = 10
+      Assert.assertEquals(obj.ignValue.intValue(), 10)
     }
   })
 

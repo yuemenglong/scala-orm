@@ -7,17 +7,6 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.lang.anno._
 
-//object FieldMetaTypeKind {
-//  val BUILT_IN: Int = 0
-//  val REFER: Int = 1
-//  val POINTER: Int = 2
-//  val ONE_ONE: Int = 3
-//  val ONE_MANY: Int = 4
-//  val IGNORE_BUILT_IN: Int = 100
-//  val IGNORE_REFER: Int = 101
-//  val IGNORE_MANY: Int = 102
-//}
-
 trait FieldMeta {
   val entity: EntityMeta
   val name: String
@@ -62,6 +51,11 @@ trait FieldMeta {
   def isOneOne: Boolean = this.isInstanceOf[FieldMetaOneOne]
 
   def isOneMany: Boolean = this.isInstanceOf[FieldMetaOneMany]
+}
+
+class FieldMetaIgnore(val field: Field, val entity: EntityMeta) {
+  val name: String = field.getName
+  val clazz: Class[_] = field.getType
 }
 
 trait FieldMetaBuildIn extends FieldMeta
