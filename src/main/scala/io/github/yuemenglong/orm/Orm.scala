@@ -48,6 +48,7 @@ object Orm {
     new Db(new SqliteConfig(db))
   }
 
+  @Deprecated
   def create[T](clazz: Class[T]): T = {
     EntityManager.create(clazz)
   }
