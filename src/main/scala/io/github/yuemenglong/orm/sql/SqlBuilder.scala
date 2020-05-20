@@ -385,7 +385,7 @@ trait ResultColumn extends SqlItem {
 }
 
 trait UpdateStmt extends SqlItem {
-  val _table: Table[_]
+  val _table: TableLike
   var _sets: Array[Assign] = Array() // Table,Column,Expr
   var _where: Expr = _
 
@@ -444,8 +444,8 @@ object Assign {
 }
 
 trait DeleteStmt extends SqlItem {
-  val _targets: Array[Table[_]]
-  var _table: Table[_] = _
+  val _targets: Array[TableLike]
+  var _table: TableLike = _
   var _where: Expr = _
 
   override def genSql(sb: StringBuffer): Unit = {

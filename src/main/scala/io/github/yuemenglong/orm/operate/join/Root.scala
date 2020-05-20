@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.operate.join
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
-import io.github.yuemenglong.orm.sql.{Expr, Table, Var}
+import io.github.yuemenglong.orm.sql.{Expr, TableLike, Var}
 
 trait Root[T] extends TypedSelectableCascade[T] {}
 
@@ -13,7 +13,7 @@ object Root {
       case Some(m) => m
       case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
     }
-    val table = Table(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
+    val table = TableLike(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
     new Root[T] {
       override val meta = rootMeta
       override private[orm] val _table = table._table

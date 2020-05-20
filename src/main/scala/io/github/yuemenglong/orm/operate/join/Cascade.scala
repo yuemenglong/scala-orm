@@ -20,7 +20,7 @@ object JoinType extends Enumeration {
   val INNER, LEFT, RIGHT, OUTER = Value
 }
 
-trait Cascade extends Table[Cascade] {
+trait Cascade extends TableLike {
   val meta: EntityMeta
   var joins: Map[String, (JoinType, Cascade)] = Map()
 
@@ -38,9 +38,9 @@ trait Cascade extends Table[Cascade] {
     }
   }
 
-  def join(t: Table[_], joinType: JoinType): Table[_] = super.join(t, joinType.toString)
+  def join(t: TableLike, joinType: JoinType): TableLike = super.join(t, joinType.toString)
 
-  def join(t: Table[_]): Table[_] = join(t, JoinType.INNER)
+  def join(t: TableLike): TableLike = join(t, JoinType.INNER)
 
   def join(field: String, joinType: JoinType): Cascade = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
@@ -59,7 +59,7 @@ trait Cascade extends Table[Cascade] {
         val alias = s"${getAlias}_${Kit.lowerCaseFirst(field)}"
         val leftColumn = getMeta.fieldMap(referMeta.left).column
         val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
-        val table = join(Table(tableName, alias), joinType.toString, leftColumn, rightColumn)
+        val table = join(TableLike(tableName, alias), joinType.toString, leftColumn, rightColumn)
         val ret = new Cascade {
           override val meta = referMeta.refer
           override private[orm] val _table = table._table
@@ -94,7 +94,7 @@ trait Cascade extends Table[Cascade] {
     val leftColumn = getMeta.fieldMap(left).column
     val rightColumn = referMeta.fieldMap(right).column
     val alias = s"${getAlias}__${joinName}"
-    val table = join(Table(tableName, alias), joinType.toString, leftColumn, rightColumn)
+    val table = join(TableLike(tableName, alias), joinType.toString, leftColumn, rightColumn)
     new TypedSelectableCascade[T] {
       override val meta = referMeta
       override private[orm] val _table = table._table
@@ -431,7 +431,7 @@ trait TypedSelectableCascade[T] extends TypedCascade[T]
   override def getType: Class[T] = getMeta.clazz.asInstanceOf[Class[T]]
 }
 
-trait SubQuery extends Table[SubQuery] {
+trait SubQuery extends TableLike {
   def get(alias: String): FieldT = {
     val that = this
     new FieldT {
@@ -440,7 +440,7 @@ trait SubQuery extends Table[SubQuery] {
     }
   }
 
-  def join(t: Table[_], joinType: JoinType): Table[_] = super.join(t, joinType.toString)
+  def join(t: TableLike, joinType: JoinType): TableLike = super.join(t, joinType.toString)
 
-  def join(t: Table[_]): Table[_] = join(t, JoinType.INNER)
+  def join(t: TableLike): TableLike = join(t, JoinType.INNER)
 }
