@@ -117,12 +117,12 @@ trait Table extends TableLike {
   }
 }
 
-trait SelectFieldTable extends Table {
-  private[orm] val _selects = new ArrayBuffer[(String, SelectFieldTable)]()
+trait ResultTable extends Table {
+  private[orm] val _selects = new ArrayBuffer[(String, ResultTable)]()
   private[orm] var _fields = Array[String]()
   private[orm] var _ignores = Set[String]()
 
-  def select(field: String): SelectFieldTable = {
+  def select(field: String): ResultTable = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Object Field $field")
     }
@@ -130,7 +130,7 @@ trait SelectFieldTable extends Table {
       case Some(p) => p._2
       case None =>
         val j = leftJoin(field)
-        val ret = new SelectFieldTable {
+        val ret = new ResultTable {
           override val meta = j.meta
           override private[orm] val _table = j._table
           override private[orm] val _joins = j._joins
@@ -141,7 +141,7 @@ trait SelectFieldTable extends Table {
     }
   }
 
-  def fields(fields: String*): SelectFieldTable = {
+  def fields(fields: String*): ResultTable = {
     fields.foreach(f => {
       if (!this.getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Invalid Field $f In ${this.getMeta.entity}")
@@ -154,8 +154,7 @@ trait SelectFieldTable extends Table {
     this
   }
 
-
-  def ignore(fields: String*): SelectFieldTable = {
+  def ignore(fields: String*): ResultTable = {
     fields.foreach(f => {
       if (!getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Not Exists Field, $f")
@@ -310,7 +309,7 @@ trait TypedTable[T] extends Table {
 }
 
 trait TypedSelectableTable[T] extends TypedTable[T]
-  with SelectFieldTable with Selectable[T] {
+  with ResultTable with Selectable[T] {
 
   private def typedSelect[R](field: String) = {
     val j = this.select(field)
@@ -327,7 +326,7 @@ trait TypedSelectableTable[T] extends TypedTable[T]
   override def getColumns: Array[ResultColumn] = {
     val ab = new ArrayBuffer[ResultColumn]()
 
-    def go(cascade: SelectFieldTable): Unit = {
+    def go(cascade: ResultTable): Unit = {
       val self = cascade.validFields().map(cascade.get)
       ab ++= self
       cascade._selects.foreach(s => go(s._2))
@@ -373,7 +372,7 @@ trait TypedSelectableTable[T] extends TypedTable[T]
     this
   }
 
-  private def pickSelfAndRefer(select: SelectFieldTable, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+  private def pickSelfAndRefer(select: ResultTable, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
     val a = select.pickSelf(resultSet, filterMap)
     if (a == null) {
       return null
@@ -386,7 +385,7 @@ trait TypedSelectableTable[T] extends TypedTable[T]
     s"$getAlias@$field@${core.getPkey.toString}"
   }
 
-  private def pickRefer(selfSelect: SelectFieldTable, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
+  private def pickRefer(selfSelect: ResultTable, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
     val aCore = EntityManager.core(a)
     selfSelect._selects.foreach { case (field, select) =>
       val fieldMeta = selfSelect.meta.fieldMap(field)

@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.lang.anno.ExportTS
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.join.{Table, Root, SelectFieldTable, TypedSelectableTable}
+import io.github.yuemenglong.orm.operate.join.{Table, Root, ResultTable, TypedSelectableTable}
 import io.github.yuemenglong.orm.operate.query.Query1
 
 import scala.reflect.ClassTag
@@ -100,7 +100,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
+      case _ => (join: ResultTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -121,7 +121,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
+      case _ => (join: ResultTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -146,7 +146,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
+      case _ => (join: ResultTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -171,7 +171,7 @@ object OrmTool {
     val field = marker.toString
     val jf = joinFn match {
       case null => null
-      case _ => (join: SelectFieldTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
+      case _ => (join: ResultTable) => joinFn(join.asInstanceOf[TypedSelectableTable[R]])
     }
     val qf = queryFn match {
       case null => null
@@ -183,7 +183,7 @@ object OrmTool {
   def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
 
   def attach[T](obj: T, field: String, session: Session,
-                joinFn: SelectFieldTable => Unit,
+                joinFn: ResultTable => Unit,
                 queryFn: Query1[_] => Unit
                ): T = {
     if (obj.getClass.isArray) {
@@ -225,7 +225,7 @@ object OrmTool {
   }
 
   private def attachArray(arr: Array[_], field: String, session: Session,
-                          joinFn: SelectFieldTable => Unit = null,
+                          joinFn: ResultTable => Unit = null,
                           queryFn: Query1[_] => Unit = null
                          ): Array[_] = {
     if (arr.exists(!_.isInstanceOf[Entity])) {
