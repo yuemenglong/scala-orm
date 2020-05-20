@@ -1054,4 +1054,32 @@ class TypedTest {
       Assert.assertEquals(obj.longValue, 100L)
     }
   })
+
+  @Test
+  def testCascadeField(): Unit = db.beginTransaction(session => {
+    {
+      val obj = new Obj
+      obj.name = "name"
+      obj.age = 10
+      obj.longValue = 100L
+      obj.ptr = new Ptr
+      obj.ptr.value = 1
+      obj.om = Array(new OM, new OM)
+      obj.om(0).value = 10
+      obj.om(1).value = 11
+      val ex = Orm.insert(obj)
+      ex.insert(_.ptr)
+      ex.insert(_.om)
+      session.execute(ex)
+    }
+    {
+      val root = Orm.root(classOf[Ptr])
+      val objJoin = root.select(_.obj)
+      objJoin.fields(_.name, _.age)
+      val ptr = session.first(Orm.selectFrom(root))
+      Assert.assertEquals(ptr.obj.age, 10)
+      Assert.assertEquals(ptr.obj.name, "name")
+      Assert.assertNull(ptr.obj.longValue)
+    }
+  })
 }
