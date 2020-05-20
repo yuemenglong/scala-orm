@@ -22,7 +22,7 @@ object JoinType extends Enumeration {
 
 trait Table extends TableLike {
   val meta: EntityMeta
-  var joins: Map[String, (JoinType, Table)] = Map()
+  val joins: mutable.Map[String, (JoinType, Table)] = mutable.Map()
 
   def getMeta: EntityMeta = meta
 
@@ -119,8 +119,8 @@ trait Table extends TableLike {
 
 trait ResultTable extends Table {
   private[orm] val _selects = new ArrayBuffer[(String, ResultTable)]()
-  private[orm] var _fields = Array[String]()
-  private[orm] var _ignores = Set[String]()
+  private[orm] val _fields = ArrayBuffer[String]()
+  private[orm] val _ignores = mutable.Set[String]()
 
   def select(field: String): ResultTable = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
@@ -142,6 +142,8 @@ trait ResultTable extends Table {
   }
 
   def fields(fields: String*): ResultTable = {
+    _fields.clear()
+    _fields += this.getMeta.pkey.name
     fields.foreach(f => {
       if (!this.getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Invalid Field $f In ${this.getMeta.entity}")
@@ -149,12 +151,13 @@ trait ResultTable extends Table {
       if (!this.getMeta.fieldMap(f).isNormal) {
         throw new RuntimeException(s"Not Normal Field $f In ${this.getMeta.entity}")
       }
+      _fields += f
     })
-    _fields = Array(this.getMeta.pkey.name) ++ fields
     this
   }
 
   def ignore(fields: String*): ResultTable = {
+    _ignores.clear()
     fields.foreach(f => {
       if (!getMeta.fieldMap.contains(f)) {
         throw new RuntimeException(s"Not Exists Field, $f")
@@ -163,15 +166,15 @@ trait ResultTable extends Table {
       if (!fieldMeta.isNormal) {
         throw new RuntimeException(s"Only Normal Field Can Ignore, $f")
       }
+      _ignores += f
     })
-    _ignores = fields.toSet
     this
   }
 
   private[orm] def validFields(): Array[String] = {
     val fs: Array[String] = _fields.isEmpty match {
       case true => getMeta.fieldVec.filter(_.isNormalOrPkey).map(_.name).toArray
-      case false => _fields
+      case false => _fields.toArray
     }
     fs.filter(!_ignores.contains(_))
   }
@@ -185,7 +188,7 @@ trait ResultTable extends Table {
       val field = get(f)
       val fieldMeta = getMeta.fieldMap(f)
       val alias = field.getAlias
-      //      val value = resultSet.getObject(alias)
+      // val value = resultSet.getObject(alias)
       // 适配sqlite
       val value = Kit.getObjectFromResultSet(resultSet, alias, fieldMeta.clazz).asInstanceOf[Object]
       (f, value)
@@ -205,7 +208,7 @@ trait ResultTable extends Table {
 }
 
 trait TypedTable[T] extends Table {
-  private def typedCascade[R](field: String, joinType: JoinType) = {
+  private def typedCascade[R](field: String, joinType: JoinType): TypedTable[R] = {
     val j: Table = this.join(field, joinType)
     new TypedTable[R] {
       override val meta = j.meta
@@ -311,13 +314,15 @@ trait TypedTable[T] extends Table {
 trait TypedResultTable[T] extends TypedTable[T]
   with ResultTable with Selectable[T] {
 
-  private def typedSelect[R](field: String) = {
+  private def typedSelect[R](field: String): TypedResultTable[R] = {
     val j = this.select(field)
     val ret = new TypedResultTable[R] {
       override val meta = j.meta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
       override private[orm] val _selects = j._selects
+      override private[orm] val _fields = j._fields
+      override private[orm] val _ignores = j._ignores
       override private[orm] val _on = j._on
     }
     ret
