@@ -48,6 +48,7 @@ object Orm {
     new Db(new SqliteConfig(db))
   }
 
+  @Deprecated
   def create[T](clazz: Class[T]): T = {
     EntityManager.create(clazz)
   }
@@ -101,7 +102,7 @@ object Orm {
 
   def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2] = new Query3[T0, T1, T2](s0, s1, s2)
 
-  def selectFrom[T: ClassTag](r: TypedSelectableCascade[T]): Query1[T] = select(r).from(r)
+  def selectFrom[T: ClassTag](r: TypedResultTable[T]): Query1[T] = select(r).from(r)
 
   def cond(): Expr = Expr("1 = 1")
 
@@ -121,7 +122,7 @@ object Orm {
 
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
-  def delete(joins: Cascade*): ExecutableDelete = new DeleteImpl(joins: _*)
+  def delete(joins: Table*): ExecutableDelete = new DeleteImpl(joins: _*)
 
   def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
 

@@ -139,7 +139,7 @@ trait QueryBase[S] extends SelectStatement[S] {
     val that = this
     new SubQuery {
       override private[orm] val _on = Var[Expr](null)
-      override private[orm] val _table = Table(that, alias)._table
+      override private[orm] val _table = TableLike(that, alias)._table
       override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
     }
   }

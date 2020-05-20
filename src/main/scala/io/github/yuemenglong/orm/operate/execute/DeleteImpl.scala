@@ -2,8 +2,8 @@ package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.operate.execute.traits.ExecutableDelete
-import io.github.yuemenglong.orm.operate.join.Cascade
-import io.github.yuemenglong.orm.sql.Table
+import io.github.yuemenglong.orm.operate.join.Table
+import io.github.yuemenglong.orm.sql.TableLike
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -11,8 +11,8 @@ import scala.collection.mutable.ArrayBuffer
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
 
-class DeleteImpl(deletes: Cascade*) extends ExecutableDelete {
-  override val _targets: Array[Table[_]] = deletes.toArray
+class DeleteImpl(deletes: Table*) extends ExecutableDelete {
+  override val _targets: Array[TableLike] = deletes.toArray
 
   override def execute(session: Session): Int = {
     if (_table == null) {
