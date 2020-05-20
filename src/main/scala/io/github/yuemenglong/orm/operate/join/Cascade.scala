@@ -38,10 +38,6 @@ trait Cascade extends TableLike {
     }
   }
 
-  def join(t: TableLike, joinType: JoinType): TableLike = super.join(t, joinType.toString)
-
-  def join(t: TableLike): TableLike = join(t, JoinType.INNER)
-
   def join(field: String, joinType: JoinType): Cascade = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
