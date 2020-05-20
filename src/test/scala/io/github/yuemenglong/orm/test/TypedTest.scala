@@ -8,7 +8,7 @@ import java.util.Date
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Orm.Fn
 import io.github.yuemenglong.orm.db.Db
-import io.github.yuemenglong.orm.operate.join.TypedSelectableTable
+import io.github.yuemenglong.orm.operate.join.TypedResultTable
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
@@ -201,7 +201,7 @@ class TypedTest {
 
     {
       val root = Orm.root(classOf[Obj])
-      val mo: TypedSelectableTable[MO] = root.joins(_.om).leftJoinAs(_.mo)
+      val mo: TypedResultTable[MO] = root.joins(_.om).leftJoinAs(_.mo)
       println(root)
       val res = session.query(Orm.select(root, mo).from(root))
       Assert.assertEquals(res.length, 2)

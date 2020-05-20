@@ -5,7 +5,7 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.sql.{Expr, TableLike, Var}
 
-trait Root[T] extends TypedSelectableTable[T] {}
+trait Root[T] extends TypedResultTable[T] {}
 
 object Root {
   def apply[T](clazz: Class[T]): Root[T] = {
