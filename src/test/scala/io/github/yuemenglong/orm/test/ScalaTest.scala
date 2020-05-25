@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.test
 
-import java.io.File
+import java.io.{ByteArrayOutputStream, File}
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
@@ -15,8 +15,8 @@ import io.github.yuemenglong.orm.lang.types.Impl._
 import io.github.yuemenglong.orm.lang.types.Types.DateTime
 
 /**
-  * Created by <yuemenglong@126.com> on 2017/10/19.
-  */
+ * Created by <yuemenglong@126.com> on 2017/10/19.
+ */
 class ScalaTest {
   private var db: Db = _
   private var db2: Db = _
@@ -337,10 +337,17 @@ class ScalaTest {
 
   @Test
   def testExport(): Unit = {
-    OrmTool.exportTsClass("export2.ts")
-    OrmTool.exportTsClass("export3.ts", "@observable", "import {observable} from 'mobx'")
-    new File("export2.ts").deleteOnExit()
-    new File("export3.ts").deleteOnExit()
+    {
+      val bs = new ByteArrayOutputStream()
+      OrmTool.exportTsClass(bs)
+      println(new String(bs.toByteArray))
+    }
+
+    {
+      val bs = new ByteArrayOutputStream()
+      OrmTool.exportTsClass(bs, "@observable", "import {observable} from 'mobx'")
+      println(new String(bs.toByteArray))
+    }
   }
 
   @Test

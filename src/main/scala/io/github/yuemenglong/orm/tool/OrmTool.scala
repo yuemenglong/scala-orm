@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.tool
 
-import java.io.FileOutputStream
+import java.io.{FileOutputStream, OutputStream}
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.lang.anno.ExportTS
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.join.{Table, Root, ResultTable, TypedResultTable}
+import io.github.yuemenglong.orm.operate.join.{ResultTable, Root, Table, TypedResultTable}
 import io.github.yuemenglong.orm.operate.query.Query1
 
 import scala.reflect.ClassTag
@@ -28,16 +28,11 @@ object OrmTool {
     }).toMap
   }
 
-  def exportTsClass(path: String): Unit = {
-    exportTsClass(path, "", "")
-  }
-
-  def exportTsClass(path: String, prefix: String, imports: String): Unit = {
+  def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit = {
     val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, prefix)).mkString("\n\n")
     val content = s"${imports}\r\n\r\n${classes}"
-    val fs = new FileOutputStream(path)
-    fs.write(content.getBytes())
-    fs.close()
+    os.write(content.getBytes())
+    os.close()
   }
 
   // relateMap保存所有与之相关的类型
