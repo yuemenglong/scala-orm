@@ -16,8 +16,8 @@ import io.github.yuemenglong.orm.operate.query.Query1
 import scala.reflect.ClassTag
 
 /**
-  * Created by <yuemenglong@126.com> on 2017/10/10.
-  */
+ * Created by <yuemenglong@126.com> on 2017/10/10.
+ */
 object OrmTool {
   def getEmptyConstructorMap: Map[Class[_], () => Object] = {
     OrmMeta.entityVec.map(meta => {
@@ -56,21 +56,21 @@ object OrmTool {
       val name = f.getName
       val typeName = f.getType.getSimpleName
       val ty = f.getType match {
-        case Types.IntegerClass => s"number = undefined"
-        case Types.LongClass => s"number = undefined"
-        case Types.FloatClass => s"number = undefined"
-        case Types.DoubleClass => s"number = undefined"
-        case Types.BooleanClass => s"boolean = undefined"
-        case Types.StringClass => s"string = undefined"
-        case Types.DateClass => s"string = undefined"
-        case Types.DateTimeClass => s"string = undefined"
-        case Types.BigDecimalClass => s"number = undefined"
-        case `clazz` => s"$typeName = undefined" // 自己引用自己
+        case Types.IntegerClass => s"number = null"
+        case Types.LongClass => s"number = null"
+        case Types.FloatClass => s"number = null"
+        case Types.DoubleClass => s"number = null"
+        case Types.BooleanClass => s"boolean = null"
+        case Types.StringClass => s"string = null"
+        case Types.DateClass => s"string = null"
+        case Types.DateTimeClass => s"string = null"
+        case Types.BigDecimalClass => s"number = null"
+        case `clazz` => s"$typeName = null" // 自己引用自己
         case _ => f.getType.isArray match {
           case true => s"$typeName = []" // 数组
           case false => f.getDeclaredAnnotation(classOf[ExportTS]) match {
             case anno if anno != null && anno.init() => s"$typeName = new $typeName()"
-            case _ => s"$typeName = undefined"
+            case _ => s"$typeName = null"
           }
         }
       }
