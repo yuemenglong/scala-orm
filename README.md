@@ -60,7 +60,9 @@ scala-orm是一个用scala开发的轻量级的开源ORM框架，用来替代hib
 +----+--------------------+-----+              +----+----------------------+
 ```
 teacher/course的表关系
+
 站在teacher表的角度，外键cid在自己表上，因此关系为**Pointer**，意思是teacher里面的cid字段像指针一样指向了course的id字段
+
 站在course表的角度，外键在对方的表上且唯一，因此关系为**OneToOne**
 
 ```
@@ -80,8 +82,11 @@ teacher/course的表关系
                      course_student
 ```
 course/course_student/student的表关系
+
 站在course的角度，外键cid在course_student上且非唯一，因此关系为**OneToMany**
+
 站在course_student的角度上，外键cid/sid在自己表上，因此对course/student的关系都是**Pointer**
+
 站在student的角度，外键cid在course_student上且非唯一，因此关系为**OneToMany**
 
 
