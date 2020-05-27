@@ -147,7 +147,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
 }
 
 trait Expr extends SqlItem
-  with ExprOp[Expr]
+  with ExprOpBool[Expr]
   with ExprOpMath[Expr] {
   private[orm] val children: (
     Constant,
@@ -349,7 +349,7 @@ trait FunctionCall extends SqlItem {
 }
 
 trait ResultColumnT extends ResultColumn
-  with ExprOp[ResultColumnT]
+  with ExprOpBool[ResultColumnT]
   with ExprOpMath[ResultColumnT] {
   override def toExpr = expr
 
@@ -473,9 +473,9 @@ trait ExprT[S] {
   def fromExpr(e: Expr): S
 }
 
-trait ExprOps[S] extends ExprOp[S] with ExprOpMath[S]
+trait ExprOps[S] extends ExprOpBool[S] with ExprOpMath[S]
 
-trait ExprOp[S] extends ExprT[S] {
+trait ExprOpBool[S] extends ExprT[S] {
   def eql(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
 
   def eql[T](t: T): S = eql(Expr.const(t))
