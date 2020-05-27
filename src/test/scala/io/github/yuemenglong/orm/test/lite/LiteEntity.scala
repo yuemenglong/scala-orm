@@ -54,7 +54,6 @@ class Obj {
   var igns: Array[Ign] = Array()
 
   @Pointer
-  @ExportTS(init = false)
   var ptr: Ptr = _
   var ptrId: Integer = _
 

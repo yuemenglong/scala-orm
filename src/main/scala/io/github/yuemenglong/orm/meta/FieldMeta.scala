@@ -101,7 +101,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   override val defaultValue: String = annoColumn match {
     case null => null
     case _ => annoColumn.defaultValue() match {
-      case Def.NONE_DEFAULT_VALUE => null
+      case Def.ANNOTATION_STRING_NULL => null
       case s: String => s
     }
   }

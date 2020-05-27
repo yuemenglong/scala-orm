@@ -6,6 +6,7 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.lang.anno.ExportTS
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
@@ -50,26 +51,46 @@ object OrmTool {
     }).map(f => {
       val name = f.getName
       val typeName = f.getType.getSimpleName
+      val anno = f.getDeclaredAnnotation(classOf[ExportTS])
       val ty = f.getType match {
-        case Types.IntegerClass => s"number = null"
-        case Types.LongClass => s"number = null"
-        case Types.FloatClass => s"number = null"
-        case Types.DoubleClass => s"number = null"
-        case Types.BooleanClass => s"boolean = null"
-        case Types.StringClass => s"string = null"
-        case Types.DateClass => s"string = null"
-        case Types.DateTimeClass => s"string = null"
-        case Types.BigDecimalClass => s"number = null"
-        case `clazz` => s"$typeName = null" // 自己引用自己
+        case Types.IntegerClass => s"number"
+        case Types.LongClass => s"number"
+        case Types.FloatClass => s"number"
+        case Types.DoubleClass => s"number"
+        case Types.BooleanClass => s"boolean"
+        case Types.StringClass => s"string"
+        case Types.DateClass => s"string"
+        case Types.DateTimeClass => s"string"
+        case Types.BigDecimalClass => s"number"
+        case _ => s"$typeName"
+      }
+      val init = anno != null && anno.value() != Def.ANNOTATION_STRING_NULL match {
+        case true => anno.value()
+        case false => "null"
+      }
+      val value = f.getType match {
+        case Types.IntegerClass => init
+        case Types.LongClass => init
+        case Types.FloatClass => init
+        case Types.DoubleClass => init
+        case Types.BooleanClass => init
+        case Types.StringClass => init
+        case Types.DateClass => init
+        case Types.DateTimeClass => init
+        case Types.BigDecimalClass => init
+        case `clazz` => "null" // 自己引用自己
         case _ => f.getType.isArray match {
-          case true => s"$typeName = []" // 数组
-          case false => f.getDeclaredAnnotation(classOf[ExportTS]) match {
-            case anno if anno != null && anno.init() => s"$typeName = new $typeName()"
-            case _ => s"$typeName = null"
+          case true => init match { // 数组的情况
+            case "null" => "[]" // 默认的情况
+            case s => s
+          }
+          case false => init match { // 对象的情况
+            case "" => s"new $typeName()" // 特殊指定的情况
+            case s => s
           }
         }
       }
-      s"\t${pfx}$name: $ty;"
+      s"\t${pfx}$name: $ty = ${value};"
     }).mkString("\n")
     val ret = s"export class $className {\n$content\n}"
     ret

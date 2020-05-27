@@ -20,6 +20,6 @@ public @interface Column {
 
     int scale() default 0;
 
-    String defaultValue() default Def.NONE_DEFAULT_VALUE;
+    String defaultValue() default Def.ANNOTATION_STRING_NULL;
 }
 //(precision, scale)

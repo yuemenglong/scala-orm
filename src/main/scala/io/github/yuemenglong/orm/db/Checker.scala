@@ -31,7 +31,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
 
       val defaultValueEq = field.defaultValue match {
         case null => defaultValue == null
-        case Def.NONE_DEFAULT_VALUE => defaultValue == null
+        case Def.ANNOTATION_STRING_NULL => defaultValue == null
         case "now()" => defaultValue != null && defaultValue.startsWith("CURRENT_")
         case s => s == defaultValue
       }

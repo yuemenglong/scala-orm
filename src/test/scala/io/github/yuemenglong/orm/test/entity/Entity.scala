@@ -4,14 +4,15 @@ import io.github.yuemenglong.orm.lang.anno._
 import io.github.yuemenglong.orm.lang.types.Types._
 
 /**
-  * Created by <yuemenglong@126.com> on 2018/1/31.
-  */
+ * Created by <yuemenglong@126.com> on 2018/1/31.
+ */
 @Entity(db = "orm_test")
 class Obj {
   @Id(auto = true)
   var id: Long = _
 
   @Column(name = "age_")
+  @ExportTS(value = "undefined")
   var age: Integer = _
 
   @TinyInt
@@ -29,6 +30,7 @@ class Obj {
 
   @Column(length = 128, nullable = false)
   @Index
+  @ExportTS(value = "'name'")
   var name: String = _
 
   @Text
@@ -51,13 +53,15 @@ class Obj {
   var ignValue: Integer = _
 
   @Ignore
+  @ExportTS(value = "")
   var ign: Ign = _
 
   @Ignore
+  @ExportTS(value = "[ {}, {} ]")
   var igns: Array[Ign] = Array()
 
   @Pointer
-  @ExportTS(init = false)
+  @ExportTS(value = "new Ptr()")
   var ptr: Ptr = _
   var ptrId: Long = _
 
