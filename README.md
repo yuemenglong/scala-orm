@@ -91,87 +91,53 @@ course/course_student/student的表关系
 
 
 ```jsx
-//职员表
-@Entity(db = "dbtest")
-class Stuff {
-  @Id
-  var id: String = _
-  var departId: String = _
-  var age: Integer = _
-  @Column(length = 30)
-  var name: String = _
-  var sex: Integer = _
-  @Pointer(left = "departId", right = "id")
-  var department: Department = _
-}
-
-//领导表
-@Entity(db = "dbtest")
-class Manager {
-  @Id
-  var id: String = _
+@Entity
+class Teacher {
+  @Id(auto = true)
+  var id: Long = _
   var name: String = _
   var age: Integer = _
-  var sex: Integer = _
-  var phone: String = _
 
-  @OneToOne(left = "id", right = "id")
-  var department: Department = _
+  // Pointer中，left表示自己的外键，right表示对方的主键
+  @Pointer(left = "course_id", right = "id")
+  var course: Course = _
 }
 
-//部门表
-@Entity(db = "dbtest")
-class Department {
-  @Id
-  var id: String = _
+@Entity
+class Course {
+  @Id(auto = true)
+  var id: Long = _
   var name: String = _
-  var numbers: Integer = _
-  var computers: Integer = _
 
-  @OneToMany(left = "id", right = "departId")
-  var stuffs: Array[Stuff] = Array()
+  // OneToOne中，left表示自己的主键，right表示对方的外键
+  @OneToOne(left = "id", right = "course_id")
+  var teacher: Teacher = _
+  // OneToMany中，left表示自己的主键，right表示对方的外键
+  // 与OneToOne不同的是外键不唯一
+  @OneToMany(left = "id", right = "course_id")
+  var students: Array[CourseStudent] = Array()
+}
 
-  @Pointer(left = "id", right = "id")
-  var manager: Manager = _
+@Entity
+class CourseStudent {
+  @Id(auto = true)
+  var id: Long = _
+  @Pointer // 默认情况下left=course_id(字段名+id), right=id
+  var course: Course = _
+  @Pointer // 默认情况下left=student_id(字段名+id), right=id
+  var student: Student = _
+}
+
+@Entity
+class Student {
+  @Id(auto = true)
+  var id: Long = _
+  var name: String = _
+  var no: String = _
+  @OneToMany // 默认情况下left=id, right=student_id(实体名+id)
+  var courses: Array[CourseStudent] = Array()
 }
 ```
-## 实体间的关系
-### Pointer
-![Pointer](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
-
-Pointer关系中，判断哪个是主表，如图所示：若A为主表，A表中的主键充当B表中的外键，则B表对A表来说是Pointer关系
-
-A表中的一行最多只能匹配B表中的一行
-
-@Pointer(left="id",right="id"),left表示department表中的主键，对应manager中的主键；right表示manager表中的主键，具有唯一性
-
-例如：一个部门属于一个领导管理，department的id对应manager的id
-
-### OneToOne
-![一对一](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_one.png)
-
-一对一关系中，判断哪个为主表，如图所示：若A为主表，A表的主键充当B表的外键，则A表对B表来说是OneToOne关系
-
-A表中的一行最多只能匹配B表中的一行
-
-@OneToOne(left="id",right="id"),left表示manager表中的主键，具有唯一性；right表示department表中主键，对应manager中的主键，具有唯一性
-
-例如：一个领导管理一个部门，manager的id对应department的id
-
-### OneToMany
-![一对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/one_to_many.png)
-
-一对多关系中，在多的一方添加外键，如图所示：A表中的主键充当B表中的外键
-
-A表中的一行可以匹配B表中的多行
-
-@OneToMany(left="id",right="departId"),left表示department表中的主键，具有唯一性；right表示stuff中的外键，对应department中的主键，不具有唯一性
-
-例如：一个部门对应多个职员，deparment的id对应stuff的departId
-### ManyToMany
-![多对多](https://github.com/SimpleSmile412/scala-orm/raw/master/doc/imgs/many_to_many.png)
-
-多对多关系中，一般需要一个中间表将两个表关联，如图所示：A表中的主键充当AB中间表中的外键，A表和AB中间表示一对多关系，B表中的主键充当AB表中的外键，B表中和AB中间表表示一对多关系，则A表和B表示多对多关系
 
 ## 新增
 ###  insert(一次添加一条数据)
