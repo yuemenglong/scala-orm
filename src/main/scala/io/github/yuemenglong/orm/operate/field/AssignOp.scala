@@ -14,4 +14,8 @@ trait AssignOp {
   def :=(e: ExprT[_]): Assign = assign(e)
 
   def :=[T](v: T): Assign = assign(v)
+
+  def ===(e: ExprT[_]): Assign = assign(e)
+
+  def ===[T](v: T): Assign = assign(v)
 }
