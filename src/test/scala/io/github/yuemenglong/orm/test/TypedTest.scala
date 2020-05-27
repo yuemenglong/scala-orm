@@ -562,8 +562,8 @@ class TypedTest {
       {
         val root = Orm.root(classOf[Obj])
         session.execute(Orm.update(root).set(
-          root.get(_.age) := null,
-          root.get(_.doubleValue) := 20.0
+          root.get(_.age) === null,
+          root.get(_.doubleValue) === 20.0
         ).where(root.get(_.id) === obj.id))
       }
       {
@@ -846,7 +846,7 @@ class TypedTest {
     session.execute(Orm.insert(obj))
 
     val root = Orm.root(classOf[Obj])
-    session.execute(Orm.update(root).set(root(_.age) := (root(_.age) + 10)))
+    session.execute(Orm.update(root).set(root(_.age) === (root(_.age) + 10)))
 
     val res = session.first(Orm.select(root(_.age)).from(root))
     Assert.assertEquals(res.intValue(), 20)
