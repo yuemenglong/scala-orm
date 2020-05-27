@@ -188,6 +188,10 @@ class InsertJoin(meta: EntityMeta) extends ExecuteCascadeImpl(meta) {
       field.isNormalOrPkey &&
         core.fieldMap.contains(field.name) &&
         !ignoreFields.contains(field.name)
+      //       && (field.defaultValue match {
+      //          case "" => true // 没有默认值的情况没有影响
+      //          case _ => field.nullable || core.get(field.name) != null // 有默认值的情况value不能为null
+      //        })
     })
     val columns = validFields.map(field => {
       s"`${field.column}`"
