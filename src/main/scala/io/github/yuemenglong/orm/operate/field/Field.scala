@@ -26,13 +26,13 @@ trait FieldT extends Field with ExprOps[FieldT] {
   }
 }
 
-trait Field extends ResultColumn with AssignOp {
+trait Field extends ResultColumn {
   def getAlias: String = uid
 
-  override def assign(e: ExprT[_]) = e match {
-    case null => Assign(Expr.asTableColumn(expr), null)
-    case _ => Assign(Expr.asTableColumn(expr), e.toExpr)
-  }
+//  override def assign(e: ExprT[_]) = e match {
+//    case null => Assign(Expr.asTableColumn(expr), null)
+//    case _ => Assign(Expr.asTableColumn(expr), e.toExpr)
+//  }
 
   def to[T](clazz: Class[T]): SelectableFieldT[T] = {
     val that = this

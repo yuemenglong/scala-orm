@@ -147,8 +147,9 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
 }
 
 trait Expr extends SqlItem
-  with ExprOp[Expr]
-  with ExprOpMath[Expr] {
+  with ExprOpBool[Expr]
+  with ExprOpMath[Expr]
+  with ExprOpAssign[Expr] {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -163,6 +164,20 @@ trait Expr extends SqlItem
     )
   //      (Expr, String, SelectStmt), // IN (SUBQUERY)
 
+  def exprGenSql(e: Expr, sb: StringBuffer): Unit = {
+    e match {
+      case null => sb.append("NULL")
+      case _ => e.genSql(sb)
+    }
+  }
+
+  def exprGenParam(e: Expr, ab: ArrayBuffer[Object]): Unit = {
+    e match {
+      case null =>
+      case _ => e.genParams(ab)
+    }
+  }
+
   override def genSql(sb: StringBuffer): Unit = children match {
     case (c, null, null, null, null, null, null, null, null, null) =>
       c.genSql(sb)
@@ -176,20 +191,20 @@ trait Expr extends SqlItem
       sb.append(")")
     case (null, null, null, null, (op, e), null, null, null, null, null) =>
       sb.append(s"${op} ")
-      e.genSql(sb)
+      exprGenSql(e, sb) // e.genSql(sb)
     case (null, null, null, null, null, (e, op), null, null, null, null) =>
-      e.genSql(sb)
+      exprGenSql(e, sb) // e.genSql(sb)
       sb.append(s" ${op}")
     case (null, null, null, null, null, null, (l, op, r), null, null, null) =>
-      l.genSql(sb)
+      exprGenSql(l, sb) // l.genSql(sb)
       sb.append(s" ${op} ")
-      r.genSql(sb)
+      exprGenSql(r, sb) // r.genSql(sb)
     case (null, null, null, null, null, null, null, (e, l, r), null, null) =>
-      e.genSql(sb)
+      exprGenSql(e, sb) // e.genSql(sb)
       sb.append(" BETWEEN ")
-      l.genSql(sb)
+      exprGenSql(l, sb) // l.genSql(sb)
       sb.append(" AND ")
-      r.genSql(sb)
+      exprGenSql(r, sb) // r.genSql(sb)
     case (null, null, null, null, null, null, null, null, list, null) =>
       sb.append("(")
       bufferMkString(sb, list, ", ")
@@ -209,16 +224,16 @@ trait Expr extends SqlItem
     case (null, null, null, s, null, null, null, null, null, null) =>
       s.genParams(ab)
     case (null, null, null, null, (_, e), null, null, null, null, null) =>
-      e.genParams(ab)
+      exprGenParam(e, ab) // e.genParams(ab)
     case (null, null, null, null, null, (e, _), null, null, null, null) =>
-      e.genParams(ab)
+      exprGenParam(e, ab) // e.genParams(ab)
     case (null, null, null, null, null, null, (l, _, r), null, null, null) =>
-      l.genParams(ab)
-      r.genParams(ab)
+      exprGenParam(l, ab) // l.genParams(ab)
+      exprGenParam(r, ab) // r.genParams(ab)
     case (null, null, null, null, null, null, null, (e, l, r), null, null) =>
-      e.genParams(ab)
-      l.genParams(ab)
-      r.genParams(ab)
+      exprGenParam(e, ab) // e.genParams(ab)
+      exprGenParam(l, ab) // l.genParams(ab)
+      exprGenParam(r, ab) // r.genParams(ab)
     case (null, null, null, null, null, null, null, null, list, null) =>
       list.foreach(_.genParams(ab))
     case (null, null, null, null, null, null, null, null, null, (_, p)) =>
@@ -349,7 +364,7 @@ trait FunctionCall extends SqlItem {
 }
 
 trait ResultColumnT extends ResultColumn
-  with ExprOp[ResultColumnT]
+  with ExprOpBool[ResultColumnT]
   with ExprOpMath[ResultColumnT] {
   override def toExpr = expr
 
@@ -386,7 +401,7 @@ trait ResultColumn extends SqlItem {
 
 trait UpdateStmt extends SqlItem {
   val _table: TableLike
-  var _sets: Array[Assign] = Array() // Table,Column,Expr
+  var _sets: Array[Expr] = Array() // Table,Column,Expr
   var _where: Expr = _
 
   override def genSql(sb: StringBuffer): Unit = {
@@ -415,33 +430,33 @@ trait UpdateStmt extends SqlItem {
   }
 }
 
-trait Assign extends SqlItem {
-  val column: TableColumn
-  val expr: Expr
-
-  override def genSql(sb: StringBuffer): Unit = {
-    column.genSql(sb)
-    sb.append(s" = ")
-    expr match {
-      case null => sb.append("NULL")
-      case _ => expr.genSql(sb)
-    }
-  }
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = {
-    column.genParams(ab)
-    if (expr != null) {
-      expr.genParams(ab)
-    }
-  }
-}
-
-object Assign {
-  def apply(c: TableColumn, e: Expr): Assign = new Assign {
-    override val column = c
-    override val expr = e
-  }
-}
+//trait Assign extends SqlItem {
+//  val column: TableColumn
+//  val expr: Expr
+//
+//  override def genSql(sb: StringBuffer): Unit = {
+//    column.genSql(sb)
+//    sb.append(s" = ")
+//    expr match {
+//      case null => sb.append("NULL")
+//      case _ => expr.genSql(sb)
+//    }
+//  }
+//
+//  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+//    column.genParams(ab)
+//    if (expr != null) {
+//      expr.genParams(ab)
+//    }
+//  }
+//}
+//
+//object Assign {
+//  def apply(c: TableColumn, e: Expr): Assign = new Assign {
+//    override val column = c
+//    override val expr = e
+//  }
+//}
 
 trait DeleteStmt extends SqlItem {
   val _targets: Array[TableLike]
@@ -473,9 +488,9 @@ trait ExprT[S] {
   def fromExpr(e: Expr): S
 }
 
-trait ExprOps[S] extends ExprOp[S] with ExprOpMath[S]
+trait ExprOps[S] extends ExprOpBool[S] with ExprOpMath[S] with ExprOpAssign[S]
 
-trait ExprOp[S] extends ExprT[S] {
+trait ExprOpBool[S] extends ExprT[S] {
   def eql(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
 
   def eql[T](t: T): S = eql(Expr.const(t))
@@ -504,9 +519,12 @@ trait ExprOp[S] extends ExprT[S] {
 
   def between[T](l: T, r: T): S = between(Expr.const(l), Expr.const(r))
 
-  def ===(e: ExprT[_]): S = eql(e)
+  def ===(e: ExprT[_]): S = fromExpr(e match {
+    case null => Expr(this.toExpr, "= NULL")
+    case _ => Expr(this.toExpr, "=", e.toExpr)
+  })
 
-  def ===[T](t: T): S = eql(t)
+  def ===[T](t: T): S = ===(Expr.const(t))
 
   def !==(e: ExprT[_]): S = neq(e)
 
@@ -563,6 +581,15 @@ trait ExprOpMath[S] extends ExprT[S] {
   def -(e: ExprT[_]): S = sub(e)
 
   def -[T](v: T): S = sub(v)
+}
+
+trait ExprOpAssign[S] extends ExprT[S] {
+  def assign(e: ExprT[_]): S = fromExpr(e match {
+    case null => Expr(this.toExpr, "= NULL")
+    case _ => Expr(this.toExpr, "=", e.toExpr)
+  })
+
+  def assign[T](v: T): S = assign(Expr.const(v))
 }
 
 trait TableOrSubQuery extends SqlItem {
