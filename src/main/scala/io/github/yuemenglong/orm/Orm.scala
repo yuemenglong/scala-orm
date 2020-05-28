@@ -38,14 +38,15 @@ object Orm {
     new Db(config)
   }
 
-  def openMysqlDb(host: String, port: Int, user: String, pwd: String, db: String): Db = {
+  def openMysqlDb(host: String, port: Int, user: String, pwd: String, db: String,
+                  min: Int = 5, max: Int = 30, partition: Int = 3): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(new MysqlConfig(host, port, user, pwd, db))
+    new Db(new MysqlConfig(host, port, user, pwd, db).setPoolArgs(min, max, partition))
   }
 
-  def openSqliteDb(db: String): Db = {
+  def openSqliteDb(db: String, min: Int = 5, max: Int = 30, partition: Int = 3): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(new SqliteConfig(db))
+    new Db(new SqliteConfig(db).setPoolArgs(min, max, partition))
   }
 
   def create[T](clazz: Class[T]): T = {
