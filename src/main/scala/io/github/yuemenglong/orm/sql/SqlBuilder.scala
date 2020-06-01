@@ -78,7 +78,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   private[orm] var _where: Expr = _
   private[orm] var _groupBy: Array[Expr] = _
   private[orm] var _having: Expr = _
-  private[orm] var _orderBy: ArrayBuffer[(Expr, String)] = new ArrayBuffer[(Expr, String)]()
+  private[orm] var _orderBy: Array[Expr] = Array[Expr]()
   private[orm] var _limit: Integer = _
   private[orm] var _offset: Integer = _
 
@@ -106,11 +106,14 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
     }
     if (nonEmpty(_orderBy)) {
       sb.append(" ORDER BY ")
-      _orderBy.foreach { case (e, o) =>
-        sb.append(" ")
+      var first = true
+      _orderBy.foreach(e => {
+        if (!first) {
+          sb.append(", ")
+        }
+        first = false
         e.genSql(sb)
-        sb.append(s" ${o}")
-      }
+      })
     }
     if (_limit != null) {
       sb.append(" LIMIT ?")
@@ -135,7 +138,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
       }
     }
     if (nonEmpty(_orderBy)) {
-      _orderBy.foreach(_._1.genParams(ab))
+      _orderBy.foreach(_.genParams(ab))
     }
     (_limit, _offset) match {
       case (null, null) =>
@@ -149,7 +152,8 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
 trait Expr extends SqlItem
   with ExprOpBool[Expr]
   with ExprOpMath[Expr]
-  with ExprOpAssign[Expr] {
+  with ExprOpAssign[Expr]
+  with ExprOpOrder[Expr] {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -488,7 +492,10 @@ trait ExprT[S] {
   def fromExpr(e: Expr): S
 }
 
-trait ExprOps[S] extends ExprOpBool[S] with ExprOpMath[S] with ExprOpAssign[S]
+trait ExprOps[S] extends ExprOpBool[S]
+  with ExprOpMath[S]
+  with ExprOpAssign[S]
+  with ExprOpOrder[S]
 
 trait ExprOpBool[S] extends ExprT[S] {
   def eql(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
@@ -590,6 +597,12 @@ trait ExprOpAssign[S] extends ExprT[S] {
   })
 
   def assign[T](v: T): S = assign(Expr.const(v))
+}
+
+trait ExprOpOrder[S] extends ExprT[S] {
+  def asc(): S = fromExpr(Expr(this.toExpr, "ASC"))
+
+  def desc(): S = fromExpr(Expr(this.toExpr, "DESC"))
 }
 
 trait TableOrSubQuery extends SqlItem {

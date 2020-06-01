@@ -5,8 +5,8 @@ import io.github.yuemenglong.orm.kit.UnreachableException
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by <yuemenglong@126.com> on 2018/3/19.
-  */
+ * Created by <yuemenglong@126.com> on 2018/3/19.
+ */
 
 //noinspection ScalaRedundantCast
 trait SelectStatement[S] extends SelectStmt with ExprT[S] {
@@ -45,13 +45,19 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
     this.asInstanceOf[S]
   }
 
-  def asc(e: ExprT[_]): S = {
-    core._orderBy += ((e.toExpr, "ASC"))
-    this.asInstanceOf[S]
-  }
+  //  def asc(e: ExprT[_]): S = {
+  //    core._orderBy += ((e.toExpr, "ASC"))
+  //    this.asInstanceOf[S]
+  //  }
+  //
+  //  def desc(e: ExprT[_]): S = {
+  //    core._orderBy += ((e.toExpr, "DESC"))
+  //    this.asInstanceOf[S]
+  //  }
 
-  def desc(e: ExprT[_]): S = {
-    core._orderBy += ((e.toExpr, "DESC"))
+
+  def orderBy(e: ExprT[_]*): S = {
+    core._orderBy = e.map(_.toExpr).toArray
     this.asInstanceOf[S]
   }
 

@@ -523,11 +523,32 @@ class TypedTest {
 
     val root = Orm.root(classOf[OM])
     val res = session.query(Orm.selectFrom(root)
-      .desc(root.get(_.id)).limit(3).offset(2))
+      //      .desc(root.get(_.id)).limit(3).offset(2))
+      .orderBy(root.get(_.id).desc()).limit(3).offset(2))
     Assert.assertEquals(res.length, 3)
     Assert.assertEquals(res(0).id.intValue(), 4)
     Assert.assertEquals(res(1).id.intValue(), 3)
     Assert.assertEquals(res(2).id.intValue(), 2)
+  })
+
+  @Test
+  def testOrderByMultiCond(): Unit = db.beginTransaction(session => {
+    val objs = (1 to 6).map(i => {
+      val obj = new Obj
+      obj.name = s"name${i}"
+      obj.age = i % 2
+      obj.longValue = (i % 3).toLong
+      obj
+    }).toArray
+    session.execute(Orm.insertArray(objs))
+
+    val root = Orm.root(classOf[Obj])
+    val ret = session.query(Orm.selectFrom(root).orderBy(root.get(_.age).asc(), root.get(_.longValue).desc()))
+    ret.zipWithIndex.foreach { case (obj, i) =>
+      Assert.assertEquals(obj.age, (i / 3))
+      Assert.assertEquals(obj.longValue.intValue(), 2 - (i % 3))
+    }
+    ret.foreach(println)
   })
 
   @Test
@@ -905,14 +926,14 @@ class TypedTest {
       t.leftJoin(_.om)
       val c = Fn.count(t.get(_.id))
       val q = Orm.select(t.get(_.id), c).from(t)
-        .groupBy(t.get(_.id)).asc(c)
+        //        .groupBy(t.get(_.id)).asc(c)
+        .groupBy(t.get(_.id)).orderBy(c.asc())
       val res = session.query(q)
       Assert.assertEquals(res(0)._1.intValue(), 1)
       Assert.assertEquals(res(0)._2.intValue(), 2)
       Assert.assertEquals(res(1)._1.intValue(), 2)
       Assert.assertEquals(res(1)._2.intValue(), 3)
     }
-
   })
 
   @Test
