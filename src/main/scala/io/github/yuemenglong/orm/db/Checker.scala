@@ -135,7 +135,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
   }
 
   def checkIndex(conn: Connection, meta: EntityMeta): Array[String] = {
-    val sql = s"SHOW INDEX FROM ${meta.table}"
+    val sql = s"SHOW INDEX FROM `${meta.table}`"
     val resultSet = conn.prepareStatement(sql).executeQuery()
     val onlineMap = Stream.continually({
       resultSet.next() match {
@@ -164,7 +164,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
   }
 
   def checkEntity(conn: Connection, meta: EntityMeta, ignoreUnused: Boolean = false): Array[String] = {
-    val sql = s"SHOW COLUMNS FROM ${meta.table}"
+    val sql = s"SHOW COLUMNS FROM `${meta.table}`"
     val resultSet = conn.prepareStatement(sql).executeQuery()
     val columns = Stream.continually({
       resultSet.next() match {
