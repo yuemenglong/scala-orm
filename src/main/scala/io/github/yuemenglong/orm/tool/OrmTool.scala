@@ -19,6 +19,7 @@ import scala.reflect.ClassTag
 /**
  * Created by <yuemenglong@126.com> on 2017/10/10.
  */
+//noinspection SimplifyBooleanMatch
 object OrmTool {
   def getEmptyConstructorMap: Map[Class[_], () => Object] = {
     OrmMeta.entityVec.map(meta => {
@@ -316,6 +317,25 @@ object OrmTool {
       case 1 => updateById(clazz, id, session, ps.head)
       case _ => updateById(clazz, id, session, ps.head, ps.drop(1): _*)
     }
+  }
+
+  def updateById[T, V](obj: T, session: Session)
+                      (fns: (T => Any)*) {
+    val clazz: Class[T] = obj.isInstanceOf[Entity] match {
+      case true => obj.getClass.getSuperclass.asInstanceOf[Class[T]]
+      case false => obj.getClass.asInstanceOf[Class[T]]
+    }
+    val meta = OrmMeta.entityMap(clazz)
+    val names = fns.map(fn => {
+      val marker = EntityManager.createMarker[T](meta)
+      fn(marker)
+      marker.toString
+    })
+    val values = names.map(name => {
+      obj.asInstanceOf[Entity].$$core().getValue(name)
+    })
+    val id = obj.asInstanceOf[Entity].$$core().getPkey
+    updateById(clazz, id, session)(fns: _*)(values: _*)
   }
 
   def updateArray[T <: Object](root: Root[T], oldValues: Array[T], newValues: Array[T], session: Session): Unit = {

@@ -8,6 +8,7 @@ import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta.{FieldMetaOneOne, _}
 import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -64,7 +65,7 @@ object EntityManager {
       throw new RuntimeException(s"[${obj.getClass.getSimpleName}] Is Not Entity")
     }
     val meta = OrmMeta.entityMap(obj.getClass)
-    val map: Map[String, Object] = Kit.getDeclaredFields(obj.getClass)
+    val map: mutable.Map[String, Object] = Kit.getDeclaredFields(obj.getClass)
       .filter(field => meta.fieldMap.contains(field.getName)) //不做ignore的
       .map(field => {
       field.setAccessible(true)
@@ -90,7 +91,7 @@ object EntityManager {
 
   def walk(entity: Entity, fn: (Entity) => Entity): Entity {} = {
     val retEntity = fn(entity)
-    val map: Map[String, Object] = retEntity.$$core().fieldMap.map { case (name, value) =>
+    val map: mutable.Map[String, Object] = retEntity.$$core().fieldMap.map { case (name, value) =>
       if (value == null) {
         (name, value)
       } else {

@@ -184,7 +184,7 @@ trait ResultTable extends Table {
   }
 
   def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
-    val map: Map[String, Object] = validFields().map(f => {
+    val map: mutable.Map[String, Object] = validFields().map(f => {
       val field = get(f)
       val fieldMeta = getMeta.fieldMap(f)
       val alias = field.getAlias

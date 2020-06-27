@@ -8,10 +8,12 @@ import io.github.yuemenglong.orm.lang.types.Types.{BigDecimal, Date, DateTime}
 import io.github.yuemenglong.orm.meta._
 import net.sf.cglib.proxy.MethodProxy
 
+import scala.collection.mutable
+
 /**
  * Created by Administrator on 2017/5/18.
  */
-class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
+class EntityCore(val meta: EntityMeta, val fieldMap: mutable.Map[String, Object]) {
   private val coreFn = "$$core"
 
   def getPkey: Object = {
@@ -97,7 +99,7 @@ class EntityCore(val meta: EntityMeta, var fieldMap: Map[String, Object]) {
 object EntityCore {
   // 数组初始化为空数组，其他全部为null
   def create(meta: EntityMeta): EntityCore = {
-    val map: Map[String, Object] = meta.fieldVec.map {
+    val map: mutable.Map[String, Object] = meta.fieldVec.map {
       case f: FieldMetaOneMany => (f.name, Kit.newArray(f.refer.clazz).asInstanceOf[Object])
       case f => (f.name, null)
     }(collection.breakOut)
@@ -106,7 +108,7 @@ object EntityCore {
 
   // 纯空对象
   def empty(meta: EntityMeta): EntityCore = {
-    new EntityCore(meta, Map())
+    new EntityCore(meta, mutable.Map())
   }
 
   def shallowEqual(left: EntityCore, right: EntityCore): Boolean = {

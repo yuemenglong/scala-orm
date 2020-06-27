@@ -763,6 +763,21 @@ class TypedTest {
     }
     {
       val obj = ex.root()
+      obj.name = "name3"
+      obj.age = 11
+      OrmTool.updateById(obj, session)(_.name, _.age)
+    }
+    {
+      val obj = ex.root()
+      val res = OrmTool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
+        root.select(_.om)
+      })
+      Assert.assertEquals(res.om.length, 3)
+      Assert.assertEquals(res.name, "name3")
+      Assert.assertEquals(res.age, 11)
+    }
+    {
+      val obj = ex.root()
       OrmTool.deleteByIdEx(classOf[Obj], obj.id, session)(root => {
         Array(root.leftJoin(_.om))
       })
