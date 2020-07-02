@@ -8,6 +8,65 @@ import scala.collection.mutable.ArrayBuffer
  * Created by <yuemenglong@126.com> on 2018/3/19.
  */
 
+object TableLike {
+  def apply(name: String, uid: String): TableLike = new TableLike {
+    override private[orm] val _table = ((name, uid), null)
+    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
+    override private[orm] val _on = Var[Expr](null)
+  }
+
+  def apply(stmt: SelectStmt, uid: String): TableLike = new TableLike {
+    override private[orm] val _table = (null, (stmt, uid))
+    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
+    override private[orm] val _on = Var[Expr](null)
+  }
+}
+
+trait TableLike extends TableOrSubQuery {
+  private[orm] val _on: Var[Expr]
+
+  def join(t: TableLike, joinType: String): TableLike = {
+    _joins += ((joinType, t, t._on))
+    t
+  }
+
+  def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike = {
+    val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
+    t.on(c)
+    _joins += ((joinType, t, t._on))
+    t
+  }
+
+  def on(e: ExprT[_]): TableLike = {
+    if (_on == null) {
+      throw new RuntimeException("Root Table Has No On[Expr]")
+    }
+    _on.get match {
+      case null => _on.set(e.toExpr)
+      case _ => _on.set(_on.get.and(e))
+    }
+    this
+  }
+
+  def getColumn(column: String, alias: String = null): ResultColumn = {
+    val col = Expr.column(getAlias, column)
+    val ali = alias match {
+      case null => s"${getAlias}$$${column}"
+      case _ => alias
+    }
+    new ResultColumn {
+      override private[orm] val expr = col
+      override private[orm] val uid = ali
+    }
+  }
+
+  def getAlias: String = _table match {
+    case ((_, alias), null) => alias
+    case (null, (_, alias)) => alias
+    case _ => throw new UnreachableException
+  }
+}
+
 //noinspection ScalaRedundantCast
 trait SelectStatement[S] extends SelectStmt with ExprT[S] {
 
@@ -82,66 +141,6 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
   }
 }
 
-trait TableLike extends TableOrSubQuery {
-  private[orm] val _on: Var[Expr]
-
-  def join(t: TableLike, joinType: String): TableLike = {
-    _joins += ((joinType, t, t._on))
-    t
-  }
-
-  def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike = {
-    val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
-    t.on(c)
-    _joins += ((joinType, t, t._on))
-    t
-  }
-
-  def on(e: ExprT[_]): TableLike = {
-    if (_on == null) {
-      throw new RuntimeException("Root Table Has No On[Expr]")
-    }
-    _on.get match {
-      case null => _on.set(e.toExpr)
-      case _ => _on.set(_on.get.and(e))
-    }
-    this
-  }
-
-  def getColumn(column: String, alias: String = null): ResultColumn = {
-    val col = Expr.column(getAlias, column)
-    val ali = alias match {
-      case null => s"${getAlias}$$${column}"
-      case _ => alias
-    }
-    new ResultColumn {
-      override private[orm] val expr = col
-      override private[orm] val uid = ali
-    }
-  }
-
-  def getAlias: String = _table match {
-    case ((_, alias), null) => alias
-    case (null, (_, alias)) => alias
-    case _ => throw new UnreachableException
-  }
-}
-
-object TableLike {
-  def apply(name: String, uid: String): TableLike = new TableLike {
-    override private[orm] val _table = ((name, uid), null)
-    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
-    override private[orm] val _on = Var[Expr](null)
-  }
-
-  def apply(stmt: SelectStmt, uid: String): TableLike = new TableLike {
-    override private[orm] val _table = (null, (stmt, uid))
-    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
-    override private[orm] val _on = Var[Expr](null)
-  }
-}
-
 trait UpdateStatement extends UpdateStmt
 
 trait DeleteStatement extends DeleteStmt
-

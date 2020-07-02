@@ -434,34 +434,6 @@ trait UpdateStmt extends SqlItem {
   }
 }
 
-//trait Assign extends SqlItem {
-//  val column: TableColumn
-//  val expr: Expr
-//
-//  override def genSql(sb: StringBuffer): Unit = {
-//    column.genSql(sb)
-//    sb.append(s" = ")
-//    expr match {
-//      case null => sb.append("NULL")
-//      case _ => expr.genSql(sb)
-//    }
-//  }
-//
-//  override def genParams(ab: ArrayBuffer[Object]): Unit = {
-//    column.genParams(ab)
-//    if (expr != null) {
-//      expr.genParams(ab)
-//    }
-//  }
-//}
-//
-//object Assign {
-//  def apply(c: TableColumn, e: Expr): Assign = new Assign {
-//    override val column = c
-//    override val expr = e
-//  }
-//}
-
 trait DeleteStmt extends SqlItem {
   val _targets: Array[TableLike]
   var _table: TableLike = _
