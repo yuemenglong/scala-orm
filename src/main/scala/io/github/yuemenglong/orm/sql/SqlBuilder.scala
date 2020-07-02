@@ -211,19 +211,19 @@ trait ResultColumn extends SqlItem {
   }
 }
 
-trait ResultColumnT extends ResultColumn
-  with ExprOpBool[ResultColumnT]
-  with ExprOpMath[ResultColumnT] {
-  override def toExpr = expr
-
-  override def fromExpr(e: Expr) = {
-    val that = this
-    new ResultColumnT {
-      override private[orm] val uid = that.uid
-      override private[orm] val expr = e
-    }
-  }
-}
+//trait ResultColumnT extends ResultColumn
+//  with ExprOpBool[ResultColumnT]
+//  with ExprOpMath[ResultColumnT] {
+//  override def toExpr = expr
+//
+//  override def fromExpr(e: Expr) = {
+//    val that = this
+//    new ResultColumnT {
+//      override private[orm] val uid = that.uid
+//      override private[orm] val expr = e
+//    }
+//  }
+//}
 
 trait UpdateStmt extends SqlItem {
   val _table: TableLike
