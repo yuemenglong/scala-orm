@@ -5,8 +5,8 @@ import java.sql.Connection
 import com.jolbox.bonecp.{BoneCP, BoneCPConfig}
 
 /**
-  * Created by Administrator on 2017/5/16.
-  */
+ * Created by Administrator on 2017/5/16.
+ */
 
 trait DbConfig {
   val context: DbContext
@@ -55,8 +55,35 @@ trait DbConfig {
 }
 
 class MysqlConfig(host: String, port: Int, val username: String, val password: String, val db: String) extends DbConfig {
+  def this(url: String) {
+    this(null, 0, null, null, null)
+    _url = url
+  }
 
-  override def url: String = s"jdbc:mysql://$host:$port/$db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"
+  private var useUnicode = true
+  private var characterEncoding = "UTF-8"
+  private var serverTimezone = "UTC"
+  private var _url: String = _
+
+  def useUnicode(b: Boolean): MysqlConfig = {
+    useUnicode = b
+    this
+  }
+
+  def characterEncoding(s: String): MysqlConfig = {
+    characterEncoding = s
+    this
+  }
+
+  def serverTimezone(s: String): MysqlConfig = {
+    serverTimezone = s
+    this
+  }
+
+  override def url: String = _url match {
+    case null => s"jdbc:mysql://$host:$port/$db?useUnicode=${useUnicode}&characterEncoding=${characterEncoding}&serverTimezone=${serverTimezone}"
+    case _ => _url
+  }
 
   override val context = new MysqlContext
 }
