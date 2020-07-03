@@ -118,11 +118,21 @@ trait Table extends TableLike {
 }
 
 trait ResultTable extends Table {
-  private[orm] val _selects = new ArrayBuffer[(String, ResultTable)]()
+  def select(field: String): ResultTable
+
+  def fields(fields: String*): ResultTable
+
+  def ignore(fields: String*): ResultTable
+
+  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity
+}
+
+trait ResultTableImpl extends ResultTable {
+  private[orm] val _selects = new ArrayBuffer[(String, ResultTableImpl)]()
   private[orm] val _fields = ArrayBuffer[String]()
   private[orm] val _ignores = mutable.Set[String]()
 
-  def select(field: String): ResultTable = {
+  def select(field: String): ResultTableImpl = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Object Field $field")
     }
@@ -130,7 +140,7 @@ trait ResultTable extends Table {
       case Some(p) => p._2
       case None =>
         val j = leftJoin(field)
-        val ret = new ResultTable {
+        val ret = new ResultTableImpl {
           override val meta = j.meta
           override private[orm] val _table = j._table
           override private[orm] val _joins = j._joins
@@ -339,7 +349,8 @@ trait TypedResultTable[T] extends TypedTable[T]
   def ignore(fns: (T => Object)*): TypedResultTable[T]
 }
 
-trait TypedResultTableImpl[T] extends TypedResultTable[T] with TypedTableImpl[T] {
+trait TypedResultTableImpl[T] extends TypedResultTable[T]
+  with TypedTableImpl[T] with ResultTableImpl {
 
   private def typedSelect[R](field: String): TypedResultTable[R] = {
     val j = this.select(field)
@@ -358,7 +369,7 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T] with TypedTableImpl[T]
   override def getColumns: Array[ResultColumn] = {
     val ab = new ArrayBuffer[ResultColumn]()
 
-    def go(cascade: ResultTable): Unit = {
+    def go(cascade: ResultTableImpl): Unit = {
       val self = cascade.validFields().map(cascade.get)
       ab ++= self
       cascade._selects.foreach(s => go(s._2))
@@ -404,7 +415,7 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T] with TypedTableImpl[T]
     this
   }
 
-  private def pickSelfAndRefer(select: ResultTable, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+  private def pickSelfAndRefer(select: ResultTableImpl, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
     val a = select.pickSelf(resultSet, filterMap)
     if (a == null) {
       return null
@@ -417,7 +428,7 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T] with TypedTableImpl[T]
     s"$getAlias@$field@${core.getPkey.toString}"
   }
 
-  private def pickRefer(selfSelect: ResultTable, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
+  private def pickRefer(selfSelect: ResultTableImpl, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
     val aCore = EntityManager.core(a)
     selfSelect._selects.foreach { case (field, select) =>
       val fieldMeta = selfSelect.meta.fieldMap(field)
