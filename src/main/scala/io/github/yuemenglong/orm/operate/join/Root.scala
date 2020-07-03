@@ -5,7 +5,9 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.sql.{Expr, TableLike, Var}
 
-trait Root[T] extends TypedResultTable[T] {}
+trait Root[T] extends TypedResultTable[T]
+
+trait RootImpl[T] extends Root[T] with TypedResultTableImpl[T]
 
 object Root {
   def apply[T](clazz: Class[T]): Root[T] = {
@@ -14,7 +16,7 @@ object Root {
       case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
     }
     val table = TableLike(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
-    new Root[T] {
+    new RootImpl[T] {
       override val meta = rootMeta
       override private[orm] val _table = table._table
       override private[orm] val _joins = table._joins

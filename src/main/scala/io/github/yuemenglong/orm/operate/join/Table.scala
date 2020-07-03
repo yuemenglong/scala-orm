@@ -91,7 +91,7 @@ trait Table extends TableLike {
     val rightColumn = referMeta.fieldMap(right).column
     val alias = s"${getAlias}__${joinName}"
     val table = join(TableLike(tableName, alias), joinType.toString, leftColumn, rightColumn)
-    new TypedResultTable[T] {
+    new TypedResultTableImpl[T] {
       override val meta = referMeta
       override private[orm] val _table = table._table
       override private[orm] val _joins = table._joins
@@ -108,7 +108,7 @@ trait Table extends TableLike {
       throw new RuntimeException(s"$clazz Is Not Entity")
     }
     val that = this
-    new TypedResultTable[T] {
+    new TypedResultTableImpl[T] {
       override val meta = that.meta
       override private[orm] val _table = that._table
       override private[orm] val _joins = that._joins
@@ -297,7 +297,7 @@ trait TypedTable[T] extends Table {
     val left = lm.toString
     val right = rm.toString
     val j = this.joinAs(left, right, clazz)
-    new TypedResultTable[R] {
+    new TypedResultTableImpl[R] {
       override val meta = j.meta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
@@ -314,9 +314,22 @@ trait TypedTable[T] extends Table {
 trait TypedResultTable[T] extends TypedTable[T]
   with ResultTable with Selectable[T] {
 
+  def select[R](fn: T => R): TypedResultTable[R]
+
+  def selects[R](fn: T => Array[R]): TypedResultTable[R]
+
+  def selectArray[R](fn: T => Array[R]): TypedResultTable[R] = selects(fn)
+
+  def fields(fns: (T => Object)*): TypedResultTable[T]
+
+  def ignore(fns: (T => Object)*): TypedResultTable[T]
+}
+
+trait TypedResultTableImpl[T] extends TypedResultTable[T] {
+
   private def typedSelect[R](field: String): TypedResultTable[R] = {
     val j = this.select(field)
-    val ret = new TypedResultTable[R] {
+    val ret = new TypedResultTableImpl[R] {
       override val meta = j.meta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
@@ -355,7 +368,7 @@ trait TypedResultTable[T] extends TypedTable[T]
     typedSelect[R](field)
   }
 
-  def selectArray[R](fn: T => Array[R]): TypedResultTable[R] = selects(fn)
+  //  def selectArray[R](fn: T => Array[R]): TypedResultTable[R] = selects(fn)
 
   def fields(fns: (T => Object)*): TypedResultTable[T] = {
     val fields = fns.map(fn => {
