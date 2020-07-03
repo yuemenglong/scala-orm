@@ -70,6 +70,31 @@ trait TableLike extends TableOrSubQuery {
 //noinspection ScalaRedundantCast
 trait SelectStatement[S] extends SelectStmt with ExprT[S] {
 
+  def distinct(): S
+
+  def select(cs: Array[ResultColumn]): S
+
+  def from(ts: TableLike*): S
+
+  def where(expr: ExprT[_]): S
+
+  def groupBy(es: ExprT[_]*): S
+
+  def having(e: ExprT[_]): S
+
+  def orderBy(e: ExprT[_]*): S
+
+  def limit(l: Integer): S
+
+  def offset(o: Integer): S
+
+  def union(stmt: SelectStatement[_]): S
+
+  def unionAll(stmt: SelectStatement[_]): S
+}
+
+private[orm] trait SelectStatementImpl[S] extends SelectStatement[S] {
+
   override def fromExpr(e: Expr): S = Expr.asSelectStmt(e).asInstanceOf[S]
 
   override def toExpr: Expr = Expr.stmt(this)
@@ -103,17 +128,6 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
     core._having = e.toExpr
     this.asInstanceOf[S]
   }
-
-  //  def asc(e: ExprT[_]): S = {
-  //    core._orderBy += ((e.toExpr, "ASC"))
-  //    this.asInstanceOf[S]
-  //  }
-  //
-  //  def desc(e: ExprT[_]): S = {
-  //    core._orderBy += ((e.toExpr, "DESC"))
-  //    this.asInstanceOf[S]
-  //  }
-
 
   def orderBy(e: ExprT[_]*): S = {
     core._orderBy = e.map(_.toExpr).toArray

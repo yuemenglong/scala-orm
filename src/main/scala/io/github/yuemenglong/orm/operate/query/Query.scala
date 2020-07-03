@@ -13,8 +13,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
-  * Created by yml on 2017/7/14.
-  */
+ * Created by yml on 2017/7/14.
+ */
 trait Queryable[T] {
   def query(session: Session): Array[T]
 }
@@ -97,7 +97,7 @@ trait Selectable[T] {
 //  }
 //}
 
-trait QueryBase[S] extends SelectStatement[S] {
+private[orm] trait QueryBase[S] extends SelectStatement[S] {
   val targets: Array[Selectable[_]]
 
   def query0(session: Session): Array[Array[Any]] = {
@@ -145,7 +145,9 @@ trait QueryBase[S] extends SelectStatement[S] {
   }
 }
 
-class Query1[T: ClassTag](s: Selectable[T]) extends QueryBase[Query1[T]] with Queryable[T] {
+trait Query1[T] extends QueryBase[Query1[T]] with Queryable[T]
+
+class Query1Impl[T: ClassTag](s: Selectable[T]) extends Query1[T] with SelectStatementImpl[T] {
 
   override def query(session: Session): Array[T] = {
     Array[T](query0(session).map(r => r(0).asInstanceOf[T]): _*)
@@ -155,9 +157,11 @@ class Query1[T: ClassTag](s: Selectable[T]) extends QueryBase[Query1[T]] with Qu
   override private[orm] val core = new SelectCore(s.getColumns)
 }
 
-class Query2[T0: ClassTag, T1: ClassTag](s0: Selectable[T0],
-                                         s1: Selectable[T1])
-  extends QueryBase[Query2[T0, T1]] with Queryable[(T0, T1)] {
+trait Query2[T0, T1] extends QueryBase[Query2[T0, T1]] with Queryable[(T0, T1)]
+
+class Query2Impl[T0: ClassTag, T1: ClassTag](s0: Selectable[T0],
+                                             s1: Selectable[T1])
+  extends Query2[T0, T1] with SelectStatementImpl[(T0, T1)] {
 
   override def query(session: Session): Array[(T0, T1)] = {
     Array[(T0, T1)](query0(session).map(r => (
@@ -170,11 +174,13 @@ class Query2[T0: ClassTag, T1: ClassTag](s0: Selectable[T0],
   override private[orm] val core = new SelectCore(s0.getColumns ++ s1.getColumns)
 }
 
-class Query3[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0],
-                                                       s1: Selectable[T1],
-                                                       s2: Selectable[T2]
-                                                      )
-  extends QueryBase[Query3[T0, T1, T2]] with Queryable[(T0, T1, T2)] {
+trait Query3[T0, T1, T2] extends QueryBase[Query3[T0, T1, T2]] with Queryable[(T0, T1, T2)]
+
+class Query3Impl[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0],
+                                                           s1: Selectable[T1],
+                                                           s2: Selectable[T2]
+                                                          )
+  extends Query3[T0, T1, T2] with SelectStatementImpl[(T0, T1, T2)] {
 
   override def query(session: Session): Array[(T0, T1, T2)] = {
     Array[(T0, T1, T2)](query0(session).map(r => (

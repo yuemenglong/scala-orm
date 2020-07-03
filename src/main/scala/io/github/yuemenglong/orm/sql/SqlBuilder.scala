@@ -71,7 +71,7 @@ trait SelectStmt extends SqlItem {
   }
 }
 
-class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
+private[orm] class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   private[orm] var _distinct: Boolean = _
   private[orm] var _columns: Array[ResultColumn] = cs
   private[orm] var _from: Array[TableOrSubQuery] = _
