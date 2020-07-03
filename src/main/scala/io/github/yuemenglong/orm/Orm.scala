@@ -96,11 +96,11 @@ object Orm {
 
   def table[T](clazz: Class[T]): Root[T] = Root[T](clazz)
 
-  def select[T: ClassTag](c: Selectable[T]): Query1[T] = new Query1[T](c)
+  def select[T: ClassTag](c: Selectable[T]): Query1[T] = new Query1Impl[T](c)
 
-  def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1] = new Query2[T0, T1](s0, s1)
+  def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1] = new Query2Impl[T0, T1](s0, s1)
 
-  def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2] = new Query3[T0, T1, T2](s0, s1, s2)
+  def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2] = new Query3Impl[T0, T1, T2](s0, s1, s2)
 
   def selectFrom[T: ClassTag](r: TypedResultTable[T]): Query1[T] = select(r).from(r)
 
