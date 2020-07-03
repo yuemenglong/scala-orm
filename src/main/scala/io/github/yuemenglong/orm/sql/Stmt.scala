@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm.sql
 
 import io.github.yuemenglong.orm.kit.UnreachableException
+import io.github.yuemenglong.orm.lang.types.Types.String
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -67,6 +68,106 @@ trait TableLike extends TableOrSubQuery {
   }
 }
 
+trait SelectStmt extends SqlItem {
+  private[orm] val core: SelectCore
+  private[orm] var comps = new ArrayBuffer[(String, SelectCore)]()
+
+  override def genSql(sb: StringBuffer): Unit = {
+    core.genSql(sb)
+    if (nonEmpty(comps)) {
+      comps.foreach { case (op, s) =>
+        sb.append(s" ${op} ")
+        s.genSql(sb)
+      }
+    }
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    core.genParams(ab)
+    if (nonEmpty(comps)) {
+      comps.foreach(_._2.genParams(ab))
+    }
+  }
+}
+
+class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
+  private[orm] var _distinct: Boolean = _
+  private[orm] var _columns: Array[ResultColumn] = cs
+  private[orm] var _from: Array[TableOrSubQuery] = _
+  private[orm] var _where: Expr = _
+  private[orm] var _groupBy: Array[Expr] = _
+  private[orm] var _having: Expr = _
+  private[orm] var _orderBy: Array[Expr] = Array[Expr]()
+  private[orm] var _limit: Integer = _
+  private[orm] var _offset: Integer = _
+
+  override def genSql(sb: StringBuffer): Unit = {
+    _distinct match {
+      case true => sb.append("SELECT DISTINCT\n")
+      case false => sb.append("SELECT\n")
+    }
+    bufferMkString(sb, _columns, ",\n")
+    if (nonEmpty(_from)) {
+      sb.append("\nFROM\n")
+      bufferMkString(sb, _from, ",\n")
+    }
+    if (_where != null) {
+      sb.append("\nWHERE\n")
+      _where.genSql(sb)
+    }
+    if (nonEmpty(_groupBy)) {
+      sb.append("\nGROUP BY\n")
+      bufferMkString(sb, _groupBy, ", ")
+      if (_having != null) {
+        sb.append("\nHAVING\n")
+        _having.genSql(sb)
+      }
+    }
+    if (nonEmpty(_orderBy)) {
+      sb.append(" ORDER BY ")
+      var first = true
+      _orderBy.foreach(e => {
+        if (!first) {
+          sb.append(", ")
+        }
+        first = false
+        e.genSql(sb)
+      })
+    }
+    if (_limit != null) {
+      sb.append(" LIMIT ?")
+      if (_offset != null) {
+        sb.append(" OFFSET ?")
+      }
+    }
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    _columns.foreach(_.genParams(ab))
+    if (_from != null) {
+      _from.foreach(_.genParams(ab))
+    }
+    if (_where != null) {
+      _where.genParams(ab)
+    }
+    if (nonEmpty(_groupBy)) {
+      _groupBy.foreach(_.genParams(ab))
+      if (_having != null) {
+        _having.genParams(ab)
+      }
+    }
+    if (nonEmpty(_orderBy)) {
+      _orderBy.foreach(_.genParams(ab))
+    }
+    (_limit, _offset) match {
+      case (null, null) =>
+      case (l, null) => ab += l
+      case (l, o) => ab += l += o
+      case _ => throw new UnreachableException
+    }
+  }
+}
+
 //noinspection ScalaRedundantCast
 trait SelectStatement[S] extends SelectStmt with ExprT[S] {
 
@@ -93,7 +194,7 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
   def unionAll(stmt: SelectStatement[_]): S
 }
 
-private[orm] trait SelectStatementImpl[S] extends SelectStatement[S] {
+trait SelectStatementImpl[S] extends SelectStatement[S] {
 
   override def fromExpr(e: Expr): S = Expr.asSelectStmt(e).asInstanceOf[S]
 
