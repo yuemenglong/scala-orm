@@ -21,8 +21,29 @@ object JoinType extends Enumeration {
 }
 
 trait Table extends TableLike {
+
+  def getMeta: EntityMeta
+
+  def get(field: String): FieldT
+
+  def join(field: String, joinType: JoinType): Table
+
+  def join(field: String): Table = join(field, JoinType.INNER)
+
+  def leftJoin(field: String): Table = join(field, JoinType.LEFT)
+
+  def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): TypedResultTable[T]
+
+  def joinAs[T](left: String, right: String, clazz: Class[T]): TypedResultTable[T] = this.joinAs(left, right, clazz, JoinType.INNER)
+
+  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedResultTable[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
+
+  def as[T](clazz: Class[T]): TypedResultTableImpl[T]
+}
+
+trait TableImpl extends Table {
   val meta: EntityMeta
-  val joins: mutable.Map[String, (JoinType, Table)] = mutable.Map()
+  val joins: mutable.Map[String, (JoinType, TableImpl)] = mutable.Map()
 
   def getMeta: EntityMeta = meta
 
@@ -38,7 +59,7 @@ trait Table extends TableLike {
     }
   }
 
-  def join(field: String, joinType: JoinType): Table = {
+  def join(field: String, joinType: JoinType): TableImpl = {
     if (!getMeta.fieldMap.contains(field) || !getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
     }
@@ -56,7 +77,7 @@ trait Table extends TableLike {
         val leftColumn = getMeta.fieldMap(referMeta.left).column
         val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
         val table = join(TableLike(tableName, alias), joinType.toString, leftColumn, rightColumn)
-        val ret = new Table {
+        val ret = new TableImpl {
           override val meta = referMeta.refer
           override private[orm] val _table = table._table
           override private[orm] val _joins = table._joins
@@ -66,10 +87,6 @@ trait Table extends TableLike {
         ret
     }
   }
-
-  def join(field: String): Table = join(field, JoinType.INNER)
-
-  def leftJoin(field: String): Table = join(field, JoinType.LEFT)
 
   def joinAs[T](left: String, right: String, clazz: Class[T], joinType: JoinType): TypedResultTable[T] = {
     if (!OrmMeta.entityMap.contains(clazz)) {
@@ -99,11 +116,7 @@ trait Table extends TableLike {
     }
   }
 
-  def joinAs[T](left: String, right: String, clazz: Class[T]): TypedResultTable[T] = this.joinAs(left, right, clazz, JoinType.INNER)
-
-  def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedResultTable[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
-
-  def as[T](clazz: Class[T]) = {
+  def as[T](clazz: Class[T]): TypedResultTableImpl[T] = {
     if (!OrmMeta.entityMap.contains(clazz)) {
       throw new RuntimeException(s"$clazz Is Not Entity")
     }
@@ -127,7 +140,7 @@ trait ResultTable extends Table {
   def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity
 }
 
-trait ResultTableImpl extends ResultTable {
+trait ResultTableImpl extends ResultTable with TableImpl {
   private[orm] val _selects = new ArrayBuffer[(String, ResultTableImpl)]()
   private[orm] val _fields = ArrayBuffer[String]()
   private[orm] val _ignores = mutable.Set[String]()
@@ -141,7 +154,7 @@ trait ResultTableImpl extends ResultTable {
       case None =>
         val j = leftJoin(field)
         val ret = new ResultTableImpl {
-          override val meta = j.meta
+          override val meta = j.getMeta
           override private[orm] val _table = j._table
           override private[orm] val _joins = j._joins
           override private[orm] val _on = j._on
@@ -258,11 +271,11 @@ trait TypedTable[T] extends Table {
   def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedTable[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn, rightFn)
 }
 
-trait TypedTableImpl[T] extends TypedTable[T] {
+trait TypedTableImpl[T] extends TypedTable[T] with TableImpl {
   private def typedCascade[R](field: String, joinType: JoinType): TypedTable[R] = {
     val j: Table = this.join(field, joinType)
     new TypedTableImpl[R] {
-      override val meta = j.meta
+      override val meta = j.getMeta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
       override private[orm] val _on = j._on
@@ -327,7 +340,7 @@ trait TypedTableImpl[T] extends TypedTable[T] {
     val right = rm.toString
     val j = this.joinAs(left, right, clazz)
     new TypedResultTableImpl[R] {
-      override val meta = j.meta
+      override val meta = j.getMeta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
       override private[orm] val _on = j._on

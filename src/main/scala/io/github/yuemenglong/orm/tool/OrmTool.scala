@@ -339,7 +339,7 @@ object OrmTool {
   }
 
   def updateArray[T <: Object](root: Root[T], oldValues: Array[T], newValues: Array[T], session: Session): Unit = {
-    val meta = root.meta
+    val meta = root.getMeta
     val oldvs = Orm.convert(oldValues)
     val newvs = Orm.convert(newValues)
     val oldMap = oldvs.map(v => (v.asInstanceOf[Entity].$$core().getPkey, v)).toMap
