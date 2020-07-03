@@ -208,17 +208,56 @@ trait ResultTable extends Table {
 }
 
 trait TypedTable[T] extends Table {
+
+  def apply[R](fn: T => R): SelectableFieldT[R] = get(fn)
+
+  def get[R](fn: (T => R)): SelectableFieldT[R]
+
+  def join[R](fn: (T => R), joinType: JoinType): TypedTable[R]
+
+  def join[R](fn: (T => R)): TypedTable[R] = join(fn, JoinType.INNER)
+
+  def leftJoin[R](fn: (T => R)): TypedTable[R] = join(fn, JoinType.LEFT)
+
+  def joinAs[R](fn: (T => R), joinType: JoinType): TypedResultTable[R]
+
+  def joinAs[R](fn: (T => R)): TypedResultTable[R] = joinAs(fn, JoinType.INNER)
+
+  def leftJoinAs[R](fn: (T => R)): TypedResultTable[R] = joinAs(fn, JoinType.LEFT)
+
+  def joinsAs[R](fn: (T => Array[R]), joinType: JoinType): TypedResultTable[R]
+
+  def joinsAs[R](fn: (T => Array[R])): TypedResultTable[R] = joinsAs(fn, JoinType.INNER)
+
+  def leftJoinsAs[R](fn: (T => Array[R])): TypedTable[R] = joinsAs(fn, JoinType.LEFT)
+
+  def joins[R](fn: (T => Array[R]), joinType: JoinType): TypedTable[R]
+
+  def joins[R](fn: (T => Array[R])): TypedTable[R] = joins(fn, JoinType.INNER)
+
+  def joinArray[R](fn: (T => Array[R])): TypedTable[R] = joins(fn)
+
+  def leftJoins[R](fn: (T => Array[R])): TypedTable[R] = joins(fn, JoinType.LEFT)
+
+  def leftJoinArray[R](fn: (T => Array[R])): TypedTable[R] = leftJoins(fn)
+
+  def joinAs[R](clazz: Class[R], joinType: JoinType)(leftFn: T => Object, rightFn: R => Object): TypedTable[R]
+
+  def joinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedTable[R] = this.joinAs(clazz, JoinType.INNER)(leftFn, rightFn)
+
+  def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedTable[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn, rightFn)
+}
+
+trait TypedTableImpl[T] extends TypedTable[T] {
   private def typedCascade[R](field: String, joinType: JoinType): TypedTable[R] = {
     val j: Table = this.join(field, joinType)
-    new TypedTable[R] {
+    new TypedTableImpl[R] {
       override val meta = j.meta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
       override private[orm] val _on = j._on
     }
   }
-
-  def apply[R](fn: T => R): SelectableFieldT[R] = get(fn)
 
   def get[R](fn: (T => R)): SelectableFieldT[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
@@ -238,10 +277,6 @@ trait TypedTable[T] extends Table {
     typedCascade(field, joinType)
   }
 
-  def join[R](fn: (T => R)): TypedTable[R] = join(fn, JoinType.INNER)
-
-  def leftJoin[R](fn: (T => R)): TypedTable[R] = join(fn, JoinType.LEFT)
-
   def joinAs[R](fn: (T => R), joinType: JoinType): TypedResultTable[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
@@ -251,10 +286,6 @@ trait TypedTable[T] extends Table {
     val right = referMeta.right
     joinAs(left, right, referMeta.refer.clazz.asInstanceOf[Class[R]], joinType)
   }
-
-  def joinAs[R](fn: (T => R)): TypedResultTable[R] = joinAs(fn, JoinType.INNER)
-
-  def leftJoinAs[R](fn: (T => R)): TypedResultTable[R] = joinAs(fn, JoinType.LEFT)
 
   def joinsAs[R](fn: (T => Array[R]), joinType: JoinType): TypedResultTable[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
@@ -266,24 +297,12 @@ trait TypedTable[T] extends Table {
     joinAs(left, right, referMeta.refer.clazz.asInstanceOf[Class[R]], joinType)
   }
 
-  def joinsAs[R](fn: (T => Array[R])): TypedResultTable[R] = joinsAs(fn, JoinType.INNER)
-
-  def leftJoinsAs[R](fn: (T => Array[R])): TypedTable[R] = joinsAs(fn, JoinType.LEFT)
-
   def joins[R](fn: (T => Array[R]), joinType: JoinType): TypedTable[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = marker.toString
     typedCascade(field, joinType)
   }
-
-  def joins[R](fn: (T => Array[R])): TypedTable[R] = joins(fn, JoinType.INNER)
-
-  def joinArray[R](fn: (T => Array[R])): TypedTable[R] = joins(fn)
-
-  def leftJoins[R](fn: (T => Array[R])): TypedTable[R] = joins(fn, JoinType.LEFT)
-
-  def leftJoinArray[R](fn: (T => Array[R])): TypedTable[R] = leftJoins(fn)
 
   def joinAs[R](clazz: Class[R], joinType: JoinType)(leftFn: T => Object, rightFn: R => Object): TypedTable[R] = {
     if (!OrmMeta.entityMap.contains(clazz)) {
@@ -304,11 +323,6 @@ trait TypedTable[T] extends Table {
       override private[orm] val _on = j._on
     }
   }
-
-  def joinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedTable[R] = this.joinAs(clazz, JoinType.INNER)(leftFn, rightFn)
-
-  def leftJoinAs[R](clazz: Class[R])(leftFn: T => Object, rightFn: R => Object): TypedTable[R] = this.joinAs(clazz, JoinType.LEFT)(leftFn, rightFn)
-
 }
 
 trait TypedResultTable[T] extends TypedTable[T]
@@ -325,7 +339,7 @@ trait TypedResultTable[T] extends TypedTable[T]
   def ignore(fns: (T => Object)*): TypedResultTable[T]
 }
 
-trait TypedResultTableImpl[T] extends TypedResultTable[T] {
+trait TypedResultTableImpl[T] extends TypedResultTable[T] with TypedTableImpl[T] {
 
   private def typedSelect[R](field: String): TypedResultTable[R] = {
     val j = this.select(field)
