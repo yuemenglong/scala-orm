@@ -106,10 +106,10 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
       case true => sb.append("SELECT DISTINCT\n")
       case false => sb.append("SELECT\n")
     }
-    bufferMkString(sb, _columns, ",\n")
+    appendToStringBuffer(sb, _columns, ",\n")
     if (nonEmpty(_from)) {
       sb.append("\nFROM\n")
-      bufferMkString(sb, _from, ",\n")
+      appendToStringBuffer(sb, _from, ",\n")
     }
     if (_where != null) {
       sb.append("\nWHERE\n")
@@ -117,7 +117,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
     }
     if (nonEmpty(_groupBy)) {
       sb.append("\nGROUP BY\n")
-      bufferMkString(sb, _groupBy, ", ")
+      appendToStringBuffer(sb, _groupBy, ", ")
       if (_having != null) {
         sb.append("\nHAVING\n")
         _having.genSql(sb)

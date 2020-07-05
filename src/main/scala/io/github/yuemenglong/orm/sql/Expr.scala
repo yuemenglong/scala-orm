@@ -137,7 +137,7 @@ trait Expr extends SqlItem
       exprGenSql(r, sb) // r.genSql(sb)
     case (null, null, null, null, null, null, null, null, list, null) =>
       sb.append("(")
-      bufferMkString(sb, list, ", ")
+      appendToStringBuffer(sb, list, ", ")
       sb.append(")")
     case (null, null, null, null, null, null, null, null, null, (s, p)) =>
       sb.append(s"${s}")

@@ -36,7 +36,7 @@ trait SqlItem {
 
   def genParams(ab: ArrayBuffer[Object])
 
-  def bufferMkString(sb: StringBuffer, list: Seq[SqlItem], gap: String): Unit = {
+  def appendToStringBuffer(sb: StringBuffer, list: Seq[SqlItem], gap: String): Unit = {
     list.zipWithIndex.foreach { case (e, i) =>
       e.genSql(sb)
       if (i != list.length - 1) {
@@ -47,7 +47,6 @@ trait SqlItem {
 
   def nonEmpty(list: Seq[_]): Boolean = list != null && list.nonEmpty
 }
-
 
 trait Constant extends SqlItem {
   private[orm] val value: Object
@@ -80,7 +79,7 @@ trait FunctionCall extends SqlItem {
       if (distinct) {
         sb.append("DISTINCT ")
       }
-      bufferMkString(sb, params, ", ")
+      appendToStringBuffer(sb, params, ", ")
       sb.append(")")
   }
 
