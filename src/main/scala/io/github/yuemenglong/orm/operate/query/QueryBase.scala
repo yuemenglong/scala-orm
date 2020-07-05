@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
-import io.github.yuemenglong.orm.operate.join.SubQuery
+import io.github.yuemenglong.orm.operate.join.{SubQuery, SubQueryImpl}
 import io.github.yuemenglong.orm.sql._
 
 import scala.collection.mutable
@@ -79,7 +79,7 @@ private[orm] trait QueryBaseImpl[S] extends QueryBase[S] with SelectStatementImp
 
   def asTable(alias: String): SubQuery = {
     val that = this
-    new SubQuery {
+    new SubQueryImpl {
       override private[orm] val _on = Var[Expr](null)
       override private[orm] val _table = TableLike(that, alias)._table
       override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
@@ -96,7 +96,7 @@ private[orm] class Query1Impl[T: ClassTag](s: Selectable[T]) extends Query1[T] w
   }
 
   override val targets: Array[Selectable[_]] = Array(s)
-  override private[orm] val core = new SelectCore(s.getColumns)
+  override private[orm] val core = new SelectCoreImpl(s.getColumns)
 }
 
 trait Query2[T0, T1] extends QueryBase[Query2[T0, T1]] with Queryable[(T0, T1)]
@@ -113,7 +113,7 @@ private[orm] class Query2Impl[T0: ClassTag, T1: ClassTag](s0: Selectable[T0],
   }
 
   override val targets: Array[Selectable[_]] = Array(s0, s1)
-  override private[orm] val core = new SelectCore(s0.getColumns ++ s1.getColumns)
+  override private[orm] val core = new SelectCoreImpl(s0.getColumns ++ s1.getColumns)
 }
 
 trait Query3[T0, T1, T2] extends QueryBase[Query3[T0, T1, T2]] with Queryable[(T0, T1, T2)]
@@ -133,5 +133,5 @@ private[orm] class Query3Impl[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Sele
   }
 
   override val targets: Array[Selectable[_]] = Array(s0, s1, s2)
-  override private[orm] val core = new SelectCore(s0.getColumns ++ s1.getColumns ++ s2.getColumns)
+  override private[orm] val core = new SelectCoreImpl(s0.getColumns ++ s1.getColumns ++ s2.getColumns)
 }

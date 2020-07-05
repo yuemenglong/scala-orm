@@ -41,7 +41,7 @@ trait Table extends TableLike {
   def as[T](clazz: Class[T]): TypedResultTableImpl[T]
 }
 
-trait TableImpl extends Table {
+trait TableImpl extends Table with TableLikeImpl {
   val meta: EntityMeta
   val joins: mutable.Map[String, (JoinType, TableImpl)] = mutable.Map()
 
@@ -483,6 +483,14 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T]
 }
 
 trait SubQuery extends TableLike {
+  def get(alias: String): FieldExpr
+
+  def join(t: TableLike, joinType: JoinType): TableLike
+
+  def join(t: TableLike): TableLike = join(t, JoinType.INNER)
+}
+
+trait SubQueryImpl extends SubQuery with TableLikeImpl {
   def get(alias: String): FieldExpr = {
     val that = this
     new FieldExpr {
@@ -492,6 +500,4 @@ trait SubQuery extends TableLike {
   }
 
   def join(t: TableLike, joinType: JoinType): TableLike = super.join(t, joinType.toString)
-
-  def join(t: TableLike): TableLike = join(t, JoinType.INNER)
 }

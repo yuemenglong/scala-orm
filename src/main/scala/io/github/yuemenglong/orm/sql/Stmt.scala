@@ -10,13 +10,13 @@ import scala.collection.mutable.ArrayBuffer
  */
 
 object TableLike {
-  def apply(name: String, uid: String): TableLike = new TableLike {
+  def apply(name: String, uid: String): TableLike = new TableLikeImpl {
     override private[orm] val _table = ((name, uid), null)
     override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
     override private[orm] val _on = Var[Expr](null)
   }
 
-  def apply(stmt: SelectStmt, uid: String): TableLike = new TableLike {
+  def apply(stmt: SelectStmt, uid: String): TableLike = new TableLikeImpl {
     override private[orm] val _table = (null, (stmt, uid))
     override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
     override private[orm] val _on = Var[Expr](null)
@@ -24,6 +24,20 @@ object TableLike {
 }
 
 trait TableLike extends TableOrSubQuery {
+  private[orm] val _on: Var[Expr]
+
+  def join(t: TableLike, joinType: String): TableLike
+
+  def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike
+
+  def on(e: ExprLike[_]): TableLike
+
+  def getColumn(column: String, alias: String = null): ResultColumn
+
+  def getAlias: String
+}
+
+trait TableLikeImpl extends TableLike {
   private[orm] val _on: Var[Expr]
 
   def join(t: TableLike, joinType: String): TableLike = {
@@ -71,7 +85,9 @@ trait TableLike extends TableOrSubQuery {
 trait SelectStmt extends SqlItem {
   private[orm] val core: SelectCore
   private[orm] var comps = new ArrayBuffer[(String, SelectCore)]()
+}
 
+trait SelectStmtImpl extends SelectStmt {
   override def genSql(sb: StringBuffer): Unit = {
     core.genSql(sb)
     if (nonEmpty(comps)) {
@@ -90,7 +106,8 @@ trait SelectStmt extends SqlItem {
   }
 }
 
-class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
+trait SelectCore extends SqlItem {
+  private[orm] val cs: Array[ResultColumn]
   private[orm] var _distinct: Boolean = _
   private[orm] var _columns: Array[ResultColumn] = cs
   private[orm] var _from: Array[TableOrSubQuery] = _
@@ -100,6 +117,9 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
   private[orm] var _orderBy: Array[Expr] = Array[Expr]()
   private[orm] var _limit: Integer = _
   private[orm] var _offset: Integer = _
+}
+
+class SelectCoreImpl(val cs: Array[ResultColumn] = Array()) extends SelectCore {
 
   override def genSql(sb: StringBuffer): Unit = {
     _distinct match {
@@ -194,7 +214,7 @@ trait SelectStatement[S] extends SelectStmt with ExprLike[S] {
   def unionAll(stmt: SelectStatement[_]): S
 }
 
-trait SelectStatementImpl[S] extends SelectStatement[S] {
+trait SelectStatementImpl[S] extends SelectStatement[S] with SelectStmtImpl {
 
   override def fromExpr(e: Expr): S = Expr.asSelectStmt(e).asInstanceOf[S]
 
