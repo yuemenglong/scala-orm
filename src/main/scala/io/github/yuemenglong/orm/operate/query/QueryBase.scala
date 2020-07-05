@@ -30,9 +30,9 @@ trait Selectable[T] {
 }
 
 trait AsSubQuery[T] {
-  def all: ExprT[_]
+  def all: ExprLike[_]
 
-  def any: ExprT[_]
+  def any: ExprLike[_]
 
   def asTable(alias: String): SubQuery
 }
@@ -73,9 +73,9 @@ private[orm] trait QueryBaseImpl[S] extends QueryBase[S] with SelectStatementImp
     })
   }
 
-  def all: ExprT[_] = Expr.apply("ALL", this)
+  def all: ExprLike[_] = Expr.apply("ALL", this)
 
-  def any: ExprT[_] = Expr.apply("ANY", this)
+  def any: ExprLike[_] = Expr.apply("ANY", this)
 
   def asTable(alias: String): SubQuery = {
     val that = this

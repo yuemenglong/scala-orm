@@ -7,14 +7,14 @@ import io.github.yuemenglong.orm.lang.types.Types._
   * Created by <yuemenglong@126.com> on 2018/3/22.
   */
 
-trait FnT[T] extends ResultColumn
+trait FnExpr[T] extends ResultColumn
   with SelectableField[T]
-  with ExprOps[FnT[T]] {
-  def distinct: FnT[T] = {
+  with ExprOps[FnExpr[T]] {
+  def distinct: FnExpr[T] = {
     val fnCall = Expr.asFunctionCall(expr)
     val newExpr = Expr.func(fnCall.fn, d = true, fnCall.params)
     val that = this
-    new FnT[T] {
+    new FnExpr[T] {
       override val clazz: Class[T] = that.clazz
       override private[orm] val expr = newExpr
       override private[orm] val uid = that.uid
@@ -23,9 +23,9 @@ trait FnT[T] extends ResultColumn
 
   override def toExpr: Expr = expr
 
-  override def fromExpr(e: Expr): FnT[T] = {
+  override def fromExpr(e: Expr): FnExpr[T] = {
     val that = this
-    new FnT[T] {
+    new FnExpr[T] {
       override val clazz: Class[T] = that.clazz
       override private[orm] val uid = that.uid
       override private[orm] val expr = e
@@ -34,36 +34,36 @@ trait FnT[T] extends ResultColumn
 }
 
 trait FnOp {
-  def count(): FnT[Long] = new FnT[Long] {
+  def count(): FnExpr[Long] = new FnExpr[Long] {
     override private[orm] val uid = "$count$"
     override private[orm] val expr = Expr.func("COUNT(*)", d = false, Array())
     override val clazz: Class[Long] = classOf[Long]
   }
 
-  def count(c: ResultColumn with ExprT[_]): FnT[Long] = new FnT[Long] {
+  def count(c: ResultColumn with ExprLike[_]): FnExpr[Long] = new FnExpr[Long] {
     override val clazz: Class[Long] = classOf[Long]
     override private[orm] val uid = s"$$count$$${c.uid}"
     override private[orm] val expr = Expr.func("COUNT", d = false, Array(c.toExpr))
   }
 
-  def sum[T](f: SelectableFieldT[T]): FnT[T] = new FnT[T] {
+  def sum[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExpr[T] {
     override val clazz: Class[T] = f.getType
     override private[orm] val uid = s"$$sum$$${f.uid}"
     override private[orm] val expr = Expr.func("SUM", d = false, Array(f.toExpr))
   }
 
-  def min[T](f: SelectableFieldT[T]): FnT[T] = new FnT[T] {
+  def min[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExpr[T] {
     override val clazz: Class[T] = f.getType
     override private[orm] val uid = s"$$min$$${f.uid}"
     override private[orm] val expr = Expr.func("MIN", d = false, Array(f.toExpr))
   }
 
-  def max[T](f: SelectableFieldT[T]): FnT[T] = new FnT[T] {
+  def max[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExpr[T] {
     override val clazz: Class[T] = f.getType
     override private[orm] val uid = s"$$max$$${f.uid}"
     override private[orm] val expr = Expr.func("MAX", d = false, Array(f.toExpr))
   }
 
-  def exists(e: ExprT[_]): ExprT[_] = Expr("EXISTS", e)
+  def exists(e: ExprLike[_]): ExprLike[_] = Expr("EXISTS", e)
 }
 

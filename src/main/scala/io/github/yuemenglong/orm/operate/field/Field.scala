@@ -13,13 +13,13 @@ import scala.collection.mutable
 /**
   * Created by <yuemenglong@126.com> on 2018/3/26.
   */
-trait FieldT extends Field with ExprOps[FieldT] {
+trait FieldExpr extends Field with ExprOps[FieldExpr] {
 
   def toExpr: Expr = expr
 
-  def fromExpr(e: Expr): FieldT = {
+  def fromExpr(e: Expr): FieldExpr = {
     val that = this
-    new FieldT {
+    new FieldExpr {
       override private[orm] val uid = that.uid
       override private[orm] val expr = e
     }
@@ -29,30 +29,25 @@ trait FieldT extends Field with ExprOps[FieldT] {
 trait Field extends ResultColumn {
   def getAlias: String = uid
 
-//  override def assign(e: ExprT[_]) = e match {
-//    case null => Assign(Expr.asTableColumn(expr), null)
-//    case _ => Assign(Expr.asTableColumn(expr), e.toExpr)
-//  }
-
-  def to[T](clazz: Class[T]): SelectableFieldT[T] = {
+  def to[T](clazz: Class[T]): SelectableFieldExpr[T] = {
     val that = this
     val thatClazz = clazz
-    new SelectableFieldT[T] {
+    new SelectableFieldExpr[T] {
       override val clazz = thatClazz
       override private[orm] val expr = that.expr
       override private[orm] val uid = that.uid
     }
   }
 
-  def toInt: SelectableFieldT[Integer] = to(classOf[Integer])
+  def toInt: SelectableFieldExpr[Integer] = to(classOf[Integer])
 
-  def toLong: SelectableFieldT[Long] = to(classOf[Long])
+  def toLong: SelectableFieldExpr[Long] = to(classOf[Long])
 
-  def toDouble: SelectableFieldT[Double] = to(classOf[Double])
+  def toDouble: SelectableFieldExpr[Double] = to(classOf[Double])
 
-  def toStr: SelectableFieldT[String] = to(classOf[String])
+  def toStr: SelectableFieldExpr[String] = to(classOf[String])
 
-  def toBool: SelectableFieldT[Boolean] = to(classOf[Boolean])
+  def toBool: SelectableFieldExpr[Boolean] = to(classOf[Boolean])
 
   override def as(alias: String): Field = {
     val that = this
@@ -63,12 +58,12 @@ trait Field extends ResultColumn {
   }
 }
 
-trait SelectableFieldT[T] extends SelectableField[T] with ExprOps[SelectableFieldT[T]] {
+trait SelectableFieldExpr[T] extends SelectableField[T] with ExprOps[SelectableFieldExpr[T]] {
   def toExpr: Expr = expr
 
-  def fromExpr(e: Expr): SelectableFieldT[T] = {
+  def fromExpr(e: Expr): SelectableFieldExpr[T] = {
     val that = this
-    new SelectableFieldT[T] {
+    new SelectableFieldExpr[T] {
       override val clazz = that.clazz
       override private[orm] val uid = that.uid
       override private[orm] val expr = e

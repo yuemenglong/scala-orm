@@ -35,23 +35,23 @@ object Expr {
     override val children = (null, null, null, s, null, null, null, null, null, null)
   }
 
-  def apply(op: String, e: ExprT[_]): Expr = new Expr {
+  def apply(op: String, e: ExprLike[_]): Expr = new Expr {
     override val children = (null, null, null, null, (op, e.toExpr), null, null, null, null, null)
   }
 
-  def apply(e: ExprT[_], op: String): Expr = new Expr {
+  def apply(e: ExprLike[_], op: String): Expr = new Expr {
     override val children = (null, null, null, null, null, (e.toExpr, op), null, null, null, null)
   }
 
-  def apply(l: ExprT[_], op: String, r: ExprT[_]): Expr = new Expr {
+  def apply(l: ExprLike[_], op: String, r: ExprLike[_]): Expr = new Expr {
     override val children = (null, null, null, null, null, null, (l.toExpr, op, r.toExpr), null, null, null)
   }
 
-  def apply(e: ExprT[_], l: ExprT[_], r: ExprT[_]): Expr = new Expr {
+  def apply(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr = new Expr {
     override val children = (null, null, null, null, null, null, null, (e.toExpr, l.toExpr, r.toExpr), null, null)
   }
 
-  def apply(es: ExprT[_]*): Expr = new Expr {
+  def apply(es: ExprLike[_]*): Expr = new Expr {
     override val children = (null, null, null, null, null, null, null, null, es.map(_.toExpr).toArray, null)
   }
 
@@ -184,7 +184,7 @@ trait Expr extends SqlItem
   }
 }
 
-trait ExprT[S] {
+trait ExprLike[S] {
   def toExpr: Expr
 
   def fromExpr(e: Expr): S
@@ -195,101 +195,101 @@ trait ExprOps[S] extends ExprOpBool[S]
   with ExprOpAssign[S]
   with ExprOpOrder[S]
 
-trait ExprOpBool[S] extends ExprT[S] {
-  def eql(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
+trait ExprOpBool[S] extends ExprLike[S] {
+  def eql(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
 
   def eql[T](t: T): S = eql(Expr.const(t))
 
-  def neq(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "<>", e.toExpr))
+  def neq(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "<>", e.toExpr))
 
   def neq[T](t: T): S = neq(Expr.const(t))
 
-  def gt(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, ">", e.toExpr))
+  def gt(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, ">", e.toExpr))
 
   def gt[T](t: T): S = gt(Expr.const(t))
 
-  def gte(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, ">=", e.toExpr))
+  def gte(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, ">=", e.toExpr))
 
   def gte[T](t: T): S = gte(Expr.const(t))
 
-  def lt(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "<", e.toExpr))
+  def lt(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "<", e.toExpr))
 
   def lt[T](t: T): S = lt(Expr.const(t))
 
-  def lte(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "<=", e.toExpr))
+  def lte(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "<=", e.toExpr))
 
   def lte[T](t: T): S = lte(Expr.const(t))
 
-  def between(l: ExprT[_], r: ExprT[_]): S = fromExpr(Expr(this.toExpr, l.toExpr, r.toExpr))
+  def between(l: ExprLike[_], r: ExprLike[_]): S = fromExpr(Expr(this.toExpr, l.toExpr, r.toExpr))
 
   def between[T](l: T, r: T): S = between(Expr.const(l), Expr.const(r))
 
-  def ===(e: ExprT[_]): S = fromExpr(e match {
+  def ===(e: ExprLike[_]): S = fromExpr(e match {
     case null => Expr(this.toExpr, "= NULL")
     case _ => Expr(this.toExpr, "=", e.toExpr)
   })
 
   def ===[T](t: T): S = ===(Expr.const(t))
 
-  def !==(e: ExprT[_]): S = neq(e)
+  def !==(e: ExprLike[_]): S = neq(e)
 
   def !==[T](t: T): S = neq(t)
 
-  def >(e: ExprT[_]): S = gt(e)
+  def >(e: ExprLike[_]): S = gt(e)
 
   def >[T](t: T): S = gt(t)
 
-  def >=(e: ExprT[_]): S = gte(e)
+  def >=(e: ExprLike[_]): S = gte(e)
 
   def >=[T](t: T): S = gte(t)
 
-  def <(e: ExprT[_]): S = lt(e)
+  def <(e: ExprLike[_]): S = lt(e)
 
   def <[T](t: T): S = lt(t)
 
-  def <=(e: ExprT[_]): S = lte(e)
+  def <=(e: ExprLike[_]): S = lte(e)
 
   def <=[T](t: T): S = lte(t)
 
-  def and(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "AND", e.toExpr))
+  def and(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "AND", e.toExpr))
 
-  def or(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "OR", e.toExpr))
+  def or(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "OR", e.toExpr))
 
   def isNull: S = fromExpr(Expr(this.toExpr, "IS NULL"))
 
   def notNull: S = fromExpr(Expr(this.toExpr, "IS NOT NULL"))
 
-  def in(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "IN", e.toExpr))
+  def in(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "IN", e.toExpr))
 
-  def in[T](arr: Array[T]): S = in(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
+  def in[T](arr: Array[T]): S = in(Expr(arr.map(Expr.const(_).asInstanceOf[ExprLike[_]]): _*))
 
   def nin(e: Expr): S = fromExpr(Expr(this.toExpr, "NOT IN", e.toExpr))
 
-  def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprT[_]]): _*))
+  def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprLike[_]]): _*))
 
   def like(s: String): S = fromExpr(Expr(this.toExpr, "LIKE", Expr.const(s)))
 }
 
-trait ExprOpMath[S] extends ExprT[S] {
-  def add(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "+", e.toExpr))
+trait ExprOpMath[S] extends ExprLike[S] {
+  def add(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "+", e.toExpr))
 
   def add[T](v: T): S = add(Expr.const(v))
 
-  def sub(e: ExprT[_]): S = fromExpr(Expr(this.toExpr, "-", e.toExpr))
+  def sub(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "-", e.toExpr))
 
   def sub[T](v: T): S = sub(Expr.const(v))
 
-  def +(e: ExprT[_]): S = add(e)
+  def +(e: ExprLike[_]): S = add(e)
 
   def +[T](v: T): S = add(v)
 
-  def -(e: ExprT[_]): S = sub(e)
+  def -(e: ExprLike[_]): S = sub(e)
 
   def -[T](v: T): S = sub(v)
 }
 
-trait ExprOpAssign[S] extends ExprT[S] {
-  def assign(e: ExprT[_]): S = fromExpr(e match {
+trait ExprOpAssign[S] extends ExprLike[S] {
+  def assign(e: ExprLike[_]): S = fromExpr(e match {
     case null => Expr(this.toExpr, "= NULL")
     case _ => Expr(this.toExpr, "=", e.toExpr)
   })
@@ -297,7 +297,7 @@ trait ExprOpAssign[S] extends ExprT[S] {
   def assign[T](v: T): S = assign(Expr.const(v))
 }
 
-trait ExprOpOrder[S] extends ExprT[S] {
+trait ExprOpOrder[S] extends ExprLike[S] {
   def asc(): S = fromExpr(Expr(this.toExpr, "ASC"))
 
   def desc(): S = fromExpr(Expr(this.toExpr, "DESC"))

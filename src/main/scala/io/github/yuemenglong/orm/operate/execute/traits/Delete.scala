@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
 import io.github.yuemenglong.orm.operate.join.Root
-import io.github.yuemenglong.orm.sql.{DeleteStatement, Expr, ExprT}
+import io.github.yuemenglong.orm.sql.{DeleteStatement, Expr, ExprLike}
 
 /**
   * Created by yml on 2017/7/15.
@@ -13,7 +13,7 @@ trait ExecutableDelete extends Executable with DeleteStatement {
     this
   }
 
-  def where(e: ExprT[_]): ExecutableDelete = {
+  def where(e: ExprLike[_]): ExecutableDelete = {
     _where = e.toExpr
     this
   }

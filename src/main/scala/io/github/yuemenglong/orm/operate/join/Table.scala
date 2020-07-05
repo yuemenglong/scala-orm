@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.field.{Field, FieldT, SelectableField, SelectableFieldT}
+import io.github.yuemenglong.orm.operate.field.{Field, FieldExpr, SelectableField, SelectableFieldExpr}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.sql._
@@ -24,7 +24,7 @@ trait Table extends TableLike {
 
   def getMeta: EntityMeta
 
-  def get(field: String): FieldT
+  def get(field: String): FieldExpr
 
   def join(field: String, joinType: JoinType): Table
 
@@ -47,13 +47,13 @@ trait TableImpl extends Table {
 
   def getMeta: EntityMeta = meta
 
-  def get(field: String): FieldT = {
+  def get(field: String): FieldExpr = {
     if (!getMeta.fieldMap.contains(field) || getMeta.fieldMap(field).isRefer) {
       throw new RuntimeException(s"Unknown Field $field On ${getMeta.entity}")
     }
     val alias = s"${getAlias}$$${field}"
     val column = getColumn(getMeta.fieldMap(field).column, alias)
-    new FieldT {
+    new FieldExpr {
       override private[orm] val uid = column.uid
       override private[orm] val expr = column.expr
     }
@@ -232,9 +232,9 @@ trait ResultTableImpl extends ResultTable with TableImpl {
 
 trait TypedTable[T] extends Table {
 
-  def apply[R](fn: T => R): SelectableFieldT[R] = get(fn)
+  def apply[R](fn: T => R): SelectableFieldExpr[R] = get(fn)
 
-  def get[R](fn: (T => R)): SelectableFieldT[R]
+  def get[R](fn: (T => R)): SelectableFieldExpr[R]
 
   def join[R](fn: (T => R), joinType: JoinType): TypedTable[R]
 
@@ -282,11 +282,11 @@ trait TypedTableImpl[T] extends TypedTable[T] with TableImpl {
     }
   }
 
-  def get[R](fn: (T => R)): SelectableFieldT[R] = {
+  def get[R](fn: (T => R)): SelectableFieldExpr[R] = {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = get(marker.toString)
-    new SelectableFieldT[R] {
+    new SelectableFieldExpr[R] {
       override val clazz = getMeta.fieldMap(marker.toString).clazz.asInstanceOf[Class[R]]
       override private[orm] val expr = field.expr
       override private[orm] val uid = field.uid
@@ -483,9 +483,9 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T]
 }
 
 trait SubQuery extends TableLike {
-  def get(alias: String): FieldT = {
+  def get(alias: String): FieldExpr = {
     val that = this
-    new FieldT {
+    new FieldExpr {
       override private[orm] val uid = alias
       override private[orm] val expr = Expr.column(that.getAlias, alias)
     }

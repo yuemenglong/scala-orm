@@ -38,7 +38,7 @@ trait TableLike extends TableOrSubQuery {
     t
   }
 
-  def on(e: ExprT[_]): TableLike = {
+  def on(e: ExprLike[_]): TableLike = {
     if (_on == null) {
       throw new RuntimeException("Root Table Has No On[Expr]")
     }
@@ -169,7 +169,7 @@ class SelectCore(cs: Array[ResultColumn] = Array()) extends SqlItem {
 }
 
 //noinspection ScalaRedundantCast
-trait SelectStatement[S] extends SelectStmt with ExprT[S] {
+trait SelectStatement[S] extends SelectStmt with ExprLike[S] {
 
   def distinct(): S
 
@@ -177,13 +177,13 @@ trait SelectStatement[S] extends SelectStmt with ExprT[S] {
 
   def from(ts: TableLike*): S
 
-  def where(expr: ExprT[_]): S
+  def where(expr: ExprLike[_]): S
 
-  def groupBy(es: ExprT[_]*): S
+  def groupBy(es: ExprLike[_]*): S
 
-  def having(e: ExprT[_]): S
+  def having(e: ExprLike[_]): S
 
-  def orderBy(e: ExprT[_]*): S
+  def orderBy(e: ExprLike[_]*): S
 
   def limit(l: Integer): S
 
@@ -215,22 +215,22 @@ trait SelectStatementImpl[S] extends SelectStatement[S] {
     this.asInstanceOf[S]
   }
 
-  def where(expr: ExprT[_]): S = {
+  def where(expr: ExprLike[_]): S = {
     core._where = expr.toExpr
     this.asInstanceOf[S]
   }
 
-  def groupBy(es: ExprT[_]*): S = {
+  def groupBy(es: ExprLike[_]*): S = {
     core._groupBy = es.map(_.toExpr).toArray
     this.asInstanceOf[S]
   }
 
-  def having(e: ExprT[_]): S = {
+  def having(e: ExprLike[_]): S = {
     core._having = e.toExpr
     this.asInstanceOf[S]
   }
 
-  def orderBy(e: ExprT[_]*): S = {
+  def orderBy(e: ExprLike[_]*): S = {
     core._orderBy = e.map(_.toExpr).toArray
     this.asInstanceOf[S]
   }
