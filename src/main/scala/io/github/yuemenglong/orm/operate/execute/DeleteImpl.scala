@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.Session.Session
-import io.github.yuemenglong.orm.operate.execute.traits.ExecutableDelete
+import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableDeleteImpl}
 import io.github.yuemenglong.orm.operate.join.Table
 import io.github.yuemenglong.orm.sql.TableLike
 
@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by <yuemenglong@126.com> on 2017/7/16.
   */
 
-class DeleteImpl(deletes: Table*) extends ExecutableDelete {
+class DeleteImpl(deletes: Table*) extends ExecutableDeleteImpl {
   override val _targets: Array[TableLike] = deletes.toArray
 
   override def execute(session: Session): Int = {

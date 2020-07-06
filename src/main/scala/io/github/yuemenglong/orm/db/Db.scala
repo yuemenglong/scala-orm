@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.db
 import java.sql.{Connection, ResultSet}
 
 import com.jolbox.bonecp.BoneCP
-import io.github.yuemenglong.orm.Session.Session
+import io.github.yuemenglong.orm.Session.{Session, SessionImpl}
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
 
@@ -72,7 +72,7 @@ class Db(config: DbConfig) {
   }
 
   def openSession(): Session = {
-    new Session(openConnection())
+    new SessionImpl(openConnection())
   }
 
   def execute(sql: String, params: Array[Object] = Array()): Int = {

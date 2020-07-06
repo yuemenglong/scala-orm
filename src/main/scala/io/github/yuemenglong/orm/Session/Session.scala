@@ -9,8 +9,8 @@ import io.github.yuemenglong.orm.operate.query.Queryable
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by Administrator on 2017/5/24.
-  */
+ * Created by Administrator on 2017/5/24.
+ */
 
 class Stmt {}
 
@@ -40,7 +40,45 @@ case class BatchStmt(sql: String, params: Array[Array[Object]]) extends Stmt {
   }
 }
 
-class Session(private val conn: Connection) {
+trait Session {
+
+  def inTransaction(): Boolean
+
+  def beginTransaction(): Transaction
+
+  def clearTransaction(): Unit
+
+  def isClosed: Boolean
+
+  def close(): Unit
+
+  def getConnection: Connection
+
+  def execute(executor: Executable): Int
+
+  def query[T](query: Queryable[T]): Array[T]
+
+  def first[T](q: Queryable[T]): T
+
+  def statements(): Array[Stmt]
+
+  def execute(sql: String,
+              params: Array[Object] = Array(),
+              postStmt: Statement => Unit = null): Int
+
+  def batch(sql: String, params: Array[Array[Object]],
+            postStmt: Statement => Unit = null): Int
+
+  def query(sql: String,
+            params: Array[Object] = Array(),
+            fn: ResultSet => Array[Array[Any]]): Array[Array[Any]]
+
+  def commit(): Unit = getConnection.commit()
+
+  def rollback(): Unit = getConnection.rollback()
+}
+
+class SessionImpl(private val conn: Connection) extends Session {
   private var closed = false
   private var tx: Transaction = _
   private var stmts = new ArrayBuffer[Stmt]()
@@ -185,8 +223,4 @@ class Session(private val conn: Connection) {
       stmt.close()
     }
   }
-
-  def commit(): Unit = getConnection.commit()
-
-  def rollback(): Unit = getConnection.rollback()
 }
