@@ -7,6 +7,13 @@ import io.github.yuemenglong.orm.sql.{ExprLike, UpdateStatement}
  */
 //noinspection ScalaFileName
 trait ExecutableUpdate extends UpdateStatement with Executable {
+  def set[T <: ExprLike[_]](as: T*): ExecutableUpdate
+
+  def where(e: ExprLike[_]): ExecutableUpdate
+}
+
+//noinspection ScalaFileName
+trait ExecutableUpdateImpl extends ExecutableUpdate {
   def set[T <: ExprLike[_]](as: T*): ExecutableUpdate = {
     _sets = as.map(_.toExpr).toArray
     this
