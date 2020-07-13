@@ -4,8 +4,8 @@ import java.io.{ByteArrayOutputStream, File}
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.Orm.Fn
-import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.OrmFn
+import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.test.entity._
@@ -40,9 +40,9 @@ class ScalaTest {
     db2.shutdown()
   }
 
-  def openDb(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "orm_test")
+  def openDb(): Db = Orm.open(new MysqlConfig("localhost", 3306, "root", "root", "orm_test"))
 
-  def openDb2(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "orm_test2")
+  def openDb2(): Db = Orm.open(new MysqlConfig("localhost", 3306, "root", "root", "orm_test2"))
 
   @Test
   def testConnPool(): Unit = {
@@ -147,8 +147,8 @@ class ScalaTest {
         session.execute(Orm.insert(Orm.convert(obj)))
       })
       val root = Orm.root(classOf[Obj])
-      val query = Orm.select(Fn.max(root.get("id").to(classOf[java.lang.Long])),
-        Fn.min(root.get("id").to(classOf[java.lang.Long]))).from(root)
+      val query = Orm.select(OrmFn.max(root.get("id").to(classOf[java.lang.Long])),
+        OrmFn.min(root.get("id").to(classOf[java.lang.Long]))).from(root)
       val (max, min) = session.first(query)
       Assert.assertEquals(max.intValue(), 10)
       Assert.assertEquals(min.intValue(), 1)
@@ -254,7 +254,7 @@ class ScalaTest {
         val root = Orm.root(classOf[Obj])
         root.select("oo")
         root.select("om").select("mo")
-        val query = Orm.select(Fn.count()).from(root)
+        val query = Orm.select(OrmFn.count()).from(root)
         val ret = session.first(query)
         Assert.assertEquals(ret.longValue(), 0)
       }
@@ -493,7 +493,7 @@ class ScalaTest {
 
   @Test
   def testClearField(): Unit = {
-    val obj = Orm.empty(classOf[Obj])
+    val obj = Orm.obj(classOf[Obj])
     Assert.assertEquals(obj.toString, "{}")
     obj.id = 1L
     Assert.assertEquals(obj.toString, """{id: 1}""")
@@ -505,7 +505,7 @@ class ScalaTest {
   def testTransaction(): Unit = {
     try {
       db.beginTransaction(fn = session => {
-        val obj = Orm.create(classOf[Obj])
+        val obj = Orm.obj(classOf[Obj])
         obj.name = ""
         session.execute(Orm.insert(obj))
         throw new RuntimeException("Test")
@@ -524,9 +524,9 @@ class ScalaTest {
   def testTransaction2(): Unit = {
     try {
       db.beginTransaction(fn = session => {
-        val obj = Orm.create(classOf[Obj])
+        val obj = Orm.obj(classOf[Obj])
         obj.name = ""
-        session.execute(Orm.inserts(Array(obj)))
+        session.execute(Orm.insertArray(Array(obj)))
         throw new RuntimeException("Test")
       })
       Assert.assertFalse(true)
@@ -557,7 +557,7 @@ class ScalaTest {
   @Test
   def testDefaultValue(): Unit = {
     db.beginTransaction(session => {
-      val obj = Orm.empty(classOf[Obj])
+      val obj = Orm.obj(classOf[Obj])
       obj.name = "dft"
       session.execute(Orm.insert(obj))
       val res = OrmTool.selectByIdEx(classOf[Obj], 1, session)()
@@ -568,7 +568,7 @@ class ScalaTest {
   @Test
   def testOrmToolUpdate(): Unit = {
     db.beginTransaction(session => {
-      val obj = Orm.empty(classOf[Obj])
+      val obj = Orm.obj(classOf[Obj])
       obj.name = "update"
       session.execute(Orm.insert(obj))
       OrmTool.updateById(classOf[Obj], 1, session, ("name", "update2"), ("age", 10))
@@ -585,17 +585,17 @@ class ScalaTest {
         val mo = new MO()
         mo
       }).toArray)
-      session.execute(Orm.inserts(mos))
+      session.execute(Orm.insertArray(mos))
       val oms = mos.map(mo => {
-        val om = Orm.empty(classOf[OM])
+        val om = Orm.obj(classOf[OM])
         om.subId = 1L
         om.moId = mo.id
         om
       })
-      session.execute(Orm.inserts(oms))
+      session.execute(Orm.insertArray(oms))
     })
     db.beginTransaction(session => {
-      var sub = Orm.empty(classOf[Sub])
+      var sub = Orm.obj(classOf[Sub])
       sub.id = 1L
       sub = OrmTool.attach(sub, "om", session, join => join.select("mo"), null)
       Assert.assertEquals(sub.om.length, 5)

@@ -24,7 +24,7 @@ object OrmTool {
   def getEmptyConstructorMap: Map[Class[_], () => Object] = {
     OrmMeta.entityVec.map(meta => {
       val fn = () => {
-        Orm.empty(meta.clazz).asInstanceOf[Object]
+        Orm.obj(meta.clazz).asInstanceOf[Object]
       }
       (meta.clazz, fn)
     }).toMap

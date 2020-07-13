@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm
 
-import io.github.yuemenglong.orm.db.{Db, DbConfig, MysqlConfig, SqliteConfig}
+import io.github.yuemenglong.orm.db.{Db, DbConfig}
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.lang.interfaces.Entity
@@ -15,13 +15,70 @@ import io.github.yuemenglong.orm.sql.Expr
 
 import scala.reflect.ClassTag
 
-object Orm {
+trait Orm {
 
   def init(paths: Array[String]): Unit = {
-    Scanner.scan(paths)
+    init(paths.map(Class.forName))
   }
 
-  def init(clazzs: Array[_ <: Class[_]]): Unit = {
+  def init(clazzs: Array[Class[_]]): Unit
+
+  def reset(): Unit
+
+  def open(config: DbConfig): Db
+
+  def obj[T](clazz: Class[T]): T
+
+  def convert[T](obj: T): T
+
+  def setLogger(enable: Boolean): Unit
+
+  def setLoggerLevel(level: String = "DEBUG"): Unit = {
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", level)
+  }
+
+  def insert[T <: Object](obj: T): TypedExecuteRoot[T]
+
+  def update[T <: Object](obj: T): TypedExecuteRoot[T]
+
+  def delete[T <: Object](obj: T): TypedExecuteRoot[T]
+
+  def root[T](clazz: Class[T]): Root[T]
+
+  def table[T](clazz: Class[T]): Root[T] = root(clazz)
+
+  def select[T: ClassTag](c: Selectable[T]): Query1[T]
+
+  def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1]
+
+  def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2]
+
+  def selectFrom[T: ClassTag](r: TypedResultTable[T]): Query1[T] = select(r).from(r)
+
+  def cond(): Expr
+
+  def insertArray[T](arr: Array[T]): ExecutableInsert[T]
+
+  def update(root: Root[_]): ExecutableUpdate
+
+  def delete(joins: Table*): ExecutableDelete
+
+  def deleteFrom(root: Root[_]): ExecutableDelete = delete(root).from(root)
+
+  def set[V](obj: Object, field: String, value: V): Unit
+
+  def get(obj: Object, field: String): Object
+
+  def clear(obj: Object, field: String): Unit
+
+  def clear[T <: Object](obj: T)(fn: T => Any): Unit
+}
+
+object OrmFn extends FnOp
+
+class OrmImpl extends Orm {
+
+  def init(clazzs: Array[Class[_]]): Unit = {
     Scanner.scan(clazzs)
   }
 
@@ -38,22 +95,7 @@ object Orm {
     new Db(config)
   }
 
-  def openMysqlDb(host: String, port: Int, user: String, pwd: String, db: String,
-                  min: Int = 5, max: Int = 30, partition: Int = 3): Db = {
-    if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(new MysqlConfig(host, port, user, pwd, db).setPoolArgs(min, max, partition))
-  }
-
-  def openSqliteDb(db: String, min: Int = 5, max: Int = 30, partition: Int = 3): Db = {
-    if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(new SqliteConfig(db).setPoolArgs(min, max, partition))
-  }
-
-  def create[T](clazz: Class[T]): T = {
-    EntityManager.empty(clazz)
-  }
-
-  def empty[T](clazz: Class[T]): T = {
+  def obj[T](clazz: Class[T]): T = {
     EntityManager.empty(clazz)
   }
 
@@ -70,20 +112,8 @@ object Orm {
     }
   }
 
-  @Deprecated
-  def converts[T](arr: Array[T]): Array[T] = {
-    if (arr.isEmpty) {
-      throw new RuntimeException("Converts Nothing")
-    }
-    arr.map(convert).toArray(ClassTag(arr(0).getClass))
-  }
-
   def setLogger(enable: Boolean): Unit = {
     Logger.setEnable(enable)
-  }
-
-  def setLoggerLevel(level: String = "DEBUG"): Unit = {
-    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", level)
   }
 
   def insert[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.insert(convert(obj))
@@ -94,19 +124,15 @@ object Orm {
 
   def root[T](clazz: Class[T]): Root[T] = Root[T](clazz)
 
-  def table[T](clazz: Class[T]): Root[T] = Root[T](clazz)
-
   def select[T: ClassTag](c: Selectable[T]): Query1[T] = new Query1Impl[T](c)
 
   def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1] = new Query2Impl[T0, T1](s0, s1)
 
   def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2] = new Query3Impl[T0, T1, T2](s0, s1, s2)
 
-  def selectFrom[T: ClassTag](r: TypedResultTable[T]): Query1[T] = select(r).from(r)
-
   def cond(): Expr = Expr("1 = 1")
 
-  def inserts[T](arr: Array[T]): ExecutableInsert[T] = {
+  def insertArray[T](arr: Array[T]): ExecutableInsert[T] = {
     arr.isEmpty match {
       case true => throw new RuntimeException("Batch Insert But Array Is Empty")
       case false => {
@@ -118,13 +144,9 @@ object Orm {
     }
   }
 
-  def insertArray[T](arr: Array[T]): ExecutableInsert[T] = inserts(arr)
-
   def update(root: Root[_]): ExecutableUpdate = new UpdateImpl(root)
 
   def delete(joins: Table*): ExecutableDelete = new DeleteImpl(joins: _*)
-
-  def deleteFrom(root: Root[_]): ExecutableDelete = new DeleteImpl(root).from(root)
 
   def set[V](obj: Object, field: String, value: V): Unit = obj.asInstanceOf[Entity].$$core().set(field, value.asInstanceOf[Object])
 
@@ -134,6 +156,6 @@ object Orm {
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
 
-  object Fn extends FnOp
-
 }
+
+object Orm extends OrmImpl

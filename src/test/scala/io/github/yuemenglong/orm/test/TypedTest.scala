@@ -6,8 +6,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.Orm.Fn
-import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.OrmFn
+import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.operate.join.TypedResultTable
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
@@ -41,9 +41,9 @@ class TypedTest {
     db2.shutdown()
   }
 
-  def openDb(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "orm_test")
+  def openDb(): Db = Orm.open(new MysqlConfig("localhost", 3306, "root", "root", "orm_test"))
 
-  def openDb2(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "orm_test2")
+  def openDb2(): Db = Orm.open(new MysqlConfig("localhost", 3306, "root", "root", "orm_test2"))
 
   @Test
   def testInsert(): Unit = db.beginTransaction(session => {
@@ -69,7 +69,7 @@ class TypedTest {
 
     {
       r.name = "name"
-      r.om = r.om ++ Array(Orm.create(classOf[OM]))
+      r.om = r.om ++ Array(Orm.obj(classOf[OM]))
       val ex = Orm.update(r)
       (0 to 1).foreach(i => ex.ignoreFor(r.om(i)))
       ex.insert(_.om)
@@ -139,7 +139,7 @@ class TypedTest {
     Assert.assertEquals(ret, 7)
 
     val root = Orm.root(classOf[OM])
-    val c = session.first(Orm.select(Fn.count()).from(root))
+    val c = session.first(Orm.select(OrmFn.count()).from(root))
     Assert.assertEquals(c.longValue(), 6)
   })
 
@@ -252,22 +252,22 @@ class TypedTest {
 
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(Fn.count(root.get(_.objId))).from(root))
+      val res = session.first(Orm.select(OrmFn.count(root.get(_.objId))).from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(Fn.count(root.get(_.objId))).distinct().from(root))
+      val res = session.first(Orm.select(OrmFn.count(root.get(_.objId))).distinct().from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(Fn.count(root.get(_.objId)).distinct).from(root))
+      val res = session.first(Orm.select(OrmFn.count(root.get(_.objId)).distinct).from(root))
       Assert.assertEquals(res.longValue(), 1)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(Fn.count()).from(root))
+      val res = session.first(Orm.select(OrmFn.count()).from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
   })
@@ -314,7 +314,7 @@ class TypedTest {
     }
     {
       val root = Orm.root(classOf[Obj])
-      val res = session.first(Orm.select(Fn.sum(root.joins(_.om).get(_.id))).from(root))
+      val res = session.first(Orm.select(OrmFn.sum(root.joins(_.om).get(_.id))).from(root))
       Assert.assertEquals(res.longValue(), 6)
     }
     {
@@ -322,8 +322,8 @@ class TypedTest {
       val om = root.joins(_.om)
       val res = session.query(Orm.select(
         root.get(_.id),
-        Fn.sum(om.get(_.id)),
-        Fn.count(om.get(_.id))
+        OrmFn.sum(om.get(_.id)),
+        OrmFn.count(om.get(_.id))
       ).from(root).groupBy(root.get(_.id)))
       Assert.assertEquals(res.length, 2)
       Assert.assertEquals(res(0)._1.longValue(), 1)
@@ -337,11 +337,11 @@ class TypedTest {
       val root = Orm.root(classOf[Obj])
       val res = session.query(Orm.select(
         root.get(_.id),
-        Fn.sum(root.joins(_.om).get(_.id)),
-        Fn.count(root.joins(_.om).get(_.id))
+        OrmFn.sum(root.joins(_.om).get(_.id)),
+        OrmFn.count(root.joins(_.om).get(_.id))
       ).from(root)
         .groupBy(root.get(_.id))
-        .having(Fn.count(root(_.id)).gt(1)))
+        .having(OrmFn.count(root(_.id)).gt(1)))
       Assert.assertEquals(res.length, 1)
       Assert.assertEquals(res(0)._1.longValue(), 2)
       Assert.assertEquals(res(0)._2.longValue(), 5)
@@ -387,7 +387,7 @@ class TypedTest {
     }
 
     {
-      val o = Orm.empty(classOf[Obj])
+      val o = Orm.obj(classOf[Obj])
       o.id = obj.id
       o.age = 20
       val ret = session.execute(Orm.update(o))
@@ -429,7 +429,7 @@ class TypedTest {
     session.execute(ex)
 
     {
-      val obj = Orm.empty(classOf[Obj])
+      val obj = Orm.obj(classOf[Obj])
       obj.id = ex.root().id
       obj.age = 200
       session.execute(Orm.update(obj))
@@ -575,7 +575,7 @@ class TypedTest {
     }
 
     {
-      val obj = Orm.empty(classOf[Obj])
+      val obj = Orm.obj(classOf[Obj])
       obj.name = "name2"
       obj.age = 10
       session.execute(Orm.insert(obj))
@@ -630,11 +630,11 @@ class TypedTest {
   @Test
   def testBatchInsert(): Unit = db.beginTransaction(session => {
     val objs = (1 to 3).map(i => {
-      val obj = Orm.empty(classOf[Obj])
+      val obj = Orm.obj(classOf[Obj])
       obj.name = i.toString
       obj
     }).toArray
-    val ret = session.execute(Orm.inserts(objs))
+    val ret = session.execute(Orm.insertArray(objs))
     Assert.assertEquals(ret, 3)
     Assert.assertEquals(objs(0).id.intValue(), 1)
     Assert.assertEquals(objs(1).id.intValue(), 2)
@@ -786,7 +786,7 @@ class TypedTest {
       })
       Assert.assertNull(res)
       val root = Orm.root(classOf[OM])
-      val count = session.first(Orm.select(Fn.count()).from(root))
+      val count = session.first(Orm.select(OrmFn.count()).from(root))
       Assert.assertEquals(count.intValue(), 0)
     }
   })
@@ -866,7 +866,7 @@ class TypedTest {
     {
       val r = Orm.root(classOf[OM])
       val sr = Orm.root(classOf[Obj])
-      val query = Orm.selectFrom(r).where(Fn.exists(
+      val query = Orm.selectFrom(r).where(OrmFn.exists(
         Orm.select(sr.get(_.id)).from(sr).where(sr.get(_.id).eql(r.get(_.objId)))
       ))
       val res = session.query(query)
@@ -939,7 +939,7 @@ class TypedTest {
     {
       val t = Orm.table(classOf[Obj])
       t.leftJoin(_.om)
-      val c = Fn.count(t.get(_.id))
+      val c = OrmFn.count(t.get(_.id))
       val q = Orm.select(t.get(_.id), c).from(t)
         //        .groupBy(t.get(_.id)).asc(c)
         .groupBy(t.get(_.id)).orderBy(c.asc())
