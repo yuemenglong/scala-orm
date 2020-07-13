@@ -11,20 +11,8 @@ import io.github.yuemenglong.orm.sql._
 import scala.collection.mutable
 
 /**
-  * Created by <yuemenglong@126.com> on 2018/3/26.
-  */
-trait FieldExpr extends Field with ExprOps[FieldExpr] {
-
-  def toExpr: Expr = expr
-
-  def fromExpr(e: Expr): FieldExpr = {
-    val that = this
-    new FieldExpr {
-      override private[orm] val uid = that.uid
-      override private[orm] val expr = e
-    }
-  }
-}
+ * Created by <yuemenglong@126.com> on 2018/3/26.
+ */
 
 trait Field extends ResultColumn {
   def getAlias: String = uid
@@ -58,13 +46,13 @@ trait Field extends ResultColumn {
   }
 }
 
-trait SelectableFieldExpr[T] extends SelectableField[T] with ExprOps[SelectableFieldExpr[T]] {
+trait FieldExpr extends Field with ExprOpsImpl[FieldExpr] {
+
   def toExpr: Expr = expr
 
-  def fromExpr(e: Expr): SelectableFieldExpr[T] = {
+  def fromExpr(e: Expr): FieldExpr = {
     val that = this
-    new SelectableFieldExpr[T] {
-      override val clazz = that.clazz
+    new FieldExpr {
       override private[orm] val uid = that.uid
       override private[orm] val expr = e
     }
@@ -94,6 +82,19 @@ trait SelectableField[T] extends Field with Selectable[T] {
       override val clazz = that.clazz
       override private[orm] val uid = alias
       override private[orm] val expr = that.expr
+    }
+  }
+}
+
+trait SelectableFieldExpr[T] extends SelectableField[T] with ExprOpsImpl[SelectableFieldExpr[T]] {
+  def toExpr: Expr = expr
+
+  def fromExpr(e: Expr): SelectableFieldExpr[T] = {
+    val that = this
+    new SelectableFieldExpr[T] {
+      override val clazz = that.clazz
+      override private[orm] val uid = that.uid
+      override private[orm] val expr = e
     }
   }
 }

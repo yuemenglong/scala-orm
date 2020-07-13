@@ -7,14 +7,14 @@ import io.github.yuemenglong.orm.operate.field.Field
 import scala.collection.mutable.ArrayBuffer
 
 object Expr {
-  def const[T](v: T): Expr = new Expr() {
+  def const[T](v: T): Expr = new ExprImpl {
     val c = new Constant {
       override val value = v.asInstanceOf[Object]
     }
     override val children = (c, null, null, null, null, null, null, null, null, null)
   }
 
-  def column(t: String, c: String): Expr = new Expr() {
+  def column(t: String, c: String): Expr = new ExprImpl {
     val tc = new TableColumn {
       override val table = t
       override val column = c
@@ -22,7 +22,7 @@ object Expr {
     override val children = (null, tc, null, null, null, null, null, null, null, null)
   }
 
-  def func(f: String, d: Boolean, p: Array[Expr]): Expr = new Expr {
+  def func(f: String, d: Boolean, p: Array[Expr]): Expr = new ExprImpl {
     val fc = new FunctionCall {
       override val fn = f
       override val distinct = d
@@ -31,55 +31,55 @@ object Expr {
     override val children = (null, null, fc, null, null, null, null, null, null, null)
   }
 
-  def stmt(s: SelectStmt): Expr = new Expr {
+  def stmt(s: SelectStmt): Expr = new ExprImpl {
     override val children = (null, null, null, s, null, null, null, null, null, null)
   }
 
-  def apply(op: String, e: ExprLike[_]): Expr = new Expr {
+  def apply(op: String, e: ExprLike[_]): Expr = new ExprImpl {
     override val children = (null, null, null, null, (op, e.toExpr), null, null, null, null, null)
   }
 
-  def apply(e: ExprLike[_], op: String): Expr = new Expr {
+  def apply(e: ExprLike[_], op: String): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, (e.toExpr, op), null, null, null, null)
   }
 
-  def apply(l: ExprLike[_], op: String, r: ExprLike[_]): Expr = new Expr {
+  def apply(l: ExprLike[_], op: String, r: ExprLike[_]): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, (l.toExpr, op, r.toExpr), null, null, null)
   }
 
-  def apply(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr = new Expr {
+  def apply(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, null, (e.toExpr, l.toExpr, r.toExpr), null, null)
   }
 
-  def apply(es: ExprLike[_]*): Expr = new Expr {
+  def apply(es: ExprLike[_]*): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, null, null, es.map(_.toExpr).toArray, null)
   }
 
-  def apply(sql: String, params: Array[Object] = Array()): Expr = new Expr {
+  def apply(sql: String, params: Array[Object] = Array()): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, null, null, null, (sql, params))
   }
 
-  def asTableColumn(e: Expr): TableColumn = e.children match {
+  def asTableColumn(e: Expr): TableColumn = e.asInstanceOf[ExprImpl].children match {
     case (null, c, null, null, null, null, null, null, null, null) => c
     case _ => throw new RuntimeException("Not TableColumn Expr")
   }
 
-  def asFunctionCall(e: Expr): FunctionCall = e.children match {
+  def asFunctionCall(e: Expr): FunctionCall = e.asInstanceOf[ExprImpl].children match {
     case (null, null, fn, null, null, null, null, null, null, null) => fn
     case _ => throw new RuntimeException("Not FunctionCall Expr")
   }
 
-  def asSelectStmt(e: Expr): SelectStmt = e.children match {
+  def asSelectStmt(e: Expr): SelectStmt = e.asInstanceOf[ExprImpl].children match {
     case (null, null, null, s, null, null, null, null, null, null) => s
     case _ => throw new RuntimeException("Not SelectStmt Expr")
   }
 }
 
-trait Expr extends SqlItem
-  with ExprOpBool[Expr]
-  with ExprOpMath[Expr]
-  with ExprOpAssign[Expr]
-  with ExprOpOrder[Expr] {
+trait Expr extends SqlItem with ExprOps[Expr] {
+  def as(alias: String): Field
+}
+
+trait ExprImpl extends Expr with ExprOpsImpl[Expr] {
   private[orm] val children: (
     Constant,
       TableColumn,
@@ -171,9 +171,9 @@ trait Expr extends SqlItem
     case _ => throw new UnreachableException
   }
 
-  override def toExpr = this
+  override def toExpr: Expr = this
 
-  override def fromExpr(e: Expr) = e
+  override def fromExpr(e: Expr): Expr = e
 
   def as(alias: String): Field = {
     val that = this
@@ -190,12 +190,121 @@ trait ExprLike[S] {
   def fromExpr(e: Expr): S
 }
 
-trait ExprOps[S] extends ExprOpBool[S]
-  with ExprOpMath[S]
-  with ExprOpAssign[S]
-  with ExprOpOrder[S]
+trait ExprOps[S]
+  extends ExprOpBool[S]
+    with ExprOpMath[S]
+    with ExprOpAssign[S]
+    with ExprOpOrder[S]
+
+trait ExprOpsImpl[S] extends ExprOps[S]
+  with ExprOpBoolImpl[S]
+  with ExprOpMathImpl[S]
+  with ExprOpAssignImpl[S]
+  with ExprOpOrderImpl[S]
 
 trait ExprOpBool[S] extends ExprLike[S] {
+  def eql(e: ExprLike[_]): S
+
+  def eql[T](t: T): S
+
+  def neq(e: ExprLike[_]): S
+
+  def neq[T](t: T): S
+
+  def gt(e: ExprLike[_]): S
+
+  def gt[T](t: T): S
+
+  def gte(e: ExprLike[_]): S
+
+  def gte[T](t: T): S
+
+  def lt(e: ExprLike[_]): S
+
+  def lt[T](t: T): S
+
+  def lte(e: ExprLike[_]): S
+
+  def lte[T](t: T): S
+
+  def between(l: ExprLike[_], r: ExprLike[_]): S
+
+  def between[T](l: T, r: T): S
+
+  def ===(e: ExprLike[_]): S
+
+  def ===[T](t: T): S
+
+  def !==(e: ExprLike[_]): S
+
+  def !==[T](t: T): S
+
+  def >(e: ExprLike[_]): S
+
+  def >[T](t: T): S
+
+  def >=(e: ExprLike[_]): S
+
+  def >=[T](t: T): S
+
+  def <(e: ExprLike[_]): S
+
+  def <[T](t: T): S
+
+  def <=(e: ExprLike[_]): S
+
+  def <=[T](t: T): S
+
+  def and(e: ExprLike[_]): S
+
+  def or(e: ExprLike[_]): S
+
+  def isNull: S
+
+  def notNull: S
+
+  def in(e: ExprLike[_]): S
+
+  def in[T](arr: Array[T]): S
+
+  def nin(e: Expr): S
+
+  def nin[T](arr: Array[T]): S
+
+  def like(s: String): S
+}
+
+trait ExprOpMath[S] extends ExprLike[S] {
+  def add(e: ExprLike[_]): S
+
+  def add[T](v: T): S
+
+  def sub(e: ExprLike[_]): S
+
+  def sub[T](v: T): S
+
+  def +(e: ExprLike[_]): S
+
+  def +[T](v: T): S
+
+  def -(e: ExprLike[_]): S
+
+  def -[T](v: T): S
+}
+
+trait ExprOpAssign[S] extends ExprLike[S] {
+  def assign(e: ExprLike[_]): S
+
+  def assign[T](v: T): S
+}
+
+trait ExprOpOrder[S] extends ExprLike[S] {
+  def asc(): S
+
+  def desc(): S
+}
+
+trait ExprOpBoolImpl[S] extends ExprOpBool[S] {
   def eql(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
 
   def eql[T](t: T): S = eql(Expr.const(t))
@@ -270,7 +379,7 @@ trait ExprOpBool[S] extends ExprLike[S] {
   def like(s: String): S = fromExpr(Expr(this.toExpr, "LIKE", Expr.const(s)))
 }
 
-trait ExprOpMath[S] extends ExprLike[S] {
+trait ExprOpMathImpl[S] extends ExprOpMath[S] {
   def add(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "+", e.toExpr))
 
   def add[T](v: T): S = add(Expr.const(v))
@@ -288,7 +397,7 @@ trait ExprOpMath[S] extends ExprLike[S] {
   def -[T](v: T): S = sub(v)
 }
 
-trait ExprOpAssign[S] extends ExprLike[S] {
+trait ExprOpAssignImpl[S] extends ExprOpAssign[S] {
   def assign(e: ExprLike[_]): S = fromExpr(e match {
     case null => Expr(this.toExpr, "= NULL")
     case _ => Expr(this.toExpr, "=", e.toExpr)
@@ -297,9 +406,8 @@ trait ExprOpAssign[S] extends ExprLike[S] {
   def assign[T](v: T): S = assign(Expr.const(v))
 }
 
-trait ExprOpOrder[S] extends ExprLike[S] {
+trait ExprOpOrderImpl[S] extends ExprOpOrder[S] {
   def asc(): S = fromExpr(Expr(this.toExpr, "ASC"))
 
   def desc(): S = fromExpr(Expr(this.toExpr, "DESC"))
 }
-

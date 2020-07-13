@@ -9,7 +9,7 @@ import io.github.yuemenglong.orm.lang.types.Types._
 
 trait FnExpr[T] extends ResultColumn
   with SelectableField[T]
-  with ExprOps[FnExpr[T]] {
+  with ExprOpsImpl[FnExpr[T]] {
   def distinct: FnExpr[T] = {
     val fnCall = Expr.asFunctionCall(expr)
     val newExpr = Expr.func(fnCall.fn, d = true, fnCall.params)
