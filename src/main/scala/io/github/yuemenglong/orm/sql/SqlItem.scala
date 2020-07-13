@@ -100,69 +100,6 @@ trait ResultColumn extends SqlItem {
   override def genParams(ab: ArrayBuffer[Object]): Unit = {
     expr.genParams(ab)
   }
-
-  //  def as(alias: String): ResultColumn = {
-  //    val that = this
-  //    new ResultColumn {
-  //      override private[orm] val uid = alias
-  //      override private[orm] val expr = that.expr
-  //    }
-  //  }
-}
-
-trait UpdateStmt extends SqlItem {
-  val _table: TableLike
-  var _sets: Array[Expr] = Array() // Table,Column,Expr
-  var _where: Expr = _
-
-  override def genSql(sb: StringBuffer): Unit = {
-    sb.append("UPDATE\n")
-    _table.genSql(sb)
-    sb.append("\nSET")
-    _sets.zipWithIndex.foreach { case (a, i) =>
-      if (i > 0) {
-        sb.append(",")
-      }
-      sb.append(s"\n")
-      a.genSql(sb)
-    }
-    if (_where != null) {
-      sb.append("\nWHERE\n")
-      _where.genSql(sb)
-    }
-  }
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = {
-    _table.genParams(ab)
-    _sets.foreach(_.genParams(ab))
-    if (_where != null) {
-      _where.genParams(ab)
-    }
-  }
-}
-
-trait DeleteStmt extends SqlItem {
-  val _targets: Array[TableLike]
-  var _table: TableLike = _
-  var _where: Expr = _
-
-  override def genSql(sb: StringBuffer): Unit = {
-    sb.append("DELETE\n")
-    sb.append(_targets.map(t => s"`${t.getAlias}`").mkString(", "))
-    sb.append("\nFROM\n")
-    _table.genSql(sb)
-    if (_where != null) {
-      sb.append("\nWHERE\n")
-      _where.genSql(sb)
-    }
-  }
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = {
-    _table.genParams(ab)
-    if (_where != null) {
-      _where.genParams(ab)
-    }
-  }
 }
 
 trait TableOrSubQuery extends SqlItem {
@@ -207,5 +144,3 @@ trait TableOrSubQuery extends SqlItem {
     }
   }
 }
-
-

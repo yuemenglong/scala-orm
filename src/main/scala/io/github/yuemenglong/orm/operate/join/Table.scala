@@ -81,7 +81,7 @@ trait TableImpl extends Table with TableLikeImpl {
           override val meta = referMeta.refer
           override private[orm] val _table = table._table
           override private[orm] val _joins = table._joins
-          override private[orm] val _on = table._on
+          override private[orm] val _on = table.asInstanceOf[TableLikeImpl]._on
         }
         joins += (field -> (joinType, ret))
         ret
@@ -112,7 +112,7 @@ trait TableImpl extends Table with TableLikeImpl {
       override val meta = referMeta
       override private[orm] val _table = table._table
       override private[orm] val _joins = table._joins
-      override private[orm] val _on = table._on
+      override private[orm] val _on = table.asInstanceOf[TableLikeImpl]._on
     }
   }
 
@@ -157,7 +157,7 @@ trait ResultTableImpl extends ResultTable with TableImpl {
           override val meta = j.getMeta
           override private[orm] val _table = j._table
           override private[orm] val _joins = j._joins
-          override private[orm] val _on = j._on
+          override private[orm] val _on = j.asInstanceOf[TableLikeImpl]._on
         }
         _selects += ((field, ret))
         ret
@@ -278,7 +278,7 @@ trait TypedTableImpl[T] extends TypedTable[T] with TableImpl {
       override val meta = j.getMeta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
-      override private[orm] val _on = j._on
+      override private[orm] val _on = j.asInstanceOf[TableLikeImpl]._on
     }
   }
 
@@ -343,7 +343,7 @@ trait TypedTableImpl[T] extends TypedTable[T] with TableImpl {
       override val meta = j.getMeta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
-      override private[orm] val _on = j._on
+      override private[orm] val _on = j.asInstanceOf[TableLikeImpl]._on
     }
   }
 }

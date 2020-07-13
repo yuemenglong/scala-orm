@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.tool
 
-import java.io.{FileOutputStream, OutputStream}
+import java.io.OutputStream
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.Session.Session
@@ -225,11 +225,7 @@ object OrmTool {
     val query = Orm.selectFrom(root)
     if (queryFn != null) queryFn(query.asInstanceOf[Query1[T]])
     val cond = root.get(rightField).eql(leftValue)
-    val where = query.core._where match {
-      case null => cond
-      case w => w.and(cond)
-    }
-    query.where(where)
+    query.where(cond)
 
     val res = refer.isOneMany match {
       case true => session.query(query).toArray(ClassTag(refer.refer.clazz)).asInstanceOf[Object]
@@ -267,11 +263,7 @@ object OrmTool {
     val query = Orm.selectFrom(root)
     if (queryFn != null) queryFn(query)
     val cond = root.get(rightField).in(leftValues)
-    val where = query.core._where match {
-      case null => cond
-      case w => w.and(cond)
-    }
-    query.where(where)
+    query.where(cond)
 
     val res: Map[Object, Object] = refer.isOneMany match {
       case true => session.query(query).map(_.asInstanceOf[Entity])

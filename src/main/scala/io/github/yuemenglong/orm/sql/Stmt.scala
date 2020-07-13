@@ -9,6 +9,8 @@ import scala.collection.mutable.ArrayBuffer
  * Created by <yuemenglong@126.com> on 2018/3/19.
  */
 
+trait SelectStmt extends SqlItem
+
 object TableLike {
   def apply(name: String, uid: String): TableLike = new TableLikeImpl {
     override private[orm] val _table = ((name, uid), null)
@@ -24,7 +26,6 @@ object TableLike {
 }
 
 trait TableLike extends TableOrSubQuery {
-  private[orm] val _on: Var[Expr]
 
   def join(t: TableLike, joinType: String): TableLike
 
@@ -41,14 +42,14 @@ trait TableLikeImpl extends TableLike {
   private[orm] val _on: Var[Expr]
 
   def join(t: TableLike, joinType: String): TableLike = {
-    _joins += ((joinType, t, t._on))
+    _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
     t
   }
 
   def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike = {
     val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
     t.on(c)
-    _joins += ((joinType, t, t._on))
+    _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
     t
   }
 
@@ -82,32 +83,7 @@ trait TableLikeImpl extends TableLike {
   }
 }
 
-trait SelectStmt extends SqlItem {
-  private[orm] val core: SelectCore
-  private[orm] var comps = new ArrayBuffer[(String, SelectCore)]()
-}
-
-trait SelectStmtImpl extends SelectStmt {
-  override def genSql(sb: StringBuffer): Unit = {
-    core.genSql(sb)
-    if (nonEmpty(comps)) {
-      comps.foreach { case (op, s) =>
-        sb.append(s" ${op} ")
-        s.genSql(sb)
-      }
-    }
-  }
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = {
-    core.genParams(ab)
-    if (nonEmpty(comps)) {
-      comps.foreach(_._2.genParams(ab))
-    }
-  }
-}
-
-trait SelectCore extends SqlItem {
-  private[orm] val cs: Array[ResultColumn]
+class SelectCore(private[orm] val cs: Array[ResultColumn] = Array()) extends SqlItem {
   private[orm] var _distinct: Boolean = _
   private[orm] var _columns: Array[ResultColumn] = cs
   private[orm] var _from: Array[TableOrSubQuery] = _
@@ -117,9 +93,6 @@ trait SelectCore extends SqlItem {
   private[orm] var _orderBy: Array[Expr] = Array[Expr]()
   private[orm] var _limit: Integer = _
   private[orm] var _offset: Integer = _
-}
-
-class SelectCoreImpl(val cs: Array[ResultColumn] = Array()) extends SelectCore {
 
   override def genSql(sb: StringBuffer): Unit = {
     _distinct match {
@@ -214,7 +187,26 @@ trait SelectStatement[S] extends SelectStmt with ExprLike[S] {
   def unionAll(stmt: SelectStatement[_]): S
 }
 
-trait SelectStatementImpl[S] extends SelectStatement[S] with SelectStmtImpl {
+trait SelectStatementImpl[S] extends SelectStatement[S] {
+  private[orm] val core: SelectCore
+  private[orm] var comps = new ArrayBuffer[(String, SelectCore)]()
+
+  override def genSql(sb: StringBuffer): Unit = {
+    core.genSql(sb)
+    if (nonEmpty(comps)) {
+      comps.foreach { case (op, s) =>
+        sb.append(s" ${op} ")
+        s.genSql(sb)
+      }
+    }
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    core.genParams(ab)
+    if (nonEmpty(comps)) {
+      comps.foreach(_._2.genParams(ab))
+    }
+  }
 
   override def fromExpr(e: Expr): S = Expr.asSelectStmt(e).asInstanceOf[S]
 
@@ -236,7 +228,10 @@ trait SelectStatementImpl[S] extends SelectStatement[S] with SelectStmtImpl {
   }
 
   def where(expr: ExprLike[_]): S = {
-    core._where = expr.toExpr
+    core._where = core._where match {
+      case null => expr.toExpr
+      case w => w.and(expr)
+    }
     this.asInstanceOf[S]
   }
 
@@ -266,16 +261,67 @@ trait SelectStatementImpl[S] extends SelectStatement[S] with SelectStmtImpl {
   }
 
   def union(stmt: SelectStatement[_]): S = {
-    comps += (("UNION", stmt.core))
+    comps += (("UNION", stmt.asInstanceOf[SelectStatementImpl[_]].core))
     this.asInstanceOf[S]
   }
 
   def unionAll(stmt: SelectStatement[_]): S = {
-    comps += (("UNION ALL", stmt.core))
+    comps += (("UNION ALL", stmt.asInstanceOf[SelectStatementImpl[_]].core))
     this.asInstanceOf[S]
   }
 }
 
-trait UpdateStatement extends UpdateStmt
+trait UpdateStatement extends SqlItem {
+  val _table: TableLike
+  var _sets: Array[Expr] = Array() // Table,Column,Expr
+  var _where: Expr = _
 
-trait DeleteStatement extends DeleteStmt
+  override def genSql(sb: StringBuffer): Unit = {
+    sb.append("UPDATE\n")
+    _table.genSql(sb)
+    sb.append("\nSET")
+    _sets.zipWithIndex.foreach { case (a, i) =>
+      if (i > 0) {
+        sb.append(",")
+      }
+      sb.append(s"\n")
+      a.genSql(sb)
+    }
+    if (_where != null) {
+      sb.append("\nWHERE\n")
+      _where.genSql(sb)
+    }
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    _table.genParams(ab)
+    _sets.foreach(_.genParams(ab))
+    if (_where != null) {
+      _where.genParams(ab)
+    }
+  }
+}
+
+trait DeleteStatement extends SqlItem {
+  val _targets: Array[TableLike]
+  var _table: TableLike = _
+  var _where: Expr = _
+
+  override def genSql(sb: StringBuffer): Unit = {
+    sb.append("DELETE\n")
+    sb.append(_targets.map(t => s"`${t.getAlias}`").mkString(", "))
+    sb.append("\nFROM\n")
+    _table.genSql(sb)
+    if (_where != null) {
+      sb.append("\nWHERE\n")
+      _where.genSql(sb)
+    }
+  }
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = {
+    _table.genParams(ab)
+    if (_where != null) {
+      _where.genParams(ab)
+    }
+  }
+}

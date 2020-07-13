@@ -96,7 +96,7 @@ private[orm] class Query1Impl[T: ClassTag](s: Selectable[T]) extends Query1[T] w
   }
 
   override val targets: Array[Selectable[_]] = Array(s)
-  override private[orm] val core = new SelectCoreImpl(s.getColumns)
+  override private[orm] val core = new SelectCore(s.getColumns)
 }
 
 trait Query2[T0, T1] extends QueryBase[Query2[T0, T1]] with Queryable[(T0, T1)]
@@ -113,7 +113,7 @@ private[orm] class Query2Impl[T0: ClassTag, T1: ClassTag](s0: Selectable[T0],
   }
 
   override val targets: Array[Selectable[_]] = Array(s0, s1)
-  override private[orm] val core = new SelectCoreImpl(s0.getColumns ++ s1.getColumns)
+  override private[orm] val core = new SelectCore(s0.getColumns ++ s1.getColumns)
 }
 
 trait Query3[T0, T1, T2] extends QueryBase[Query3[T0, T1, T2]] with Queryable[(T0, T1, T2)]
@@ -133,5 +133,5 @@ private[orm] class Query3Impl[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Sele
   }
 
   override val targets: Array[Selectable[_]] = Array(s0, s1, s2)
-  override private[orm] val core = new SelectCoreImpl(s0.getColumns ++ s1.getColumns ++ s2.getColumns)
+  override private[orm] val core = new SelectCore(s0.getColumns ++ s1.getColumns ++ s2.getColumns)
 }
