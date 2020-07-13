@@ -101,13 +101,13 @@ trait ResultColumn extends SqlItem {
     expr.genParams(ab)
   }
 
-  def as(alias: String): ResultColumn = {
-    val that = this
-    new ResultColumn {
-      override private[orm] val uid = alias
-      override private[orm] val expr = that.expr
-    }
-  }
+  //  def as(alias: String): ResultColumn = {
+  //    val that = this
+  //    new ResultColumn {
+  //      override private[orm] val uid = alias
+  //      override private[orm] val expr = that.expr
+  //    }
+  //  }
 }
 
 trait UpdateStmt extends SqlItem {

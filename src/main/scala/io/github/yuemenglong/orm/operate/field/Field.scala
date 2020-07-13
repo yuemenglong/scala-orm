@@ -15,12 +15,45 @@ import scala.collection.mutable
  */
 
 trait Field extends ResultColumn {
+  def getAlias: String
+
+  def to[T](clazz: Class[T]): SelectableFieldExpr[T]
+
+  def toInt: SelectableFieldExpr[Integer]
+
+  def toLong: SelectableFieldExpr[Long]
+
+  def toDouble: SelectableFieldExpr[Double]
+
+  def toStr: SelectableFieldExpr[String]
+
+  def toBool: SelectableFieldExpr[Boolean]
+}
+
+trait FieldExpr extends Field with ExprOps[FieldExpr] {
+
+  def toExpr: Expr
+
+  def fromExpr(e: Expr): FieldExpr
+}
+
+trait SelectableField[T] extends Field with Selectable[T] {
+  def as(alias: String): SelectableField[T]
+}
+
+trait SelectableFieldExpr[T] extends SelectableField[T] with ExprOps[SelectableFieldExpr[T]] {
+  def toExpr: Expr
+
+  def fromExpr(e: Expr): SelectableFieldExpr[T]
+}
+
+trait FieldImpl extends Field {
   def getAlias: String = uid
 
   def to[T](clazz: Class[T]): SelectableFieldExpr[T] = {
     val that = this
     val thatClazz = clazz
-    new SelectableFieldExpr[T] {
+    new SelectableFieldExprImpl[T] {
       override val clazz = thatClazz
       override private[orm] val expr = that.expr
       override private[orm] val uid = that.uid
@@ -36,33 +69,26 @@ trait Field extends ResultColumn {
   def toStr: SelectableFieldExpr[String] = to(classOf[String])
 
   def toBool: SelectableFieldExpr[Boolean] = to(classOf[Boolean])
-
-  override def as(alias: String): Field = {
-    val that = this
-    new Field {
-      override private[orm] val uid = alias
-      override private[orm] val expr = that.expr
-    }
-  }
 }
 
-trait FieldExpr extends Field with ExprOpsImpl[FieldExpr] {
+trait FieldExprImpl extends FieldExpr with FieldImpl with ExprOpsImpl[FieldExpr] {
 
   def toExpr: Expr = expr
 
   def fromExpr(e: Expr): FieldExpr = {
     val that = this
-    new FieldExpr {
+    new FieldExprImpl {
       override private[orm] val uid = that.uid
       override private[orm] val expr = e
     }
   }
 }
 
-trait SelectableField[T] extends Field with Selectable[T] {
+trait SelectableFieldImpl[T] extends SelectableField[T] with FieldImpl {
+
   val clazz: Class[T]
 
-  override def getType = clazz
+  override def getType: Class[T] = clazz
 
   override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
     // 适配sqlite的情况
@@ -78,7 +104,7 @@ trait SelectableField[T] extends Field with Selectable[T] {
 
   override def as(alias: String): SelectableField[T] = {
     val that = this
-    new SelectableField[T] {
+    new SelectableFieldImpl[T] {
       override val clazz = that.clazz
       override private[orm] val uid = alias
       override private[orm] val expr = that.expr
@@ -86,12 +112,14 @@ trait SelectableField[T] extends Field with Selectable[T] {
   }
 }
 
-trait SelectableFieldExpr[T] extends SelectableField[T] with ExprOpsImpl[SelectableFieldExpr[T]] {
+trait SelectableFieldExprImpl[T] extends SelectableFieldExpr[T]
+  with SelectableFieldImpl[T]
+  with ExprOpsImpl[SelectableFieldExpr[T]] {
   def toExpr: Expr = expr
 
   def fromExpr(e: Expr): SelectableFieldExpr[T] = {
     val that = this
-    new SelectableFieldExpr[T] {
+    new SelectableFieldExprImpl[T] {
       override val clazz = that.clazz
       override private[orm] val uid = that.uid
       override private[orm] val expr = e

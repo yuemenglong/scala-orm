@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.sql
 
 import io.github.yuemenglong.orm.kit.UnreachableException
 import io.github.yuemenglong.orm.lang.types.Types.String
-import io.github.yuemenglong.orm.operate.field.Field
+import io.github.yuemenglong.orm.operate.field.{Field, FieldImpl}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -177,7 +177,7 @@ trait ExprImpl extends Expr with ExprOpsImpl[Expr] {
 
   def as(alias: String): Field = {
     val that = this
-    new Field {
+    new FieldImpl {
       override private[orm] val uid = alias
       override private[orm] val expr = that
     }

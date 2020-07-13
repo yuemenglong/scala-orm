@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.field.{Field, FieldExpr, SelectableField, SelectableFieldExpr}
+import io.github.yuemenglong.orm.operate.field.{Field, FieldExpr, FieldExprImpl, SelectableField, SelectableFieldExpr, SelectableFieldExprImpl}
 import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.sql._
@@ -53,7 +53,7 @@ trait TableImpl extends Table with TableLikeImpl {
     }
     val alias = s"${getAlias}$$${field}"
     val column = getColumn(getMeta.fieldMap(field).column, alias)
-    new FieldExpr {
+    new FieldExprImpl {
       override private[orm] val uid = column.uid
       override private[orm] val expr = column.expr
     }
@@ -286,7 +286,7 @@ trait TypedTableImpl[T] extends TypedTable[T] with TableImpl {
     val marker = EntityManager.createMarker[T](getMeta)
     fn(marker)
     val field = get(marker.toString)
-    new SelectableFieldExpr[R] {
+    new SelectableFieldExprImpl[R] {
       override val clazz = getMeta.fieldMap(marker.toString).clazz.asInstanceOf[Class[R]]
       override private[orm] val expr = field.expr
       override private[orm] val uid = field.uid
@@ -493,7 +493,7 @@ trait SubQuery extends TableLike {
 trait SubQueryImpl extends SubQuery with TableLikeImpl {
   def get(alias: String): FieldExpr = {
     val that = this
-    new FieldExpr {
+    new FieldExprImpl {
       override private[orm] val uid = alias
       override private[orm] val expr = Expr.column(that.getAlias, alias)
     }
