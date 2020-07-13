@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm
 
-import io.github.yuemenglong.orm.db.{Db, DbConfig}
+import io.github.yuemenglong.orm.db.{Db, DbConfig, DbImpl}
 import io.github.yuemenglong.orm.entity.EntityManager
 import io.github.yuemenglong.orm.init.Scanner
 import io.github.yuemenglong.orm.lang.interfaces.Entity
@@ -92,7 +92,7 @@ class OrmImpl extends Orm {
 
   def open(config: DbConfig): Db = {
     if (OrmMeta.entityVec.isEmpty) throw new RuntimeException("Orm Not Init Yet")
-    new Db(config)
+    new DbImpl(config)
   }
 
   def obj[T](clazz: Class[T]): T = {

@@ -8,8 +8,8 @@ import io.github.yuemenglong.orm.meta._
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by <yuemenglong@126.com> on 2017/8/2.
-  */
+ * Created by <yuemenglong@126.com> on 2017/8/2.
+ */
 
 class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
 
@@ -61,7 +61,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
   }
 
   def check(): Unit = {
-    val dbName = db.db
+    val dbName = db.asInstanceOf[DbImpl].db
     val metas = db.entities()
     db.openConnection(conn => {
       //1. 先获取所有表结构
