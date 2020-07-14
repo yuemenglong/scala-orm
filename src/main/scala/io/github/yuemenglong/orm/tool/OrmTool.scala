@@ -9,7 +9,7 @@ import io.github.yuemenglong.orm.api.types.Types
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
-import io.github.yuemenglong.orm.meta._
+import io.github.yuemenglong.orm.impl.meta._
 import io.github.yuemenglong.orm.operate.sql.table.{ResultTable, Root, Table, TypedResultTable}
 import io.github.yuemenglong.orm.operate.query.Query1
 

@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.impl.db
 
 import io.github.yuemenglong.orm.api.db.Db
-import io.github.yuemenglong.orm.meta.{EntityMeta, FieldMeta, IndexInfo}
+import io.github.yuemenglong.orm.impl.meta.{EntityMeta, FieldMeta, IndexInfo}
 
 /**
   * Created by Administrator on 2017/5/16.

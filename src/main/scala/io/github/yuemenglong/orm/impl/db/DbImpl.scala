@@ -5,8 +5,8 @@ import java.sql.{Connection, ResultSet}
 import com.jolbox.bonecp.BoneCP
 import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
 import io.github.yuemenglong.orm.session.{Session, SessionImpl}
-import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
+import io.github.yuemenglong.orm.impl.logger.Logger
+import io.github.yuemenglong.orm.impl.meta.{EntityMeta, OrmMeta}
 
 class DbImpl(config: DbConfig) extends Db {
   val pool: BoneCP = config.initPool()

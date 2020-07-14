@@ -4,7 +4,7 @@ import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
-import io.github.yuemenglong.orm.meta._
+import io.github.yuemenglong.orm.impl.meta._
 import io.github.yuemenglong.orm.operate.sql.table.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.operate.sql.core._

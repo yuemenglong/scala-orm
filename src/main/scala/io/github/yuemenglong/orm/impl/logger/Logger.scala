@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.logger
+package io.github.yuemenglong.orm.impl.logger
 
 import org.slf4j.{Logger => SLFLogger, LoggerFactory}
 

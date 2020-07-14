@@ -1,13 +1,12 @@
-package io.github.yuemenglong.orm.meta
+package io.github.yuemenglong.orm.impl.meta
 
 import java.lang.reflect.Field
 
 import io.github.yuemenglong.orm.api.anno
-import io.github.yuemenglong.orm.api.anno.{Check, Column, Id, Index, LongText, OneToMany, OneToOne, Pointer}
 import io.github.yuemenglong.orm.api.anno.predef.Const
+import io.github.yuemenglong.orm.api.anno._
 import io.github.yuemenglong.orm.impl.db.DbContext
 import io.github.yuemenglong.orm.impl.kit.Kit
-import io.github.yuemenglong.orm.api.anno._
 
 trait FieldMeta {
   val entity: EntityMeta

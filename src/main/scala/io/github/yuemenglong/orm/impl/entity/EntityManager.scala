@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.impl.entity
 import java.lang.reflect.Method
 
 import io.github.yuemenglong.orm.impl.kit.Kit
-import io.github.yuemenglong.orm.meta.{FieldMetaOneOne, _}
+import io.github.yuemenglong.orm.impl.meta.{FieldMetaOneOne, _}
 import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
 import scala.collection.mutable

@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.session
 
 import java.sql.Connection
 
-import io.github.yuemenglong.orm.logger.Logger
+import io.github.yuemenglong.orm.impl.logger.Logger
 
 /**
   * Created by Administrator on 2017/6/6.

@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.session
 
 import java.sql.{Connection, ResultSet, Statement}
 
-import io.github.yuemenglong.orm.logger.Logger
+import io.github.yuemenglong.orm.impl.logger.Logger
 import io.github.yuemenglong.orm.operate.execute.traits.Executable
 import io.github.yuemenglong.orm.operate.query.Queryable
 

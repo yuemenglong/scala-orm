@@ -4,8 +4,8 @@ import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
 import io.github.yuemenglong.orm.impl.db.DbImpl
 import io.github.yuemenglong.orm.impl.init.Scanner
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityManager}
-import io.github.yuemenglong.orm.logger.Logger
-import io.github.yuemenglong.orm.meta.OrmMeta
+import io.github.yuemenglong.orm.impl.logger.Logger
+import io.github.yuemenglong.orm.impl.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.operate.sql.table._

@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.meta
+package io.github.yuemenglong.orm.impl.meta
 
 import java.lang.reflect.Method
 
