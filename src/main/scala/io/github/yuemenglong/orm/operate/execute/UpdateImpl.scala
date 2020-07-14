@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.execute
 
-import io.github.yuemenglong.orm.Session.Session
+import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableUpdate, ExecutableUpdateImpl}
 import io.github.yuemenglong.orm.operate.join.Root
 

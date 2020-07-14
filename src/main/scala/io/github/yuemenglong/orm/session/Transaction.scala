@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.Session
+package io.github.yuemenglong.orm.session
 
 import java.sql.Connection
 

@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.operate.query
 
 import java.sql.ResultSet
 
-import io.github.yuemenglong.orm.Session.Session
+import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types.String
 import io.github.yuemenglong.orm.operate.join.{SubQuery, SubQueryImpl}
