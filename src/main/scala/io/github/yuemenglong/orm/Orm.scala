@@ -72,9 +72,9 @@ trait Orm {
   def clear(obj: Object, field: String): Unit
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit
-}
 
-object OrmFn extends FnOpImpl
+  val Fn: FnOp
+}
 
 class OrmImpl extends Orm {
 
@@ -156,6 +156,7 @@ class OrmImpl extends Orm {
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
 
+  val Fn: FnOp = new FnOpImpl()
 }
 
 object Orm extends OrmImpl

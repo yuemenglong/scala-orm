@@ -6,14 +6,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.OrmFn
 import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
+import io.github.yuemenglong.orm.lang.types.Impl._
 import io.github.yuemenglong.orm.operate.join.TypedResultTable
 import io.github.yuemenglong.orm.sql.Expr
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
-import io.github.yuemenglong.orm.lang.types.Impl._
 
 /**
  * Created by <yuemenglong@126.com> on 2018/1/31.
@@ -139,7 +138,7 @@ class TypedTest {
     Assert.assertEquals(ret, 7)
 
     val root = Orm.root(classOf[OM])
-    val c = session.first(Orm.select(OrmFn.count()).from(root))
+    val c = session.first(Orm.select(Orm.Fn.count()).from(root))
     Assert.assertEquals(c.longValue(), 6)
   })
 
@@ -252,22 +251,22 @@ class TypedTest {
 
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(OrmFn.count(root.get(_.objId))).from(root))
+      val res = session.first(Orm.select(Orm.Fn.count(root.get(_.objId))).from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(OrmFn.count(root.get(_.objId))).distinct().from(root))
+      val res = session.first(Orm.select(Orm.Fn.count(root.get(_.objId))).distinct().from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(OrmFn.count(root.get(_.objId)).distinct).from(root))
+      val res = session.first(Orm.select(Orm.Fn.count(root.get(_.objId)).distinct).from(root))
       Assert.assertEquals(res.longValue(), 1)
     }
     {
       val root = Orm.root(classOf[OM])
-      val res = session.first(Orm.select(OrmFn.count()).from(root))
+      val res = session.first(Orm.select(Orm.Fn.count()).from(root))
       Assert.assertEquals(res.longValue(), 3)
     }
   })
@@ -314,7 +313,7 @@ class TypedTest {
     }
     {
       val root = Orm.root(classOf[Obj])
-      val res = session.first(Orm.select(OrmFn.sum(root.joins(_.om).get(_.id))).from(root))
+      val res = session.first(Orm.select(Orm.Fn.sum(root.joins(_.om).get(_.id))).from(root))
       Assert.assertEquals(res.longValue(), 6)
     }
     {
@@ -322,8 +321,8 @@ class TypedTest {
       val om = root.joins(_.om)
       val res = session.query(Orm.select(
         root.get(_.id),
-        OrmFn.sum(om.get(_.id)),
-        OrmFn.count(om.get(_.id))
+        Orm.Fn.sum(om.get(_.id)),
+        Orm.Fn.count(om.get(_.id))
       ).from(root).groupBy(root.get(_.id)))
       Assert.assertEquals(res.length, 2)
       Assert.assertEquals(res(0)._1.longValue(), 1)
@@ -337,11 +336,11 @@ class TypedTest {
       val root = Orm.root(classOf[Obj])
       val res = session.query(Orm.select(
         root.get(_.id),
-        OrmFn.sum(root.joins(_.om).get(_.id)),
-        OrmFn.count(root.joins(_.om).get(_.id))
+        Orm.Fn.sum(root.joins(_.om).get(_.id)),
+        Orm.Fn.count(root.joins(_.om).get(_.id))
       ).from(root)
         .groupBy(root.get(_.id))
-        .having(OrmFn.count(root(_.id)).gt(1)))
+        .having(Orm.Fn.count(root(_.id)).gt(1)))
       Assert.assertEquals(res.length, 1)
       Assert.assertEquals(res(0)._1.longValue(), 2)
       Assert.assertEquals(res(0)._2.longValue(), 5)
@@ -786,7 +785,7 @@ class TypedTest {
       })
       Assert.assertNull(res)
       val root = Orm.root(classOf[OM])
-      val count = session.first(Orm.select(OrmFn.count()).from(root))
+      val count = session.first(Orm.select(Orm.Fn.count()).from(root))
       Assert.assertEquals(count.intValue(), 0)
     }
   })
@@ -866,7 +865,7 @@ class TypedTest {
     {
       val r = Orm.root(classOf[OM])
       val sr = Orm.root(classOf[Obj])
-      val query = Orm.selectFrom(r).where(OrmFn.exists(
+      val query = Orm.selectFrom(r).where(Orm.Fn.exists(
         Orm.select(sr.get(_.id)).from(sr).where(sr.get(_.id).eql(r.get(_.objId)))
       ))
       val res = session.query(query)
@@ -939,7 +938,7 @@ class TypedTest {
     {
       val t = Orm.table(classOf[Obj])
       t.leftJoin(_.om)
-      val c = OrmFn.count(t.get(_.id))
+      val c = Orm.Fn.count(t.get(_.id))
       val q = Orm.select(t.get(_.id), c).from(t)
         //        .groupBy(t.get(_.id)).asc(c)
         .groupBy(t.get(_.id)).orderBy(c.asc())

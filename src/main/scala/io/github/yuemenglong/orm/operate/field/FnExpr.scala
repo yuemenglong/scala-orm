@@ -57,7 +57,7 @@ trait FnOp {
   def exists(e: ExprLike[_]): ExprLike[_]
 }
 
-trait FnOpImpl extends FnOp {
+class FnOpImpl extends FnOp {
   def count(): FnExpr[Long] = new FnExprImpl[Long] {
     override private[orm] val uid = "$count$"
     override private[orm] val expr = Expr.func("COUNT(*)", d = false, Array())

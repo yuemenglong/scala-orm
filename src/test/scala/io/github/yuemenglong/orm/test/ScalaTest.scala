@@ -1,18 +1,17 @@
 package io.github.yuemenglong.orm.test
 
-import java.io.{ByteArrayOutputStream, File}
+import java.io.ByteArrayOutputStream
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.OrmFn
 import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.lang.types.Impl._
+import io.github.yuemenglong.orm.lang.types.Types.DateTime
 import io.github.yuemenglong.orm.test.entity._
 import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
-import io.github.yuemenglong.orm.lang.types.Impl._
-import io.github.yuemenglong.orm.lang.types.Types.DateTime
 
 /**
  * Created by <yuemenglong@126.com> on 2017/10/19.
@@ -147,8 +146,8 @@ class ScalaTest {
         session.execute(Orm.insert(Orm.convert(obj)))
       })
       val root = Orm.root(classOf[Obj])
-      val query = Orm.select(OrmFn.max(root.get("id").to(classOf[java.lang.Long])),
-        OrmFn.min(root.get("id").to(classOf[java.lang.Long]))).from(root)
+      val query = Orm.select(Orm.Fn.max(root.get("id").to(classOf[java.lang.Long])),
+        Orm.Fn.min(root.get("id").to(classOf[java.lang.Long]))).from(root)
       val (max, min) = session.first(query)
       Assert.assertEquals(max.intValue(), 10)
       Assert.assertEquals(min.intValue(), 1)
@@ -254,7 +253,7 @@ class ScalaTest {
         val root = Orm.root(classOf[Obj])
         root.select("oo")
         root.select("om").select("mo")
-        val query = Orm.select(OrmFn.count()).from(root)
+        val query = Orm.select(Orm.Fn.count()).from(root)
         val ret = session.first(query)
         Assert.assertEquals(ret.longValue(), 0)
       }
