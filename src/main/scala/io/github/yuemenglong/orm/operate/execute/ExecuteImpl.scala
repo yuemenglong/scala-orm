@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecuteJoin, ExecuteRoot, TypedExecuteJoin, TypedExecuteRoot}

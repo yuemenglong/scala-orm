@@ -4,8 +4,8 @@ import java.lang.reflect.Field
 
 import io.github.yuemenglong.orm.db.{Db, DbContext}
 import io.github.yuemenglong.orm.kit.Kit
-import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.lang.anno._
+import io.github.yuemenglong.orm.lang.anno.predef.Const
 
 trait FieldMeta {
   val entity: EntityMeta
@@ -101,7 +101,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   override val defaultValue: String = annoColumn match {
     case null => null
     case _ => annoColumn.defaultValue() match {
-      case Def.ANNOTATION_STRING_NULL => null
+      case Const.ANNOTATION_STRING_NULL => null
       case s: String => s
     }
   }

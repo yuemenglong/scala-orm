@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.db
 
 import java.sql.{Connection, ResultSet}
 
-import io.github.yuemenglong.orm.lang.Def
+import io.github.yuemenglong.orm.lang.anno.predef.Const
 import io.github.yuemenglong.orm.meta._
 
 import scala.collection.mutable.ArrayBuffer
@@ -31,7 +31,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
 
       val defaultValueEq = field.defaultValue match {
         case null => defaultValue == null
-        case Def.ANNOTATION_STRING_NULL => defaultValue == null
+        case Const.ANNOTATION_STRING_NULL => defaultValue == null
         case "now()" => defaultValue != null && defaultValue.startsWith("CURRENT_")
         case s => s == defaultValue
       }

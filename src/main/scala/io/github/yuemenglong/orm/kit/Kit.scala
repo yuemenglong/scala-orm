@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.kit
 import java.lang.reflect.{Field, Method}
 import java.sql.ResultSet
 
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.lang.types.Types._
 
 import scala.reflect.ClassTag

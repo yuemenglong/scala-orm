@@ -6,9 +6,9 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.Kit
-import io.github.yuemenglong.orm.lang.Def
 import io.github.yuemenglong.orm.lang.anno.ExportTS
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.impl.entity.Entity
+import io.github.yuemenglong.orm.lang.anno.predef.Const
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.sql.table.{ResultTable, Root, Table, TypedResultTable}
@@ -134,7 +134,7 @@ class OrmToolImpl extends OrmTool {
         case Types.BigDecimalClass => s"number"
         case _ => s"$typeName"
       }
-      val init = anno != null && anno.value() != Def.ANNOTATION_STRING_NULL match {
+      val init = anno != null && anno.value() != Const.ANNOTATION_STRING_NULL match {
         case true => anno.value()
         case false => "null"
       }

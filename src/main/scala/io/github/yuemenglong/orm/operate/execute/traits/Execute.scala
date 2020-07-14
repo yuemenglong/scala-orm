@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
 import io.github.yuemenglong.orm.session.Session
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.impl.entity.Entity
 
 /**
   * Created by yml on 2017/7/15.

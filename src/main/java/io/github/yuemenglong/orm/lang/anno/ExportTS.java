@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static io.github.yuemenglong.orm.lang.Def.ANNOTATION_STRING_NULL;
+import static io.github.yuemenglong.orm.lang.anno.predef.Const.ANNOTATION_STRING_NULL;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

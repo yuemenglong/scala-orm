@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.lang.anno;
 
-import io.github.yuemenglong.orm.lang.Def;
+import io.github.yuemenglong.orm.lang.anno.predef.Const;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -20,6 +20,6 @@ public @interface Column {
 
     int scale() default 0;
 
-    String defaultValue() default Def.ANNOTATION_STRING_NULL;
+    String defaultValue() default Const.ANNOTATION_STRING_NULL;
 }
 //(precision, scale)

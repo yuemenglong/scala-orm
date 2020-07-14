@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.operate.sql.field
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.kit.Kit
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.operate.sql.core._
 

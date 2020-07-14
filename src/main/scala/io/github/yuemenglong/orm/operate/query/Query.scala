@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.operate.query
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.session.Session
-import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.operate.sql.table.{SubQuery, SubQueryImpl}
 import io.github.yuemenglong.orm.operate.sql.core._
 

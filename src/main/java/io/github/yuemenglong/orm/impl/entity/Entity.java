@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.lang.interfaces;
+package io.github.yuemenglong.orm.impl.entity;
 
 import io.github.yuemenglong.orm.entity.EntityCore;
 
