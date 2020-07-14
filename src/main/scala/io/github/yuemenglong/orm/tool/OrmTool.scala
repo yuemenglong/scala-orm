@@ -11,7 +11,7 @@ import io.github.yuemenglong.orm.lang.anno.ExportTS
 import io.github.yuemenglong.orm.lang.interfaces.Entity
 import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.join.{ResultTable, Root, Table, TypedResultTable}
+import io.github.yuemenglong.orm.operate.sql.table.{ResultTable, Root, Table, TypedResultTable}
 import io.github.yuemenglong.orm.operate.query.Query1
 
 import scala.reflect.ClassTag

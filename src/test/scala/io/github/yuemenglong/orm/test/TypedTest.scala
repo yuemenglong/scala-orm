@@ -7,12 +7,11 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
-import io.github.yuemenglong.orm.lang.types.Impl._
-import io.github.yuemenglong.orm.operate.join.TypedResultTable
-import io.github.yuemenglong.orm.sql.Expr
+import io.github.yuemenglong.orm.operate.sql.core.Expr
+import io.github.yuemenglong.orm.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.test.entity._
-import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
+import io.github.yuemenglong.orm.lang.types.Impl._
 
 /**
  * Created by <yuemenglong@126.com> on 2018/1/31.

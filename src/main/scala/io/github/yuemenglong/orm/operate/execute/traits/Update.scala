@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
-import io.github.yuemenglong.orm.sql.{ExprLike, UpdateStatement}
+import io.github.yuemenglong.orm.operate.sql.core.{ExprLike, UpdateStatement}
 
 /**
  * Created by yml on 2017/7/15.

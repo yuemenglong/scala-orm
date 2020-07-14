@@ -1,7 +1,6 @@
-package io.github.yuemenglong.orm.operate.field
+package io.github.yuemenglong.orm.operate.sql.field
 
-import io.github.yuemenglong.orm.sql._
-import io.github.yuemenglong.orm.lang.types.Types._
+import io.github.yuemenglong.orm.operate.sql.core._
 
 /**
  * Created by <yuemenglong@126.com> on 2018/3/22.

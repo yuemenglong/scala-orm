@@ -4,9 +4,8 @@ import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.lang.types.Types.String
-import io.github.yuemenglong.orm.operate.join.{SubQuery, SubQueryImpl}
-import io.github.yuemenglong.orm.sql._
+import io.github.yuemenglong.orm.operate.sql.table.{SubQuery, SubQueryImpl}
+import io.github.yuemenglong.orm.operate.sql.core._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

@@ -1,12 +1,11 @@
-package io.github.yuemenglong.orm.operate.field
+package io.github.yuemenglong.orm.operate.sql.field
 
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.lang.types.Types.{Boolean, Double, Integer, Long, String}
 import io.github.yuemenglong.orm.operate.query.Selectable
-import io.github.yuemenglong.orm.sql._
+import io.github.yuemenglong.orm.operate.sql.core._
 
 import scala.collection.mutable
 

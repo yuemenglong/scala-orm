@@ -1,8 +1,7 @@
-package io.github.yuemenglong.orm.sql
+package io.github.yuemenglong.orm.operate.sql.core
 
 import io.github.yuemenglong.orm.kit.UnreachableException
-import io.github.yuemenglong.orm.lang.types.Types.String
-import io.github.yuemenglong.orm.operate.field.{Field, FieldImpl}
+import io.github.yuemenglong.orm.operate.sql.field.{Field, FieldImpl}
 
 import scala.collection.mutable.ArrayBuffer
 

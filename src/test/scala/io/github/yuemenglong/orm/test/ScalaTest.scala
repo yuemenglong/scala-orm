@@ -7,11 +7,10 @@ import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.lang.types.Impl._
-import io.github.yuemenglong.orm.lang.types.Types.DateTime
 import io.github.yuemenglong.orm.test.entity._
-import io.github.yuemenglong.orm.tool.OrmTool
 import org.junit.{After, Assert, Before, Test}
+import io.github.yuemenglong.orm.lang.types.Types._
+import io.github.yuemenglong.orm.lang.types.Impl._
 
 /**
  * Created by <yuemenglong@126.com> on 2017/10/19.

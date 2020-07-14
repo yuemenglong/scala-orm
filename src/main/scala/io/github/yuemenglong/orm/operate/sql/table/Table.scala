@@ -1,16 +1,15 @@
-package io.github.yuemenglong.orm.operate.join
+package io.github.yuemenglong.orm.operate.sql.table
 
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.interfaces.Entity
-import io.github.yuemenglong.orm.lang.types.Types._
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.operate.field.{Field, FieldExpr, FieldExprImpl, SelectableField, SelectableFieldExpr, SelectableFieldExprImpl}
-import io.github.yuemenglong.orm.operate.join.JoinType.JoinType
+import io.github.yuemenglong.orm.operate.sql.table.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.Selectable
-import io.github.yuemenglong.orm.sql._
+import io.github.yuemenglong.orm.operate.sql.core._
+import io.github.yuemenglong.orm.operate.sql.field.{FieldExpr, FieldExprImpl, SelectableFieldExpr, SelectableFieldExprImpl}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

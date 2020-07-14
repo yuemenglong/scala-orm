@@ -6,9 +6,9 @@ import java.nio.file.Paths
 
 import io.github.yuemenglong.orm.kit.Kit
 import io.github.yuemenglong.orm.lang.anno._
-import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
+import io.github.yuemenglong.orm.lang.types.Types
 
 /**
  * Created by Administrator on 2017/5/16.

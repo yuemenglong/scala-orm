@@ -2,8 +2,8 @@ package io.github.yuemenglong.orm.operate.execute
 
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableDeleteImpl}
-import io.github.yuemenglong.orm.operate.join.Table
-import io.github.yuemenglong.orm.sql.TableLike
+import io.github.yuemenglong.orm.operate.sql.table.Table
+import io.github.yuemenglong.orm.operate.sql.core.TableLike
 
 import scala.collection.mutable.ArrayBuffer
 

@@ -1,7 +1,6 @@
-package io.github.yuemenglong.orm.sql
+package io.github.yuemenglong.orm.operate.sql.core
 
 import io.github.yuemenglong.orm.kit.UnreachableException
-import io.github.yuemenglong.orm.lang.types.Types.String
 
 import scala.collection.mutable.ArrayBuffer
 
