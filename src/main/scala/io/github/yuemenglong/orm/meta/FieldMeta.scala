@@ -2,10 +2,12 @@ package io.github.yuemenglong.orm.meta
 
 import java.lang.reflect.Field
 
+import io.github.yuemenglong.orm.api.anno
+import io.github.yuemenglong.orm.api.anno.{Check, Column, Id, Index, LongText, OneToMany, OneToOne, Pointer}
+import io.github.yuemenglong.orm.api.anno.predef.Const
 import io.github.yuemenglong.orm.impl.db.DbContext
 import io.github.yuemenglong.orm.impl.kit.Kit
-import io.github.yuemenglong.orm.lang.anno._
-import io.github.yuemenglong.orm.lang.anno.predef.Const
+import io.github.yuemenglong.orm.api.anno._
 
 trait FieldMeta {
   val entity: EntityMeta
@@ -77,7 +79,7 @@ abstract class FieldMetaDeclared(val field: Field, val entity: EntityMeta) exten
   val annoColumn: Column = field.getAnnotation(classOf[Column])
   val annoId: Id = field.getAnnotation(classOf[Id])
   val annoLongText: LongText = field.getAnnotation(classOf[LongText])
-  val annoEnum: Enum = field.getAnnotation(classOf[Enum])
+  val annoEnum: anno.Enum = field.getAnnotation(classOf[anno.Enum])
   val annoPointer: Pointer = field.getAnnotation(classOf[Pointer])
   val annoOneOne: OneToOne = field.getAnnotation(classOf[OneToOne])
   val annoOneMany: OneToMany = field.getAnnotation(classOf[OneToMany])

@@ -1,6 +1,6 @@
-package io.github.yuemenglong.orm.lang.anno;
+package io.github.yuemenglong.orm.api.anno;
 
-import io.github.yuemenglong.orm.lang.anno.predef.Const;
+import io.github.yuemenglong.orm.api.anno.predef.Const;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

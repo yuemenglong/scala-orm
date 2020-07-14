@@ -4,11 +4,11 @@ import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 
 import io.github.yuemenglong.orm.impl.kit.Kit
-import io.github.yuemenglong.orm.lang.types.Types.{BigDecimal, Date, DateTime}
 import io.github.yuemenglong.orm.meta._
 import net.sf.cglib.proxy.MethodProxy
 
 import scala.collection.mutable
+import io.github.yuemenglong.orm.api.types.Types._
 
 /**
  * Created by Administrator on 2017/5/18.

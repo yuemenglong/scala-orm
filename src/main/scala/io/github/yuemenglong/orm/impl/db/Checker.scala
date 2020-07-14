@@ -2,8 +2,8 @@ package io.github.yuemenglong.orm.impl.db
 
 import java.sql.{Connection, ResultSet}
 
+import io.github.yuemenglong.orm.api.anno.predef.Const
 import io.github.yuemenglong.orm.api.db.Db
-import io.github.yuemenglong.orm.lang.anno.predef.Const
 import io.github.yuemenglong.orm.meta._
 
 import scala.collection.mutable.ArrayBuffer

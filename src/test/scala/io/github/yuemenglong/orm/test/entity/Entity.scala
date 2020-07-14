@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.test.entity
 
-import io.github.yuemenglong.orm.lang.anno._
-import io.github.yuemenglong.orm.lang.types.Types._
+import io.github.yuemenglong.orm.api.anno.{Column, Entity, Enum, ExportTS, Id, Ignore, Index, LongText, OneToMany, OneToOne, Pointer, SmallInt, Text, TinyInt}
+import io.github.yuemenglong.orm.api.types.Types._
 
 /**
  * Created by <yuemenglong@126.com> on 2018/1/31.

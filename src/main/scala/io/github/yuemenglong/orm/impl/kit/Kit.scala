@@ -4,9 +4,9 @@ import java.lang.reflect.{Field, Method}
 import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.impl.entity.Entity
-import io.github.yuemenglong.orm.lang.types.Types._
 
 import scala.reflect.ClassTag
+import io.github.yuemenglong.orm.api.types.Types._
 
 /**
   * Created by Administrator on 2017/5/24.

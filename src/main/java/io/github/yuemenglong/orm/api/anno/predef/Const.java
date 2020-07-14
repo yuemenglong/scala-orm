@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.lang.anno.predef;
+package io.github.yuemenglong.orm.api.anno.predef;
 
 /**
  * Created by yuemenglong@126.com on 2017/12/8.

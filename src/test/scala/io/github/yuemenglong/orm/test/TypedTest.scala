@@ -11,7 +11,7 @@ import io.github.yuemenglong.orm.operate.sql.core.Expr
 import io.github.yuemenglong.orm.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
-import io.github.yuemenglong.orm.lang.types.Impl._
+import io.github.yuemenglong.orm.api.types.Types._
 
 /**
  * Created by <yuemenglong@126.com> on 2018/1/31.

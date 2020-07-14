@@ -4,11 +4,12 @@ import java.io.File
 import java.lang.reflect.Method
 import java.nio.file.Paths
 
+import io.github.yuemenglong.orm.api.anno.{Entity, Enum, Ignore, Index, LongText, OneToMany, OneToOne, Pointer, SmallInt, Text, TinyInt}
+import io.github.yuemenglong.orm.api.types.Types
 import io.github.yuemenglong.orm.impl.kit.Kit
-import io.github.yuemenglong.orm.lang.anno._
+import io.github.yuemenglong.orm.api.anno._
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
-import io.github.yuemenglong.orm.lang.types.Types
 
 /**
  * Created by Administrator on 2017/5/16.

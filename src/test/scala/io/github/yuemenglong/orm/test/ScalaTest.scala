@@ -8,8 +8,7 @@ import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
-import io.github.yuemenglong.orm.lang.types.Types._
-import io.github.yuemenglong.orm.lang.types.Impl._
+import io.github.yuemenglong.orm.api.types.Types._
 
 /**
  * Created by <yuemenglong@126.com> on 2017/10/19.
