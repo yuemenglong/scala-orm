@@ -4,9 +4,8 @@ import java.io.ByteArrayOutputStream
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
-import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
-import io.github.yuemenglong.orm.impl.entity.Entity
+import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
+import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
 import io.github.yuemenglong.orm.lang.types.Types._

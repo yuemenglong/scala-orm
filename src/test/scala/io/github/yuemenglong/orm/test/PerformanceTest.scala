@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.test
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
+import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.test.entity.Obj
 
 /**

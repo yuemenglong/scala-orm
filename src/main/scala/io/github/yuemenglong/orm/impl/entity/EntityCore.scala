@@ -1,9 +1,9 @@
-package io.github.yuemenglong.orm.entity
+package io.github.yuemenglong.orm.impl.entity
 
 import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 
-import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.lang.types.Types.{BigDecimal, Date, DateTime}
 import io.github.yuemenglong.orm.meta._
 import net.sf.cglib.proxy.MethodProxy

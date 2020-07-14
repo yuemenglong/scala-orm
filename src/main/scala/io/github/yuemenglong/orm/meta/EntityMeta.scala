@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.meta
 
 import java.lang.reflect.Method
 
-import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.lang.anno.Entity
 
 import scala.collection.mutable.ArrayBuffer

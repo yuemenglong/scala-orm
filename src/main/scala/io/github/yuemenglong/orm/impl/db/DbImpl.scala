@@ -1,42 +1,12 @@
-package io.github.yuemenglong.orm.db
+package io.github.yuemenglong.orm.impl.db
 
 import java.sql.{Connection, ResultSet}
 
 import com.jolbox.bonecp.BoneCP
+import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
 import io.github.yuemenglong.orm.session.{Session, SessionImpl}
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.{EntityMeta, OrmMeta}
-
-trait Db {
-
-  def openConnection(): Connection
-
-  def openConnection[T](fn: Connection => T): T
-
-  def shutdown(): Unit
-
-  def context: DbContext
-
-  def entities(): Array[EntityMeta]
-
-  def check(ignoreUnused: Boolean = false): Unit
-
-  def rebuild(): Unit
-
-  def drop(): Unit
-
-  def create(): Unit
-
-  def openSession(): Session
-
-  def execute(sql: String, params: Array[Object] = Array()): Int
-
-  def query[T](sql: String,
-               params: Array[Object],
-               fn: ResultSet => T): T
-
-  def beginTransaction[T](fn: Session => T): T
-}
 
 class DbImpl(config: DbConfig) extends Db {
   val pool: BoneCP = config.initPool()

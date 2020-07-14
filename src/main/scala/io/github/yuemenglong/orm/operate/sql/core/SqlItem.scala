@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.sql.core
 
-import io.github.yuemenglong.orm.kit.UnreachableException
+import io.github.yuemenglong.orm.impl.kit.UnreachableException
 
 import scala.collection.mutable.ArrayBuffer
 

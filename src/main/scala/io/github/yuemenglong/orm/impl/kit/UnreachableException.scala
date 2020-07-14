@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.kit
+package io.github.yuemenglong.orm.impl.kit
 
 /**
   * Created by <yuemenglong@126.com> on 2018/3/15.

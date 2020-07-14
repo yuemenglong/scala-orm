@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.db.{Db, MysqlConfig}
+import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.operate.sql.core.Expr
 import io.github.yuemenglong.orm.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.test.entity._

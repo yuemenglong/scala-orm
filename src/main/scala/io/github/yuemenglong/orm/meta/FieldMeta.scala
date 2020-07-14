@@ -2,8 +2,8 @@ package io.github.yuemenglong.orm.meta
 
 import java.lang.reflect.Field
 
-import io.github.yuemenglong.orm.db.{Db, DbContext}
-import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.impl.db.DbContext
+import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.lang.anno._
 import io.github.yuemenglong.orm.lang.anno.predef.Const
 

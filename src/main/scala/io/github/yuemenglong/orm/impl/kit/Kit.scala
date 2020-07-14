@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.kit
+package io.github.yuemenglong.orm.impl.kit
 
 import java.lang.reflect.{Field, Method}
 import java.sql.ResultSet

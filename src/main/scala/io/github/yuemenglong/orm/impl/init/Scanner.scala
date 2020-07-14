@@ -1,10 +1,10 @@
-package io.github.yuemenglong.orm.init
+package io.github.yuemenglong.orm.impl.init
 
 import java.io.File
 import java.lang.reflect.Method
 import java.nio.file.Paths
 
-import io.github.yuemenglong.orm.kit.Kit
+import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.lang.anno._
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
