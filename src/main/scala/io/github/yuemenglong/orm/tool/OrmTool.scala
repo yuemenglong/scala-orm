@@ -20,8 +20,77 @@ import scala.reflect.ClassTag
  * Created by <yuemenglong@126.com> on 2017/10/10.
  */
 //noinspection SimplifyBooleanMatch
-object OrmTool {
-  def getEmptyConstructorMap: Map[Class[_], () => Object] = {
+trait OrmTool {
+  def getConstructors: Map[Class[_], () => Object]
+
+  def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit
+
+  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachX(orig, session)(fn)(null, null)
+
+  def attachOneMany[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachOneManyX(orig, session)(fn)(null, null)
+
+  def attachArray[T, R](orig: Array[T], session: Session)(fn: T => R): Array[T] = attachArrayX(orig, session)(fn)(null, null)
+
+  def attachArrayOneMany[T, R](orig: Array[T], session: Session)(fn: T => Array[R]): Array[T] = attachArrayOneManyX(orig, session)(fn)(null, null)
+
+  def attachX[T, R](orig: T, session: Session)
+                   (fn: T => R)
+                   (joinFn: TypedResultTable[R] => Unit,
+                    queryFn: Query1[R] => Unit
+                   ): T
+
+  def attachOneManyX[T, R](orig: T, session: Session)
+                          (fn: T => Array[R])
+                          (joinFn: TypedResultTable[R] => Unit,
+                           queryFn: Query1[R] => Unit
+                          ): T
+
+  def attachArrayX[T, R](orig: Array[T], session: Session)
+                        (fn: T => R)
+                        (joinFn: TypedResultTable[R] => Unit,
+                         queryFn: Query1[R] => Unit
+                        ): Array[T]
+
+  def attachArrayOneManyX[T, R](orig: Array[T], session: Session)
+                               (fn: T => Array[R])
+                               (joinFn: TypedResultTable[R] => Unit,
+                                queryFn: Query1[R] => Unit
+                               ): Array[T]
+
+  def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
+
+  def attach[T](obj: T, field: String, session: Session,
+                joinFn: ResultTable => Unit,
+                queryFn: Query1[_] => Unit
+               ): T
+
+  def updateById[T, V](clazz: Class[T], id: V, session: Session,
+                       pair: (String, Any), pairs: (String, Any)*): Unit
+
+  def updateById[T, V](clazz: Class[T], id: V, session: Session)
+                      (fns: (T => Any)*)
+                      (values: Any*): Unit
+
+  def updateById[T, V](obj: T, session: Session)
+                      (fns: (T => Any)*)
+
+  def updateArray[T <: Object](root: Root[T], oldValues: Array[T], newValues: Array[T], session: Session): Unit
+
+  def selectByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
+                                  (rootFn: Root[T] => Unit = null): T
+
+  def selectById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): T = selectByIdEx(clazz, id, session)()
+
+
+  def deleteByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
+                                  (rootFn: Root[T] => Array[Table] = (_: Root[T]) => Array[Table]()
+                                  ): Int
+
+  def deleteById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): Int
+}
+
+class OrmToolImpl extends OrmTool {
+  def getConstructors: Map[Class[_], () => Object] = {
     OrmMeta.entityVec.map(meta => {
       val fn = () => {
         Orm.obj(meta.clazz).asInstanceOf[Object]
@@ -96,14 +165,6 @@ object OrmTool {
     val ret = s"export class $className {\n$content\n}"
     ret
   }
-
-  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachX(orig, session)(fn)(null, null)
-
-  def attachOneMany[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachOneManyX(orig, session)(fn)(null, null)
-
-  def attachArray[T, R](orig: Array[T], session: Session)(fn: T => R): Array[T] = attachArrayX(orig, session)(fn)(null, null)
-
-  def attachArrayOneMany[T, R](orig: Array[T], session: Session)(fn: T => Array[R]): Array[T] = attachArrayOneManyX(orig, session)(fn)(null, null)
 
   def attachX[T, R](orig: T, session: Session)
                    (fn: T => R)
@@ -196,8 +257,6 @@ object OrmTool {
     }
     attach(arr, field, session, jf, qf)
   }
-
-  def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
 
   def attach[T](obj: T, field: String, session: Session,
                 joinFn: ResultTable => Unit,
@@ -369,10 +428,6 @@ object OrmTool {
     session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
   }
 
-  def selectById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): T = {
-    selectByIdEx(clazz, id, session)()
-  }
-
   def deleteByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
                                   (rootFn: Root[T] => Array[Table] = (_: Root[T]) => Array[Table]()
                                   ): Int = {
@@ -392,3 +447,5 @@ object OrmTool {
     session.execute(sql, Array(id.asInstanceOf[Object]))
   }
 }
+
+object OrmTool extends OrmToolImpl

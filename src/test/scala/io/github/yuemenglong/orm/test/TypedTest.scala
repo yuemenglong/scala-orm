@@ -721,13 +721,13 @@ class TypedTest {
     {
       val obj = ex.root()
       obj.om = Array()
-      OrmTool.attach(obj, session)(_.om)
+      Orm.Tool.attach(obj, session)(_.om)
       Assert.assertEquals(obj.om.length, 3)
     }
     {
       val obj = ex.root()
       obj.om = Array()
-      OrmTool.attachOneManyX(obj, session)(_.om)(j => {
+      Orm.Tool.attachOneManyX(obj, session)(_.om)(j => {
         j.select(_.mo)
       }, null)
       Assert.assertEquals(obj.om.length, 3)
@@ -742,18 +742,18 @@ class TypedTest {
         Assert.assertNull(om.mo)
       })
 
-      OrmTool.attachArray(obj.om, session)(_.mo)
+      Orm.Tool.attachArray(obj.om, session)(_.mo)
       Assert.assertEquals(obj.om(0).mo.id.intValue(), 1)
       Assert.assertEquals(obj.om(1).mo.id.intValue(), 2)
       Assert.assertEquals(obj.om(2).mo.id.intValue(), 3)
     }
     {
       val obj = ex.root()
-      OrmTool.updateById(classOf[Obj], obj.id, session)(_.name, _.age)("name2", 10)
+      Orm.Tool.updateById(classOf[Obj], obj.id, session)(_.name, _.age)("name2", 10)
     }
     {
       val obj = ex.root()
-      val res = OrmTool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
+      val res = Orm.Tool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
         root.select(_.om)
       })
       Assert.assertEquals(res.om.length, 3)
@@ -764,11 +764,11 @@ class TypedTest {
       val obj = ex.root()
       obj.name = "name3"
       obj.age = 11
-      OrmTool.updateById(obj, session)(_.name, _.age)
+      Orm.Tool.updateById(obj, session)(_.name, _.age)
     }
     {
       val obj = ex.root()
-      val res = OrmTool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
+      val res = Orm.Tool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
         root.select(_.om)
       })
       Assert.assertEquals(res.om.length, 3)
@@ -777,10 +777,10 @@ class TypedTest {
     }
     {
       val obj = ex.root()
-      OrmTool.deleteByIdEx(classOf[Obj], obj.id, session)(root => {
+      Orm.Tool.deleteByIdEx(classOf[Obj], obj.id, session)(root => {
         Array(root.leftJoin(_.om))
       })
-      val res = OrmTool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
+      val res = Orm.Tool.selectByIdEx(classOf[Obj], obj.id, session)(root => {
         root.select(_.om)
       })
       Assert.assertNull(res)

@@ -8,10 +8,11 @@ import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta.OrmMeta
 import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
-import io.github.yuemenglong.orm.operate.field.{FnOp, FnOpImpl}
+import io.github.yuemenglong.orm.operate.field.{OrmFn, OrmFnImpl}
 import io.github.yuemenglong.orm.operate.join._
 import io.github.yuemenglong.orm.operate.query._
 import io.github.yuemenglong.orm.sql.Expr
+import io.github.yuemenglong.orm.tool.{OrmTool, OrmToolImpl}
 
 import scala.reflect.ClassTag
 
@@ -73,7 +74,8 @@ trait Orm {
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit
 
-  val Fn: FnOp
+  val Fn: OrmFn
+  val Tool: OrmTool
 }
 
 class OrmImpl extends Orm {
@@ -156,7 +158,9 @@ class OrmImpl extends Orm {
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
 
-  val Fn: FnOp = new FnOpImpl()
+  val Fn: OrmFn = new OrmFnImpl()
+ 
+  val Tool: OrmTool = new OrmToolImpl()
 }
 
 object Orm extends OrmImpl
