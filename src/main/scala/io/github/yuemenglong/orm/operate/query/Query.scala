@@ -72,9 +72,9 @@ private[orm] trait QueryBaseImpl[S] extends QueryBase[S] with SelectStatementImp
     })
   }
 
-  def all: ExprLike[_] = Expr.apply("ALL", this)
+  def all: ExprLike[_] = ExprUtil.create("ALL", this)
 
-  def any: ExprLike[_] = Expr.apply("ANY", this)
+  def any: ExprLike[_] = ExprUtil.create("ANY", this)
 
   def asTable(alias: String): SubQuery = {
     val that = this

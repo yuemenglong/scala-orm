@@ -46,7 +46,7 @@ trait TableLikeImpl extends TableLike {
   }
 
   def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike = {
-    val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
+    val c = ExprUtil.create(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
     t.on(c)
     _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
     t
@@ -64,7 +64,7 @@ trait TableLikeImpl extends TableLike {
   }
 
   def getColumn(column: String, alias: String = null): ResultColumn = {
-    val col = Expr.column(getAlias, column)
+    val col = ExprUtil.column(getAlias, column)
     val ali = alias match {
       case null => s"${getAlias}$$${column}"
       case _ => alias
@@ -207,9 +207,9 @@ trait SelectStatementImpl[S] extends SelectStatement[S] {
     }
   }
 
-  override def fromExpr(e: Expr): S = Expr.asSelectStmt(e).asInstanceOf[S]
+  override def fromExpr(e: Expr): S = ExprUtil.asSelectStmt(e).asInstanceOf[S]
 
-  override def toExpr: Expr = Expr.stmt(this)
+  override def toExpr: Expr = ExprUtil.stmt(this)
 
   def distinct(): S = {
     core._distinct = true

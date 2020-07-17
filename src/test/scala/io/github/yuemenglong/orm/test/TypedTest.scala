@@ -7,7 +7,7 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
-import io.github.yuemenglong.orm.operate.sql.core.Expr
+import io.github.yuemenglong.orm.operate.sql.core.{Expr, ExprLike, ExprUtil}
 import io.github.yuemenglong.orm.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
@@ -92,7 +92,7 @@ class TypedTest {
       session.execute(ex)
     })
     val root = Orm.root(classOf[Obj])
-    val cond = Expr(root.get(_.id).lt(2)
+    val cond = ExprUtil.create(root.get(_.id).lt(2)
       .or(root.get(_.id).gt(9)))
       .and(root.selects(_.om).get(_.id).gt(2))
     val objs = session.query(Orm.selectFrom(root).where(cond))
@@ -896,7 +896,7 @@ class TypedTest {
     session.execute(ex)
 
     {
-      val res = session.first(Orm.select(Expr.const(1).as("$1").toInt))
+      val res = session.first(Orm.select(ExprUtil.const(1).as("$1").toInt))
       Assert.assertEquals(res.intValue(), 1)
     }
     {
@@ -909,9 +909,9 @@ class TypedTest {
       Assert.assertEquals(res.longValue(), 1)
     }
     {
-      val s = Orm.select(Expr.const(1).as("id").toLong, Expr.const("").as("name").toStr)
+      val s = Orm.select(ExprUtil.const(1).as("id").toLong, ExprUtil.const("").as("name").toStr)
       val root = Orm.table(classOf[Obj])
-      val q = Orm.select(root.get(_.id)).from(root).where(Expr(root.get(_.id), root.get(_.name)).in(s))
+      val q = Orm.select(root.get(_.id)).from(root).where(ExprUtil.create(root.get(_.id), root.get(_.name)).in(s))
       val res = session.first(q)
       Assert.assertEquals(res.longValue(), 1)
     }

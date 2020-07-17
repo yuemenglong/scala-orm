@@ -493,7 +493,7 @@ trait SubQueryImpl extends SubQuery with TableLikeImpl {
     val that = this
     new FieldExprImpl {
       override private[orm] val uid = alias
-      override private[orm] val expr = Expr.column(that.getAlias, alias)
+      override private[orm] val expr = ExprUtil.column(that.getAlias, alias)
     }
   }
 

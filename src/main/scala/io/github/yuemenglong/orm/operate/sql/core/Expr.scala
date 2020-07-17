@@ -5,7 +5,7 @@ import io.github.yuemenglong.orm.operate.sql.field.{Field, FieldImpl}
 
 import scala.collection.mutable.ArrayBuffer
 
-object Expr {
+object ExprUtil {
   def const[T](v: T): Expr = new ExprImpl {
     val c = new Constant {
       override val value = v.asInstanceOf[Object]
@@ -34,27 +34,27 @@ object Expr {
     override val children = (null, null, null, s, null, null, null, null, null, null)
   }
 
-  def apply(op: String, e: ExprLike[_]): Expr = new ExprImpl {
+  def create(op: String, e: ExprLike[_]): Expr = new ExprImpl {
     override val children = (null, null, null, null, (op, e.toExpr), null, null, null, null, null)
   }
 
-  def apply(e: ExprLike[_], op: String): Expr = new ExprImpl {
+  def create(e: ExprLike[_], op: String): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, (e.toExpr, op), null, null, null, null)
   }
 
-  def apply(l: ExprLike[_], op: String, r: ExprLike[_]): Expr = new ExprImpl {
+  def create(l: ExprLike[_], op: String, r: ExprLike[_]): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, (l.toExpr, op, r.toExpr), null, null, null)
   }
 
-  def apply(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr = new ExprImpl {
+  def create(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, null, (e.toExpr, l.toExpr, r.toExpr), null, null)
   }
 
-  def apply(es: ExprLike[_]*): Expr = new ExprImpl {
+  def create(es: ExprLike[_]*): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, null, null, es.map(_.toExpr).toArray, null)
   }
 
-  def apply(sql: String, params: Array[Object] = Array()): Expr = new ExprImpl {
+  def create(sql: String, params: Array[Object] = Array()): Expr = new ExprImpl {
     override val children = (null, null, null, null, null, null, null, null, null, (sql, params))
   }
 
@@ -190,7 +190,8 @@ trait ExprLike[S] {
 }
 
 trait ExprOps[S]
-  extends ExprOpBool[S]
+  extends ExprLike[S]
+    with ExprOpBool[S]
     with ExprOpMath[S]
     with ExprOpAssign[S]
     with ExprOpOrder[S]
@@ -304,40 +305,40 @@ trait ExprOpOrder[S] extends ExprLike[S] {
 }
 
 trait ExprOpBoolImpl[S] extends ExprOpBool[S] {
-  def eql(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "=", e.toExpr))
+  def eql(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "=", e.toExpr))
 
-  def eql[T](t: T): S = eql(Expr.const(t))
+  def eql[T](t: T): S = eql(ExprUtil.const(t))
 
-  def neq(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "<>", e.toExpr))
+  def neq(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "<>", e.toExpr))
 
-  def neq[T](t: T): S = neq(Expr.const(t))
+  def neq[T](t: T): S = neq(ExprUtil.const(t))
 
-  def gt(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, ">", e.toExpr))
+  def gt(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, ">", e.toExpr))
 
-  def gt[T](t: T): S = gt(Expr.const(t))
+  def gt[T](t: T): S = gt(ExprUtil.const(t))
 
-  def gte(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, ">=", e.toExpr))
+  def gte(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, ">=", e.toExpr))
 
-  def gte[T](t: T): S = gte(Expr.const(t))
+  def gte[T](t: T): S = gte(ExprUtil.const(t))
 
-  def lt(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "<", e.toExpr))
+  def lt(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "<", e.toExpr))
 
-  def lt[T](t: T): S = lt(Expr.const(t))
+  def lt[T](t: T): S = lt(ExprUtil.const(t))
 
-  def lte(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "<=", e.toExpr))
+  def lte(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "<=", e.toExpr))
 
-  def lte[T](t: T): S = lte(Expr.const(t))
+  def lte[T](t: T): S = lte(ExprUtil.const(t))
 
-  def between(l: ExprLike[_], r: ExprLike[_]): S = fromExpr(Expr(this.toExpr, l.toExpr, r.toExpr))
+  def between(l: ExprLike[_], r: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, l.toExpr, r.toExpr))
 
-  def between[T](l: T, r: T): S = between(Expr.const(l), Expr.const(r))
+  def between[T](l: T, r: T): S = between(ExprUtil.const(l), ExprUtil.const(r))
 
   def ===(e: ExprLike[_]): S = fromExpr(e match {
-    case null => Expr(this.toExpr, "= NULL")
-    case _ => Expr(this.toExpr, "=", e.toExpr)
+    case null => ExprUtil.create(this.toExpr, "= NULL")
+    case _ => ExprUtil.create(this.toExpr, "=", e.toExpr)
   })
 
-  def ===[T](t: T): S = ===(Expr.const(t))
+  def ===[T](t: T): S = ===(ExprUtil.const(t))
 
   def !==(e: ExprLike[_]): S = neq(e)
 
@@ -359,33 +360,33 @@ trait ExprOpBoolImpl[S] extends ExprOpBool[S] {
 
   def <=[T](t: T): S = lte(t)
 
-  def and(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "AND", e.toExpr))
+  def and(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "AND", e.toExpr))
 
-  def or(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "OR", e.toExpr))
+  def or(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "OR", e.toExpr))
 
-  def isNull: S = fromExpr(Expr(this.toExpr, "IS NULL"))
+  def isNull: S = fromExpr(ExprUtil.create(this.toExpr, "IS NULL"))
 
-  def notNull: S = fromExpr(Expr(this.toExpr, "IS NOT NULL"))
+  def notNull: S = fromExpr(ExprUtil.create(this.toExpr, "IS NOT NULL"))
 
-  def in(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "IN", e.toExpr))
+  def in(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "IN", e.toExpr))
 
-  def in[T](arr: Array[T]): S = in(Expr(arr.map(Expr.const(_).asInstanceOf[ExprLike[_]]): _*))
+  def in[T](arr: Array[T]): S = in(ExprUtil.create(arr.map(ExprUtil.const(_).asInstanceOf[ExprLike[_]]): _*))
 
-  def nin(e: Expr): S = fromExpr(Expr(this.toExpr, "NOT IN", e.toExpr))
+  def nin(e: Expr): S = fromExpr(ExprUtil.create(this.toExpr, "NOT IN", e.toExpr))
 
-  def nin[T](arr: Array[T]): S = nin(Expr(arr.map(Expr.const(_).asInstanceOf[ExprLike[_]]): _*))
+  def nin[T](arr: Array[T]): S = nin(ExprUtil.create(arr.map(ExprUtil.const(_).asInstanceOf[ExprLike[_]]): _*))
 
-  def like(s: String): S = fromExpr(Expr(this.toExpr, "LIKE", Expr.const(s)))
+  def like(s: String): S = fromExpr(ExprUtil.create(this.toExpr, "LIKE", ExprUtil.const(s)))
 }
 
 trait ExprOpMathImpl[S] extends ExprOpMath[S] {
-  def add(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "+", e.toExpr))
+  def add(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "+", e.toExpr))
 
-  def add[T](v: T): S = add(Expr.const(v))
+  def add[T](v: T): S = add(ExprUtil.const(v))
 
-  def sub(e: ExprLike[_]): S = fromExpr(Expr(this.toExpr, "-", e.toExpr))
+  def sub(e: ExprLike[_]): S = fromExpr(ExprUtil.create(this.toExpr, "-", e.toExpr))
 
-  def sub[T](v: T): S = sub(Expr.const(v))
+  def sub[T](v: T): S = sub(ExprUtil.const(v))
 
   def +(e: ExprLike[_]): S = add(e)
 
@@ -398,15 +399,15 @@ trait ExprOpMathImpl[S] extends ExprOpMath[S] {
 
 trait ExprOpAssignImpl[S] extends ExprOpAssign[S] {
   def assign(e: ExprLike[_]): S = fromExpr(e match {
-    case null => Expr(this.toExpr, "= NULL")
-    case _ => Expr(this.toExpr, "=", e.toExpr)
+    case null => ExprUtil.create(this.toExpr, "= NULL")
+    case _ => ExprUtil.create(this.toExpr, "=", e.toExpr)
   })
 
-  def assign[T](v: T): S = assign(Expr.const(v))
+  def assign[T](v: T): S = assign(ExprUtil.const(v))
 }
 
 trait ExprOpOrderImpl[S] extends ExprOpOrder[S] {
-  def asc(): S = fromExpr(Expr(this.toExpr, "ASC"))
+  def asc(): S = fromExpr(ExprUtil.create(this.toExpr, "ASC"))
 
-  def desc(): S = fromExpr(Expr(this.toExpr, "DESC"))
+  def desc(): S = fromExpr(ExprUtil.create(this.toExpr, "DESC"))
 }

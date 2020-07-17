@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.operate.sql.table._
 import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.sql.core.Expr
+import io.github.yuemenglong.orm.operate.sql.core.{Expr, ExprUtil}
 import io.github.yuemenglong.orm.operate.sql.field.{OrmFn, OrmFnImpl}
 import io.github.yuemenglong.orm.tool.{OrmTool, OrmToolImpl}
 
@@ -132,7 +132,7 @@ class OrmImpl extends Orm {
 
   def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2] = new Query3Impl[T0, T1, T2](s0, s1, s2)
 
-  def cond(): Expr = Expr("1 = 1")
+  def cond(): Expr = ExprUtil.create("1 = 1")
 
   def insertArray[T](arr: Array[T]): ExecutableInsert[T] = {
     arr.isEmpty match {
