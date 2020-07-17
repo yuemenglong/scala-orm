@@ -8,14 +8,14 @@ import scala.collection.mutable.ArrayBuffer
 
 object ExprUtil {
   def const[T](v: T): Expr = new ExprImpl {
-    val c = new Constant {
+    val c = new ConstantImpl {
       override val value = v.asInstanceOf[Object]
     }
     override val children = (c, null, null, null, null, null, null, null, null, null)
   }
 
   def column(t: String, c: String): Expr = new ExprImpl {
-    val tc = new TableColumn {
+    val tc = new TableColumnImpl {
       override val table = t
       override val column = c
     }
@@ -23,7 +23,7 @@ object ExprUtil {
   }
 
   def func(f: String, d: Boolean, p: Array[Expr]): Expr = new ExprImpl {
-    val fc = new FunctionCall {
+    val fc = new FunctionCallImpl {
       override val fn = f
       override val distinct = d
       override val params = p

@@ -38,7 +38,7 @@ trait TableLike extends TableOrSubQuery {
   def getAlias: String
 }
 
-trait TableLikeImpl extends TableLike {
+trait TableLikeImpl extends TableLike with TableOrSubQueryImpl {
   private[orm] val _on: Var[Expr]
 
   def join(t: TableLike, joinType: String): TableLike = {
@@ -70,7 +70,7 @@ trait TableLikeImpl extends TableLike {
       case null => s"${getAlias}$$${column}"
       case _ => alias
     }
-    new ResultColumn {
+    new ResultColumnImpl {
       override private[orm] val expr = col
       override private[orm] val uid = ali
     }

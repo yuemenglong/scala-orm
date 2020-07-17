@@ -27,16 +27,48 @@ object Var {
 
 trait Constant extends SqlItem {
   private[orm] val value: Object
-
-  override def genSql(sb: StringBuffer): Unit = sb.append("?")
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = ab += value
 }
 
 trait TableColumn extends SqlItem {
   private[orm] val table: String
   private[orm] val column: String
+}
 
+trait FunctionCall extends SqlItem {
+  private[orm] val fn: String // Include COUNT(*)
+  private[orm] val distinct: Boolean
+  private[orm] val params: Array[Expr]
+}
+
+trait ResultColumn extends SqlItem {
+  private[orm] val expr: Expr
+  private[orm] val uid: String
+}
+
+trait TableOrSubQuery extends SqlItem {
+  // (tableName, alias) or (stmt, alias)
+  private[orm] val _table: (
+    (String, String),
+      (SelectStmt, String)
+    )
+  private[orm] val _joins: ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]
+
+  def genSql(sb: StringBuffer, on: Expr): Unit
+
+  def genParams(ab: ArrayBuffer[Object], on: Expr): Unit
+
+  override def genSql(sb: StringBuffer): Unit = genSql(sb, null)
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = genParams(ab, null)
+}
+
+trait ConstantImpl extends Constant {
+  override def genSql(sb: StringBuffer): Unit = sb.append("?")
+
+  override def genParams(ab: ArrayBuffer[Object]): Unit = ab += value
+}
+
+trait TableColumnImpl extends TableColumn {
   override def genSql(sb: StringBuffer): Unit = {
     sb.append(s"${table}.${column}")
   }
@@ -44,11 +76,7 @@ trait TableColumn extends SqlItem {
   override def genParams(ab: ArrayBuffer[Object]): Unit = {}
 }
 
-trait FunctionCall extends SqlItem {
-  private[orm] val fn: String // Include COUNT(*)
-  private[orm] val distinct: Boolean
-  private[orm] val params: Array[Expr]
-
+trait FunctionCallImpl extends FunctionCall {
   override def genSql(sb: StringBuffer): Unit = fn match {
     case "COUNT(*)" => sb.append("COUNT(*)")
     case _ =>
@@ -65,10 +93,7 @@ trait FunctionCall extends SqlItem {
   }
 }
 
-trait ResultColumn extends SqlItem {
-  private[orm] val expr: Expr
-  private[orm] val uid: String
-
+trait ResultColumnImpl extends ResultColumn {
   override def genSql(sb: StringBuffer): Unit = {
     expr.genSql(sb)
     sb.append(s" AS ${uid}")
@@ -79,14 +104,7 @@ trait ResultColumn extends SqlItem {
   }
 }
 
-trait TableOrSubQuery extends SqlItem {
-  // (tableName, alias) or (stmt, alias)
-  private[orm] val _table: (
-    (String, String),
-      (SelectStmt, String)
-    )
-  private[orm] val _joins: ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]
-
+trait TableOrSubQueryImpl extends TableOrSubQuery {
   def genSql(sb: StringBuffer, on: Expr): Unit = {
     _table match {
       case ((name, alias), null) => sb.append(s"`${name}` AS `${alias}`")
@@ -102,10 +120,6 @@ trait TableOrSubQuery extends SqlItem {
       t.genSql(sb, expr.get)
     }
   }
-
-  override def genSql(sb: StringBuffer): Unit = genSql(sb, null)
-
-  override def genParams(ab: ArrayBuffer[Object]): Unit = genParams(ab, null)
 
   def genParams(ab: ArrayBuffer[Object], on: Expr): Unit = {
     _table match {

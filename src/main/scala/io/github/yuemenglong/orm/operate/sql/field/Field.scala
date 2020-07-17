@@ -47,7 +47,7 @@ trait SelectableFieldExpr[T] extends SelectableField[T] with ExprOps[SelectableF
   def fromExpr(e: Expr): SelectableFieldExpr[T]
 }
 
-trait FieldImpl extends Field {
+trait FieldImpl extends Field with ResultColumnImpl {
   def getAlias: String = uid
 
   def to[T](clazz: Class[T]): SelectableFieldExpr[T] = {
