@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.operate.execute._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.operate.sql.table._
 import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.sql.core.{Expr, ExprUtil}
+import io.github.yuemenglong.orm.operate.sql.core.{Constant, Expr, ExprImpl, ExprLike, ExprUtil}
 import io.github.yuemenglong.orm.operate.sql.field.{OrmFn, OrmFnImpl}
 import io.github.yuemenglong.orm.tool.{OrmTool, OrmToolImpl}
 
@@ -73,6 +73,20 @@ trait Orm {
   def clear(obj: Object, field: String): Unit
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit
+
+  def const[T](v: T): Expr
+
+  def expr(op: String, e: ExprLike[_]): Expr
+
+  def expr(e: ExprLike[_], op: String): Expr
+
+  def expr(l: ExprLike[_], op: String, r: ExprLike[_]): Expr
+
+  def expr(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr
+
+  def expr(es: ExprLike[_]*): Expr
+
+  def expr(sql: String, params: Array[Object] = Array()): Expr
 
   val Fn: OrmFn
   val Tool: OrmTool
@@ -157,6 +171,20 @@ class OrmImpl extends Orm {
   def clear(obj: Object, field: String): Unit = EntityManager.clear(obj, field)
 
   def clear[T <: Object](obj: T)(fn: T => Any): Unit = EntityManager.clear(obj)(fn)
+
+  override def const[T](v: T): Expr = ExprUtil.const(v)
+
+  override def expr(op: String, e: ExprLike[_]): Expr = ExprUtil.create(op, e)
+
+  override def expr(e: ExprLike[_], op: String): Expr = ExprUtil.create(e, op)
+
+  override def expr(l: ExprLike[_], op: String, r: ExprLike[_]): Expr = ExprUtil.create(l, op, r)
+
+  override def expr(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr = ExprUtil.create(e, l, r)
+
+  override def expr(es: ExprLike[_]*): Expr = ExprUtil.create(es: _*)
+
+  override def expr(sql: String, params: Array[Object]): Expr = ExprUtil.create(sql, params)
 
   val Fn: OrmFn = new OrmFnImpl()
 
