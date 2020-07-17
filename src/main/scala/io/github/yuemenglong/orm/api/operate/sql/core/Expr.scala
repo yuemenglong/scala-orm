@@ -1,6 +1,5 @@
 package io.github.yuemenglong.orm.api.operate.sql.core
 
-import io.github.yuemenglong.orm.operate.sql.core.SqlItem
 import io.github.yuemenglong.orm.operate.sql.field.Field
 
 trait Expr extends SqlItem with ExprOps[Expr] {
