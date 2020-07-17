@@ -81,7 +81,7 @@ private[orm] trait QueryBaseImpl[S] extends QueryBase[S] with SelectStatementImp
     val that = this
     new SubQueryImpl {
       override private[orm] val _on = Var[Expr](null)
-      override private[orm] val _table = TableLike(that, alias)._table
+      override private[orm] val _table = TableLikeUtil.create(that, alias)._table
       override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
     }
   }

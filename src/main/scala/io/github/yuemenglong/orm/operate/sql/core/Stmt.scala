@@ -11,14 +11,14 @@ import scala.collection.mutable.ArrayBuffer
 
 trait SelectStmt extends SqlItem
 
-object TableLike {
-  def apply(name: String, uid: String): TableLike = new TableLikeImpl {
+object TableLikeUtil {
+  def create(name: String, uid: String): TableLike = new TableLikeImpl {
     override private[orm] val _table = ((name, uid), null)
     override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
     override private[orm] val _on = Var[Expr](null)
   }
 
-  def apply(stmt: SelectStmt, uid: String): TableLike = new TableLikeImpl {
+  def create(stmt: SelectStmt, uid: String): TableLike = new TableLikeImpl {
     override private[orm] val _table = (null, (stmt, uid))
     override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
     override private[orm] val _on = Var[Expr](null)

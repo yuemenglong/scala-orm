@@ -4,7 +4,7 @@ package io.github.yuemenglong.orm.operate.sql.table
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, Var}
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.meta.OrmMeta
-import io.github.yuemenglong.orm.operate.sql.core.TableLike
+import io.github.yuemenglong.orm.operate.sql.core.{TableLike, TableLikeUtil}
 
 trait Root[T] extends TypedResultTable[T]
 
@@ -16,7 +16,7 @@ object Root {
       case Some(m) => m
       case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
     }
-    val table = TableLike(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
+    val table = TableLikeUtil.create(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
     new RootImpl[T] {
       override val meta = rootMeta
       override private[orm] val _table = table._table

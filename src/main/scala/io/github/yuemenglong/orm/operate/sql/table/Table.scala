@@ -75,7 +75,7 @@ trait TableImpl extends Table with TableLikeImpl {
         val alias = s"${getAlias}_${Kit.lowerCaseFirst(field)}"
         val leftColumn = getMeta.fieldMap(referMeta.left).column
         val rightColumn = referMeta.refer.fieldMap(referMeta.right).column
-        val table = join(TableLike(tableName, alias), joinType.toString, leftColumn, rightColumn)
+        val table = join(TableLikeUtil.create(tableName, alias), joinType.toString, leftColumn, rightColumn)
         val ret = new TableImpl {
           override val meta = referMeta.refer
           override private[orm] val _table = table._table
@@ -106,7 +106,7 @@ trait TableImpl extends Table with TableLikeImpl {
     val leftColumn = getMeta.fieldMap(left).column
     val rightColumn = referMeta.fieldMap(right).column
     val alias = s"${getAlias}__${joinName}"
-    val table = join(TableLike(tableName, alias), joinType.toString, leftColumn, rightColumn)
+    val table = join(TableLikeUtil.create(tableName, alias), joinType.toString, leftColumn, rightColumn)
     new TypedResultTableImpl[T] {
       override val meta = referMeta
       override private[orm] val _table = table._table
