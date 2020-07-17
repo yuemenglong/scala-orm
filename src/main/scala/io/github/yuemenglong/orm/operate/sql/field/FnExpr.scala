@@ -1,5 +1,6 @@
 package io.github.yuemenglong.orm.operate.sql.field
 
+import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike, ExprOps}
 import io.github.yuemenglong.orm.operate.sql.core._
 
 /**

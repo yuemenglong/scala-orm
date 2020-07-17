@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.query
 
 import java.sql.ResultSet
 
+import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike}
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.operate.sql.table.{SubQuery, SubQueryImpl}

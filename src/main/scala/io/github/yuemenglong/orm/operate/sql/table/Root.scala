@@ -1,9 +1,10 @@
 
 package io.github.yuemenglong.orm.operate.sql.table
 
+import io.github.yuemenglong.orm.api.operate.sql.core.Expr
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.meta.OrmMeta
-import io.github.yuemenglong.orm.operate.sql.core.{Expr, TableLike, Var}
+import io.github.yuemenglong.orm.operate.sql.core.{TableLike, Var}
 
 trait Root[T] extends TypedResultTable[T]
 

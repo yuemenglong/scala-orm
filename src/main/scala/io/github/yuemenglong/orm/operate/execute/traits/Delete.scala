@@ -1,7 +1,8 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
+import io.github.yuemenglong.orm.api.operate.sql.core.ExprLike
 import io.github.yuemenglong.orm.operate.sql.table.Root
-import io.github.yuemenglong.orm.operate.sql.core.{DeleteStatement, Expr, ExprLike}
+import io.github.yuemenglong.orm.operate.sql.core.DeleteStatement
 
 /**
  * Created by yml on 2017/7/15.
