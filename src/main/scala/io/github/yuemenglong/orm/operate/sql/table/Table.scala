@@ -2,6 +2,7 @@ package io.github.yuemenglong.orm.operate.sql.table
 
 import java.sql.ResultSet
 
+import io.github.yuemenglong.orm.api.operate.sql.core.ResultColumn
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.impl.meta._

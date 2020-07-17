@@ -2,7 +2,7 @@ package io.github.yuemenglong.orm.operate.sql.field
 
 import java.sql.ResultSet
 
-import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprOps}
+import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprOps, ResultColumn}
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.operate.query.Selectable
