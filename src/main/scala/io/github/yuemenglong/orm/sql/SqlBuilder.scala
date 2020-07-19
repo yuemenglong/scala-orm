@@ -613,6 +613,18 @@ trait TableOrSubQuery extends SqlItem {
     )
   private[orm] val _joins: ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]
 
+  override def equals(obj: Any): Boolean = {
+    if (!obj.isInstanceOf[TableOrSubQuery]) {
+      return false
+    }
+    val x = obj.asInstanceOf[TableOrSubQuery]
+    (_table, x._table) match {
+      case (((a1, a2), null), ((b1, b2), null)) => a1 == b1 && a2 == b2
+      case ((null, (a1, a2)), (null, (b1, b2))) => a1 == b1 && a2 == b2
+      case _ => false
+    }
+  }
+
   def genSql(sb: StringBuffer, on: Expr): Unit = {
     _table match {
       case ((name, alias), null) => sb.append(s"`${name}` AS `${alias}`")

@@ -86,15 +86,26 @@ trait TableLike extends TableOrSubQuery {
   private[orm] val _on: Var[Expr]
 
   def join(t: TableLike, joinType: String): TableLike = {
-    _joins += ((joinType, t, t._on))
-    t
+    _joins.find { case (_, x, _) => x.equals(t) } match {
+      case Some((_, t, _)) =>
+        t.asInstanceOf[TableLike]
+      case None =>
+        _joins += ((joinType, t, t._on))
+        t
+    }
+
   }
 
   def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike = {
-    val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
-    t.on(c)
-    _joins += ((joinType, t, t._on))
-    t
+    _joins.find { case (_, x, _) => x.equals(t) } match {
+      case Some((_, t, _)) =>
+        t.asInstanceOf[TableLike]
+      case None =>
+        val c = Expr(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
+        t.on(c)
+        _joins += ((joinType, t, t._on))
+        t
+    }
   }
 
   def on(e: ExprT[_]): TableLike = {
