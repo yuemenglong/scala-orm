@@ -42,15 +42,25 @@ trait TableLikeImpl extends TableLike with TableOrSubQueryImpl {
   private[orm] val _on: Var[Expr]
 
   def join(t: TableLike, joinType: String): TableLike = {
-    _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
-    t
+    _joins.find { case (_, x, _) => x.equals(t) } match {
+      case Some((_, t, _)) =>
+        t.asInstanceOf[TableLike]
+      case None =>
+        _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
+        t
+    }
   }
 
   def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike = {
-    val c = ExprUtil.create(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
-    t.on(c)
-    _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
-    t
+    _joins.find { case (_, x, _) => x.equals(t) } match {
+      case Some((_, t, _)) =>
+        t.asInstanceOf[TableLike]
+      case None =>
+        val c = ExprUtil.create(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
+        t.on(c)
+        _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
+        t
+    }
   }
 
   def on(e: ExprLike[_]): TableLike = {
