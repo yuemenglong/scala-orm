@@ -2,26 +2,27 @@
 package io.github.yuemenglong.orm.operate.sql.table
 
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, Var}
+import io.github.yuemenglong.orm.api.operate.sql.table.Root
 import io.github.yuemenglong.orm.impl.kit.Kit
-import io.github.yuemenglong.orm.impl.meta.OrmMeta
+import io.github.yuemenglong.orm.impl.meta.{EntityMeta, OrmMeta}
 import io.github.yuemenglong.orm.operate.sql.core.TableLikeUtil
 
-trait Root[T] extends TypedResultTable[T]
-
-trait RootImpl[T] extends Root[T] with TypedResultTableImpl[T]
-
-object Root {
-  def apply[T](clazz: Class[T]): Root[T] = {
+object RootUtil {
+  def create[T](clazz: Class[T]): Root[T] = {
     val rootMeta = OrmMeta.entityMap.get(clazz) match {
       case Some(m) => m
       case None => throw new RuntimeException(s"Not Entity Of [${clazz.getName}]")
     }
     val table = TableLikeUtil.create(rootMeta.table, Kit.lowerCaseFirst(rootMeta.entity))
     new RootImpl[T] {
-      override val meta = rootMeta
+      override val meta: EntityMeta = rootMeta
       override private[orm] val _table = table._table
       override private[orm] val _joins = table._joins
       override private[orm] val _on = Var[Expr](null)
     }
   }
 }
+
+trait RootImpl[T] extends Root[T] with TypedResultTableImpl[T]
+
+

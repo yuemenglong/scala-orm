@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
 import io.github.yuemenglong.orm.api.operate.sql.core.{DeleteStatement, ExprLike}
-import io.github.yuemenglong.orm.operate.sql.table.Root
+import io.github.yuemenglong.orm.api.operate.sql.table.Root
 import io.github.yuemenglong.orm.operate.sql.core.DeleteStatementImpl
 
 /**

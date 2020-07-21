@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm
 import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike}
 import io.github.yuemenglong.orm.api.operate.sql.field.OrmFn
+import io.github.yuemenglong.orm.api.operate.sql.table.Root
 import io.github.yuemenglong.orm.impl.db.DbImpl
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityManager}
 import io.github.yuemenglong.orm.impl.init.Scanner
@@ -140,7 +141,7 @@ class OrmImpl extends Orm {
 
   def delete[T <: Object](obj: T): TypedExecuteRoot[T] = ExecuteRootImpl.delete(convert(obj))
 
-  def root[T](clazz: Class[T]): Root[T] = Root[T](clazz)
+  def root[T](clazz: Class[T]): Root[T] = RootUtil.create[T](clazz)
 
   def select[T: ClassTag](c: Selectable[T]): Query1[T] = new Query1Impl[T](c)
 

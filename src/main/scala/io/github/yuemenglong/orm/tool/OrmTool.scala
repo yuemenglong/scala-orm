@@ -5,12 +5,13 @@ import java.io.OutputStream
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.api.anno.ExportTS
 import io.github.yuemenglong.orm.api.anno.predef.Const
+import io.github.yuemenglong.orm.api.operate.sql.table.Root
 import io.github.yuemenglong.orm.api.types.Types
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.impl.meta._
-import io.github.yuemenglong.orm.operate.sql.table.{ResultTable, Root, Table, TypedResultTable}
+import io.github.yuemenglong.orm.operate.sql.table.{ResultTable, Table, TypedResultTable}
 import io.github.yuemenglong.orm.operate.query.Query1
 
 import scala.reflect.ClassTag
