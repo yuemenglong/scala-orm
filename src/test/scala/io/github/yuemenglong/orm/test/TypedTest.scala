@@ -7,8 +7,8 @@ import java.util.Date
 
 import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
+import io.github.yuemenglong.orm.api.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.api.types.Types._
-import io.github.yuemenglong.orm.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
 

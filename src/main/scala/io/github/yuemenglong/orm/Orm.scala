@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm
 import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike}
 import io.github.yuemenglong.orm.api.operate.sql.field.OrmFn
-import io.github.yuemenglong.orm.api.operate.sql.table.Root
+import io.github.yuemenglong.orm.api.operate.sql.table.{Root, Table, TypedResultTable}
 import io.github.yuemenglong.orm.impl.db.DbImpl
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityManager}
 import io.github.yuemenglong.orm.impl.init.Scanner
