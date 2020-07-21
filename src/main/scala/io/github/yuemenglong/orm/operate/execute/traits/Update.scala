@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
-import io.github.yuemenglong.orm.api.operate.sql.core.ExprLike
-import io.github.yuemenglong.orm.operate.sql.core.UpdateStatement
+import io.github.yuemenglong.orm.api.operate.sql.core.{ExprLike, UpdateStatement}
+import io.github.yuemenglong.orm.operate.sql.core.UpdateStatementImpl
 
 /**
  * Created by yml on 2017/7/15.
@@ -14,7 +14,7 @@ trait ExecutableUpdate extends UpdateStatement with Executable {
 }
 
 //noinspection ScalaFileName
-trait ExecutableUpdateImpl extends ExecutableUpdate {
+trait ExecutableUpdateImpl extends ExecutableUpdate with UpdateStatementImpl {
   def set[T <: ExprLike[_]](as: T*): ExecutableUpdate = {
     _sets = as.map(_.toExpr).toArray
     this

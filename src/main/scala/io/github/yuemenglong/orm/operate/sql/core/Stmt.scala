@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.operate.sql.core
 
-import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike, ResultColumn, SqlItem, TableOrSubQuery, Var}
+import io.github.yuemenglong.orm.api.operate.sql.core._
 import io.github.yuemenglong.orm.impl.kit.UnreachableException
 
 import scala.collection.mutable.ArrayBuffer
@@ -8,90 +8,6 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * Created by <yuemenglong@126.com> on 2018/3/19.
  */
-
-trait SelectStmt extends SqlItem
-
-object TableLikeUtil {
-  def create(name: String, uid: String): TableLike = new TableLikeImpl {
-    override private[orm] val _table = ((name, uid), null)
-    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
-    override private[orm] val _on = Var[Expr](null)
-  }
-
-  def create(stmt: SelectStmt, uid: String): TableLike = new TableLikeImpl {
-    override private[orm] val _table = (null, (stmt, uid))
-    override private[orm] val _joins = new ArrayBuffer[(String, TableOrSubQuery, Var[Expr])]()
-    override private[orm] val _on = Var[Expr](null)
-  }
-}
-
-trait TableLike extends TableOrSubQuery {
-
-  def join(t: TableLike, joinType: String): TableLike
-
-  def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike
-
-  def on(e: ExprLike[_]): TableLike
-
-  def getColumn(column: String, alias: String = null): ResultColumn
-
-  def getAlias: String
-}
-
-trait TableLikeImpl extends TableLike with TableOrSubQueryImpl {
-  private[orm] val _on: Var[Expr]
-
-  def join(t: TableLike, joinType: String): TableLike = {
-    _joins.find { case (_, x, _) => x.equals(t) } match {
-      case Some((_, t, _)) =>
-        t.asInstanceOf[TableLike]
-      case None =>
-        _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
-        t
-    }
-  }
-
-  def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike = {
-    _joins.find { case (_, x, _) => x.equals(t) } match {
-      case Some((_, t, _)) =>
-        t.asInstanceOf[TableLike]
-      case None =>
-        val c = ExprUtil.create(getColumn(leftColunm).expr, "=", t.getColumn(rightColumn).expr)
-        t.on(c)
-        _joins += ((joinType, t, t.asInstanceOf[TableLikeImpl]._on))
-        t
-    }
-  }
-
-  def on(e: ExprLike[_]): TableLike = {
-    if (_on == null) {
-      throw new RuntimeException("Root Table Has No On[Expr]")
-    }
-    _on.get match {
-      case null => _on.set(e.toExpr)
-      case _ => _on.set(_on.get.and(e))
-    }
-    this
-  }
-
-  def getColumn(column: String, alias: String = null): ResultColumn = {
-    val col = ExprUtil.column(getAlias, column)
-    val ali = alias match {
-      case null => s"${getAlias}$$${column}"
-      case _ => alias
-    }
-    new ResultColumnImpl {
-      override private[orm] val expr = col
-      override private[orm] val uid = ali
-    }
-  }
-
-  def getAlias: String = _table match {
-    case ((_, alias), null) => alias
-    case (null, (_, alias)) => alias
-    case _ => throw new UnreachableException
-  }
-}
 
 class SelectCore(private[orm] val cs: Array[ResultColumn] = Array()) extends SqlItem {
   private[orm] var _distinct: Boolean = _
@@ -169,32 +85,6 @@ class SelectCore(private[orm] val cs: Array[ResultColumn] = Array()) extends Sql
       case _ => throw new UnreachableException
     }
   }
-}
-
-//noinspection ScalaRedundantCast
-trait SelectStatement[S] extends SelectStmt with ExprLike[S] {
-
-  def distinct(): S
-
-  def select(cs: Array[ResultColumn]): S
-
-  def from(ts: TableLike*): S
-
-  def where(expr: ExprLike[_]): S
-
-  def groupBy(es: ExprLike[_]*): S
-
-  def having(e: ExprLike[_]): S
-
-  def orderBy(e: ExprLike[_]*): S
-
-  def limit(l: Integer): S
-
-  def offset(o: Integer): S
-
-  def union(stmt: SelectStatement[_]): S
-
-  def unionAll(stmt: SelectStatement[_]): S
 }
 
 trait SelectStatementImpl[S] extends SelectStatement[S] {
@@ -281,8 +171,7 @@ trait SelectStatementImpl[S] extends SelectStatement[S] {
   }
 }
 
-trait UpdateStatement extends SqlItem {
-  val _table: TableLike
+trait UpdateStatementImpl extends UpdateStatement {
   var _sets: Array[Expr] = Array() // Table,Column,Expr
   var _where: Expr = _
 
@@ -312,8 +201,7 @@ trait UpdateStatement extends SqlItem {
   }
 }
 
-trait DeleteStatement extends SqlItem {
-  val _targets: Array[TableLike]
+trait DeleteStatementImpl extends DeleteStatement {
   var _table: TableLike = _
   var _where: Expr = _
 

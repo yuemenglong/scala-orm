@@ -1,7 +1,5 @@
 package io.github.yuemenglong.orm.api.operate.sql.core
 
-import io.github.yuemenglong.orm.operate.sql.core.SelectStmt
-
 import scala.collection.mutable.ArrayBuffer
 
 trait SqlItem {
@@ -43,6 +41,8 @@ class Var[T](private var v: T) {
 object Var {
   def apply[T](v: T) = new Var(v)
 }
+
+trait SelectStmt extends SqlItem
 
 trait Constant extends SqlItem {
   private[orm] val value: Object
@@ -91,4 +91,17 @@ trait TableOrSubQuery extends SqlItem {
   override def genSql(sb: StringBuffer): Unit = genSql(sb, null)
 
   override def genParams(ab: ArrayBuffer[Object]): Unit = genParams(ab, null)
+}
+
+trait TableLike extends TableOrSubQuery {
+
+  def join(t: TableLike, joinType: String): TableLike
+
+  def join(t: TableLike, joinType: String, leftColunm: String, rightColumn: String): TableLike
+
+  def on(e: ExprLike[_]): TableLike
+
+  def getColumn(column: String, alias: String = null): ResultColumn
+
+  def getAlias: String
 }

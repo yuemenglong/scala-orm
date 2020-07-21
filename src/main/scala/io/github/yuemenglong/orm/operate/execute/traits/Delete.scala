@@ -1,8 +1,8 @@
 package io.github.yuemenglong.orm.operate.execute.traits
 
-import io.github.yuemenglong.orm.api.operate.sql.core.ExprLike
+import io.github.yuemenglong.orm.api.operate.sql.core.{DeleteStatement, ExprLike}
 import io.github.yuemenglong.orm.operate.sql.table.Root
-import io.github.yuemenglong.orm.operate.sql.core.DeleteStatement
+import io.github.yuemenglong.orm.operate.sql.core.DeleteStatementImpl
 
 /**
  * Created by yml on 2017/7/15.
@@ -15,7 +15,7 @@ trait ExecutableDelete extends Executable with DeleteStatement {
 }
 
 //noinspection ScalaFileName
-trait ExecutableDeleteImpl extends ExecutableDelete {
+trait ExecutableDeleteImpl extends ExecutableDelete with DeleteStatementImpl {
   def from(root: Root[_]): ExecutableDelete = {
     _table = root
     this

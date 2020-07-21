@@ -2,14 +2,15 @@ package io.github.yuemenglong.orm.operate.sql.table
 
 import java.sql.ResultSet
 
-import io.github.yuemenglong.orm.api.operate.sql.core.ResultColumn
+import io.github.yuemenglong.orm.api.operate.sql.core.{ResultColumn, TableLike}
+import io.github.yuemenglong.orm.api.operate.sql.field.{FieldExpr, SelectableFieldExpr}
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.impl.meta._
 import io.github.yuemenglong.orm.operate.sql.table.JoinType.JoinType
 import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.operate.sql.core._
-import io.github.yuemenglong.orm.operate.sql.field.{FieldExpr, FieldExprImpl, SelectableFieldExpr, SelectableFieldExprImpl}
+import io.github.yuemenglong.orm.operate.sql.field.{FieldExprImpl, SelectableFieldExprImpl}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
