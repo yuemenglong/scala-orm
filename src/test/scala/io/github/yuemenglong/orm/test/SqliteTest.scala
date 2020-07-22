@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.test
 
-import io.github.yuemenglong.orm.api.db.{Db, SqliteConfig}
+import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.impl.Orm
 import io.github.yuemenglong.orm.test.lite._
 import org.junit.{After, Assert, Before, Test}
@@ -25,7 +25,7 @@ class SqliteTest {
     db.shutdown()
   }
 
-  def openDb(): Db = Orm.open(new SqliteConfig("test.db"))
+  def openDb(): Db = Orm.open(Orm.sqlite("test.db"))
 
   @Test
   def testInsert(): Unit = db.beginTransaction(session => {

@@ -5,7 +5,7 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
+import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.api.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.api.types.Types._
 import io.github.yuemenglong.orm.impl.Orm
@@ -38,9 +38,9 @@ class TypedTest {
     db2.shutdown()
   }
 
-  def openDb(): Db = Orm.open(new MysqlConfig("localhost", 3306, "root", "root", "orm_test"))
+  def openDb(): Db = Orm.open(Orm.mysql("localhost", 3306, "root", "root", "orm_test"))
 
-  def openDb2(): Db = Orm.open(new MysqlConfig("localhost", 3306, "root", "root", "orm_test2"))
+  def openDb2(): Db = Orm.open(Orm.mysql("localhost", 3306, "root", "root", "orm_test2"))
 
   @Test
   def testInsert(): Unit = db.beginTransaction(session => {

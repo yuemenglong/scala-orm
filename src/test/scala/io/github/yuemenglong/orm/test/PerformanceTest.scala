@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.test
 
-import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
+import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.impl.Orm
 import io.github.yuemenglong.orm.test.entity.Obj
 
@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.test.entity.Obj
  * Created by <yuemenglong@126.com> on 2018/3/14.
  */
 object PerformanceTest {
-  def openDb(): Db = Orm.open(new MysqlConfig("localhost", 3306, "root", "root", "test"))
+  def openDb(): Db = Orm.open(Orm.mysql("localhost", 3306, "root", "root", "test"))
 
   def main(args: Array[String]): Unit = {
     Orm.init("io.github.yuemenglong.orm.test.entity")
