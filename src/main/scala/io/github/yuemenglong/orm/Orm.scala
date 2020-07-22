@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm
 
 import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
+import io.github.yuemenglong.orm.api.operate.query.{Query1, Query2, Query3, Selectable}
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike}
 import io.github.yuemenglong.orm.api.operate.sql.field.OrmFn
 import io.github.yuemenglong.orm.api.operate.sql.table.{Root, Table, TypedResultTable}

@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.api.operate.sql.field
 
+import io.github.yuemenglong.orm.api.operate.query.Selectable
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprOps, ResultColumn}
-import io.github.yuemenglong.orm.operate.query.Selectable
 
 /**
  * Created by <yuemenglong@126.com> on 2018/3/26.

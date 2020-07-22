@@ -2,9 +2,9 @@ package io.github.yuemenglong.orm.session
 
 import java.sql.{Connection, ResultSet, Statement}
 
+import io.github.yuemenglong.orm.api.operate.query.Query
 import io.github.yuemenglong.orm.impl.logger.Logger
 import io.github.yuemenglong.orm.operate.execute.traits.Executable
-import io.github.yuemenglong.orm.operate.query.Queryable
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -56,9 +56,9 @@ trait Session {
 
   def execute(executor: Executable): Int
 
-  def query[T](query: Queryable[T]): Array[T]
+  def query[T](query: Query[T]): Array[T]
 
-  def first[T](q: Queryable[T]): T
+  def first[T](q: Query[T]): T
 
   def statements(): Array[Stmt]
 
@@ -116,11 +116,11 @@ class SessionImpl(private val conn: Connection) extends Session {
     executor.execute(this)
   }
 
-  def query[T](query: Queryable[T]): Array[T] = {
+  def query[T](query: Query[T]): Array[T] = {
     query.query(this)
   }
 
-  def first[T](q: Queryable[T]): T = {
+  def first[T](q: Query[T]): T = {
     query(q) match {
       case Array() => null.asInstanceOf[T]
       case arr => arr(0)

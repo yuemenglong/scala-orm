@@ -2,12 +2,12 @@ package io.github.yuemenglong.orm.api.operate.sql.table
 
 import java.sql.ResultSet
 
+import io.github.yuemenglong.orm.api.operate.query.Selectable
 import io.github.yuemenglong.orm.api.operate.sql.core.TableLike
 import io.github.yuemenglong.orm.api.operate.sql.field.{FieldExpr, SelectableFieldExpr}
 import io.github.yuemenglong.orm.api.operate.sql.table.JoinType.JoinType
 import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.impl.meta.EntityMeta
-import io.github.yuemenglong.orm.operate.query.Selectable
 import io.github.yuemenglong.orm.operate.sql.table.TypedResultTableImpl
 
 import scala.collection.mutable
