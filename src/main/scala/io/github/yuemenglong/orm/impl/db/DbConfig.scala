@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.impl.db
 import java.sql.Connection
 
 import com.jolbox.bonecp.{BoneCP, BoneCPConfig}
-import io.github.yuemenglong.orm.api.db.{DbConfig, DbContext}
+import io.github.yuemenglong.orm.api.db.DbConfig
 import io.github.yuemenglong.orm.impl.meta.{EntityMeta, FieldMeta, IndexInfo}
 
 /**
@@ -54,6 +54,8 @@ trait DbConfigImpl extends DbConfig {
   def db: String
 
   def url: String
+
+  def context: DbContext
 }
 
 class MysqlConfig(host: String, port: Int, val username: String, val password: String, val db: String) extends DbConfigImpl {
@@ -106,6 +108,34 @@ class SqliteConfig(val db: String) extends DbConfigImpl {
   override def username: String = ""
 
   override def password: String = ""
+}
+
+trait DbContext {
+  def getCreateTableSql(meta: EntityMeta): String
+
+  def getDropTableSql(table: String): String
+
+  def getDropTableSql(meta: EntityMeta): String
+
+  def getCreateIndexSql(info: IndexInfo): String
+
+  def getDropIndexSql(info: IndexInfo): String
+
+  def getDropIndexSql(name: String, table: String): String
+
+  def getAddColumnSql(field: FieldMeta): String
+
+  def getModifyColumnSql(field: FieldMeta): String
+
+  def getDropColumnSql(table: String, column: String): String
+
+  def getDropColumnSql(field: FieldMeta): String
+
+  def createTablePostfix: String
+
+  def autoIncrement: String
+
+  def check(db: DbImpl, ignoreUnused: Boolean = false): Unit
 }
 
 trait DbContextImpl extends DbContext {

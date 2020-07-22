@@ -5,7 +5,7 @@ import java.lang.reflect.Field
 import io.github.yuemenglong.orm.api.anno
 import io.github.yuemenglong.orm.api.anno.predef.Const
 import io.github.yuemenglong.orm.api.anno._
-import io.github.yuemenglong.orm.api.db.DbContext
+import io.github.yuemenglong.orm.impl.db.DbContext
 import io.github.yuemenglong.orm.impl.kit.Kit
 
 trait FieldMeta {
