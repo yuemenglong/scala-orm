@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.impl.db
 import java.sql.{Connection, ResultSet}
 
 import com.jolbox.bonecp.BoneCP
-import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
+import io.github.yuemenglong.orm.api.db.{Db, DbConfig, DbContext}
 import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.session.SessionImpl
 import io.github.yuemenglong.orm.impl.logger.Logger
