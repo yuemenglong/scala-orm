@@ -1,6 +1,6 @@
 package io.github.yuemenglong.orm.api.session
 
-import io.github.yuemenglong.orm.impl.logger.Logger
+import io.github.yuemenglong.orm.api.logger.Logger
 
 /**
   * Created by Administrator on 2017/6/6.

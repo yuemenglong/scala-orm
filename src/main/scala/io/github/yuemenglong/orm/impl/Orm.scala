@@ -10,7 +10,7 @@ import io.github.yuemenglong.orm.api.{Orm, OrmFn, OrmTool}
 import io.github.yuemenglong.orm.impl.db.{DbImpl, MysqlConfig, SqliteConfig}
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityManager}
 import io.github.yuemenglong.orm.impl.init.Scanner
-import io.github.yuemenglong.orm.impl.logger.Logger
+import io.github.yuemenglong.orm.api.logger.Logger
 import io.github.yuemenglong.orm.impl.meta.OrmMeta
 import io.github.yuemenglong.orm.impl.operate.execute._
 import io.github.yuemenglong.orm.impl.operate.query._

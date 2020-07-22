@@ -8,7 +8,7 @@ import io.github.yuemenglong.orm.api.anno.{Entity, Enum, Ignore, Index, LongText
 import io.github.yuemenglong.orm.api.types.Types
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.api.anno._
-import io.github.yuemenglong.orm.impl.logger.Logger
+import io.github.yuemenglong.orm.api.logger.Logger
 import io.github.yuemenglong.orm.impl.meta._
 
 /**

@@ -5,7 +5,7 @@ import java.sql.{Connection, ResultSet, Statement}
 import io.github.yuemenglong.orm.api.operate.execute.Executable
 import io.github.yuemenglong.orm.api.operate.query.Query
 import io.github.yuemenglong.orm.api.session.{BatchStmt, Session, SimpleStmt, Stmt, Transaction}
-import io.github.yuemenglong.orm.impl.logger.Logger
+import io.github.yuemenglong.orm.api.logger.Logger
 
 import scala.collection.mutable.ArrayBuffer
 
