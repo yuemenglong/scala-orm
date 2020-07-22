@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.impl.operate.execute
 
 import io.github.yuemenglong.orm.api.operate.execute.{ExecuteJoin, ExecuteRoot, TypedExecuteJoin, TypedExecuteRoot}
-import io.github.yuemenglong.orm.session.Session
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.impl.logger.Logger
 import io.github.yuemenglong.orm.impl.meta._

@@ -1,7 +1,7 @@
 package io.github.yuemenglong.orm.impl.operate.execute
 
 import io.github.yuemenglong.orm.api.operate.execute.ExecutableInsert
-import io.github.yuemenglong.orm.session.Session
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.impl.meta.{EntityMeta, OrmMeta}
 

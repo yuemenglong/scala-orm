@@ -1,6 +1,4 @@
-package io.github.yuemenglong.orm.session
-
-import java.sql.Connection
+package io.github.yuemenglong.orm.api.session
 
 import io.github.yuemenglong.orm.impl.logger.Logger
 

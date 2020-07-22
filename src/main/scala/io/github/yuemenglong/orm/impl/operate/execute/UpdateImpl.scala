@@ -3,7 +3,7 @@ package io.github.yuemenglong.orm.impl.operate.execute
 import io.github.yuemenglong.orm.api.operate.execute.ExecutableUpdate
 import io.github.yuemenglong.orm.api.operate.sql.core.ExprLike
 import io.github.yuemenglong.orm.api.operate.sql.table.Root
-import io.github.yuemenglong.orm.session.Session
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.operate.sql.core.UpdateStatementImpl
 
 import scala.collection.mutable.ArrayBuffer

@@ -4,7 +4,8 @@ import java.sql.{Connection, ResultSet}
 
 import com.jolbox.bonecp.BoneCP
 import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
-import io.github.yuemenglong.orm.session.{Session, SessionImpl}
+import io.github.yuemenglong.orm.api.session.Session
+import io.github.yuemenglong.orm.impl.session.SessionImpl
 import io.github.yuemenglong.orm.impl.logger.Logger
 import io.github.yuemenglong.orm.impl.meta.{EntityMeta, OrmMeta}
 

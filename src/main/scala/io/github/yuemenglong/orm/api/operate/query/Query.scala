@@ -4,8 +4,8 @@ import java.sql.ResultSet
 
 import io.github.yuemenglong.orm.api.operate.sql.core.{ExprLike, ResultColumn, SelectStatement}
 import io.github.yuemenglong.orm.api.operate.sql.table.SubQuery
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.entity.Entity
-import io.github.yuemenglong.orm.session.Session
 
 import scala.collection.mutable
 

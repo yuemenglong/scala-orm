@@ -1,7 +1,8 @@
 package io.github.yuemenglong.orm.impl.operate.sql.field
 
-import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike, ExprOps, ResultColumn}
-import io.github.yuemenglong.orm.api.operate.sql.field.{FnExpr, OrmFn, SelectableField, SelectableFieldExpr}
+import io.github.yuemenglong.orm.api.OrmFn
+import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike, ResultColumn}
+import io.github.yuemenglong.orm.api.operate.sql.field.{FnExpr, SelectableFieldExpr}
 import io.github.yuemenglong.orm.impl.operate.sql.core._
 
 trait FnExprImpl[T] extends FnExpr[T]
@@ -29,38 +30,3 @@ trait FnExprImpl[T] extends FnExpr[T]
     }
   }
 }
-
-class OrmFnImpl extends OrmFn {
-  def count(): FnExpr[Long] = new FnExprImpl[Long] {
-    override private[orm] val uid = "$count$"
-    override private[orm] val expr = ExprUtil.func("COUNT(*)", d = false, Array())
-    override val clazz: Class[Long] = classOf[Long]
-  }
-
-  def count(c: ResultColumn with ExprLike[_]): FnExpr[Long] = new FnExprImpl[Long] {
-    override val clazz: Class[Long] = classOf[Long]
-    override private[orm] val uid = s"$$count$$${c.uid}"
-    override private[orm] val expr = ExprUtil.func("COUNT", d = false, Array(c.toExpr))
-  }
-
-  def sum[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExprImpl[T] {
-    override val clazz: Class[T] = f.getType
-    override private[orm] val uid = s"$$sum$$${f.uid}"
-    override private[orm] val expr = ExprUtil.func("SUM", d = false, Array(f.toExpr))
-  }
-
-  def min[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExprImpl[T] {
-    override val clazz: Class[T] = f.getType
-    override private[orm] val uid = s"$$min$$${f.uid}"
-    override private[orm] val expr = ExprUtil.func("MIN", d = false, Array(f.toExpr))
-  }
-
-  def max[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExprImpl[T] {
-    override val clazz: Class[T] = f.getType
-    override private[orm] val uid = s"$$max$$${f.uid}"
-    override private[orm] val expr = ExprUtil.func("MAX", d = false, Array(f.toExpr))
-  }
-
-  def exists(e: ExprLike[_]): ExprLike[_] = ExprUtil.create("EXISTS", e)
-}
-

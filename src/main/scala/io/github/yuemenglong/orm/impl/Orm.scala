@@ -1,11 +1,12 @@
-package io.github.yuemenglong.orm
+package io.github.yuemenglong.orm.impl
 
 import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
 import io.github.yuemenglong.orm.api.operate.execute.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.api.operate.query.{Query1, Query2, Query3, Selectable}
-import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike}
-import io.github.yuemenglong.orm.api.operate.sql.field.OrmFn
-import io.github.yuemenglong.orm.api.operate.sql.table.{Root, Table, TypedResultTable}
+import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike, ResultColumn}
+import io.github.yuemenglong.orm.api.operate.sql.field.{FnExpr, SelectableFieldExpr}
+import io.github.yuemenglong.orm.api.operate.sql.table.{Root, Table}
+import io.github.yuemenglong.orm.api.{Orm, OrmFn, OrmTool}
 import io.github.yuemenglong.orm.impl.db.DbImpl
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityManager}
 import io.github.yuemenglong.orm.impl.init.Scanner
@@ -14,87 +15,13 @@ import io.github.yuemenglong.orm.impl.meta.OrmMeta
 import io.github.yuemenglong.orm.impl.operate.execute._
 import io.github.yuemenglong.orm.impl.operate.query._
 import io.github.yuemenglong.orm.impl.operate.sql.core.ExprUtil
-import io.github.yuemenglong.orm.impl.operate.sql.field.OrmFnImpl
+import io.github.yuemenglong.orm.impl.operate.sql.field.FnExprImpl
 import io.github.yuemenglong.orm.impl.operate.sql.table._
-import io.github.yuemenglong.orm.tool.{OrmTool, OrmToolImpl}
+import io.github.yuemenglong.orm.impl.tool.OrmToolImpl
 
 import scala.reflect.ClassTag
 
-trait Orm {
-
-  def init(paths: Array[String]): Unit = {
-    init(paths.map(Class.forName))
-  }
-
-  def init(clazzs: Array[Class[_]]): Unit
-
-  def reset(): Unit
-
-  def open(config: DbConfig): Db
-
-  def obj[T](clazz: Class[T]): T
-
-  def convert[T](obj: T): T
-
-  def setLogger(enable: Boolean): Unit
-
-  def setLoggerLevel(level: String = "DEBUG"): Unit = {
-    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", level)
-  }
-
-  def insert[T <: Object](obj: T): TypedExecuteRoot[T]
-
-  def update[T <: Object](obj: T): TypedExecuteRoot[T]
-
-  def delete[T <: Object](obj: T): TypedExecuteRoot[T]
-
-  def root[T](clazz: Class[T]): Root[T]
-
-  def table[T](clazz: Class[T]): Root[T] = root(clazz)
-
-  def select[T: ClassTag](c: Selectable[T]): Query1[T]
-
-  def select[T0: ClassTag, T1: ClassTag](s0: Selectable[T0], s1: Selectable[T1]): Query2[T0, T1]
-
-  def select[T0: ClassTag, T1: ClassTag, T2: ClassTag](s0: Selectable[T0], s1: Selectable[T1], s2: Selectable[T2]): Query3[T0, T1, T2]
-
-  def selectFrom[T: ClassTag](r: TypedResultTable[T]): Query1[T] = select(r).from(r)
-
-  def cond(): Expr
-
-  def insertArray[T](arr: Array[T]): ExecutableInsert[T]
-
-  def update(root: Root[_]): ExecutableUpdate
-
-  def delete(joins: Table*): ExecutableDelete
-
-  def deleteFrom(root: Root[_]): ExecutableDelete = delete(root).from(root)
-
-  def set[V](obj: Object, field: String, value: V): Unit
-
-  def get(obj: Object, field: String): Object
-
-  def clear(obj: Object, field: String): Unit
-
-  def clear[T <: Object](obj: T)(fn: T => Any): Unit
-
-  def const[T](v: T): Expr
-
-  def expr(op: String, e: ExprLike[_]): Expr
-
-  def expr(e: ExprLike[_], op: String): Expr
-
-  def expr(l: ExprLike[_], op: String, r: ExprLike[_]): Expr
-
-  def expr(e: ExprLike[_], l: ExprLike[_], r: ExprLike[_]): Expr
-
-  def expr(es: ExprLike[_]*): Expr
-
-  def expr(sql: String, params: Array[Object] = Array()): Expr
-
-  val Fn: OrmFn
-  val Tool: OrmTool
-}
+object Orm extends OrmImpl
 
 class OrmImpl extends Orm {
 
@@ -195,4 +122,37 @@ class OrmImpl extends Orm {
   val Tool: OrmTool = new OrmToolImpl()
 }
 
-object Orm extends OrmImpl
+class OrmFnImpl extends OrmFn {
+  def count(): FnExpr[Long] = new FnExprImpl[Long] {
+    override private[orm] val uid = "$count$"
+    override private[orm] val expr = ExprUtil.func("COUNT(*)", d = false, Array())
+    override val clazz: Class[Long] = classOf[Long]
+  }
+
+  def count(c: ResultColumn with ExprLike[_]): FnExpr[Long] = new FnExprImpl[Long] {
+    override val clazz: Class[Long] = classOf[Long]
+    override private[orm] val uid = s"$$count$$${c.uid}"
+    override private[orm] val expr = ExprUtil.func("COUNT", d = false, Array(c.toExpr))
+  }
+
+  def sum[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExprImpl[T] {
+    override val clazz: Class[T] = f.getType
+    override private[orm] val uid = s"$$sum$$${f.uid}"
+    override private[orm] val expr = ExprUtil.func("SUM", d = false, Array(f.toExpr))
+  }
+
+  def min[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExprImpl[T] {
+    override val clazz: Class[T] = f.getType
+    override private[orm] val uid = s"$$min$$${f.uid}"
+    override private[orm] val expr = ExprUtil.func("MIN", d = false, Array(f.toExpr))
+  }
+
+  def max[T](f: SelectableFieldExpr[T]): FnExpr[T] = new FnExprImpl[T] {
+    override val clazz: Class[T] = f.getType
+    override private[orm] val uid = s"$$max$$${f.uid}"
+    override private[orm] val expr = ExprUtil.func("MAX", d = false, Array(f.toExpr))
+  }
+
+  def exists(e: ExprLike[_]): ExprLike[_] = ExprUtil.create("EXISTS", e)
+}
+

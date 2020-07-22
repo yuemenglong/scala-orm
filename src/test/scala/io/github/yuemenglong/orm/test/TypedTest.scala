@@ -5,10 +5,10 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import io.github.yuemenglong.orm.Orm
 import io.github.yuemenglong.orm.api.db.{Db, MysqlConfig}
 import io.github.yuemenglong.orm.api.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.api.types.Types._
+import io.github.yuemenglong.orm.impl.Orm
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
 

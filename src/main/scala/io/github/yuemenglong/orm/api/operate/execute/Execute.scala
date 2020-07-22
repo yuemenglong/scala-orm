@@ -2,8 +2,8 @@ package io.github.yuemenglong.orm.api.operate.execute
 
 import io.github.yuemenglong.orm.api.operate.sql.core.{DeleteStatement, ExprLike, UpdateStatement}
 import io.github.yuemenglong.orm.api.operate.sql.table.Root
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.entity.Entity
-import io.github.yuemenglong.orm.session.Session
 
 /**
  * Created by yml on 2017/7/15.

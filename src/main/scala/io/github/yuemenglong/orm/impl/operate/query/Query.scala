@@ -3,10 +3,10 @@ package io.github.yuemenglong.orm.impl.operate.query
 import io.github.yuemenglong.orm.api.operate.query._
 import io.github.yuemenglong.orm.api.operate.sql.core._
 import io.github.yuemenglong.orm.api.operate.sql.table.SubQuery
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.impl.operate.sql.core._
 import io.github.yuemenglong.orm.impl.operate.sql.table.SubQueryImpl
-import io.github.yuemenglong.orm.session.Session
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

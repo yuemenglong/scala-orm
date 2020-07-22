@@ -3,8 +3,8 @@ package io.github.yuemenglong.orm.impl.operate.execute
 import io.github.yuemenglong.orm.api.operate.execute.ExecutableDelete
 import io.github.yuemenglong.orm.api.operate.sql.core.{ExprLike, TableLike}
 import io.github.yuemenglong.orm.api.operate.sql.table.{Root, Table}
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.operate.sql.core.DeleteStatementImpl
-import io.github.yuemenglong.orm.session.Session
 
 import scala.collection.mutable.ArrayBuffer
 

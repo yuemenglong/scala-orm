@@ -2,9 +2,9 @@ package io.github.yuemenglong.orm.api.db
 
 import java.sql.{Connection, ResultSet}
 
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.db.DbContext
 import io.github.yuemenglong.orm.impl.meta.EntityMeta
-import io.github.yuemenglong.orm.session.Session
 
 trait Db {
 

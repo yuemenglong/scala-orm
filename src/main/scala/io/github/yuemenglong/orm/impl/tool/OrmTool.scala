@@ -1,14 +1,15 @@
-package io.github.yuemenglong.orm.tool
+package io.github.yuemenglong.orm.impl.tool
 
 import java.io.OutputStream
 
-import io.github.yuemenglong.orm.Orm
+import io.github.yuemenglong.orm.api.OrmTool
 import io.github.yuemenglong.orm.api.anno.ExportTS
 import io.github.yuemenglong.orm.api.anno.predef.Const
 import io.github.yuemenglong.orm.api.operate.query.Query1
 import io.github.yuemenglong.orm.api.operate.sql.table.{ResultTable, Root, Table, TypedResultTable}
+import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.api.types.Types
-import io.github.yuemenglong.orm.session.Session
+import io.github.yuemenglong.orm.impl.Orm
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.impl.meta._
@@ -20,75 +21,6 @@ import scala.reflect.ClassTag
  * Created by <yuemenglong@126.com> on 2017/10/10.
  */
 //noinspection SimplifyBooleanMatch
-trait OrmTool {
-  def getConstructors: Map[Class[_], () => Object]
-
-  def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit
-
-  def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachX(orig, session)(fn)(null, null)
-
-  def attachOneMany[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachOneManyX(orig, session)(fn)(null, null)
-
-  def attachArray[T, R](orig: Array[T], session: Session)(fn: T => R): Array[T] = attachArrayX(orig, session)(fn)(null, null)
-
-  def attachArrayOneMany[T, R](orig: Array[T], session: Session)(fn: T => Array[R]): Array[T] = attachArrayOneManyX(orig, session)(fn)(null, null)
-
-  def attachX[T, R](orig: T, session: Session)
-                   (fn: T => R)
-                   (joinFn: TypedResultTable[R] => Unit,
-                    queryFn: Query1[R] => Unit
-                   ): T
-
-  def attachOneManyX[T, R](orig: T, session: Session)
-                          (fn: T => Array[R])
-                          (joinFn: TypedResultTable[R] => Unit,
-                           queryFn: Query1[R] => Unit
-                          ): T
-
-  def attachArrayX[T, R](orig: Array[T], session: Session)
-                        (fn: T => R)
-                        (joinFn: TypedResultTable[R] => Unit,
-                         queryFn: Query1[R] => Unit
-                        ): Array[T]
-
-  def attachArrayOneManyX[T, R](orig: Array[T], session: Session)
-                               (fn: T => Array[R])
-                               (joinFn: TypedResultTable[R] => Unit,
-                                queryFn: Query1[R] => Unit
-                               ): Array[T]
-
-  def attach[T](obj: T, field: String, session: Session): T = attach(obj, field, session, null, null)
-
-  def attach[T](obj: T, field: String, session: Session,
-                joinFn: ResultTable => Unit,
-                queryFn: Query1[_] => Unit
-               ): T
-
-  def updateById[T, V](clazz: Class[T], id: V, session: Session,
-                       pair: (String, Any), pairs: (String, Any)*): Unit
-
-  def updateById[T, V](clazz: Class[T], id: V, session: Session)
-                      (fns: (T => Any)*)
-                      (values: Any*): Unit
-
-  def updateById[T, V](obj: T, session: Session)
-                      (fns: (T => Any)*)
-
-  def updateArray[T <: Object](root: Root[T], oldValues: Array[T], newValues: Array[T], session: Session): Unit
-
-  def selectByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
-                                  (rootFn: Root[T] => Unit = null): T
-
-  def selectById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): T = selectByIdEx(clazz, id, session)()
-
-
-  def deleteByIdEx[T: ClassTag, V](clazz: Class[T], id: V, session: Session)
-                                  (rootFn: Root[T] => Array[Table] = (_: Root[T]) => Array[Table]()
-                                  ): Int
-
-  def deleteById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): Int
-}
-
 class OrmToolImpl extends OrmTool {
   def getConstructors: Map[Class[_], () => Object] = {
     OrmMeta.entityVec.map(meta => {
@@ -448,4 +380,3 @@ class OrmToolImpl extends OrmTool {
   }
 }
 
-object OrmTool extends OrmToolImpl
