@@ -2,9 +2,9 @@ package io.github.yuemenglong.orm.session
 
 import java.sql.{Connection, ResultSet, Statement}
 
+import io.github.yuemenglong.orm.api.operate.execute.Executable
 import io.github.yuemenglong.orm.api.operate.query.Query
 import io.github.yuemenglong.orm.impl.logger.Logger
-import io.github.yuemenglong.orm.operate.execute.traits.Executable
 
 import scala.collection.mutable.ArrayBuffer
 

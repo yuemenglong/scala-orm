@@ -1,6 +1,7 @@
 package io.github.yuemenglong.orm
 
 import io.github.yuemenglong.orm.api.db.{Db, DbConfig}
+import io.github.yuemenglong.orm.api.operate.execute.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
 import io.github.yuemenglong.orm.api.operate.query.{Query1, Query2, Query3, Selectable}
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike}
 import io.github.yuemenglong.orm.api.operate.sql.field.OrmFn
@@ -10,12 +11,11 @@ import io.github.yuemenglong.orm.impl.entity.{Entity, EntityManager}
 import io.github.yuemenglong.orm.impl.init.Scanner
 import io.github.yuemenglong.orm.impl.logger.Logger
 import io.github.yuemenglong.orm.impl.meta.OrmMeta
-import io.github.yuemenglong.orm.operate.execute._
-import io.github.yuemenglong.orm.operate.execute.traits.{ExecutableDelete, ExecutableInsert, ExecutableUpdate, TypedExecuteRoot}
-import io.github.yuemenglong.orm.operate.query._
-import io.github.yuemenglong.orm.operate.sql.core.ExprUtil
-import io.github.yuemenglong.orm.operate.sql.field.OrmFnImpl
-import io.github.yuemenglong.orm.operate.sql.table._
+import io.github.yuemenglong.orm.impl.operate.execute._
+import io.github.yuemenglong.orm.impl.operate.query._
+import io.github.yuemenglong.orm.impl.operate.sql.core.ExprUtil
+import io.github.yuemenglong.orm.impl.operate.sql.field.OrmFnImpl
+import io.github.yuemenglong.orm.impl.operate.sql.table._
 import io.github.yuemenglong.orm.tool.{OrmTool, OrmToolImpl}
 
 import scala.reflect.ClassTag

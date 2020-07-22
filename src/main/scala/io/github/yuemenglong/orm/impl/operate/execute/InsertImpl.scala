@@ -1,9 +1,9 @@
-package io.github.yuemenglong.orm.operate.execute
+package io.github.yuemenglong.orm.impl.operate.execute
 
+import io.github.yuemenglong.orm.api.operate.execute.ExecutableInsert
 import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.impl.meta.{EntityMeta, OrmMeta}
-import io.github.yuemenglong.orm.operate.execute.traits.ExecutableInsert
 
 /**
  * Created by <yuemenglong@126.com> on 2017/7/16.

@@ -12,6 +12,7 @@ import io.github.yuemenglong.orm.session.Session
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.impl.meta._
+import io.github.yuemenglong.orm.impl.operate.sql.table.TableImpl
 
 import scala.reflect.ClassTag
 
@@ -345,7 +346,7 @@ class OrmToolImpl extends OrmTool {
     val assigns = (Array(pair) ++ pairs).map {
       case (f, v) => root.get(f).assign(v.asInstanceOf[Object])
     }
-    val pkey = root.getMeta.pkey.name
+    val pkey = root.asInstanceOf[TableImpl].getMeta.pkey.name
     session.execute(Orm.update(root).set(assigns: _*).where(root.get(pkey).eql(id)))
   }
 
@@ -389,7 +390,7 @@ class OrmToolImpl extends OrmTool {
   }
 
   def updateArray[T <: Object](root: Root[T], oldValues: Array[T], newValues: Array[T], session: Session): Unit = {
-    val meta = root.getMeta
+    val meta = root.asInstanceOf[TableImpl].getMeta
     val oldvs = Orm.convert(oldValues)
     val newvs = Orm.convert(newValues)
     val oldMap = oldvs.map(v => (v.asInstanceOf[Entity].$$core().getPkey, v)).toMap
@@ -423,7 +424,7 @@ class OrmToolImpl extends OrmTool {
                                   (rootFn: Root[T] => Unit = null): T = {
     val root = Orm.root(clazz)
     if (rootFn != null) rootFn(root)
-    val pkey = root.getMeta.pkey.name
+    val pkey = root.asInstanceOf[TableImpl].getMeta.pkey.name
     session.first(Orm.selectFrom(root).where(root.get(pkey).eql(id)))
   }
 
@@ -433,7 +434,7 @@ class OrmToolImpl extends OrmTool {
     val root = Orm.root(clazz)
     val cascade = rootFn(root)
     val all: Array[Table] = Array(root) ++ cascade
-    val pkey = root.getMeta.pkey.name
+    val pkey = root.asInstanceOf[TableImpl].getMeta.pkey.name
     val ex = Orm.delete(all: _*).from(root).where(root.get(pkey).eql(id))
     session.execute(ex)
   }

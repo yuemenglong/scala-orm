@@ -1,4 +1,4 @@
-package io.github.yuemenglong.orm.operate.sql.table
+package io.github.yuemenglong.orm.impl.operate.sql.table
 
 import java.sql.ResultSet
 
@@ -9,8 +9,8 @@ import io.github.yuemenglong.orm.api.operate.sql.table.{ResultTable, SubQuery, T
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.meta._
-import io.github.yuemenglong.orm.operate.sql.core._
-import io.github.yuemenglong.orm.operate.sql.field.{FieldExprImpl, SelectableFieldExprImpl}
+import io.github.yuemenglong.orm.impl.operate.sql.core._
+import io.github.yuemenglong.orm.impl.operate.sql.field.{FieldExprImpl, SelectableFieldExprImpl}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -118,7 +118,7 @@ trait ResultTableImpl extends ResultTable with TableImpl {
       case None =>
         val j = leftJoin(field)
         val ret = new ResultTableImpl {
-          override val meta = j.getMeta
+          override val meta: EntityMeta = j.asInstanceOf[TableImpl].getMeta
           override private[orm] val _table = j._table
           override private[orm] val _joins = j._joins
           override private[orm] val _on = j.asInstanceOf[TableLikeImpl]._on
@@ -170,7 +170,7 @@ trait ResultTableImpl extends ResultTable with TableImpl {
     s"$getAlias@${core.getPkey.toString}"
   }
 
-  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+  private[orm] def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
     val map: mutable.Map[String, Object] = validFields().map(f => {
       val field = get(f)
       val fieldMeta = getMeta.fieldMap(f)
@@ -198,7 +198,7 @@ trait TypedTableImpl[T] extends TypedTable[T] with TableImpl {
   private def typedCascade[R](field: String, joinType: JoinType): TypedTable[R] = {
     val j: Table = this.join(field, joinType)
     new TypedTableImpl[R] {
-      override val meta = j.getMeta
+      override val meta: EntityMeta = j.asInstanceOf[TableImpl].getMeta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
       override private[orm] val _on = j.asInstanceOf[TableLikeImpl]._on
@@ -263,7 +263,7 @@ trait TypedTableImpl[T] extends TypedTable[T] with TableImpl {
     val right = rm.toString
     val j = this.joinAs(left, right, clazz)
     new TypedResultTableImpl[R] {
-      override val meta = j.getMeta
+      override val meta: EntityMeta = j.asInstanceOf[TableImpl].getMeta
       override private[orm] val _table = j._table
       override private[orm] val _joins = j._joins
       override private[orm] val _on = j.asInstanceOf[TableLikeImpl]._on

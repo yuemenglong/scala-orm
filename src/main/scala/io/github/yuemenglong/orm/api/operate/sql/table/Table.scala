@@ -1,16 +1,9 @@
 package io.github.yuemenglong.orm.api.operate.sql.table
 
-import java.sql.ResultSet
-
 import io.github.yuemenglong.orm.api.operate.query.Selectable
 import io.github.yuemenglong.orm.api.operate.sql.core.TableLike
 import io.github.yuemenglong.orm.api.operate.sql.field.{FieldExpr, SelectableFieldExpr}
 import io.github.yuemenglong.orm.api.operate.sql.table.JoinType.JoinType
-import io.github.yuemenglong.orm.impl.entity.Entity
-import io.github.yuemenglong.orm.impl.meta.EntityMeta
-import io.github.yuemenglong.orm.operate.sql.table.TypedResultTableImpl
-
-import scala.collection.mutable
 
 object JoinType extends Enumeration {
   type JoinType = Value
@@ -18,8 +11,6 @@ object JoinType extends Enumeration {
 }
 
 trait Table extends TableLike {
-
-  def getMeta: EntityMeta
 
   def get(field: String): FieldExpr
 
@@ -35,7 +26,7 @@ trait Table extends TableLike {
 
   def leftJoinAs[T](left: String, right: String, clazz: Class[T]): TypedResultTable[T] = this.joinAs(left, right, clazz, JoinType.LEFT)
 
-  def as[T](clazz: Class[T]): TypedResultTableImpl[T]
+  def as[T](clazz: Class[T]): TypedResultTable[T]
 }
 
 trait ResultTable extends Table {
@@ -44,8 +35,6 @@ trait ResultTable extends Table {
   def fields(fields: String*): ResultTable
 
   def ignore(fields: String*): ResultTable
-
-  def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity
 }
 
 trait TypedTable[T] extends Table {

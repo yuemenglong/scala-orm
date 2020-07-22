@@ -1,8 +1,8 @@
-package io.github.yuemenglong.orm.operate.sql.field
+package io.github.yuemenglong.orm.impl.operate.sql.field
 
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike, ExprOps, ResultColumn}
 import io.github.yuemenglong.orm.api.operate.sql.field.{FnExpr, OrmFn, SelectableField, SelectableFieldExpr}
-import io.github.yuemenglong.orm.operate.sql.core._
+import io.github.yuemenglong.orm.impl.operate.sql.core._
 
 trait FnExprImpl[T] extends FnExpr[T]
   with SelectableFieldImpl[T]

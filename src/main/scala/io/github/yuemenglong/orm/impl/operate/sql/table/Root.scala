@@ -1,11 +1,11 @@
 
-package io.github.yuemenglong.orm.operate.sql.table
+package io.github.yuemenglong.orm.impl.operate.sql.table
 
 import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, Var}
 import io.github.yuemenglong.orm.api.operate.sql.table.Root
 import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.meta.{EntityMeta, OrmMeta}
-import io.github.yuemenglong.orm.operate.sql.core.TableLikeUtil
+import io.github.yuemenglong.orm.impl.operate.sql.core.TableLikeUtil
 
 object RootUtil {
   def create[T](clazz: Class[T]): Root[T] = {

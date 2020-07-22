@@ -1,9 +1,9 @@
-package io.github.yuemenglong.orm.operate.sql.core
+package io.github.yuemenglong.orm.impl.operate.sql.core
 
 import io.github.yuemenglong.orm.api.operate.sql.core._
 import io.github.yuemenglong.orm.api.operate.sql.field.Field
 import io.github.yuemenglong.orm.impl.kit.UnreachableException
-import io.github.yuemenglong.orm.operate.sql.field.FieldImpl
+import io.github.yuemenglong.orm.impl.operate.sql.field.FieldImpl
 
 import scala.collection.mutable.ArrayBuffer
 

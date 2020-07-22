@@ -1,11 +1,13 @@
-package io.github.yuemenglong.orm.operate.execute.traits
+package io.github.yuemenglong.orm.api.operate.execute
 
-import io.github.yuemenglong.orm.session.Session
+import io.github.yuemenglong.orm.api.operate.sql.core.{DeleteStatement, ExprLike, UpdateStatement}
+import io.github.yuemenglong.orm.api.operate.sql.table.Root
 import io.github.yuemenglong.orm.impl.entity.Entity
+import io.github.yuemenglong.orm.session.Session
 
 /**
-  * Created by yml on 2017/7/15.
-  */
+ * Created by yml on 2017/7/15.
+ */
 trait Executable {
   def execute(session: Session): Int
 }
@@ -67,6 +69,22 @@ trait TypedExecuteRoot[T] extends ExecuteRoot with TypedExecuteJoin[T] {
   def root(): T
 }
 
+//noinspection ScalaFileName
+trait ExecutableInsert[T] extends Executable {
+  def values(arr: Array[T]): ExecutableInsert[T]
+}
 
+//noinspection ScalaFileName
+trait ExecutableUpdate extends UpdateStatement with Executable {
+  def set[T <: ExprLike[_]](as: T*): ExecutableUpdate
 
+  def where(e: ExprLike[_]): ExecutableUpdate
+}
+
+//noinspection ScalaFileName
+trait ExecutableDelete extends Executable with DeleteStatement {
+  def from(root: Root[_]): ExecutableDelete
+
+  def where(e: ExprLike[_]): ExecutableDelete
+}
 
