@@ -18,7 +18,11 @@ abstract class ExecuteCascadeImpl(meta: EntityMeta) extends ExecuteJoin {
   protected var ignoreFields: Set[String] = Set[String]()
 
 
-  override def execute(entity: Entity, session: Session): Int = {
+  override def execute(entity: Object, session: Session): Int = {
+    execute(entity.asInstanceOf[Entity], session)
+  }
+
+  def execute(entity: Entity, session: Session): Int = {
     if (entity.$$core().meta != meta) {
       throw new RuntimeException(s"Meta Info Not Match, ${entity.$$core().meta.entity}:${meta.entity}")
     }
@@ -277,7 +281,7 @@ class ExecuteRootImpl(obj: Object, impl: ExecuteJoin) extends ExecuteRoot {
     this
   }
 
-  override def execute(entity: Entity, session: Session): Int = impl.execute(entity, session)
+  override def execute(entity: Object, session: Session): Int = impl.execute(entity, session)
 }
 
 trait TypedExecuteCascadeImpl[T] extends TypedExecuteJoin[T] {

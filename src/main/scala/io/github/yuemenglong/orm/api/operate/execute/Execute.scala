@@ -3,7 +3,6 @@ package io.github.yuemenglong.orm.api.operate.execute
 import io.github.yuemenglong.orm.api.operate.sql.core.{DeleteStatement, ExprLike, UpdateStatement}
 import io.github.yuemenglong.orm.api.operate.sql.table.Root
 import io.github.yuemenglong.orm.api.session.Session
-import io.github.yuemenglong.orm.impl.entity.Entity
 
 /**
  * Created by yml on 2017/7/15.
@@ -31,7 +30,7 @@ trait ExecuteJoin {
 
   def ignoreFor(obj: Object): ExecuteJoin
 
-  def execute(entity: Entity, session: Session): Int
+  def execute(entity: Object, session: Session): Int
 }
 
 trait TypedExecuteJoin[T] extends ExecuteJoin {
