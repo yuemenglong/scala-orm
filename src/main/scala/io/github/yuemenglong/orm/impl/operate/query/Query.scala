@@ -4,7 +4,6 @@ import io.github.yuemenglong.orm.api.operate.query._
 import io.github.yuemenglong.orm.api.operate.sql.core._
 import io.github.yuemenglong.orm.api.operate.sql.table.SubQuery
 import io.github.yuemenglong.orm.api.session.Session
-import io.github.yuemenglong.orm.impl.entity.Entity
 import io.github.yuemenglong.orm.impl.operate.sql.core._
 import io.github.yuemenglong.orm.impl.operate.sql.table.SubQueryImpl
 
@@ -29,7 +28,7 @@ private[orm] trait QueryBaseImpl[S] extends QueryBase[S] with SelectStatementImp
     }
     session.query(sql, params, rs => {
       var ab = new ArrayBuffer[Array[Any]]()
-      val filterMap = mutable.Map[String, Entity]()
+      val filterMap = mutable.Map[String, Object]()
       while (rs.next()) {
         val row = targets.map(s => {
           val value = s.pick(rs, filterMap)

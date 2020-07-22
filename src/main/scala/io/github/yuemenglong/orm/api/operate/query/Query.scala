@@ -5,7 +5,6 @@ import java.sql.ResultSet
 import io.github.yuemenglong.orm.api.operate.sql.core.{ExprLike, ResultColumn, SelectStatement}
 import io.github.yuemenglong.orm.api.operate.sql.table.SubQuery
 import io.github.yuemenglong.orm.api.session.Session
-import io.github.yuemenglong.orm.impl.entity.Entity
 
 import scala.collection.mutable
 
@@ -19,7 +18,7 @@ trait Query[T] {
 trait Selectable[T] {
   def getColumns: Array[ResultColumn]
 
-  def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T
+  def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Object]): T
 
   def getType: Class[T]
 

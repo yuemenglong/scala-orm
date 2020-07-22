@@ -53,7 +53,7 @@ trait SelectableFieldImpl[T] extends SelectableField[T] with FieldImpl {
 
   override def getType: Class[T] = clazz
 
-  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Object]): T = {
     // 适配sqlite的情况
     Kit.getObjectFromResultSet(resultSet, getAlias, getType)
   }

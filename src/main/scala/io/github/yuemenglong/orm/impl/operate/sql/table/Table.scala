@@ -170,7 +170,7 @@ trait ResultTableImpl extends ResultTable with TableImpl {
     s"$getAlias@${core.getPkey.toString}"
   }
 
-  private[orm] def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+  private[orm] def pickSelf(resultSet: ResultSet, filterMap: mutable.Map[String, Object]): Entity = {
     val map: mutable.Map[String, Object] = validFields().map(f => {
       val field = get(f)
       val fieldMeta = getMeta.fieldMap(f)
@@ -186,7 +186,7 @@ trait ResultTableImpl extends ResultTable with TableImpl {
     }
     val key = getFilterKey(core)
     if (filterMap.contains(key)) {
-      return filterMap(key)
+      return filterMap(key).asInstanceOf[Entity]
     }
     val a = EntityManager.wrap(core)
     filterMap += (key -> a)
@@ -337,7 +337,7 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T]
     this
   }
 
-  private def pickSelfAndRefer(select: ResultTableImpl, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): Entity = {
+  private def pickSelfAndRefer(select: ResultTableImpl, resultSet: ResultSet, filterMap: mutable.Map[String, Object]): Entity = {
     val a = select.pickSelf(resultSet, filterMap)
     if (a == null) {
       return null
@@ -350,7 +350,7 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T]
     s"$getAlias@$field@${core.getPkey.toString}"
   }
 
-  private def pickRefer(selfSelect: ResultTableImpl, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Entity]) {
+  private def pickRefer(selfSelect: ResultTableImpl, a: Object, resultSet: ResultSet, filterMap: mutable.Map[String, Object]) {
     val aCore = EntityManager.core(a)
     selfSelect._selects.foreach { case (field, select) =>
       val fieldMeta = selfSelect.meta.fieldMap(field)
@@ -377,7 +377,7 @@ trait TypedResultTableImpl[T] extends TypedResultTable[T]
     }
   }
 
-  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Entity]): T = {
+  override def pick(resultSet: ResultSet, filterMap: mutable.Map[String, Object]): T = {
     pickSelfAndRefer(this, resultSet, filterMap).asInstanceOf[T]
   }
 
