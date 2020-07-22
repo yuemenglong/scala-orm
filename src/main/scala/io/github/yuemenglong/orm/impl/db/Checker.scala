@@ -3,7 +3,6 @@ package io.github.yuemenglong.orm.impl.db
 import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.api.anno.predef.Const
-import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.impl.meta._
 
 import scala.collection.mutable.ArrayBuffer
@@ -12,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
  * Created by <yuemenglong@126.com> on 2017/8/2.
  */
 
-class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
+class MysqlChecker(db: DbImpl, ignoreUnused: Boolean = false) {
 
   case class ColumnInfo(column: String, ty: String, length: Int, nullable: Boolean,
                         defaultValue: String, key: String, auto: Boolean,
@@ -62,7 +61,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
   }
 
   def check(): Unit = {
-    val dbName = db.asInstanceOf[DbImpl].db
+    val dbName = db.db
     val metas = db.entities()
     db.openConnection(conn => {
       //1. 先获取所有表结构
@@ -200,7 +199,7 @@ class MysqlChecker(db: Db, ignoreUnused: Boolean = false) {
   }
 }
 
-class SqliteChecker(db: Db, ignoreUnused: Boolean = false) {
+class SqliteChecker(db: DbImpl, ignoreUnused: Boolean = false) {
 
   case class SchemeInfo(ty: String, name: String, sql: String)
 

@@ -3,8 +3,6 @@ package io.github.yuemenglong.orm.api.db
 import java.sql.{Connection, ResultSet}
 
 import io.github.yuemenglong.orm.api.session.Session
-import io.github.yuemenglong.orm.impl.db.DbContext
-import io.github.yuemenglong.orm.impl.meta.EntityMeta
 
 trait Db {
 
@@ -13,10 +11,6 @@ trait Db {
   def openConnection[T](fn: Connection => T): T
 
   def shutdown(): Unit
-
-  def context: DbContext
-
-  def entities(): Array[EntityMeta]
 
   def check(ignoreUnused: Boolean = false): Unit
 

@@ -7,7 +7,7 @@ import io.github.yuemenglong.orm.api.operate.sql.core.{Expr, ExprLike, ResultCol
 import io.github.yuemenglong.orm.api.operate.sql.field.{FnExpr, SelectableFieldExpr}
 import io.github.yuemenglong.orm.api.operate.sql.table.{Root, Table}
 import io.github.yuemenglong.orm.api.{Orm, OrmFn, OrmTool}
-import io.github.yuemenglong.orm.impl.db.DbImpl
+import io.github.yuemenglong.orm.impl.db.{DbImpl, MysqlConfig, SqliteConfig}
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityManager}
 import io.github.yuemenglong.orm.impl.init.Scanner
 import io.github.yuemenglong.orm.impl.logger.Logger
@@ -35,6 +35,18 @@ class OrmImpl extends Orm {
 
   def reset(): Unit = {
     OrmMeta.reset()
+  }
+
+  def mysql(host: String, port: Int, username: String, password: String, db: String): DbConfig = {
+    new MysqlConfig(host, port, username, password, db)
+  }
+
+  def mysql(url: String): DbConfig = {
+    new MysqlConfig(url)
+  }
+
+  def sqlite(db: String): DbConfig = {
+    new SqliteConfig(db)
   }
 
   def open(config: DbConfig): Db = {

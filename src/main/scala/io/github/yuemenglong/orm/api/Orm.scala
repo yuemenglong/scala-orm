@@ -22,6 +22,12 @@ trait Orm {
 
   def reset(): Unit
 
+  def mysql(host: String, port: Int, username: String, password: String, db: String): DbConfig
+
+  def mysql(url: String): DbConfig
+
+  def sqlite(db: String): DbConfig
+
   def open(config: DbConfig): Db
 
   def obj[T](clazz: Class[T]): T
