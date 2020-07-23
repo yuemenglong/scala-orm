@@ -340,7 +340,7 @@ trait TableColumn extends SqlItem {
   private[orm] val column: String
 
   override def genSql(sb: StringBuffer): Unit = {
-    sb.append(s"${table}.${column}")
+    sb.append(s"`${table}`.`${column}`")
   }
 
   override def genParams(ab: ArrayBuffer[Object]): Unit = {}
