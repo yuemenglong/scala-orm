@@ -100,6 +100,9 @@ trait Orm {
 }
 
 trait OrmFn {
+
+  import io.github.yuemenglong.orm.api.types.Types._
+
   def count(): FnExpr[Long]
 
   def count(c: ResultColumn with ExprLike[_]): FnExpr[Long]

@@ -135,6 +135,9 @@ class OrmImpl extends Orm {
 }
 
 class OrmFnImpl extends OrmFn {
+
+  import io.github.yuemenglong.orm.api.types.Types._
+
   def count(): FnExpr[Long] = new FnExprImpl[Long] {
     override private[orm] val uid = "$count$"
     override private[orm] val expr = ExprUtil.func("COUNT(*)", d = false, Array())
