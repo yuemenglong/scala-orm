@@ -17,7 +17,7 @@ trait ConstantImpl extends Constant {
 
 trait TableColumnImpl extends TableColumn {
   override def genSql(sb: StringBuffer): Unit = {
-    sb.append(s"${table}.${column}")
+    sb.append(s"`${table}`.`${column}`")
   }
 
   override def genParams(ab: ArrayBuffer[Object]): Unit = {}

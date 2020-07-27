@@ -3,17 +3,18 @@ package io.github.yuemenglong.orm.test
 import java.io.ByteArrayOutputStream
 import java.util.Date
 
+import io.github.yuemenglong.orm.api.{Orm, OrmLoader}
 import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
 import io.github.yuemenglong.orm.api.types.Types._
-import io.github.yuemenglong.orm.impl.Orm
 
 /**
  * Created by <yuemenglong@126.com> on 2017/10/19.
  */
 class ScalaTest {
+  val Orm: Orm = OrmLoader.loadOrm()
   private var db: Db = _
   private var db2: Db = _
 

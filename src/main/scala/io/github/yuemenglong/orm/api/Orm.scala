@@ -14,6 +14,8 @@ import scala.reflect.ClassTag
 
 trait Orm {
 
+  private[orm] def init(path: String): Unit
+
   def init(paths: Array[String]): Unit = {
     init(paths.map(Class.forName))
   }
@@ -176,4 +178,11 @@ trait OrmTool {
                                   ): Int
 
   def deleteById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): Int
+}
+
+object OrmLoader {
+  private val inst: Orm = Class.forName("io.github.yuemenglong.orm.impl.OrmImpl")
+    .newInstance().asInstanceOf[Orm]
+
+  def loadOrm(): Orm = inst
 }

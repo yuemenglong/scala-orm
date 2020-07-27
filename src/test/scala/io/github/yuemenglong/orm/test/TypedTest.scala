@@ -5,10 +5,10 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import io.github.yuemenglong.orm.api.{Orm, OrmLoader}
 import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.api.operate.sql.table.TypedResultTable
 import io.github.yuemenglong.orm.api.types.Types._
-import io.github.yuemenglong.orm.impl.Orm
 import io.github.yuemenglong.orm.test.entity._
 import org.junit.{After, Assert, Before, Test}
 
@@ -16,6 +16,7 @@ import org.junit.{After, Assert, Before, Test}
  * Created by <yuemenglong@126.com> on 2018/1/31.
  */
 class TypedTest {
+  val Orm: Orm = OrmLoader.loadOrm()
   private var db: Db = _
   private var db2: Db = _
 
