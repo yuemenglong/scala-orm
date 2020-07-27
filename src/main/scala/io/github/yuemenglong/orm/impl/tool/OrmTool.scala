@@ -272,37 +272,29 @@ class OrmToolImpl extends OrmTool {
     arr
   }
 
-  def updateById[T, V](clazz: Class[T], id: V, session: Session,
-                       pair: (String, Any), pairs: (String, Any)*): Unit = {
-    val root = Orm.root(clazz)
-    val assigns = (Array(pair) ++ pairs).map {
-      case (f, v) => root.get(f).assign(v.asInstanceOf[Object])
+  override def updateByField[T, V](clazz: Class[T], session: Session,
+                          cond: (String, Any), pairs: (String, Any)*): Unit = {
+    //    val root = Orm.root(clazz)
+    //    val assigns = (Array(pair) ++ pairs).map {
+    //      case (f, v) => root.get(f).assign(v.asInstanceOf[Object])
+    //    }
+    //    val pkey = root.asInstanceOf[TableImpl].getMeta.pkey.name
+    //    session.execute(Orm.update(root).set(assigns: _*).where(root.get(pkey).eql(id)))
+    val obj = Orm.create(clazz).asInstanceOf[Object]
+    Orm.set(obj, cond._1, cond._2)
+    pairs.foreach {
+      case (f, v) => Orm.set(obj, f, v)
     }
-    val pkey = root.asInstanceOf[TableImpl].getMeta.pkey.name
-    session.execute(Orm.update(root).set(assigns: _*).where(root.get(pkey).eql(id)))
+    session.execute(Orm.update(obj))
   }
 
-  def updateById[T, V](clazz: Class[T], id: V, session: Session)
-                      (fns: (T => Any)*)
-                      (values: Any*): Unit = {
+  override def updateById[T, V](clazz: Class[T], id: V, session: Session,
+                       pairs: (String, Any)*): Unit = {
     val meta = OrmMeta.entityMap(clazz)
-    if (fns.length != values.length) {
-      throw new RuntimeException("Fields And Values Length Not Match")
-    }
-    val names = fns.map(fn => {
-      val marker = EntityManager.createMarker[T](meta)
-      fn(marker)
-      marker.toString
-    })
-    val ps = names.zip(values)
-    ps.length match {
-      case 0 =>
-      case 1 => updateById(clazz, id, session, ps.head)
-      case _ => updateById(clazz, id, session, ps.head, ps.drop(1): _*)
-    }
+    updateByField(clazz, session, (meta.pkey.name, id), pairs: _*)
   }
 
-  def updateById[T, V](obj: T, session: Session)
+  override def updateById[T, V](obj: T, session: Session)
                       (fns: (T => Any)*) {
     val clazz: Class[T] = obj.isInstanceOf[Entity] match {
       case true => obj.getClass.getSuperclass.asInstanceOf[Class[T]]
@@ -318,7 +310,29 @@ class OrmToolImpl extends OrmTool {
       obj.asInstanceOf[Entity].$$core().getValue(name)
     })
     val id = obj.asInstanceOf[Entity].$$core().getPkey
-    updateById(clazz, id, session)(fns: _*)(values: _*)
+    val pairs: Seq[(String, Any)] = names.zip(values)
+    updateById(clazz, id, session, pairs: _*)
+  }
+
+  override def updateByField[T, V](obj: T, session: Session)
+                         (cond: T => Any)(fns: (T => Any)*) {
+    val clazz: Class[T] = obj.isInstanceOf[Entity] match {
+      case true => obj.getClass.getSuperclass.asInstanceOf[Class[T]]
+      case false => obj.getClass.asInstanceOf[Class[T]]
+    }
+    val meta = OrmMeta.entityMap(clazz)
+    val names = (Array(cond) ++ fns).map(fn => {
+      val marker = EntityManager.createMarker[T](meta)
+      fn(marker)
+      marker.toString
+    })
+    val values = names.map(name => {
+      obj.asInstanceOf[Entity].$$core().getValue(name)
+    })
+    val pairs = names.zip(values)
+    val condPair = pairs(0)
+    val kvPairs = pairs.drop(0)
+    updateByField(clazz, session, condPair, kvPairs: _*)
   }
 
   def updateArray[T <: Object](root: Root[T], oldValues: Array[T], newValues: Array[T], session: Session): Unit = {

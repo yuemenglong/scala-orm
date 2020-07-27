@@ -748,7 +748,9 @@ class TypedTest {
     }
     {
       val obj = ex.root()
-      Orm.Tool.updateById(classOf[Obj], obj.id, session)(_.name, _.age)("name2", 10)
+      obj.name = "name2"
+      obj.age = 10
+      Orm.Tool.updateById(obj, session)(_.name, _.age)
     }
     {
       val obj = ex.root()

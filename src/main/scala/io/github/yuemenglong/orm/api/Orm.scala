@@ -32,6 +32,8 @@ trait Orm {
 
   def open(config: DbConfig): Db
 
+  def create[T](clazz: Class[T]): T = obj(clazz)
+
   def obj[T](clazz: Class[T]): T
 
   def convert[T](obj: T): T
@@ -155,12 +157,14 @@ trait OrmTool {
                 queryFn: Query1[_] => Unit
                ): T
 
-  def updateById[T, V](clazz: Class[T], id: V, session: Session,
-                       pair: (String, Any), pairs: (String, Any)*): Unit
+  def updateByField[T, V](clazz: Class[T], session: Session,
+                       cond: (String, Any), pairs: (String, Any)*): Unit
 
-  def updateById[T, V](clazz: Class[T], id: V, session: Session)
-                      (fns: (T => Any)*)
-                      (values: Any*): Unit
+  def updateByField[T, V](obj: T, session: Session)
+                         (cond: T => Any)(fns: (T => Any)*)
+
+  def updateById[T, V](clazz: Class[T], id: V, session: Session,
+                       pairs: (String, Any)*): Unit
 
   def updateById[T, V](obj: T, session: Session)
                       (fns: (T => Any)*)
