@@ -114,6 +114,8 @@ trait OrmFn {
 }
 
 trait OrmTool {
+  def getEmptyConstructorMap: Map[Class[_], () => Object] = getConstructors
+
   def getConstructors: Map[Class[_], () => Object]
 
   def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit
@@ -158,7 +160,7 @@ trait OrmTool {
                ): T
 
   def updateByField[T, V](clazz: Class[T], session: Session,
-                       cond: (String, Any), pairs: (String, Any)*): Unit
+                          cond: (String, Any), pairs: (String, Any)*): Unit
 
   def updateByField[T, V](obj: T, session: Session)
                          (cond: T => Any)(fns: (T => Any)*)
