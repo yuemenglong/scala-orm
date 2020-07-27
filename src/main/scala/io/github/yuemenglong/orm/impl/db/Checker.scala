@@ -267,12 +267,12 @@ class SqliteChecker(db: DbImpl, ignoreUnused: Boolean = false) {
         tips ++= ctips
       } else {
         // 最后对craetetable做一次判断
-        val sqlInDb = infoNameMap(t).sql + ";"
-        val sqlInDef = db.context.getCreateTableSql(entityMap(t))
-          .replace(" IF NOT EXISTS", "")
-        if (sqlInDb != sqlInDef) {
-          tips += s"Table Define Not Match\nIn DB:\n${sqlInDb}\nYour Define:\n${sqlInDef}"
-        }
+        //        val sqlInDb = infoNameMap(t).sql + ";"
+        //        val sqlInDef = db.context.getCreateTableSql(entityMap(t))
+        //          .replace(" IF NOT EXISTS", "")
+        //        if (sqlInDb != sqlInDef) {
+        //          tips += s"Table Define Not Match\nIn DB:\n${sqlInDb}\nYour Define:\n${sqlInDef}"
+        //        }
       }
     })
     // check index
