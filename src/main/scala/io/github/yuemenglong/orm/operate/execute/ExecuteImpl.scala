@@ -3,6 +3,7 @@ package io.github.yuemenglong.orm.operate.execute
 import io.github.yuemenglong.orm.Session.Session
 import io.github.yuemenglong.orm.entity.{EntityCore, EntityManager}
 import io.github.yuemenglong.orm.lang.interfaces.Entity
+import io.github.yuemenglong.orm.lang.types.Types
 import io.github.yuemenglong.orm.logger.Logger
 import io.github.yuemenglong.orm.meta._
 import io.github.yuemenglong.orm.operate.execute.traits.{ExecuteJoin, ExecuteRoot, TypedExecuteJoin, TypedExecuteRoot}
@@ -206,7 +207,7 @@ class InsertJoin(meta: EntityMeta) extends ExecuteCascadeImpl(meta) {
       if (core.meta.pkey.isAuto) {
         val rs = stmt.getGeneratedKeys
         if (rs.next()) {
-          val id = rs.getObject(1)
+          val id = Types.numberCast(rs.getObject(1), core.meta.pkey.clazz)
           core.fieldMap += (core.meta.pkey.name -> id)
         }
         rs.close()

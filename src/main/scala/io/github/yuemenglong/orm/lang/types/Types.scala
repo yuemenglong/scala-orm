@@ -1,8 +1,8 @@
 package io.github.yuemenglong.orm.lang.types
 
 /**
-  * Created by <yuemenglong@126.com> on 2017/8/4.
-  */
+ * Created by <yuemenglong@126.com> on 2017/8/4.
+ */
 
 object Types {
   type Boolean = java.lang.Boolean
@@ -14,6 +14,7 @@ object Types {
   type String = java.lang.String
   type Date = java.sql.Date
   type DateTime = java.sql.Timestamp
+  type BigInteger = java.math.BigInteger
 
   val BooleanClass: Class[Boolean] = classOf[Boolean]
   val IntegerClass: Class[Integer] = classOf[Integer]
@@ -24,6 +25,7 @@ object Types {
   val StringClass: Class[String] = classOf[String]
   val DateClass: Class[Date] = classOf[Date]
   val DateTimeClass: Class[DateTime] = classOf[DateTime]
+  val BigIntegerClass: Class[BigInteger] = classOf[BigInteger]
 
   def newInstance(clazz: Class[_]): Object = {
     clazz match {
@@ -36,6 +38,20 @@ object Types {
       case DateClass => new Date(new java.util.Date().getTime)
       case DateTimeClass => new DateTime(new java.util.Date().getTime)
       case BigDecimalClass => new BigDecimal(0)
+    }
+  }
+
+  def numberCast(value: Object, clazz: Class[_]): Object = {
+    (value.getClass, clazz) match {
+      case (IntegerClass, IntegerClass) => value
+      case (IntegerClass, LongClass) => new java.lang.Long(value.asInstanceOf[Integer].toLong)
+      case (IntegerClass, BigIntegerClass) => java.math.BigInteger.valueOf(value.asInstanceOf[Integer].longValue())
+      case (LongClass, IntegerClass) => new java.lang.Integer(value.asInstanceOf[Long].toInt)
+      case (LongClass, LongClass) => value
+      case (LongClass, BigIntegerClass) => java.math.BigInteger.valueOf(value.asInstanceOf[Integer].longValue())
+      case (BigIntegerClass, IntegerClass) => new java.lang.Integer(value.asInstanceOf[BigInteger].intValue())
+      case (BigIntegerClass, LongClass) => new java.lang.Long(value.asInstanceOf[BigInteger].longValue())
+      case (BigIntegerClass, BigIntegerClass) => value
     }
   }
 }
