@@ -4,6 +4,7 @@ import io.github.yuemenglong.orm.api.operate.execute.{ExecuteJoin, ExecuteRoot, 
 import io.github.yuemenglong.orm.api.session.Session
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
 import io.github.yuemenglong.orm.api.logger.Logger
+import io.github.yuemenglong.orm.api.types.Types
 import io.github.yuemenglong.orm.impl.meta._
 
 import scala.collection.mutable.ArrayBuffer
@@ -209,7 +210,7 @@ class InsertJoin(meta: EntityMeta) extends ExecuteCascadeImpl(meta) {
       if (core.meta.pkey.isAuto) {
         val rs = stmt.getGeneratedKeys
         if (rs.next()) {
-          val id = rs.getObject(1)
+          val id = Types.numberCast(rs.getObject(1), core.meta.pkey.clazz)
           core.fieldMap += (core.meta.pkey.name -> id)
         }
         rs.close()
