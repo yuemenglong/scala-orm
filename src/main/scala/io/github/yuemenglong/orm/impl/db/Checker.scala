@@ -24,7 +24,7 @@ class MysqlChecker(db: DbImpl, ignoreUnused: Boolean = false) {
         case (_: FieldMetaString, "CHAR") => true
         case (f: FieldMetaString, "VARCHAR") => f.length == length
         case (_: FieldMetaText, "VARCHAR") => true
-        case (_: FieldMetaLongText, "VARCHAR") => true
+        //        case (_: FieldMetaLongText, "VARCHAR") => true
         case (f: FieldMetaEnum, "ENUM") => f.values.toSet == set
         case (_, _) => field.dbType == ty
       }
@@ -100,13 +100,14 @@ class MysqlChecker(db: DbImpl, ignoreUnused: Boolean = false) {
   }
 
   def parseColumnInfo(rs: ResultSet): ColumnInfo = {
-    val re = """^(.+?)(\((.+)\))?$""".r
+    val fieldTypeRe = """^(.+?)(\((.+)\))?$""".r
     val decimalRe = """^(\d+),(\d+)$""".r
     val enumRe = """'(.+?)'""".r
     val field = rs.getString("Field")
-    val (ty, detail) = rs.getString("Type") match {
-      case re(t, _, content) => (t.toUpperCase(), content)
-      case re(t) => (t.toUpperCase(), null)
+    val fieldType = rs.getString("Type")
+    val (ty, detail) = fieldType match {
+      case fieldTypeRe(t, _, content) => (t.toUpperCase(), content)
+      case fieldTypeRe(t) => (t.toUpperCase(), null)
     }
     val length = ty match {
       case "BIGINT" | "INT" | "TINYINT" | "VARCHAR" => detail.toInt
