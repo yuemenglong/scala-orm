@@ -274,18 +274,51 @@ class OrmToolImpl extends OrmTool {
 
   override def updateByField[T, V](clazz: Class[T], session: Session,
                                    cond: (String, Any), pairs: (String, Any)*): Unit = {
-    //    val root = Orm.root(clazz)
-    //    val assigns = (Array(pair) ++ pairs).map {
-    //      case (f, v) => root.get(f).assign(v.asInstanceOf[Object])
-    //    }
-    //    val pkey = root.asInstanceOf[TableImpl].getMeta.pkey.name
-    //    session.execute(Orm.update(root).set(assigns: _*).where(root.get(pkey).eql(id)))
-    val obj = Orm.create(clazz).asInstanceOf[Object]
-    Orm.set(obj, cond._1, cond._2)
-    pairs.foreach {
-      case (f, v) => Orm.set(obj, f, v)
+    val root = Orm.root(clazz)
+    val sets = pairs.map { case (k, v) =>
+      root.get(k) === v
     }
-    session.execute(Orm.update(obj))
+    val ex = Orm.update(root).set(sets: _*).where(root.get(cond._1) === cond._2)
+    session.execute(ex)
+    //    val obj = Orm.create(clazz).asInstanceOf[Object]
+    //    Orm.set(obj, cond._1, cond._2)
+    //    pairs.foreach {
+    //      case (f, v) => Orm.set(obj, f, v)
+    //    }
+    //    session.execute(Orm.update(obj))
+  }
+
+  override def updateByField[T, V](clazz: Class[T], session: Session)
+                                  (condField: T => Any, fields: (T => Any)*)
+                                  (condValue: Any, values: Any*): Unit = {
+    val meta = OrmMeta.entityMap(clazz)
+    val condName = {
+      val marker = EntityManager.createMarker[T](meta)
+      //noinspection ScalaUnusedExpression
+      condField(marker)
+      marker.toString
+    }
+    val fieldNames = fields.map(fn => {
+      val marker = EntityManager.createMarker[T](meta)
+      fn(marker)
+      marker.toString
+    })
+    val newCond = (condName, condValue)
+    val newPairs = fieldNames.zip(values)
+    updateByField(clazz, session, newCond, newPairs: _*)
+  }
+
+  override def updateById[T, V](clazz: Class[T], id: V, session: Session)
+                               (fields: (T => Any)*)(values: Any*): Unit = {
+    val meta = OrmMeta.entityMap(clazz)
+    val fieldNames = fields.map(fn => {
+      val marker = EntityManager.createMarker[T](meta)
+      fn(marker)
+      marker.toString
+    })
+    val newCond = (meta.pkey.name, id)
+    val newPairs = fieldNames.zip(values)
+    updateByField(clazz, session, newCond, newPairs: _*)
   }
 
   override def updateById[T, V](clazz: Class[T], id: V, session: Session,
@@ -397,5 +430,7 @@ class OrmToolImpl extends OrmTool {
     val root = Orm.root(clazz)
     fn(root)
   }
+
+
 }
 

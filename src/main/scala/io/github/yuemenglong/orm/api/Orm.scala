@@ -165,11 +165,18 @@ trait OrmTool {
   def updateByField[T, V](clazz: Class[T], session: Session,
                           cond: (String, Any), pairs: (String, Any)*): Unit
 
+  def updateByField[T, V](clazz: Class[T], session: Session)
+                         (condField: T => Any, fields: (T => Any)*)
+                         (condValue: Any, values: Any*): Unit
+
   def updateByField[T, V](obj: T, session: Session)
                          (cond: T => Any)(fns: (T => Any)*)
 
   def updateById[T, V](clazz: Class[T], id: V, session: Session,
                        pairs: (String, Any)*): Unit
+
+  def updateById[T, V](clazz: Class[T], id: V, session: Session)
+                      (fields: (T => Any)*)(values: Any*): Unit
 
   def updateById[T, V](obj: T, session: Session)
                       (fns: (T => Any)*)

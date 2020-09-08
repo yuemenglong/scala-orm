@@ -685,4 +685,22 @@ class ScalaTest {
       }
     })
   }
+
+  @Test
+  def testUpdateByIdAndField(): Unit = {
+    db.beginTransaction(session => {
+      val obj = Orm.create(classOf[Obj])
+      obj.name = "name"
+      obj.longValue = 100L
+      session.execute(Orm.insert(obj))
+
+      Orm.Tool.updateById(classOf[Obj], obj.id, session)(_.name)("name1")
+      val obj1 = Orm.Tool.selectById(classOf[Obj], obj.id, session)
+      Assert.assertEquals(obj1.name, "name1")
+
+      Orm.Tool.updateByField(classOf[Obj], session)(_.longValue, _.name)(100, "name2")
+      val obj2 = Orm.Tool.selectById(classOf[Obj], obj.id, session)
+      Assert.assertEquals(obj2.name, "name2")
+    })
+  }
 }
