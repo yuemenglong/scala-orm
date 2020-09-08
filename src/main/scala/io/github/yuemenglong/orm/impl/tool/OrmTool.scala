@@ -273,7 +273,7 @@ class OrmToolImpl extends OrmTool {
   }
 
   override def updateByField[T, V](clazz: Class[T], session: Session,
-                          cond: (String, Any), pairs: (String, Any)*): Unit = {
+                                   cond: (String, Any), pairs: (String, Any)*): Unit = {
     //    val root = Orm.root(clazz)
     //    val assigns = (Array(pair) ++ pairs).map {
     //      case (f, v) => root.get(f).assign(v.asInstanceOf[Object])
@@ -289,13 +289,13 @@ class OrmToolImpl extends OrmTool {
   }
 
   override def updateById[T, V](clazz: Class[T], id: V, session: Session,
-                       pairs: (String, Any)*): Unit = {
+                                pairs: (String, Any)*): Unit = {
     val meta = OrmMeta.entityMap(clazz)
     updateByField(clazz, session, (meta.pkey.name, id), pairs: _*)
   }
 
   override def updateById[T, V](obj: T, session: Session)
-                      (fns: (T => Any)*) {
+                               (fns: (T => Any)*) {
     val clazz: Class[T] = obj.isInstanceOf[Entity] match {
       case true => obj.getClass.getSuperclass.asInstanceOf[Class[T]]
       case false => obj.getClass.asInstanceOf[Class[T]]
@@ -315,7 +315,7 @@ class OrmToolImpl extends OrmTool {
   }
 
   override def updateByField[T, V](obj: T, session: Session)
-                         (cond: T => Any)(fns: (T => Any)*) {
+                                  (cond: T => Any)(fns: (T => Any)*) {
     val clazz: Class[T] = obj.isInstanceOf[Entity] match {
       case true => obj.getClass.getSuperclass.asInstanceOf[Class[T]]
       case false => obj.getClass.asInstanceOf[Class[T]]
@@ -391,6 +391,11 @@ class OrmToolImpl extends OrmTool {
     val pkey = entity.pkey.column
     val sql = s"DELETE FROM `${table}` WHERE `${pkey}` = ?"
     session.execute(sql, Array(id.asInstanceOf[Object]))
+  }
+
+  override def withRoot[T, R](clazz: Class[T])(fn: Root[T] => R): Unit = {
+    val root = Orm.root(clazz)
+    fn(root)
   }
 }
 
