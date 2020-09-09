@@ -20,6 +20,8 @@ trait Db {
 
   def create(): Unit
 
+  def truncate(): Unit
+
   def openSession(): Session
 
   def execute(sql: String, params: Array[Object] = Array()): Int

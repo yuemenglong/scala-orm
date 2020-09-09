@@ -54,6 +54,14 @@ class DbImpl(config: DbConfig) extends Db {
     this.create()
   }
 
+  override def truncate(): Unit = {
+    entities().foreach(entity => {
+      beginTransaction(session => {
+        session.execute(context.getTruncateTableSql(entity))
+      })
+    })
+  }
+
   def drop(): Unit = {
     entities().foreach(entity => {
       beginTransaction(session => {

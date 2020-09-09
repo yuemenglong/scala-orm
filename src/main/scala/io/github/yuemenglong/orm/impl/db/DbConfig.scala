@@ -111,6 +111,8 @@ class SqliteConfig(val db: String) extends DbConfigImpl {
 }
 
 trait DbContext {
+  def getTruncateTableSql(entity: EntityMeta): String
+
   def getCreateTableSql(meta: EntityMeta): String
 
   def getDropTableSql(table: String): String
@@ -162,6 +164,11 @@ trait DbContextImpl extends DbContext {
       case false => ""
     }
     s"CREATE ${uni}INDEX ${info.name} ON `${info.meta.table}`(${info.columns});"
+  }
+
+  def getTruncateTableSql(meta: EntityMeta): String = {
+    val sql = s"TRUNCATE TABLE `${meta.table}`"
+    sql
   }
 
   def getDropIndexSql(info: IndexInfo): String = {
