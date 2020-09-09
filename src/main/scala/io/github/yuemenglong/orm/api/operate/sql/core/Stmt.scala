@@ -3,9 +3,9 @@ package io.github.yuemenglong.orm.api.operate.sql.core
 //noinspection ScalaRedundantCast
 trait SelectStatement[S] extends SelectStmt with ExprLike[S] {
 
-  def distinct(): S
+  //  def select(cs: Array[ResultColumn]): S
 
-  def select(cs: Array[ResultColumn]): S
+  def distinct(): S
 
   def from(ts: TableLike*): S
 

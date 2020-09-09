@@ -9,9 +9,9 @@ import scala.collection.mutable.ArrayBuffer
  * Created by <yuemenglong@126.com> on 2018/3/19.
  */
 
-class SelectCore(private[orm] val cs: Array[ResultColumn] = Array()) extends SqlItem {
+class SelectCore(getColumns: () => Array[ResultColumn] = () => Array()) extends SqlItem {
+  private[orm] lazy val _columns: Array[ResultColumn] = getColumns()
   private[orm] var _distinct: Boolean = _
-  private[orm] var _columns: Array[ResultColumn] = cs
   private[orm] var _from: Array[TableOrSubQuery] = _
   private[orm] var _where: Expr = _
   private[orm] var _groupBy: Array[Expr] = _
@@ -117,10 +117,10 @@ trait SelectStatementImpl[S] extends SelectStatement[S] {
     this.asInstanceOf[S]
   }
 
-  def select(cs: Array[ResultColumn]): S = {
-    core._columns = cs
-    this.asInstanceOf[S]
-  }
+  //  def select(cs: Array[ResultColumn]): S = {
+  //    core._columns = cs
+  //    this.asInstanceOf[S]
+  //  }
 
   def from(ts: TableLike*): S = {
     core._from = ts.toArray
