@@ -426,11 +426,10 @@ class OrmToolImpl extends OrmTool {
     session.execute(sql, Array(id.asInstanceOf[Object]))
   }
 
-  override def withRoot[T, R](clazz: Class[T])(fn: Root[T] => R): Unit = {
-    val root = Orm.root(clazz)
-    fn(root)
+  def withRoot[T, R](clazz: Class[T]): (Root[T] => R) => R = {
+    (fn: Root[T] => R) => {
+      fn(Orm.root(clazz))
+    }
   }
-
-
 }
 

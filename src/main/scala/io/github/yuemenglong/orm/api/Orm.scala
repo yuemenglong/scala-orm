@@ -195,7 +195,7 @@ trait OrmTool {
 
   def deleteById[T: ClassTag, V](clazz: Class[T], id: V, session: Session): Int
 
-  def withRoot[T, R](clazz: Class[T])(fn: Root[T] => R)
+  def withRoot[T, R](clazz: Class[T]): (Root[T] => R) => R
 }
 
 object OrmLoader {
