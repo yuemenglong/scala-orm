@@ -37,16 +37,12 @@ class OrmImpl extends Orm {
     OrmMeta.reset()
   }
 
-  def mysql(host: String, port: Int, username: String, password: String, db: String): DbConfig = {
-    new MysqlConfig(host, port, username, password, db)
+  def mysql(host: String, port: Int, username: String, password: String, db: String, params: Map[String, String]): DbConfig = {
+    new MysqlConfig(host, port, username, password, db, params)
   }
 
-  def mysql(url: String): DbConfig = {
-    new MysqlConfig(url)
-  }
-
-  def sqlite(db: String): DbConfig = {
-    new SqliteConfig(db)
+  def sqlite(db: String, params: Map[String, String]): DbConfig = {
+    new SqliteConfig(db, params)
   }
 
   def open(config: DbConfig): Db = {

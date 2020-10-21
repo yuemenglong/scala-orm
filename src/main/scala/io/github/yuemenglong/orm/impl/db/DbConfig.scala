@@ -47,63 +47,51 @@ trait DbConfigImpl extends DbConfig {
     this
   }
 
+  private[orm] def makeParamString: String = {
+    params.map { case (k, v) => s"${k}=${v}" }.mkString("&")
+  }
+
   def username: String
 
   def password: String
 
   def db: String
 
+  def params: Map[String, String]
+
   def url: String
 
   def context: DbContext
 }
 
-class MysqlConfig(host: String, port: Int, val username: String, val password: String, val db: String) extends DbConfigImpl {
-  def this(url: String) {
-    this(null, 0, null, null, null)
-    _url = url
-  }
+//  private var useUnicode = true
+//  private var characterEncoding = "UTF-8"
+//  private var serverTimezone = "UTC"
+//useUnicode=${useUnicode}&characterEncoding=${characterEncoding}&serverTimezone=${serverTimezone}
+class MysqlConfig(host: String,
+                  port: Int,
+                  val username: String,
+                  val password: String,
+                  val db: String,
+                  val params: Map[String, String]) extends DbConfigImpl {
 
-  private var useUnicode = true
-  private var characterEncoding = "UTF-8"
-  private var serverTimezone = "UTC"
-  private var _url: String = _
-
-  def useUnicode(b: Boolean): MysqlConfig = {
-    useUnicode = b
-    this
-  }
-
-  def characterEncoding(s: String): MysqlConfig = {
-    characterEncoding = s
-    this
-  }
-
-  def serverTimezone(s: String): MysqlConfig = {
-    serverTimezone = s
-    this
-  }
-
-  override def url: String = _url match {
-    case null => s"jdbc:mysql://$host:$port/$db?useUnicode=${useUnicode}&characterEncoding=${characterEncoding}&serverTimezone=${serverTimezone}"
-    case _ => _url
-  }
+  override def url: String = s"jdbc:mysql://$host:$port/$db?${makeParamString}"
 
   override val context = new MysqlContext
 }
 
-class HsqldbConfig(val username: String, val password: String, val db: String) extends DbConfigImpl {
+class HsqldbConfig(val username: String, val password: String, val db: String, val params: Map[String, String]) extends DbConfigImpl {
 
-  override def url: String = s"jdbc:hsqldb:file:${db}"
+  override def url: String = s"jdbc:hsqldb:file:${db}?${makeParamString}"
 
   override val context = new HsqldbContext
 }
 
-class SqliteConfig(val db: String) extends DbConfigImpl {
+class SqliteConfig(val db: String, val params: Map[String, String]) extends DbConfigImpl {
 
   override val context = new SqliteContext
 
-  override def url: String = s"jdbc:sqlite:${db}"
+  override def url: String = s"jdbc:sqlite:${db}?${makeParamString}"
 
   override def username: String = ""
 

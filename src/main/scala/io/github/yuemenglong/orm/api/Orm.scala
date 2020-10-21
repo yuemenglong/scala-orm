@@ -24,11 +24,17 @@ trait Orm {
 
   def reset(): Unit
 
-  def mysql(host: String, port: Int, username: String, password: String, db: String): DbConfig
+  def mysql(host: String, port: Int, username: String, password: String, db: String, params: Map[String, String]): DbConfig
 
-  def mysql(url: String): DbConfig
+  def mysql(host: String, port: Int, username: String, password: String, db: String): DbConfig = {
+    mysql(host, port, username, password, db, Map())
+  }
 
-  def sqlite(db: String): DbConfig
+  def sqlite(db: String, params: Map[String, String]): DbConfig
+
+  def sqlite(db: String): DbConfig = {
+    sqlite(db, Map())
+  }
 
   def open(config: DbConfig): Db
 
