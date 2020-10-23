@@ -1,14 +1,15 @@
 package io.github.yuemenglong.orm.test
 
-import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.api.{Orm, OrmLoader}
+import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.test.lite._
 import org.junit.{After, Assert, Before, Test}
 
 /**
-  * Created by <yuemenglong@126.com> on 2018/1/31.
-  */
+ * Created by <yuemenglong@126.com> on 2018/1/31.
+ */
 class SqliteTest {
+  val Orm: Orm = OrmLoader.loadOrm();
   private var db: Db = _
 
   @SuppressWarnings(Array("Duplicates"))
@@ -25,7 +26,7 @@ class SqliteTest {
     db.shutdown()
   }
 
-  def openDb(): Db = Orm.openSqliteDb("test.db")
+  def openDb(): Db = Orm.open(Orm.sqlite("test.db"))
 
   @Test
   def testInsert(): Unit = db.beginTransaction(session => {
@@ -52,7 +53,7 @@ class SqliteTest {
 
     {
       r.name = "name"
-      r.om = r.om ++ Array(Orm.create(classOf[OM]))
+      r.om = r.om ++ Array(Orm.obj(classOf[OM]))
       val ex = Orm.update(r)
       (0 to 1).foreach(i => ex.ignoreFor(r.om(i)))
       ex.insert(_.om)

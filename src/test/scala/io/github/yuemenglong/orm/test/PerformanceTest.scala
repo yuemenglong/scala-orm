@@ -1,14 +1,16 @@
 package io.github.yuemenglong.orm.test
 
-import io.github.yuemenglong.orm.Orm
-import io.github.yuemenglong.orm.db.Db
+import io.github.yuemenglong.orm.api.{Orm, OrmLoader}
+import io.github.yuemenglong.orm.api.db.Db
 import io.github.yuemenglong.orm.test.entity.Obj
 
 /**
-  * Created by <yuemenglong@126.com> on 2018/3/14.
-  */
+ * Created by <yuemenglong@126.com> on 2018/3/14.
+ */
 object PerformanceTest {
-  def openDb(): Db = Orm.openMysqlDb("localhost", 3306, "root", "root", "test")
+  val Orm: Orm = OrmLoader.loadOrm()
+
+  def openDb(): Db = Orm.open(Orm.mysql("localhost", 3306, "root", "root", "orm_test"))
 
   def main(args: Array[String]): Unit = {
     Orm.init("io.github.yuemenglong.orm.test.entity")
