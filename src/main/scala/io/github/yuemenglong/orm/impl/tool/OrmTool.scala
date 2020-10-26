@@ -267,6 +267,8 @@ class OrmToolImpl extends OrmTool {
       if (res.contains(leftValue)) {
         EntityCore.setWithRefer(e.$$core(), field, res(leftValue))
         //        e.$$core().setRefer(field, res(leftValue))
+      } else if (refer.isOneMany) {
+        EntityCore.setWithRefer(e.$$core(), field, Kit.newArray(refer.refer.clazz))
       }
     })
     arr
