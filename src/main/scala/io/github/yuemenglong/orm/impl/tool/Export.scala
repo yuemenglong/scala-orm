@@ -9,11 +9,15 @@ import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.meta.OrmMeta
 
 object Export {
-  def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit = {
-    val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, prefix)).mkString("\n\n")
-    val content = s"${imports}\r\n\r\n${classes}"
+  def exportTsClass2(os: OutputStream, classes: Array[Class[_]], prefix: String = "", imports: String = ""): Unit = {
+    val classDefs = classes.map(c => stringifyTsClass(c, prefix)).mkString("\n\n")
+    val content = s"${imports}\r\n\r\n${classDefs}"
     os.write(content.getBytes())
     os.close()
+  }
+
+  def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit = {
+    exportTsClass2(os, OrmMeta.entityVec.map(_.clazz).toArray, prefix, imports)
   }
 
   // relateMap保存所有与之相关的类型
@@ -76,11 +80,15 @@ object Export {
     ret
   }
 
-  def exportDtClass(os: OutputStream): Unit = {
-    val classes = OrmMeta.entityVec.map(e => stringifyDtClass(e.clazz)).mkString("\n\n")
-    val content = s"${classes}"
+  def exportDtClass2(os: OutputStream, classes: Array[Class[_]]): Unit = {
+    val classDefs = classes.map(c => stringifyDtClass(c)).mkString("\n\n")
+    val content = s"${classDefs}\n"
     os.write(content.getBytes())
     os.close()
+  }
+
+  def exportDtClass(os: OutputStream): Unit = {
+    exportDtClass2(os, OrmMeta.entityVec.map(_.clazz).toArray)
   }
 
   private def stringifyDtClass(clazz: Class[_]): String = {
@@ -139,7 +147,8 @@ object Export {
       val name = f.getName
       val ty = getType(f.getType)
       ty match {
-        case "int" | "double" | "bool" | "String" => s"""    ${name} = $$map["${name}"];"""
+        case "int" => s"""    ${name} = $$map["${name}"].runtimeType == String ? int.parse($$map["${name}"]) : $$map["${name}"];"""
+        case "double" | "bool" | "String" => s"""    ${name} = $$map["${name}"];"""
         case x if x.startsWith("List") =>
           val T = Kit.getArrayType(f.getType).getSimpleName
           s"""    ${name} = List<${T}>.from($$map["${name}"]?.map((x) => ${T}.fromJson(x)) ?? []);"""
@@ -159,17 +168,4 @@ object Export {
          |}""".stripMargin
     ret
   }
-
-  def main(args: Array[String]): Unit = {
-    val res = stringifyDtClass(classOf[T])
-    println(res)
-  }
-}
-
-class T {
-  @ExportDT(ignore = true)
-  var i: Integer = _
-  var date: Types.Date = _
-  var ii: Array[T] = _
-  var t: T = _
 }
