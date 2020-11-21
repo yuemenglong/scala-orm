@@ -3,15 +3,12 @@ package io.github.yuemenglong.orm.impl.tool
 import java.io.OutputStream
 
 import io.github.yuemenglong.orm.api.OrmTool
-import io.github.yuemenglong.orm.api.anno.ExportTS
-import io.github.yuemenglong.orm.api.anno.predef.Const
 import io.github.yuemenglong.orm.api.operate.query.Query1
 import io.github.yuemenglong.orm.api.operate.sql.table.{ResultTable, Root, Table, TypedResultTable}
 import io.github.yuemenglong.orm.api.session.Session
-import io.github.yuemenglong.orm.api.types.Types
 import io.github.yuemenglong.orm.impl.Orm
-import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.entity.{Entity, EntityCore, EntityManager}
+import io.github.yuemenglong.orm.impl.kit.Kit
 import io.github.yuemenglong.orm.impl.meta._
 import io.github.yuemenglong.orm.impl.operate.sql.table.TableImpl
 
@@ -20,7 +17,7 @@ import scala.reflect.ClassTag
 /**
  * Created by <yuemenglong@126.com> on 2017/10/10.
  */
-//noinspection SimplifyBooleanMatch
+//noinspection ScalaFileName
 class OrmToolImpl extends OrmTool {
   def getConstructors: Map[Class[_], () => Object] = {
     OrmMeta.entityVec.map(meta => {
@@ -31,72 +28,9 @@ class OrmToolImpl extends OrmTool {
     }).toMap
   }
 
-  def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit = {
-    val classes = OrmMeta.entityVec.map(e => stringifyTsClass(e.clazz, prefix)).mkString("\n\n")
-    val content = s"${imports}\r\n\r\n${classes}"
-    os.write(content.getBytes())
-    os.close()
-  }
+  def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit = Export.exportTsClass(os, prefix, imports)
 
-  // relateMap保存所有与之相关的类型
-  private def stringifyTsClass(clazz: Class[_], prefix: String): String = {
-    val pfx = prefix match {
-      case null | "" => ""
-      case s => s"${s} "
-    }
-    val className = clazz.getSimpleName
-    val content = Kit.getDeclaredFields(clazz).filter(p = f => {
-      f.getDeclaredAnnotation(classOf[ExportTS]) match {
-        case anno if anno != null && anno.ignore() => false
-        case _ => true
-      }
-    }).map(f => {
-      val name = f.getName
-      val typeName = f.getType.getSimpleName
-      val anno = f.getDeclaredAnnotation(classOf[ExportTS])
-      val ty = f.getType match {
-        case Types.IntegerClass => s"number"
-        case Types.LongClass => s"number"
-        case Types.FloatClass => s"number"
-        case Types.DoubleClass => s"number"
-        case Types.BooleanClass => s"boolean"
-        case Types.StringClass => s"string"
-        case Types.DateClass => s"string"
-        case Types.DateTimeClass => s"string"
-        case Types.BigDecimalClass => s"number"
-        case _ => s"$typeName"
-      }
-      val init = anno != null && anno.value() != Const.ANNOTATION_STRING_NULL match {
-        case true => anno.value()
-        case false => "null"
-      }
-      val value = f.getType match {
-        case Types.IntegerClass => init
-        case Types.LongClass => init
-        case Types.FloatClass => init
-        case Types.DoubleClass => init
-        case Types.BooleanClass => init
-        case Types.StringClass => init
-        case Types.DateClass => init
-        case Types.DateTimeClass => init
-        case Types.BigDecimalClass => init
-        case `clazz` => "null" // 自己引用自己
-        case _ => f.getType.isArray match {
-          case true => init match { // 数组的情况
-            case "null" => "[]" // 默认的情况
-            case s => s
-          }
-          case false => init match { // 对象的情况
-            case "" => s"new $typeName()" // 特殊指定的情况
-            case s => s
-          }
-        }
-      }
-      s"\t${pfx}$name: $ty = ${value};"
-    }).mkString("\n")
-    val ret = s"export class $className {\n$content\n}"
-    ret
-  }
+  def exportDtClass(os: OutputStream): Unit = Export.exportDtClass(os)
 
   def attachX[T, R](orig: T, session: Session)
                    (fn: T => R)

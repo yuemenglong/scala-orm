@@ -129,6 +129,8 @@ trait OrmTool {
 
   def exportTsClass(os: OutputStream, prefix: String = "", imports: String = ""): Unit
 
+  def exportDtClass(os: OutputStream): Unit
+
   def attach[T, R](orig: T, session: Session)(fn: T => R): T = attachX(orig, session)(fn)(null, null)
 
   def attachOneMany[T, R](orig: T, session: Session)(fn: T => Array[R]): T = attachOneManyX(orig, session)(fn)(null, null)
